@@ -4063,7 +4063,10 @@ async function loadComprehensiveTreasury() {
                     results.push({
                         idx, wallet, xchBal, nfts,
                         tokens: tokens.map(t => {
-                            const name = (t.name || t.symbol || '').trim();
+                            // Enhanced name resolution: use name → symbol → readable fallback
+                            let name = (t.name || t.symbol || '').trim();
+                            if (!name) name = `Token ${(t.asset_id || '').slice(0,6).toUpperCase()}`;
+                            
                             const isLP = name.toLowerCase().includes('tibet') || name.toLowerCase().includes(' lp ');
                             const balance = t.balance;
                             const price = t.price;
@@ -4104,8 +4107,14 @@ async function loadComprehensiveTreasury() {
         const buildChiaTokens = (raw, tibetMap, lpSet, pairMap) =>
             (raw?.data || []).filter(t => parseFloat(t.balance||0) > 0).map(t => {
                 const aid  = (t.asset_id||'').toLowerCase();
-                const name = (t.name||t.symbol||'').trim() || (tibetMap[aid]?.name||'') || aid.slice(0,16);
-                const sym  = name || aid.slice(0,8);
+                // Enhanced name resolution: Spacescan → TibetSwap → symbol → readable fallback
+                let name = (t.name||t.symbol||'').trim();
+                if (!name && tibetMap[aid]) name = tibetMap[aid].name || tibetMap[aid].short_name || '';
+                if (!name) name = t.symbol || '';
+                // Use a more readable fallback if still empty (first 6 chars + asset type marker)
+                if (!name) name = `Token ${aid.slice(0,6).toUpperCase()}`;
+                
+                const sym  = t.symbol || name.slice(0,8) || aid.slice(0,8);
                 const lnam = name.toLowerCase();
                 const lsym = (tibetMap[aid]?.short_name||'').toLowerCase();
                 const isLP = lpSet.has(aid) || lnam.toLowerCase().includes('tibet') || lnam.includes(' lp ') || lsym.startsWith('tibet-');
