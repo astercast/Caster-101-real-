@@ -3,12 +3,18 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=0.8, minimum-scale=0.5, maximum-scale=5.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>Caster101</title>
     <link rel="icon" type="image/png" href="/images/hodl-diamond.png">
+    <!-- Performance: Preconnect to external APIs -->
+    <link rel="preconnect" href="https://api.coingecko.com">
+    <link rel="preconnect" href="https://api.spacescan.io">
+    <link rel="preconnect" href="https://api.v2.tibetswap.io">
+    <link rel="preconnect" href="https://xchscan.com">
+    <link rel="preconnect" href="https://api.mintgarden.io">
     <style>
-        /* Mystical fonts for mobile and desktop */
-        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700;900&family=UnifrakturMaguntia&family=MedievalSharp&family=Uncial+Antiqua&family=Press+Start+2P&family=Pacifico&family=Dancing+Script:wght@700&family=Satisfy&display=swap');
+        /* Optimized font loading - reduced to essential families */
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Inter:wght@400;600;700&family=Press+Start+2P&display=swap');
         
         @font-face {
             font-family: 'Valve Occult';
@@ -152,6 +158,8 @@
             pointer-events: none;
             animation: twinkle 2s ease-in-out infinite;
             z-index: 1;
+            will-change: opacity, transform;
+            transform: translate3d(0, 0, 0); /* GPU acceleration */
         }
 
         @keyframes twinkle {
@@ -177,11 +185,11 @@
             z-index: 10;
         }
 
+        /* Mobile: Keep desktop layout, just adjust padding */
         @media (max-width: 768px) {
             .container {
-                max-width: 480px;
-                padding: 8px;
-                padding-bottom: 30px;
+                padding: 10px;
+                padding-bottom: 35px;
             }
         }
 
@@ -221,95 +229,20 @@
             z-index: 20;
         }
 
+        /* Mobile: Scale title proportionally */
         @media (max-width: 768px) {
             .title {
-                font-size: 20px;
-                letter-spacing: 6px;
+                font-size: 32px;
+                letter-spacing: 8px;
                 padding: 6px;
-            }
-            
-            /* UPDATED SOON text responsive */
-            .updated-soon-text {
-                font-size: 36px !important;
-                letter-spacing: 3px !important;
-            }
-            
-            /* Emoji market responsive - KEEP SIDE BY SIDE */
-            .market-columns {
-                display: flex !important;
-                gap: 8px !important;
-            }
-            
-            .market-column {
-                margin-bottom: 0;
-            }
-            
-            #baseTokenList,
-            #chiaTokenList {
-                display: grid !important;
-                grid-template-columns: repeat(3, 1fr) !important;
-                gap: 8px !important;
-            }
-            
-            #baseTokenList > div,
-            #chiaTokenList > div {
-                font-size: 12px !important;
-                padding: 8px 6px !important;
-            }
-            
-            #baseTokenList > div > div:first-child,
-            #chiaTokenList > div > div:first-child {
-                font-size: 24px !important;
-                margin-bottom: 4px !important;
-            }
-            
-            /* Quick links responsive */
-            .quick-links {
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
-            }
-            
-            .quick-link-btn {
-                font-size: 10px !important;
-                padding: 5px 8px !important;
             }
         }
         
+        /* Small mobile: Minor font adjustments only */
         @media (max-width: 480px) {
-            /* UPDATED SOON smaller screens */
-            .updated-soon-text {
-                font-size: 24px !important;
-                letter-spacing: 2px !important;
-            }
-            
-            /* Very small screens - 2 columns for emoji market */
-            #baseTokenList,
-            #chiaTokenList {
-                grid-template-columns: repeat(2, 1fr) !important;
-                gap: 6px !important;
-            }
-            
-            #baseTokenList > div > div:first-child,
-            #chiaTokenList > div > div:first-child {
-                font-size: 20px !important;
-            }
-            
-            /* How to Wizard responsive */
-            #howto h1 {
-                font-size: 32px !important;
-            }
-            
-            #howto h2 {
-                font-size: 20px !important;
-            }
-            
-            #howto h3 {
-                font-size: 22px !important;
-            }
-            
-            /* Stack rewards grid on mobile */
-            #howto div[style*="grid-template-columns: 1fr 1fr"] {
-                grid-template-columns: 1fr !important;
+            .title {
+                font-size: 24px;
+                letter-spacing: 5px;
             }
         }
 
@@ -405,6 +338,7 @@
             margin: 0 2px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3),
                         0 0 0 1px rgba(220, 38, 38, 0.15);
+            will-change: transform, background; /* Optimize tab switching */
         }
         
         .tab::before {
@@ -452,12 +386,13 @@
                         0 0 20px rgba(251, 191, 36, 0.1);
         }
 
+        /* Mobile tabs: Keep readable size */
         @media (max-width: 768px) {
             .tab {
-                font-size: 9px;
-                padding: 7px 6px;
-                margin: 0 1px;
-                letter-spacing: 0px;
+                font-size: 11px;
+                padding: 8px 8px;
+                margin: 0 2px;
+                letter-spacing: 0.5px;
             }
         }
 
@@ -520,22 +455,11 @@
             color: #dc2626;
         }
 
-        @media (max-width: 768px) {
-            .token-grid {
-                gap: 8px;
-            }
-        }
-
+        /* Keep desktop grid structure on mobile */
         .chain-column {
             display: flex;
             flex-direction: column;
             gap: 10px;
-        }
-
-        @media (max-width: 768px) {
-            .chain-column {
-                gap: 6px;
-            }
         }
 
         /* New Responsive & Layout Styles */
@@ -546,7 +470,7 @@
 
         @media (max-width: 768px) {
             .market-columns {
-                gap: 8px;
+                gap: 12px;
             }
         }
 
@@ -590,20 +514,11 @@
                         0 0 20px rgba(74, 222, 128, 0.2);
         }
 
+        /* Mobile: Keep same header styling */
         @media (max-width: 768px) {
             .column-header {
-            padding: 12px;
-            font-weight: 900;
-            font-size: 16px;
-            text-align: center;
-            border: 2px solid rgba(74, 222, 128, 0.5);
-            border-radius: 8px;
-            margin-bottom: 12px;
-            font-family: 'Inter', sans-serif;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3),
-                        0 0 0 1px rgba(74, 222, 128, 0.3),
-                        0 0 20px rgba(74, 222, 128, 0.2);
-        }
+                font-size: 15px;
+            }
         }
 
         .column-header.base {
@@ -632,6 +547,8 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3),
                         inset 0 1px 0 rgba(255, 255, 255, 0.05),
                         0 0 0 1px rgba(251, 191, 36, 0.1);
+            content-visibility: auto; /* Render only when visible */
+            contain: layout style paint; /* Performance containment */
         }
         
         .token-card::before {
@@ -657,7 +574,7 @@
         /* Desktop specific interactions */
         @media (min-width: 769px) {
             .token-card:hover {
-                transform: translateY(-2px);
+                transform: translateY(-2px) translate3d(0, 0, 0);
                 border: 1px solid rgba(251, 191, 36, 0.6);
                 box-shadow: 0 8px 24px rgba(251, 191, 36, 0.15),
                             0 4px 12px rgba(0, 0, 0, 0.4),
@@ -730,7 +647,7 @@
 
         @media (max-width: 768px) {
             .token-symbol {
-                font-size: 22px;
+                font-size: 24px;
             }
         }
 
@@ -746,8 +663,8 @@
 
         @media (max-width: 768px) {
             .token-name {
-                font-size: 12px;
-                letter-spacing: 0.3px;
+                font-size: 13px;
+                letter-spacing: 0.4px;
             }
         }
 
@@ -761,7 +678,7 @@
 
         @media (max-width: 768px) {
             .token-price {
-                font-size: 13px;
+                font-size: 14px;
             }
         }
 
@@ -889,25 +806,12 @@
             background: rgba(251, 191, 36, 0.1);
         }
 
+        /* Mobile: Keep quick links same as desktop */
         @media (max-width: 768px) {
             .quick-link-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 10px 16px;
-            background: rgba(0, 0, 0, 0.5);
-            border: 2px solid rgba(251, 191, 36, 0.7);
-            border-radius: 8px;
-            color: white;
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 600;
-            transition: all 0.3s;
-            backdrop-filter: blur(8px);
-            max-width: 260px;
-            margin: 0 auto;
-        }
+                font-size: 12px;
+                padding: 8px 12px;
+            }
         }
 
         .warp-btn {
@@ -923,7 +827,7 @@
             box-shadow: 0 4px 20px rgba(217, 70, 239, 0.5);
         }
 
-        /* Treasury Split Responsive */
+        /* Treasury Split Responsive - Keep 2 columns on mobile */
         .treasury-split {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -932,16 +836,8 @@
 
         @media (max-width: 768px) {
             .treasury-split {
-                grid-template-columns: 1fr;
-                gap: 12px;
-            }
-        }
-
-        /* Reduce treasury padding on mobile */
-        @media (max-width: 768px) {
-            #treasury .treasury-split > div {
-                padding: 12px !important;
-                min-height: 250px !important;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
             }
         }
 
@@ -3164,9 +3060,10 @@
                 // Random z-index: some go above gradient (11-14) to pop into header, but stay behind text (15)
                 const zIndex = Math.random() > 0.3 ? Math.floor(Math.random() * 4) + 11 : 5; // 70% chance to pop above, 30% stay below
                 
-                // Create image element
+                // Create image element with lazy loading
                 const img = document.createElement('img');
-                img.src = src;
+                img.dataset.src = src; // Store src in data attribute for lazy loading
+                img.loading = 'lazy'; // Native lazy loading
                 img.style.cssText = `
                     position: fixed;
                     width: ${size}px;
@@ -3177,6 +3074,13 @@
                     opacity: 0.8;
                     z-index: ${zIndex};
                 `;
+                
+                // Load immediately for first batch, lazy load rest
+                if (i < 8) {
+                    img.src = src;
+                } else {
+                    requestIdleCallback(() => { img.src = src; });
+                }
                 
                 collage.appendChild(img);
                 
@@ -3710,6 +3614,44 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
             renderTokens(sorted);
         }
 
+        // ── PERFORMANCE UTILITIES ─────────────────────────────────────────────────
+        
+        // Debounce function for search/filter operations
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Lazy load images when they enter viewport
+        const imageObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    if (img.dataset.src && !img.src) {
+                        img.src = img.dataset.src;
+                        imageObserver.unobserve(img);
+                    }
+                }
+            });
+        }, { rootMargin: '50px' });
+
+        // Request idle callback polyfill
+        window.requestIdleCallback = window.requestIdleCallback || function(cb) {
+            const start = Date.now();
+            return setTimeout(() => {
+                cb({ didTimeout: false, timeRemaining: () => Math.max(0, 50 - (Date.now() - start)) });
+            }, 1);
+        };
+
+        // ── END PERFORMANCE UTILITIES ─────────────────────────────────────────────
+
         function filterTokens() {
             const search = document.getElementById('searchInput').value.toLowerCase();
             displayedTokens = tokens.filter(t =>
@@ -3772,7 +3714,8 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
             }
         }
 
-        function handleSearch() {
+        // Debounced search handler for better performance
+        const debouncedHandleSearch = debounce(function() {
             const searchValue = document.getElementById('searchInput').value.trim();
 
             if (!searchValue) {
@@ -3786,6 +3729,10 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
             }
 
             filterTokens();
+        }, 300);
+
+        function handleSearch() {
+            debouncedHandleSearch();
         }
 
         function refreshData() {
