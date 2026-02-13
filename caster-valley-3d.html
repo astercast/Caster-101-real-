@@ -4239,7 +4239,8 @@
                             const currentScale = plot.plantMesh.scale.x;
                             const newScale = currentScale + (targetScale - currentScale) * 0.1;
                             plot.plantMesh.scale.set(newScale, newScale, newScale);
-                            const baseY = 0.6 + newScale * 0.45; // Base position for bigger plants
+                            // Keep plants grounded at their planted Y position
+                            const baseY = 0.6;
                             const tier = plot.plantMesh.userData?.tier || 1;
                             const phase = plot.plantMesh.userData?.swayPhase || 0;
                             plot.plantMesh.rotation.z = Math.sin(Date.now() / 500 + phase) * 0.08;
