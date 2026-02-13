@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="viewport" content="width=1200, initial-scale=0.3, minimum-scale=0.2, maximum-scale=5.0, user-scalable=yes">
     <title>Caster101</title>
     <link rel="icon" type="image/png" href="/images/hodl-diamond.png">
     <!-- Performance: Preconnect to external APIs -->
@@ -185,11 +185,11 @@
             z-index: 10;
         }
 
-        /* Mobile: Keep desktop layout, just adjust padding */
+        /* Mobile: No layout changes - full desktop view */
         @media (max-width: 768px) {
             .container {
-                padding: 10px;
-                padding-bottom: 35px;
+                padding: 12px;
+                padding-bottom: 40px;
             }
         }
 
@@ -229,20 +229,20 @@
             z-index: 20;
         }
 
-        /* Mobile: Scale title proportionally */
+        /* Mobile: Keep desktop font sizes */
         @media (max-width: 768px) {
             .title {
-                font-size: 32px;
-                letter-spacing: 8px;
-                padding: 6px;
+                font-size: 42px;
+                letter-spacing: 12px;
+                padding: 8px;
             }
         }
         
-        /* Small mobile: Minor font adjustments only */
+        /* Small mobile: Keep desktop fonts */
         @media (max-width: 480px) {
             .title {
-                font-size: 24px;
-                letter-spacing: 5px;
+                font-size: 42px;
+                letter-spacing: 12px;
             }
         }
 
@@ -263,7 +263,7 @@
 
         @media (max-width: 768px) {
             .marquee {
-                font-size: 16px;
+                font-size: 24px;
             }
         }
 
@@ -386,13 +386,13 @@
                         0 0 20px rgba(251, 191, 36, 0.1);
         }
 
-        /* Mobile tabs: Keep readable size */
+        /* Mobile tabs: Keep desktop size */
         @media (max-width: 768px) {
             .tab {
                 font-size: 11px;
-                padding: 8px 8px;
+                padding: 8px 10px;
                 margin: 0 2px;
-                letter-spacing: 0.5px;
+                letter-spacing: 0.3px;
             }
         }
 
@@ -514,10 +514,10 @@
                         0 0 20px rgba(74, 222, 128, 0.2);
         }
 
-        /* Mobile: Keep same header styling */
+        /* Mobile: Keep desktop header styling */
         @media (max-width: 768px) {
             .column-header {
-                font-size: 15px;
+                font-size: 16px;
             }
         }
 
@@ -647,7 +647,7 @@
 
         @media (max-width: 768px) {
             .token-symbol {
-                font-size: 24px;
+                font-size: 28px;
             }
         }
 
@@ -663,8 +663,8 @@
 
         @media (max-width: 768px) {
             .token-name {
-                font-size: 13px;
-                letter-spacing: 0.4px;
+                font-size: 15px;
+                letter-spacing: 0.5px;
             }
         }
 
@@ -678,7 +678,7 @@
 
         @media (max-width: 768px) {
             .token-price {
-                font-size: 14px;
+                font-size: 16px;
             }
         }
 
@@ -806,11 +806,11 @@
             background: rgba(251, 191, 36, 0.1);
         }
 
-        /* Mobile: Keep quick links same as desktop */
+        /* Mobile: Desktop quick links */
         @media (max-width: 768px) {
             .quick-link-btn {
-                font-size: 12px;
-                padding: 8px 12px;
+                font-size: 13px;
+                padding: 10px 14px;
             }
         }
 
