@@ -1128,6 +1128,12 @@
                 this.forestTrolls = [];
                 this.fishingFish = [];
                 this.astralSaturns = [];
+                this.astralStars = [];
+                this.astralCrystals = [];
+                this.astralAsteroids = [];
+                this.astralNebulas = [];
+                this.astralRings = [];
+                this.astralAuroras = [];
                 this.ratThieves = []; // Rats that steal crops
                 this.dragon = null;
             },
@@ -2048,7 +2054,7 @@
                     new THREE.SphereGeometry(2.0, 18, 18),
                     bodyMat
                 );
-                dragonBody.scale.set(1.25, 0.95, 2.4);
+                dragonBody.scale.set(1.2, 0.7, 3.0);
                 dragonBody.castShadow = true;
                 dragonGroup.add(dragonBody);
 
@@ -2057,7 +2063,7 @@
                     bodyMat
                 );
                 dragonChest.position.set(0, 0.6, 1.6);
-                dragonChest.scale.set(1.1, 0.9, 1.5);
+                dragonChest.scale.set(1.0, 0.75, 1.9);
                 dragonChest.castShadow = true;
                 dragonGroup.add(dragonChest);
 
@@ -2066,7 +2072,7 @@
                     bodyMat
                 );
                 dragonHips.position.set(0, -0.6, -1.7);
-                dragonHips.scale.set(1.2, 0.85, 1.6);
+                dragonHips.scale.set(1.05, 0.7, 2.1);
                 dragonHips.castShadow = true;
                 dragonGroup.add(dragonHips);
 
@@ -2075,7 +2081,7 @@
                     bellyMat
                 );
                 bellyPlate.rotation.z = Math.PI / 2;
-                bellyPlate.scale.set(1, 0.7, 1);
+                bellyPlate.scale.set(0.95, 0.55, 1.15);
                 bellyPlate.position.set(0, -0.5, 0.2);
                 dragonGroup.add(bellyPlate);
 
@@ -2771,6 +2777,12 @@
 
             createAstral() {
                 this.scene.background = new THREE.Color(0x0a0a2e);
+                this.astralStars = [];
+                this.astralCrystals = [];
+                this.astralAsteroids = [];
+                this.astralNebulas = [];
+                this.astralRings = [];
+                this.astralAuroras = [];
                 
                 // Dark space ground
                 this.ground.material.color.setHex(0x0a0a2e);
@@ -2821,8 +2833,12 @@
                 
                 // 300 White stars scattered across sky
                 const starGeo = new THREE.SphereGeometry(0.05, 8, 8);
-                const starMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
                 for (let i = 0; i < 300; i++) {
+                    const starMat = new THREE.MeshBasicMaterial({
+                        color: 0xffffff,
+                        transparent: true,
+                        opacity: 0.55 + Math.random() * 0.4
+                    });
                     const star = new THREE.Mesh(starGeo, starMat);
                     star.position.set(
                         (Math.random() - 0.5) * 60,
@@ -2831,6 +2847,12 @@
                     );
                     this.scene.add(star);
                     this.areaObjects.push(star);
+                    star.userData = {
+                        baseOpacity: starMat.opacity,
+                        twinkleSpeed: 0.6 + Math.random() * 1.2,
+                        phase: Math.random() * Math.PI * 2
+                    };
+                    this.astralStars.push(star);
                 }
                 
                 // Large moon with craters
@@ -2870,6 +2892,15 @@
                     asteroid.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
                     this.scene.add(asteroid);
                     this.areaObjects.push(asteroid);
+                    this.astralAsteroids.push({
+                        mesh: asteroid,
+                        spinX: 0.002 + Math.random() * 0.004,
+                        spinY: 0.002 + Math.random() * 0.004,
+                        spinZ: 0.001 + Math.random() * 0.003,
+                        bobSpeed: 0.4 + Math.random() * 0.6,
+                        baseY: asteroid.position.y,
+                        phase: Math.random() * Math.PI * 2
+                    });
                 }
                 
                 // 10 Nebula clouds (colorful)
@@ -2890,20 +2921,100 @@
                     );
                     this.scene.add(nebula);
                     this.areaObjects.push(nebula);
+                    this.astralNebulas.push({
+                        mesh: nebula,
+                        baseOpacity: 0.08 + Math.random() * 0.06,
+                        phase: Math.random() * Math.PI * 2
+                    });
                 }
                 
-                // 4 Floating crystal platforms
-                const crystalPositions = [[-6, -6], [6, -6], [-6, 6], [6, 6]];
-                crystalPositions.forEach(([x, z]) => {
+                // Floating crystal ring and inner shards
+                const crystalPositions = [];
+                for (let i = 0; i < 10; i++) {
+                    const angle = (i / 10) * Math.PI * 2;
+                    crystalPositions.push([
+                        Math.cos(angle) * 9,
+                        Math.sin(angle) * 9
+                    ]);
+                }
+                crystalPositions.push([0, 4], [3, -2], [-3, -2]);
+                crystalPositions.forEach(([x, z], i) => {
+                    const size = 0.6 + Math.random() * 0.5;
                     const crystal = new THREE.Mesh(
-                        new THREE.OctahedronGeometry(0.8, 0),
-                        new THREE.MeshLambertMaterial({ color: 0x9370db, emissive: 0x9370db, emissiveIntensity: 0.5 })
+                        new THREE.OctahedronGeometry(size, 0),
+                        new THREE.MeshLambertMaterial({ color: 0x9370db, emissive: 0x6f4bd9, emissiveIntensity: 0.7 })
                     );
-                    crystal.position.set(x, 2, z);
+                    const baseY = 1.6 + Math.random() * 1.6;
+                    crystal.position.set(x, baseY, z);
                     crystal.rotation.set(Math.random(), Math.random(), Math.random());
                     this.scene.add(crystal);
                     this.areaObjects.push(crystal);
+                    this.astralCrystals.push({
+                        mesh: crystal,
+                        baseY,
+                        bobSpeed: 0.6 + Math.random() * 0.8,
+                        phase: Math.random() * Math.PI * 2,
+                        spin: 0.01 + Math.random() * 0.02
+                    });
                 });
+
+                // Portal glow at center
+                const portalCore = new THREE.Mesh(
+                    new THREE.CircleGeometry(2.2, 32),
+                    new THREE.MeshBasicMaterial({ color: 0x6b4bff, transparent: true, opacity: 0.35 })
+                );
+                portalCore.rotation.x = -Math.PI / 2;
+                portalCore.position.set(0, 0.06, 0);
+                this.scene.add(portalCore);
+                this.areaObjects.push(portalCore);
+
+                const portalRing = new THREE.Mesh(
+                    new THREE.RingGeometry(2.4, 2.9, 48),
+                    new THREE.MeshBasicMaterial({ color: 0x9ad7ff, transparent: true, opacity: 0.4 })
+                );
+                portalRing.rotation.x = -Math.PI / 2;
+                portalRing.position.set(0, 0.07, 0);
+                this.scene.add(portalRing);
+                this.areaObjects.push(portalRing);
+
+                const portalHalo = new THREE.Mesh(
+                    new THREE.TorusGeometry(3.4, 0.08, 8, 64),
+                    new THREE.MeshBasicMaterial({ color: 0xff6bff, transparent: true, opacity: 0.3 })
+                );
+                portalHalo.position.set(0, 1.0, 0);
+                portalHalo.rotation.x = Math.PI / 2.2;
+                this.scene.add(portalHalo);
+                this.areaObjects.push(portalHalo);
+
+                this.astralRings.push(
+                    { mesh: portalRing, baseOpacity: 0.4, phase: Math.random() * Math.PI * 2, spin: 0.004 },
+                    { mesh: portalHalo, baseOpacity: 0.3, phase: Math.random() * Math.PI * 2, spin: 0.006 }
+                );
+
+                // Aurora ribbons in the sky
+                const auroraColors = [0x54ffd5, 0x7f6bff, 0xff7bd1];
+                for (let i = 0; i < 3; i++) {
+                    const aurora = new THREE.Mesh(
+                        new THREE.PlaneGeometry(22, 4),
+                        new THREE.MeshBasicMaterial({
+                            color: auroraColors[i],
+                            transparent: true,
+                            opacity: 0.12,
+                            side: THREE.DoubleSide
+                        })
+                    );
+                    aurora.position.set((Math.random() - 0.5) * 10, 9 + i * 2, (Math.random() - 0.5) * 10);
+                    aurora.rotation.set(-0.3, Math.random() * Math.PI, 0);
+                    this.scene.add(aurora);
+                    this.areaObjects.push(aurora);
+                    this.astralAuroras.push({
+                        mesh: aurora,
+                        baseY: aurora.position.y,
+                        baseOpacity: 0.1 + Math.random() * 0.06,
+                        phase: Math.random() * Math.PI * 2,
+                        spin: 0.001 + Math.random() * 0.002
+                    });
+                }
                 
                 // 6 Colorful Saturns with rotating rings
                 const colors = [0xff6b6b, 0x4ecdc4, 0xffe66d, 0xa8e6cf, 0xc7ceea, 0xffa07a];
@@ -4571,6 +4682,36 @@
                             const pulse = Math.sin(Date.now() / 600) * 0.2 + 0.3; // Slower pulse
                             saturn.planet.material.emissiveIntensity = pulse;
                         }
+                    });
+                    const time = Date.now() / 1000;
+                    this.astralStars.forEach(star => {
+                        const twinkle = Math.sin(time * star.userData.twinkleSpeed + star.userData.phase) * 0.18;
+                        star.material.opacity = Math.max(0.2, Math.min(1, star.userData.baseOpacity + twinkle));
+                    });
+                    this.astralAsteroids.forEach(asteroid => {
+                        asteroid.mesh.rotation.x += asteroid.spinX;
+                        asteroid.mesh.rotation.y += asteroid.spinY;
+                        asteroid.mesh.rotation.z += asteroid.spinZ;
+                        asteroid.mesh.position.y = asteroid.baseY + Math.sin(time * asteroid.bobSpeed + asteroid.phase) * 0.6;
+                    });
+                    this.astralNebulas.forEach(nebula => {
+                        const glow = Math.sin(time * 0.5 + nebula.phase) * 0.04;
+                        nebula.mesh.material.opacity = Math.max(0.04, nebula.baseOpacity + glow);
+                    });
+                    this.astralCrystals.forEach(crystal => {
+                        crystal.mesh.position.y = crystal.baseY + Math.sin(time * crystal.bobSpeed + crystal.phase) * 0.5;
+                        crystal.mesh.rotation.y += crystal.spin;
+                        crystal.mesh.rotation.x += crystal.spin * 0.6;
+                        crystal.mesh.material.emissiveIntensity = 0.6 + Math.sin(time * 1.3 + crystal.phase) * 0.25;
+                    });
+                    this.astralRings.forEach(ring => {
+                        ring.mesh.rotation.z += ring.spin;
+                        ring.mesh.material.opacity = ring.baseOpacity + Math.sin(time * 0.8 + ring.phase) * 0.08;
+                    });
+                    this.astralAuroras.forEach(aurora => {
+                        aurora.mesh.rotation.y += aurora.spin;
+                        aurora.mesh.position.y = aurora.baseY + Math.sin(time * 0.6 + aurora.phase) * 0.5;
+                        aurora.mesh.material.opacity = aurora.baseOpacity + Math.sin(time * 0.9 + aurora.phase) * 0.04;
                     });
                 }
                 if (this.wizard) {
