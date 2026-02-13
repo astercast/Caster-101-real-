@@ -1158,6 +1158,18 @@
                 this.ground.material.color.setHex(0x7ba05b);
                 this.ground.material.transparent = false;
                 this.ground.material.opacity = 1.0;
+
+                const total = 12 + this.extraPlots;
+                const plotPositions = [];
+                for (let i = 0; i < total; i++) {
+                    const col = i % 4;
+                    const row = Math.floor(i / 4);
+                    const x = (col - 1.5) * 4.2;
+                    const z = (row - Math.floor(total / 4) / 2) * 4.2;
+                    plotPositions.push({ x, z });
+                }
+                const isNearPlot = (x, z, buffer = 1.6) =>
+                    plotPositions.some(p => Math.hypot(x - p.x, z - p.z) < buffer);
                 
                 // Add grass texture with patches of different greens - AVOID CENTER
                 for (let i = 0; i < 150; i++) {
@@ -1165,7 +1177,7 @@
                     do {
                         x = (Math.random() - 0.5) * 60;
                         z = (Math.random() - 0.5) * 60;
-                    } while (Math.abs(x) < 18 && Math.abs(z) < 18); // Skip center plot area
+                    } while ((Math.abs(x) < 18 && Math.abs(z) < 18) || isNearPlot(x, z, 2.2)); // Skip plot area
                     
                     const grassPatch = new THREE.Mesh(
                         new THREE.CircleGeometry(0.8 + Math.random() * 0.5, 8),
@@ -1191,7 +1203,7 @@
                     do {
                         x = (Math.random() - 0.5) * 60;
                         z = (Math.random() - 0.5) * 60;
-                    } while (Math.abs(x) < 18 && Math.abs(z) < 18); // Skip center plot area
+                    } while ((Math.abs(x) < 18 && Math.abs(z) < 18) || isNearPlot(x, z, 2.0)); // Skip plot area
                     
                     const grass = new THREE.Mesh(
                         new THREE.ConeGeometry(0.05, 0.15, 3),
@@ -1204,12 +1216,9 @@
                 }
                 
                 // Farm plots (spread wider)
-                const total = 12 + this.extraPlots;
-                for (let i = 0; i < total; i++) {
-                    const col = i % 4;
-                    const row = Math.floor(i / 4);
-                    const x = (col - 1.5) * 4.2; // Wider spacing
-                    const z = (row - Math.floor(total / 4) / 2) * 4.2; // Wider spacing
+                for (const pos of plotPositions) {
+                    const x = pos.x;
+                    const z = pos.z;
                     
                     const plot = new THREE.Mesh(new THREE.BoxGeometry(2, 0.3, 2), new THREE.MeshLambertMaterial({ color: 0x6d5633 }));
                     plot.position.set(x, 0.15, z);
@@ -1276,7 +1285,7 @@
                     const z = (Math.random() - 0.5) * 60; // -30 to 30
                     
                     // Skip if too close to center farm plots
-                    if (Math.sqrt(x * x + z * z) < 8) continue;
+                    if (Math.sqrt(x * x + z * z) < 8 || isNearPlot(x, z, 3.2)) continue;
                     
                     const trunk = new THREE.Mesh(
                         new THREE.CylinderGeometry(0.3, 0.4, 3 + Math.random(), 8),
@@ -1304,7 +1313,7 @@
                     do {
                         x = (Math.random() - 0.5) * 60;
                         z = (Math.random() - 0.5) * 60;
-                    } while (Math.abs(x) < 18 && Math.abs(z) < 18); // Bigger avoid zone
+                    } while ((Math.abs(x) < 18 && Math.abs(z) < 18) || isNearPlot(x, z, 2.2)); // Bigger avoid zone
                     
                     const flower = new THREE.Mesh(
                         new THREE.SphereGeometry(0.15, 6, 6),
@@ -1325,7 +1334,7 @@
                     do {
                         x = (Math.random() - 0.5) * 60;
                         z = (Math.random() - 0.5) * 60;
-                    } while (Math.abs(x) < 18 && Math.abs(z) < 18); // Bigger avoid zone
+                    } while ((Math.abs(x) < 18 && Math.abs(z) < 18) || isNearPlot(x, z, 2.2)); // Bigger avoid zone
                     
                     const rock = new THREE.Mesh(
                         new THREE.DodecahedronGeometry(0.3 + Math.random() * 0.3, 0),
@@ -1343,7 +1352,7 @@
                     do {
                         x = (Math.random() - 0.5) * 60;
                         z = (Math.random() - 0.5) * 60;
-                    } while (Math.abs(x) < 18 && Math.abs(z) < 18); // Bigger avoid zone
+                    } while ((Math.abs(x) < 18 && Math.abs(z) < 18) || isNearPlot(x, z, 2.2)); // Bigger avoid zone
                     
                     const bush = new THREE.Mesh(
                         new THREE.SphereGeometry(0.5 + Math.random() * 0.3, 8, 8),
@@ -1448,15 +1457,16 @@
                 
                 // Grass tufts between plots
                 for (let i = 0; i < 40; i++) {
+                    let x, z;
+                    do {
+                        x = (Math.random() - 0.5) * 12;
+                        z = (Math.random() - 0.5) * 12;
+                    } while (isNearPlot(x, z, 1.2));
                     const tuft = new THREE.Mesh(
                         new THREE.ConeGeometry(0.15, 0.3, 6),
                         new THREE.MeshLambertMaterial({ color: 0x5a7647 })
                     );
-                    tuft.position.set(
-                        (Math.random() - 0.5) * 12,
-                        0.15,
-                        (Math.random() - 0.5) * 12
-                    );
+                    tuft.position.set(x, 0.15, z);
                     tuft.rotation.x = (Math.random() - 0.5) * 0.4;
                     this.scene.add(tuft);
                     this.areaObjects.push(tuft);
@@ -2023,7 +2033,8 @@
                 
                 // REALISTIC DRAGON - layered body, neck segments, wings, tail, and legs
                 const dragonGroup = new THREE.Group();
-                dragonGroup.position.set(0, 2.2, -8);
+                dragonGroup.position.set(0, 2.0, -8);
+                dragonGroup.scale.set(0.85, 0.85, 0.85);
                 this.scene.add(dragonGroup);
                 this.areaObjects.push(dragonGroup);
 
@@ -2034,114 +2045,115 @@
                 const spikeMat = new THREE.MeshLambertMaterial({ color: 0x1b4ea5 });
 
                 const dragonBody = new THREE.Mesh(
-                    new THREE.SphereGeometry(2.1, 16, 16),
+                    new THREE.SphereGeometry(2.0, 18, 18),
                     bodyMat
                 );
-                dragonBody.scale.set(1.15, 0.9, 2.2);
+                dragonBody.scale.set(1.25, 0.95, 2.4);
                 dragonBody.castShadow = true;
                 dragonGroup.add(dragonBody);
 
                 const dragonChest = new THREE.Mesh(
-                    new THREE.SphereGeometry(1.7, 16, 16),
+                    new THREE.SphereGeometry(1.5, 16, 16),
                     bodyMat
                 );
-                dragonChest.position.set(0, 0.7, 1.4);
-                dragonChest.scale.set(1.0, 0.9, 1.4);
+                dragonChest.position.set(0, 0.6, 1.6);
+                dragonChest.scale.set(1.1, 0.9, 1.5);
                 dragonChest.castShadow = true;
                 dragonGroup.add(dragonChest);
 
                 const dragonHips = new THREE.Mesh(
-                    new THREE.SphereGeometry(1.6, 16, 16),
+                    new THREE.SphereGeometry(1.4, 16, 16),
                     bodyMat
                 );
-                dragonHips.position.set(0, -0.5, -1.6);
-                dragonHips.scale.set(1.1, 0.85, 1.5);
+                dragonHips.position.set(0, -0.6, -1.7);
+                dragonHips.scale.set(1.2, 0.85, 1.6);
                 dragonHips.castShadow = true;
                 dragonGroup.add(dragonHips);
 
                 const bellyPlate = new THREE.Mesh(
-                    new THREE.CylinderGeometry(0.95, 1.15, 2.6, 12),
+                    new THREE.CylinderGeometry(0.85, 1.1, 2.6, 12),
                     bellyMat
                 );
                 bellyPlate.rotation.z = Math.PI / 2;
                 bellyPlate.scale.set(1, 0.7, 1);
-                bellyPlate.position.set(0, -0.6, 0.2);
+                bellyPlate.position.set(0, -0.5, 0.2);
                 dragonGroup.add(bellyPlate);
 
                 const dragonNeck = new THREE.Group();
-                for (let i = 0; i < 3; i++) {
+                for (let i = 0; i < 4; i++) {
                     const seg = new THREE.Mesh(
-                        new THREE.CylinderGeometry(0.7 - i * 0.08, 0.85 - i * 0.08, 0.9, 10),
+                        new THREE.CylinderGeometry(0.62 - i * 0.08, 0.78 - i * 0.08, 0.85, 10),
                         bodyMat
                     );
-                    seg.position.set(-0.05 * i, 1.2 + i * 0.6, 1.7 + i * 0.5);
-                    seg.rotation.x = 0.25;
+                    seg.position.set(0, 1.0 + i * 0.55, 1.8 + i * 0.5);
+                    seg.rotation.x = 0.22;
                     seg.castShadow = true;
                     dragonNeck.add(seg);
                 }
                 dragonGroup.add(dragonNeck);
 
                 const dragonHead = new THREE.Mesh(
-                    new THREE.BoxGeometry(1.2, 0.9, 1.5),
+                    new THREE.SphereGeometry(0.75, 16, 16),
                     bodyMat
                 );
-                dragonHead.position.set(-0.4, 3.1, 2.6);
+                dragonHead.scale.set(1.1, 0.85, 1.3);
+                dragonHead.position.set(0, 3.0, 2.9);
                 dragonHead.castShadow = true;
                 dragonGroup.add(dragonHead);
 
                 const snout = new THREE.Mesh(
-                    new THREE.ConeGeometry(0.35, 1.0, 10),
+                    new THREE.ConeGeometry(0.32, 1.1, 10),
                     spikeMat
                 );
-                snout.position.set(-0.4, 3.0, 3.5);
+                snout.position.set(0, 2.9, 3.8);
                 snout.rotation.x = Math.PI / 2;
                 dragonGroup.add(snout);
 
                 const jaw = new THREE.Mesh(
-                    new THREE.BoxGeometry(0.8, 0.2, 0.9),
+                    new THREE.BoxGeometry(0.9, 0.2, 1.1),
                     bellyMat
                 );
-                jaw.position.set(-0.4, 2.75, 3.1);
+                jaw.position.set(0, 2.65, 3.25);
                 dragonGroup.add(jaw);
 
                 const leftEye = new THREE.Mesh(
                     new THREE.SphereGeometry(0.12, 12, 12),
                     new THREE.MeshBasicMaterial({ color: 0xffd54f, emissive: 0xffd54f, emissiveIntensity: 0.9 })
                 );
-                leftEye.position.set(-0.75, 3.15, 2.3);
+                leftEye.position.set(-0.35, 3.1, 2.6);
                 dragonGroup.add(leftEye);
 
                 const rightEye = new THREE.Mesh(
                     new THREE.SphereGeometry(0.12, 12, 12),
                     new THREE.MeshBasicMaterial({ color: 0xffd54f, emissive: 0xffd54f, emissiveIntensity: 0.9 })
                 );
-                rightEye.position.set(0.0, 3.15, 2.3);
+                rightEye.position.set(0.35, 3.1, 2.6);
                 dragonGroup.add(rightEye);
 
                 const leftHorn = new THREE.Mesh(
                     new THREE.ConeGeometry(0.16, 1.0, 8),
                     hornMat
                 );
-                leftHorn.position.set(-0.9, 3.8, 2.0);
-                leftHorn.rotation.z = -0.4;
-                leftHorn.rotation.x = -0.2;
+                leftHorn.position.set(-0.55, 3.6, 2.35);
+                leftHorn.rotation.z = -0.35;
+                leftHorn.rotation.x = -0.25;
                 dragonGroup.add(leftHorn);
 
                 const rightHorn = new THREE.Mesh(
                     new THREE.ConeGeometry(0.16, 1.0, 8),
                     hornMat
                 );
-                rightHorn.position.set(0.1, 3.8, 2.0);
-                rightHorn.rotation.z = 0.4;
-                rightHorn.rotation.x = -0.2;
+                rightHorn.position.set(0.55, 3.6, 2.35);
+                rightHorn.rotation.z = 0.35;
+                rightHorn.rotation.x = -0.25;
                 dragonGroup.add(rightHorn);
 
-                for (let i = 0; i < 6; i++) {
+                for (let i = 0; i < 7; i++) {
                     const spike = new THREE.Mesh(
                         new THREE.ConeGeometry(0.18, 0.45, 6),
                         spikeMat
                     );
-                    spike.position.set(0, 0.7 + i * 0.5, 0.7 - i * 0.6);
+                    spike.position.set(0, 0.6 + i * 0.45, 0.9 - i * 0.65);
                     spike.rotation.x = -0.2;
                     dragonGroup.add(spike);
                 }
@@ -2150,11 +2162,11 @@
                     const wingGroup = new THREE.Group();
                     const shape = new THREE.Shape();
                     shape.moveTo(0, 0);
-                    shape.lineTo(2.4, 0.2);
-                    shape.lineTo(3.6, 1.2);
-                    shape.lineTo(2.2, 1.05);
-                    shape.lineTo(1.2, 1.5);
-                    shape.lineTo(0.2, 1.1);
+                    shape.lineTo(2.5, 0.2);
+                    shape.lineTo(3.7, 1.3);
+                    shape.lineTo(2.4, 1.1);
+                    shape.lineTo(1.2, 1.6);
+                    shape.lineTo(0.2, 1.2);
                     shape.lineTo(0, 0);
                     const wingMembrane = new THREE.Mesh(new THREE.ShapeGeometry(shape), wingMat);
                     wingMembrane.rotation.y = side > 0 ? 0 : Math.PI;
@@ -2175,8 +2187,8 @@
                     bone3.rotation.z = 1.1 * side;
                     wingGroup.add(bone3);
 
-                    wingGroup.position.set(1.6 * side, 1.0, 0.2);
-                    wingGroup.rotation.y = side > 0 ? -0.2 : 0.2;
+                    wingGroup.position.set(1.7 * side, 1.1, 0.0);
+                    wingGroup.rotation.y = side > 0 ? -0.3 : 0.3;
                     wingGroup.rotation.z = 0.2 * side;
                     return wingGroup;
                 };
@@ -2187,44 +2199,45 @@
                 dragonGroup.add(rightWing);
 
                 const tail = new THREE.Group();
-                for (let i = 0; i < 4; i++) {
+                for (let i = 0; i < 5; i++) {
                     const seg = new THREE.Mesh(
                         new THREE.CylinderGeometry(0.45 - i * 0.08, 0.6 - i * 0.08, 1.0, 8),
                         bodyMat
                     );
-                    seg.position.set(0, -0.9 - i * 0.45, -2.3 - i * 0.7);
-                    seg.rotation.x = -0.6;
+                    seg.position.set(0, -0.85 - i * 0.4, -2.3 - i * 0.8);
+                    seg.rotation.x = -0.55;
+                    seg.rotation.y = (i % 2 === 0 ? 1 : -1) * 0.08;
                     tail.add(seg);
                 }
                 const tailTip = new THREE.Mesh(
                     new THREE.ConeGeometry(0.22, 0.6, 8),
                     spikeMat
                 );
-                tailTip.position.set(0, -2.5, -5.2);
-                tailTip.rotation.x = -0.6;
+                tailTip.position.set(0, -2.5, -5.6);
+                tailTip.rotation.x = -0.55;
                 tail.add(tailTip);
                 dragonGroup.add(tail);
 
                 const legMat = new THREE.MeshLambertMaterial({ color: 0x1f4aa5, emissive: 0x132c63, emissiveIntensity: 0.2 });
                 const createLeg = (x, z, kneeDir) => {
                     const upper = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.35, 0.9, 8), legMat);
-                    upper.position.set(x, -0.6, z);
+                    upper.position.set(x, -0.7, z);
                     upper.rotation.z = 0.1 * kneeDir;
                     dragonGroup.add(upper);
 
                     const lower = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.26, 0.8, 8), legMat);
-                    lower.position.set(x + 0.1 * kneeDir, -1.2, z + 0.1);
+                    lower.position.set(x + 0.12 * kneeDir, -1.35, z + 0.15);
                     lower.rotation.z = 0.2 * kneeDir;
                     dragonGroup.add(lower);
 
                     const foot = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.18, 0.6), spikeMat);
-                    foot.position.set(x + 0.15 * kneeDir, -1.65, z + 0.25);
+                    foot.position.set(x + 0.16 * kneeDir, -1.85, z + 0.3);
                     dragonGroup.add(foot);
                 };
-                createLeg(0.9, 0.6, 1);
-                createLeg(-0.9, 0.6, -1);
-                createLeg(0.9, -0.6, 1);
-                createLeg(-0.9, -0.6, -1);
+                createLeg(1.0, 0.8, 1);
+                createLeg(-1.0, 0.8, -1);
+                createLeg(1.0, -0.8, 1);
+                createLeg(-1.0, -0.8, -1);
                 
                 this.dragon = { 
                     group: dragonGroup,
@@ -2242,7 +2255,17 @@
                     isFlying: false,
                     flyTime: 0,
                     flyRadius: 16,
-                    flyHeight: 10
+                    flyHeight: 10,
+                    baseX: dragonGroup.position.x,
+                    baseY: dragonGroup.position.y,
+                    baseZ: dragonGroup.position.z,
+                    headTime: 0,
+                    flightCooldown: 6 + Math.random() * 10,
+                    flightDuration: 6 + Math.random() * 4,
+                    flightElapsed: 0,
+                    leftWingBaseZ: leftWing.rotation.z,
+                    rightWingBaseZ: rightWing.rotation.z,
+                    neckBaseZ: 0.2
                 };
                 
                 // Trolls (randomly positioned, avoid dragon AND trees)
@@ -4105,14 +4128,20 @@
                 // Define drag and drop handlers once and reuse them
                 if (this._seedDragHandlerBound) return; // Only set up once
                 this._seedDragHandlerBound = true;
+
+                const getPointer = (e) => {
+                    if (e.touches && e.touches[0]) return e.touches[0];
+                    if (e.changedTouches && e.changedTouches[0]) return e.changedTouches[0];
+                    return e;
+                };
                 
                 const handleDrag = (e) => {
                     if (!this.isDragging || !this.ghostElement) return;
                     e.preventDefault();
-                    const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-                    const clientY = e.clientY || (e.touches && e.touches[0].clientY);
-                    this.ghostElement.style.left = (clientX - 20) + 'px';
-                    this.ghostElement.style.top = (clientY - 20) + 'px';
+                    const point = getPointer(e);
+                    if (!point) return;
+                    this.ghostElement.style.left = point.clientX + 'px';
+                    this.ghostElement.style.top = point.clientY + 'px';
                 };
                 
                 const handleDrop = (e) => {
@@ -4124,9 +4153,10 @@
                     }
                     if (this.draggedSeed && this.currentArea === 'farm') {
                         const rect = this.renderer.domElement.getBoundingClientRect();
-                        const clientX = e.clientX || (e.changedTouches && e.changedTouches[0].clientX);
-                        const clientY = e.clientY || (e.changedTouches && e.changedTouches[0].clientY);
-                        if (clientX && clientY) {
+                        const point = getPointer(e);
+                        const clientX = point ? point.clientX : null;
+                        const clientY = point ? point.clientY : null;
+                        if (typeof clientX === 'number' && typeof clientY === 'number') {
                             this.mouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
                             this.mouse.y = -((clientY - rect.top) / rect.height) * 2 + 1;
                             this.raycaster.setFromCamera(this.mouse, this.camera);
@@ -4179,13 +4209,14 @@
                             this.draggedSeed = parseInt(t);
                             this.isDragging = true;
                             this.ghostElement = document.createElement('div');
-                            this.ghostElement.style.cssText = 'position:fixed; pointer-events:none; font-size:40px; z-index:9999; filter:drop-shadow(0 0 10px gold);';
+                            this.ghostElement.style.cssText = 'position:fixed; pointer-events:none; font-size:40px; z-index:9999; filter:drop-shadow(0 0 10px gold); transform:translate(-50%,-50%);';
                             this.ghostElement.textContent = s.icon;
                             document.body.appendChild(this.ghostElement);
-                            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-                            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
-                            this.ghostElement.style.left = (clientX - 20) + 'px';
-                            this.ghostElement.style.top = (clientY - 20) + 'px';
+                            const point = getPointer(e);
+                            if (point) {
+                                this.ghostElement.style.left = point.clientX + 'px';
+                                this.ghostElement.style.top = point.clientY + 'px';
+                            }
                         };
                         item.addEventListener('mousedown', startDrag);
                         item.addEventListener('touchstart', startDrag);
@@ -4491,35 +4522,6 @@
                     });
                 }
                 if (this.currentArea === 'forest') {
-                    // Smooth dragon animation - head rotates on neck
-                    if (this.dragon && !this.dragon.isFlying) {
-                        const time = Date.now() / 1000;
-                        
-                        // Head rotation (looking around) - stays attached via group
-                        this.dragon.head.rotation.y = Math.sin(time * 0.4) * 0.4;
-                        this.dragon.head.rotation.x = Math.sin(time * 0.3) * 0.15;
-                        
-                        // Snout follows head
-                        this.dragon.snout.rotation.copy(this.dragon.head.rotation);
-                        
-                        // Eyes look with head
-                        this.dragon.leftEye.rotation.copy(this.dragon.head.rotation);
-                        this.dragon.rightEye.rotation.copy(this.dragon.head.rotation);
-                        
-                        // Horns follow head rotation
-                        this.dragon.leftHorn.rotation.copy(this.dragon.head.rotation);
-                        this.dragon.leftHorn.rotation.z -= 0.4;
-                        this.dragon.rightHorn.rotation.copy(this.dragon.head.rotation);
-                        this.dragon.rightHorn.rotation.z += 0.4;
-                        
-                        // Neck sway
-                        this.dragon.neck.rotation.z = 0.2 + Math.sin(time * 0.25) * 0.15;
-                        
-                        // Wing flap animation
-                        this.dragon.leftWing.rotation.z = 0.5 + Math.sin(time * 0.8) * 0.25;
-                        this.dragon.rightWing.rotation.z = -0.5 - Math.sin(time * 0.8) * 0.25;
-                    }
-                    
                     this.forestTrolls.forEach(troll => {
                         if (troll.attackCooldown > 0) troll.attackCooldown -= 100;
                         if (troll.hp > 0) {
@@ -4602,81 +4604,68 @@
                 requestAnimationFrame(() => this.animate());
                 this.updateCamera();
                 
-                // Animate dragon - short flights every 2 minutes
+                // Animate dragon - occasional flights with idle head sway
                 if (this.dragon && this.currentArea === 'forest') {
-                    this.dragon.headTime += 0.02;
-                    this.dragon.flyTime += 0.01;
-                    
-                    // Fly for 10 seconds every 2 minutes (120 seconds)
-                    const cycleTime = this.dragon.flyTime % 120;
-                    this.dragon.isFlying = cycleTime < 10; // Flying for first 10 seconds of cycle
-                    
-                    let bodyX = this.dragon.baseX;
-                    let bodyY = 0;
-                    let bodyZ = this.dragon.baseZ;
-                    
-                    if (this.dragon.isFlying) {
-                        // Quick circle flight
-                        const flyAngle = cycleTime * 0.6; // Faster rotation
-                        bodyX = Math.cos(flyAngle) * this.dragon.flyRadius;
-                        bodyZ = Math.sin(flyAngle) * this.dragon.flyRadius;
-                        bodyY = this.dragon.flyHeight + Math.sin(cycleTime * 0.8) * 1;
-                        
-                        // Wing flapping
-                        this.dragon.leftWing.rotation.z = Math.sin(this.dragon.flyTime * 4) * 0.6 + 0.3;
-                        this.dragon.rightWing.rotation.z = -Math.sin(this.dragon.flyTime * 4) * 0.6 - 0.3;
+                    const dragon = this.dragon;
+                    const dt = 0.02;
+
+                    dragon.headTime = (dragon.headTime || 0) + dt;
+
+                    if (dragon.isFlying) {
+                        dragon.flightElapsed += dt;
+                        if (dragon.flightElapsed >= dragon.flightDuration) {
+                            dragon.isFlying = false;
+                            dragon.flightElapsed = 0;
+                            dragon.flightCooldown = 18 + Math.random() * 18;
+                        }
                     } else {
-                        // Landed - gentle wing movement
-                        this.dragon.leftWing.rotation.z = Math.sin(this.dragon.headTime) * 0.1 + 0.3;
-                        this.dragon.rightWing.rotation.z = -Math.sin(this.dragon.headTime) * 0.1 - 0.3;
+                        dragon.flightCooldown -= dt;
+                        if (dragon.flightCooldown <= 0) {
+                            dragon.isFlying = true;
+                            dragon.flightElapsed = 0;
+                        }
                     }
-                    
-                    // Update all dragon parts relative to body
-                    this.dragon.body.position.set(bodyX, bodyY, bodyZ);
-                    this.dragon.neck.position.set(bodyX, 3 + bodyY, bodyZ - 1);
-                    this.dragon.tail.position.set(bodyX, 1.5 + bodyY, bodyZ + 3);
-                    this.dragon.leftWing.position.set(bodyX - 2, 2.5 + bodyY, bodyZ);
-                    this.dragon.rightWing.position.set(bodyX + 2, 2.5 + bodyY, bodyZ);
-                    
-                    // Head movement - RELATIVE TO BODY so it stays connected
-                    const offsetX = Math.sin(this.dragon.headTime) * 0.3;
-                    const offsetY = Math.sin(this.dragon.headTime * 0.7) * 0.2;
-                    const offsetZ = Math.cos(this.dragon.headTime * 0.5) * 0.3;
-                    
-                    // Head positioned relative to body, not absolute
-                    this.dragon.head.position.set(
-                        bodyX + offsetX,
-                        bodyY + 6.0 + offsetY,
-                        bodyZ - 7.5 + offsetZ
-                    );
-                    this.dragon.snout.position.set(
-                        bodyX + offsetX,
-                        bodyY + 6.0 + offsetY,
-                        bodyZ - 7.5 + offsetZ + 1.2
-                    );
-                    this.dragon.leftEye.position.set(
-                        bodyX + offsetX - 0.5,
-                        bodyY + 6.0 + offsetY + 0.1,
-                        bodyZ - 7.5 + offsetZ + 0.7
-                    );
-                    this.dragon.rightEye.position.set(
-                        bodyX + offsetX + 0.5,
-                        bodyY + 6.0 + offsetY + 0.1,
-                        bodyZ - 7.5 + offsetZ + 0.7
-                    );
-                    this.dragon.leftHorn.position.set(
-                        bodyX + offsetX - 0.6,
-                        bodyY + 6.0 + offsetY + 0.9,
-                        bodyZ - 7.5 + offsetZ + 0.3
-                    );
-                    this.dragon.rightHorn.position.set(
-                        bodyX + offsetX + 0.6,
-                        bodyY + 6.0 + offsetY + 0.9,
-                        bodyZ - 7.5 + offsetZ + 0.3
-                    );
-                    
-                    // Slight head rotation
-                    this.dragon.head.rotation.y = Math.sin(this.dragon.headTime * 0.8) * 0.3;
+
+                    let targetX = dragon.baseX;
+                    let targetY = dragon.baseY;
+                    let targetZ = dragon.baseZ;
+
+                    if (dragon.isFlying) {
+                        const flyAngle = dragon.flightElapsed * 1.2;
+                        targetX = dragon.baseX + Math.cos(flyAngle) * dragon.flyRadius;
+                        targetZ = dragon.baseZ + Math.sin(flyAngle) * dragon.flyRadius;
+                        targetY = dragon.baseY + dragon.flyHeight + Math.sin(dragon.flightElapsed * 1.8) * 0.6;
+
+                        const flap = Math.sin(dragon.flightElapsed * 8) * 0.6;
+                        dragon.leftWing.rotation.z = dragon.leftWingBaseZ + flap;
+                        dragon.rightWing.rotation.z = dragon.rightWingBaseZ - flap;
+
+                        dragon.head.rotation.set(0, 0, 0);
+                        dragon.neck.rotation.z = dragon.neckBaseZ * 0.4;
+                        dragon.group.rotation.z = Math.sin(dragon.flightElapsed * 2) * 0.05;
+                        dragon.group.rotation.x = Math.sin(dragon.flightElapsed * 1.5) * 0.03;
+                    } else {
+                        dragon.leftWing.rotation.z = dragon.leftWingBaseZ;
+                        dragon.rightWing.rotation.z = dragon.rightWingBaseZ;
+                        dragon.group.rotation.set(0, 0, 0);
+
+                        dragon.head.rotation.y = Math.sin(dragon.headTime * 0.7) * 0.25;
+                        dragon.head.rotation.x = Math.sin(dragon.headTime * 0.45) * 0.1;
+                        dragon.neck.rotation.z = dragon.neckBaseZ + Math.sin(dragon.headTime * 0.4) * 0.12;
+                    }
+
+                    dragon.snout.rotation.copy(dragon.head.rotation);
+                    dragon.leftEye.rotation.copy(dragon.head.rotation);
+                    dragon.rightEye.rotation.copy(dragon.head.rotation);
+                    dragon.leftHorn.rotation.copy(dragon.head.rotation);
+                    dragon.leftHorn.rotation.z -= 0.4;
+                    dragon.rightHorn.rotation.copy(dragon.head.rotation);
+                    dragon.rightHorn.rotation.z += 0.4;
+
+                    const lerp = dragon.isFlying ? 0.12 : 0.08;
+                    dragon.group.position.x += (targetX - dragon.group.position.x) * lerp;
+                    dragon.group.position.y += (targetY - dragon.group.position.y) * lerp;
+                    dragon.group.position.z += (targetZ - dragon.group.position.z) * lerp;
                 }
                 
                 this.renderer.render(this.scene, this.camera);
