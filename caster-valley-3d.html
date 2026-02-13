@@ -2051,10 +2051,11 @@
                 const spikeMat = new THREE.MeshLambertMaterial({ color: 0x1b4ea5 });
 
                 const dragonBody = new THREE.Mesh(
-                    new THREE.SphereGeometry(2.0, 18, 18),
+                    new THREE.CylinderGeometry(1.0, 1.25, 6.0, 18),
                     bodyMat
                 );
-                dragonBody.scale.set(1.2, 0.7, 3.0);
+                dragonBody.rotation.x = Math.PI / 2;
+                dragonBody.scale.set(0.9, 0.65, 1.2);
                 dragonBody.castShadow = true;
                 dragonGroup.add(dragonBody);
 
@@ -2062,8 +2063,8 @@
                     new THREE.SphereGeometry(1.5, 16, 16),
                     bodyMat
                 );
-                dragonChest.position.set(0, 0.6, 1.6);
-                dragonChest.scale.set(1.0, 0.75, 1.9);
+                dragonChest.position.set(0, 0.5, 2.2);
+                dragonChest.scale.set(0.85, 0.6, 1.6);
                 dragonChest.castShadow = true;
                 dragonGroup.add(dragonChest);
 
@@ -2071,8 +2072,8 @@
                     new THREE.SphereGeometry(1.4, 16, 16),
                     bodyMat
                 );
-                dragonHips.position.set(0, -0.6, -1.7);
-                dragonHips.scale.set(1.05, 0.7, 2.1);
+                dragonHips.position.set(0, -0.6, -2.4);
+                dragonHips.scale.set(0.85, 0.6, 1.7);
                 dragonHips.castShadow = true;
                 dragonGroup.add(dragonHips);
 
@@ -2081,8 +2082,8 @@
                     bellyMat
                 );
                 bellyPlate.rotation.z = Math.PI / 2;
-                bellyPlate.scale.set(0.95, 0.55, 1.15);
-                bellyPlate.position.set(0, -0.5, 0.2);
+                bellyPlate.scale.set(0.75, 0.45, 1.35);
+                bellyPlate.position.set(0, -0.6, 0.3);
                 dragonGroup.add(bellyPlate);
 
                 const dragonNeck = new THREE.Group();

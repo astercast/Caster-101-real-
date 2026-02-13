@@ -922,14 +922,6 @@
             border: none;
             box-shadow: 0 4px 20px rgba(217, 70, 239, 0.5);
         }
-            animation: pulseFlash 2s infinite;
-        }
-
-        .warp-btn:hover {
-            background: #d946ef;
-            color: white;
-            box-shadow: 0 0 20px rgba(217, 70, 239, 0.8);
-        }
 
         /* Treasury Split Responsive */
         .treasury-split {
@@ -957,7 +949,7 @@
         .spotify-mini {
             position: relative;
             margin: 20px auto 8px;
-            max-width: 520px;
+            max-width: 680px;
             background: linear-gradient(135deg, rgba(8, 12, 20, 0.95), rgba(16, 20, 30, 0.92));
             border: 1px solid rgba(29, 185, 84, 0.35);
             border-radius: 14px;
@@ -2304,9 +2296,9 @@
             lastCall: 0,
             MIN_GAP: 2000, // 2s between calls — treasury only, Spacescan rate limits aggressively
 
-            async enqueue(url, timeout = 12000) {
+            async enqueue(url, timeout = 12000, retries = 1) {
                 return new Promise((resolve) => {
-                    this.queue.push({ url, timeout, resolve });
+                    this.queue.push({ url, timeout, resolve, retries });
                     if (!this.processing) this.processQueue();
                 });
             },
@@ -2320,7 +2312,7 @@
                     const wait = Math.max(0, this.lastCall + this.MIN_GAP - now);
                     if (wait > 0) await new Promise(r => setTimeout(r, Math.min(wait, 200)));
 
-                    const { url, timeout, resolve } = this.queue.shift();
+                    const { url, timeout, resolve, retries } = this.queue.shift();
                     this.lastCall = Date.now();
 
                     try {
@@ -2328,23 +2320,43 @@
                         const timer = setTimeout(() => ctrl.abort(), timeout);
                         const resp = await fetch(url, { 
                             headers: { Accept: 'application/json' }, 
-                            signal: ctrl.signal 
+                            signal: ctrl.signal,
+                            cache: 'no-store'
                         });
                         clearTimeout(timer);
                         const data = resp.ok ? await resp.json() : null;
-                        resolve(data);
+                        
+                        // Retry once if failed and retries > 0
+                        if (!data && retries > 0) {
+                            console.log(`[spacescanQueue] Retrying ${url.slice(-40)}...`);
+                            this.queue.push({ url, timeout, resolve, retries: retries - 1 });
+                        } else {
+                            resolve(data);
+                        }
                     } catch(e) {
                         console.warn(`[spacescanQueue] ${url.slice(-40)}: ${e.message}`);
-                        resolve(null);
+                        // Retry once on error if retries > 0
+                        if (retries > 0) {
+                            console.log(`[spacescanQueue] Retrying after error...`);
+                            this.queue.push({ url, timeout, resolve, retries: retries - 1 });
+                        } else {
+                            resolve(null);
+                        }
                     }
                 }
 
                 this.processing = false;
+            },
+
+            reset() {
+                this.queue = [];
+                this.processing = false;
+                console.log('[spacescanQueue] Reset');
             }
         };
 
         // Wrapper for Spacescan API calls - use this everywhere for coordination
-        const spacescanFetch = (url, timeout = 12000) => spacescanQueue.enqueue(url, timeout);
+        const spacescanFetch = (url, timeout = 12000, retries = 1) => spacescanQueue.enqueue(url, timeout, retries);
 
 
         async function fetchChiaData(baseData = []) {
@@ -4340,6 +4352,15 @@ async function loadComprehensiveTreasury() {
             'xch1el40ydk4v2ccdq2l8d28wvr8hnndar0xywfgqel36f85ps8gj9jqfrm64j',
         ];
 
+        const CHIA_TOKEN_OVERRIDES = {
+            'a09af8b0d12b27772c64f89cf0d1db95186dca5b1871babc5108ff44f36305e6': { name: 'Caster', symbol: '✨❤️‍🔥🧙‍♂️' },
+            'eb2155a177b6060535dd8e72e98ddb0c77aea21fab53737de1c1ced3cb38e4c4': { name: 'Spellpower', symbol: '⚡️🪄' },
+            'ae1536f56760e471ad85ead45f00d680ff9cca73b8cc3407be778f1c0c606eac': { name: 'Bytecash', symbol: '💸' },
+            '70010d83542594dd44314efbae75d82b3d9ae7d946921ed981a6cd08f0549e50': { name: 'Love', symbol: '❤️' },
+            'ab558b1b841365a24d1ff2264c55982e55664a8b6e45bc107446b7e667bb463b': { name: 'Sprout', symbol: '🌱' },
+            'dd37f678dda586fad9b1daeae1f7c5c137ffa6d947e1ed5c7b4f3c430da80638': { name: 'Pizza', symbol: '🍕' },
+        };
+
         let mergedChiaTokens = [], mergedChiaTotal = 0, mergedNFTCols = [], mergedNFTCount = 0;
         let chiaXchPrice = window._chiaXchPrice || 2.80;
 
@@ -4348,73 +4369,201 @@ async function loadComprehensiveTreasury() {
         // XCH balance from xchscan (no rate limits)
         // Tokens + NFTs from Spacescan via spacescanQueue (browser IPs work)
         // localStorage cache: serve stale data instantly, refresh in background
-        async function loadChiaTreasury() {
-            const CACHE_KEY = 'awiz_chia_treasury_v1';
+        async function loadChiaTreasury(useCache = true) {
+            const CACHE_KEY = 'awiz_chia_treasury_v3';
+            const CACHE_KEY_WALLETS = 'awiz_chia_wallets_v3';
             const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+            const STALE_TTL = 15 * 60 * 1000; // 15 minutes max stale
 
             // Try cache first for instant display
             let cached = null;
-            try {
-                const raw = localStorage.getItem(CACHE_KEY);
-                if (raw) {
-                    const parsed = JSON.parse(raw);
-                    if (parsed.ts && Date.now() - parsed.ts < CACHE_TTL) {
-                        console.log('⚡ Chia treasury from cache (' + Math.round((Date.now() - parsed.ts)/1000) + 's old)');
-                        cached = parsed.data;
+            let cacheAge = 0;
+            if (useCache) {
+                try {
+                    const raw = localStorage.getItem(CACHE_KEY);
+                    if (raw) {
+                        const parsed = JSON.parse(raw);
+                        cacheAge = Date.now() - (parsed.ts || 0);
+                        if (parsed.ts && cacheAge < STALE_TTL) {
+                            console.log('⚡ Chia treasury from cache (' + Math.round(cacheAge/1000) + 's old)');
+                            cached = parsed.data;
+                            // Return cached immediately if fresh enough
+                            if (cacheAge < CACHE_TTL) {
+                                return cached;
+                            }
+                        }
                     }
-                }
-            } catch(_) {}
+                } catch(e) { console.warn('Cache read error:', e); }
+            }
 
             try {
+                const [xchData, tibetRaw] = await Promise.all([
+                    fetch('https://api.coingecko.com/api/v3/simple/price?ids=chia&vs_currencies=usd', { cache: 'no-store' })
+                        .then(r => r.ok ? r.json() : {}).catch(() => ({})),
+                    fetch('https://api.v2.tibetswap.io/pairs?per_page=200')
+                        .then(r => r.ok ? r.json() : []).catch(() => []),
+                ]);
+
+                let xchPrice = xchData?.chia?.usd || 0;
+                const tibetArr = Array.isArray(tibetRaw) ? tibetRaw : (tibetRaw.results || tibetRaw.pairs || []);
+                if (!xchPrice && tibetArr.length > 0) {
+                    const xchUsdPair = tibetArr.find(p => (p.short_name || '').toLowerCase().includes('xch-usd'));
+                    if (xchUsdPair) {
+                        const xr = parseFloat(xchUsdPair.xch_reserve || 0) / 1e12;
+                        const ar = parseFloat(xchUsdPair.asset_reserve || 1) / 1e3;
+                        xchPrice = ar > 0 ? xr / ar : 0;
+                    }
+                }
+                if (!xchPrice || xchPrice <= 0) xchPrice = 2.8;
+                chiaXchPrice = xchPrice;
+                window._chiaXchPrice = xchPrice;
+
+                const tibetMap = {};
+                for (const pair of tibetArr) {
+                    const aid = (pair.asset_id || '').toLowerCase();
+                    if (!aid) continue;
+                    const xchRes = parseFloat(pair.xch_reserve || 0) / 1e12;
+                    const catRes = parseFloat(pair.asset_reserve || 0) / 1e3;
+                    const priceUsd = catRes > 0 ? (xchRes / catRes) * xchPrice : 0;
+                    tibetMap[aid] = {
+                        priceUsd,
+                        short_name: pair.short_name || '',
+                        name: pair.name || ''
+                    };
+                }
+
+                const fetchSpacescanWithFallback = async (endpoint, wallet, timeout) => {
+                    const direct = await spacescanFetch(`https://api.spacescan.io/address/${endpoint}/${wallet}`, timeout);
+                    if (direct) return direct;
+                    try {
+                        const ctrl = new AbortController();
+                        const timer = setTimeout(() => ctrl.abort(), timeout);
+                        const resp = await fetch('/api/chia-address-proxy', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ endpoint, address: wallet }),
+                            signal: ctrl.signal
+                        });
+                        clearTimeout(timer);
+                        return resp.ok ? await resp.json() : null;
+                    } catch (_) {
+                        return null;
+                    }
+                };
+
+                // Load per-wallet cache for progressive display
+                const walletCacheMap = new Map();
+                try {
+                    const wcRaw = localStorage.getItem(CACHE_KEY_WALLETS);
+                    if (wcRaw) {
+                        const wc = JSON.parse(wcRaw);
+                        for (const [wallet, data] of Object.entries(wc)) {
+                            if (data.ts && Date.now() - data.ts < STALE_TTL) {
+                                walletCacheMap.set(wallet, data.value);
+                            }
+                        }
+                    }
+                } catch(e) { console.warn('Per-wallet cache read error:', e); }
+
                 // Fetch XCH balances from xchscan in parallel (fast, no rate limit)
                 console.log('📡 Fetching Chia treasury (xchscan + Spacescan browser)...');
-                const balanceResults = await Promise.all(
+                const balanceResults = await Promise.allSettled(
                     CHIA_WALLETS.map(w =>
-                        fetch(`https://xchscan.com/api/account/balance?address=${w}`)
+                        fetch(`https://xchscan.com/api/account/balance?address=${w}`, { cache: 'no-store' })
                             .then(r => r.ok ? r.json() : {})
                             .then(d => parseFloat(d?.xch || 0))
                             .catch(() => 0)
                     )
                 );
-                console.log('  ✅ XCH balances:', balanceResults.map((b,i) => CHIA_WALLETS[i].slice(-8) + '=' + b.toFixed(4)));
+                console.log('  ✅ XCH balances:', balanceResults.map((r,i) => 
+                    CHIA_WALLETS[i].slice(-8) + '=' + (r.status === 'fulfilled' ? r.value.toFixed(4) : 'ERR')
+                ));
 
                 // Fetch tokens + NFTs from Spacescan via queue (sequential, 2s gaps)
                 const results = [];
+                const walletCacheUpdate = {};
                 for (let idx = 0; idx < CHIA_WALLETS.length; idx++) {
                     const wallet = CHIA_WALLETS[idx];
-                    const xchBal = balanceResults[idx];
+                    const xchBalResult = balanceResults[idx];
+                    const xchBal = xchBalResult.status === 'fulfilled' ? xchBalResult.value : 0;
                     let tokens = [], nfts = [];
+
+                    // Use cached wallet data if fresh fetch fails
+                    const walletCache = walletCacheMap.get(wallet);
 
                     // Tokens
                     try {
-                        const tokData = await spacescanFetch(`https://api.spacescan.io/address/token-balance/${wallet}`, 20000);
+                        const tokData = await fetchSpacescanWithFallback('token-balance', wallet, 20000);
                         if (tokData?.data) {
                             tokens = tokData.data
                                 .filter(t => parseFloat(t.balance || 0) > 0)
-                                .map(t => ({
-                                    asset_id: t.asset_id || '', name: t.name || t.symbol || '',
-                                    symbol: t.symbol || t.name || '', balance: parseFloat(t.balance || 0),
-                                    price: parseFloat(t.price || 0), total_value: parseFloat(t.total_value || 0)
-                                }));
+                                .map(t => {
+                                    const aid = (t.asset_id || '').toLowerCase();
+                                    const override = CHIA_TOKEN_OVERRIDES[aid];
+                                    const tibet = tibetMap[aid] || null;
+                                    let name = (t.name || t.symbol || '').trim();
+                                    if (override?.name) name = override.name;
+                                    if (!name || name.toLowerCase() === 'cat') name = tibet?.name || tibet?.short_name || name;
+                                    if (!name) name = `Token ${aid.slice(0, 6).toUpperCase()}`;
+
+                                    let symbol = (t.symbol || '').trim();
+                                    if (override?.symbol) symbol = override.symbol;
+                                    if (!symbol || symbol.toLowerCase() === 'cat') symbol = tibet?.short_name || name;
+
+                                    const balance = parseFloat(t.balance || 0);
+                                    const priceRaw = parseFloat(t.price || 0);
+                                    const price = priceRaw > 0 ? priceRaw : (tibet?.priceUsd || 0);
+                                    const rawValue = parseFloat(t.total_value || 0);
+                                    const totalValue = rawValue > 0 ? rawValue : (price > 0 ? balance * price : 0);
+
+                                    return {
+                                        asset_id: t.asset_id || '',
+                                        name,
+                                        symbol,
+                                        balance,
+                                        price,
+                                        total_value: totalValue
+                                    };
+                                });
+                        } else if (walletCache?.tokens) {
+                            console.log(`  ⚠️ Using cached tokens for ${wallet.slice(-8)}`);
+                            tokens = walletCache.tokens;
                         }
-                    } catch(_) {}
+                    } catch(e) {
+                        console.warn(`Token fetch error for ${wallet.slice(-8)}:`, e.message);
+                        if (walletCache?.tokens) tokens = walletCache.tokens;
+                    }
 
                     // NFTs
                     try {
-                        const nftData = await spacescanFetch(`https://api.spacescan.io/address/nft-balance/${wallet}`, 15000);
+                        const nftData = await fetchSpacescanWithFallback('nft-balance', wallet, 15000);
                         if (nftData?.balance) {
                             nfts = nftData.balance.map(n => ({
                                 nft_id: n.nft_id || '', name: n.name || '',
                                 collection_id: n.collection_id || '', preview_url: n.preview_url || ''
                             }));
+                        } else if (walletCache?.nfts) {
+                            console.log(`  ⚠️ Using cached NFTs for ${wallet.slice(-8)}`);
+                            nfts = walletCache.nfts;
                         }
-                    } catch(_) {}
+                    } catch(e) {
+                        console.warn(`NFT fetch error for ${wallet.slice(-8)}:`, e.message);
+                        if (walletCache?.nfts) nfts = walletCache.nfts;
+                    }
 
                     console.log(`  ✅ ${wallet.slice(-8)}: ${xchBal.toFixed(4)} XCH, ${nfts.length} NFTs, ${tokens.length} tokens`);
+
+                    // Store per-wallet cache
+                    walletCacheUpdate[wallet] = {
+                        ts: Date.now(),
+                        value: { tokens: tokens.map(t => ({ ...t })), nfts: [...nfts] }
+                    };
 
                     results.push({
                         idx, wallet, xchBal, nfts,
                         tokens: tokens.map(t => {
+                            const aid = (t.asset_id || '').toLowerCase();
+                            const tibetEntry = tibetMap[aid] || null;
                             // Enhanced name resolution: use name → symbol → readable fallback
                             let name = (t.name || t.symbol || '').trim();
                             if (!name) name = `Token ${(t.asset_id || '').slice(0,6).toUpperCase()}`;
@@ -4422,7 +4571,7 @@ async function loadComprehensiveTreasury() {
                             // Ensure symbol has a fallback (never empty)
                             const symbol = (t.symbol || name.slice(0,8) || (t.asset_id || '').slice(0,8) || 'CAT');
                             
-                            const isLP = name.toLowerCase().includes('tibet') || name.toLowerCase().includes(' lp ');
+                            const isLP = name.toLowerCase().includes('tibet') || name.toLowerCase().includes(' lp ') || (tibetEntry?.short_name || '').toLowerCase().startsWith('tibet-');
                             const balance = t.balance;
                             const price = t.price;
                             const rawVal = t.total_value > 0 ? t.total_value : (balance * price);
@@ -4433,6 +4582,9 @@ async function loadComprehensiveTreasury() {
                             if (isLP) {
                                 const m = name.match(/LP\s+(.+?)(?:\s*$)/i);
                                 if (m) pairName = m[1].replace(/-/g, '/');
+                                if (!pairName && tibetEntry?.short_name) {
+                                    pairName = tibetEntry.short_name.replace(/^TIBET-/i, '').replace(/-XCH$/i, '/XCH');
+                                }
                             }
                             const tok = {
                                 symbol, name, assetId: t.asset_id,
@@ -4445,15 +4597,24 @@ async function loadComprehensiveTreasury() {
                     });
                 }
 
-                // Cache the fresh data
-                try { localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data: results })); } catch(_) {}
+                // Cache the fresh data (both full and per-wallet)
+                try { 
+                    localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data: results })); 
+                    localStorage.setItem(CACHE_KEY_WALLETS, JSON.stringify(walletCacheUpdate));
+                    console.log('💾 Treasury cache updated');
+                } catch(e) { console.warn('Cache write error:', e); }
 
                 return results;
 
             } catch (error) {
-                console.error('Error loading Chia treasury:', error.message);
+                console.error('Error loading Chia treasury:', error.message, error.stack);
                 // Return cached data if fresh fetch failed
-                if (cached) { console.log('⚡ Using stale cache as fallback'); return cached; }
+                if (cached) { 
+                    console.log('⚡ Using stale cache as fallback (' + Math.round(cacheAge/1000) + 's old)'); 
+                    return cached; 
+                }
+                // Try to reset queue if stuck
+                spacescanQueue.reset();
                 return null;
             }
         }
