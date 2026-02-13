@@ -380,8 +380,8 @@
 
         .tabs {
             display: flex;
-            gap: 8px;
-            margin-bottom: 24px;
+            gap: 6px;
+            margin-bottom: 20px;
             background: linear-gradient(to right, #dc2626, #fbbf24, #dc2626);
             padding: 4px;
             border: none;
@@ -389,20 +389,20 @@
 
         .tab {
             flex: 1;
-            padding: 12px 16px;
+            padding: 8px 10px;
             font-weight: 600;
-            font-size: 12px;
+            font-size: 11px;
             font-family: 'Inter', 'Segoe UI', sans-serif;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
             position: relative;
             background: linear-gradient(135deg, rgba(20, 20, 30, 0.6), rgba(10, 10, 20, 0.8));
             backdrop-filter: blur(10px);
             border: 1px solid rgba(220, 38, 38, 0.3);
             border-radius: 10px;
-            margin: 0 4px;
+            margin: 0 2px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3),
                         0 0 0 1px rgba(220, 38, 38, 0.15);
         }
@@ -449,9 +449,9 @@
 
         @media (max-width: 768px) {
             .tab {
-                font-size: 10px;
-                padding: 10px 8px;
-                margin: 0 2px;
+                font-size: 9px;
+                padding: 7px 6px;
+                margin: 0 1px;
                 letter-spacing: 0px;
             }
         }
@@ -1037,11 +1037,12 @@
         // showTab function moved to main script block
     </script>
         <div class="tabs">
-            <div class="tab active" onclick="showTab('market')">📈EMOJI MARKET📈</div>
-            <div class="tab" onclick="showTab('portfolio')">💰BAG💰</div>
-            <div class="tab" onclick="showTab('treasury')">🧙‍♂️ aWizard Treasury 🧙‍♂️</div>
-            <div class="tab" onclick="showTab('howto')">🎓 How to Wizard 🎓</div>
-            <div class="tab" onclick="showTab('book')">📜 BOOK OF WIZARD 📜</div>
+            <div class="tab active" onclick="showTab('market')">EMOJI MARKET</div>
+            <div class="tab" onclick="showTab('portfolio')">BAG</div>
+            <div class="tab" onclick="showTab('treasury')">aWIZARD TREASURY</div>
+            <div class="tab" onclick="showTab('howto')">HOW TO CAST</div>
+            <div class="tab" onclick="showTab('book')">BOOK OF WIZARD</div>
+            <div class="tab" onclick="showTab('valley')">CASTER VALLEY</div>
         </div>
 
         <div id="market" class="content active">
@@ -2014,6 +2015,8 @@
 
             </div>
         </div>
+
+        <div id="valley" class="content"></div>
 
 
         <div class="footer">
