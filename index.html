@@ -955,19 +955,15 @@
 
         /* Spotify Mini Player */
         .spotify-mini {
-            position: fixed;
-            left: 16px;
-            right: 16px;
-            bottom: 16px;
-            margin: 0 auto;
-            max-width: 720px;
+            position: relative;
+            margin: 20px auto 8px;
+            max-width: 520px;
             background: linear-gradient(135deg, rgba(8, 12, 20, 0.95), rgba(16, 20, 30, 0.92));
             border: 1px solid rgba(29, 185, 84, 0.35);
-            border-radius: 16px;
-            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45), 0 0 30px rgba(29, 185, 84, 0.08);
+            border-radius: 14px;
+            box-shadow: 0 10px 26px rgba(0, 0, 0, 0.45), 0 0 24px rgba(29, 185, 84, 0.08);
             backdrop-filter: blur(12px);
-            z-index: 9999;
-            padding: 12px 14px 10px;
+            padding: 10px 12px 8px;
         }
 
         .spotify-mini-header {
@@ -975,13 +971,13 @@
             align-items: center;
             justify-content: space-between;
             gap: 12px;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .spotify-mini-title {
             font-family: 'Cinzel', serif;
-            font-size: 12px;
-            letter-spacing: 1px;
+            font-size: 11px;
+            letter-spacing: 0.8px;
             color: rgba(255, 255, 255, 0.8);
             text-transform: uppercase;
         }
@@ -1001,8 +997,8 @@
             border: 1px solid rgba(29, 185, 84, 0.45);
             background: rgba(29, 185, 84, 0.15);
             color: #b7f3cc;
-            font-size: 10px;
-            padding: 6px 10px;
+            font-size: 9px;
+            padding: 5px 8px;
             border-radius: 10px;
             cursor: pointer;
             font-family: 'Inter', sans-serif;
@@ -1022,11 +1018,11 @@
             border: none;
             background: rgba(255, 255, 255, 0.12);
             color: rgba(255, 255, 255, 0.7);
-            width: 28px;
-            height: 28px;
+            width: 24px;
+            height: 24px;
             border-radius: 8px;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 14px;
             line-height: 1;
             transition: all 0.2s ease;
         }
@@ -1039,16 +1035,16 @@
         .spotify-mini-controls {
             display: flex;
             align-items: center;
-            gap: 8px;
-            margin-bottom: 8px;
+            gap: 6px;
+            margin-bottom: 6px;
         }
 
         .spotify-mini-controls button {
             border: 1px solid rgba(255, 255, 255, 0.15);
             background: rgba(255, 255, 255, 0.08);
             color: rgba(255, 255, 255, 0.85);
-            font-size: 12px;
-            padding: 6px 10px;
+            font-size: 11px;
+            padding: 5px 8px;
             border-radius: 10px;
             cursor: pointer;
             font-family: 'Inter', sans-serif;
@@ -1062,7 +1058,7 @@
 
         .spotify-mini-embed {
             width: 100%;
-            height: 152px;
+            height: 124px;
             border-radius: 12px;
             overflow: hidden;
             border: 1px solid rgba(255, 255, 255, 0.08);
@@ -1071,10 +1067,9 @@
 
         @media (max-width: 768px) {
             .spotify-mini {
-                left: 10px;
-                right: 10px;
-                bottom: 10px;
-                padding: 10px 12px 8px;
+                margin: 16px auto 6px;
+                max-width: 100%;
+                padding: 8px 10px 6px;
             }
 
             .spotify-mini-title {
@@ -1087,7 +1082,7 @@
             }
 
             .spotify-mini-embed {
-                height: 128px;
+                height: 110px;
             }
         }
     </style>
@@ -1192,32 +1187,40 @@
                 transform: translate(-50%, -50%);
                 background: linear-gradient(135deg, rgba(20, 20, 30, 0.95), rgba(10, 10, 20, 0.98));
                 border: 2px solid rgba(251, 191, 36, 0.4);
-                border-radius: 16px; padding: 28px 40px;
+                border-radius: 14px; padding: 20px 28px;
                 display: none; z-index: 9999;
                 text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.7), 0 0 40px rgba(251,191,36,0.15);
-                min-width: 280px; max-width: 320px; backdrop-filter: blur(12px);
+                min-width: 240px; max-width: 280px; backdrop-filter: blur(12px);
             " onclick="event.stopPropagation(); document.getElementById('treasury-loading-modal').style.display = 'none';">
                 <button onclick="event.stopPropagation(); document.getElementById('treasury-loading-modal').style.display = 'none';" style="
                     position: absolute; top: 8px; right: 8px;
-                    width: 26px; height: 26px; border-radius: 8px;
+                    width: 22px; height: 22px; border-radius: 7px;
                     border: 1px solid rgba(255,255,255,0.2);
                     background: rgba(255,255,255,0.08);
-                    color: rgba(255,255,255,0.8); font-size: 16px; line-height: 1;
+                    color: rgba(255,255,255,0.8); font-size: 13px; line-height: 1;
                     cursor: pointer;
                 " aria-label="Close">X</button>
-                <div style="font-size: 32px; margin-bottom: 12px; animation: spin 2s linear infinite;">⏳</div>
-                <div style="font-size: 16px; font-weight: 700; color: #fbbf24; margin-bottom: 8px;">Loading Treasury</div>
-                <div style="color: rgba(255,255,255,0.6); font-size: 12px; margin-bottom: 12px;">
+                <div style="font-size: 26px; margin-bottom: 10px; animation: spin 2s linear infinite;">⏳</div>
+                <div style="font-size: 14px; font-weight: 700; color: #fbbf24; margin-bottom: 6px;">Loading Treasury</div>
+                <div style="color: rgba(255,255,255,0.6); font-size: 11px; margin-bottom: 10px;">
                     Spacescan rate limits mean wallet data loads in waves. Please hang tight while we sync wallets and prices.
                 </div>
                 <div style="display: flex; gap: 8px; justify-content: center;">
-                    <div style="width: 8px; height: 8px; background: #fbbf24; border-radius: 50%; animation: pulse 1.5s infinite;"></div>
-                    <div style="width: 8px; height: 8px; background: #fbbf24; border-radius: 50%; animation: pulse 1.5s infinite 0.3s;"></div>
-                    <div style="width: 8px; height: 8px; background: #fbbf24; border-radius: 50%; animation: pulse 1.5s infinite 0.6s;"></div>
+                    <div style="width: 6px; height: 6px; background: #fbbf24; border-radius: 50%; animation: pulse 1.5s infinite;"></div>
+                    <div style="width: 6px; height: 6px; background: #fbbf24; border-radius: 50%; animation: pulse 1.5s infinite 0.3s;"></div>
+                    <div style="width: 6px; height: 6px; background: #fbbf24; border-radius: 50%; animation: pulse 1.5s infinite 0.6s;"></div>
                 </div>
                 <style>
                     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
                     @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+                    @media (max-width: 600px) {
+                        #treasury-loading-modal {
+                            width: calc(100% - 24px) !important;
+                            max-width: 240px !important;
+                            min-width: 0 !important;
+                            padding: 16px 18px !important;
+                        }
+                    }
                 </style>
             </div>
         `;
@@ -2081,6 +2084,24 @@
                     </a>
                 </div>
 
+                <!-- Spotify Mini Player -->
+                <div id="spotify-miniplayer" class="spotify-mini">
+                    <div class="spotify-mini-header">
+                        <div class="spotify-mini-title">Now Playing: <span id="spotify-mini-album">Album Shuffle</span></div>
+                        <div class="spotify-mini-actions">
+                            <a id="spotify-mini-open" class="spotify-mini-btn" href="https://open.spotify.com/" target="_blank" rel="noopener">Open Spotify</a>
+                            <button id="spotify-mini-close" class="spotify-mini-close" title="Close">×</button>
+                        </div>
+                    </div>
+                    <div class="spotify-mini-controls">
+                        <button id="spotify-mini-prev" type="button" title="Previous">⏮</button>
+                        <button id="spotify-mini-play" type="button" title="Play/Pause">▶</button>
+                        <button id="spotify-mini-next" type="button" title="Next">⏭</button>
+                        <button id="spotify-mini-shuffle" type="button" title="Shuffle Albums">Shuffle Albums</button>
+                    </div>
+                    <div id="spotify-embed" class="spotify-mini-embed"></div>
+                </div>
+
                 <!-- Latest Tweets from @aWizardxch -->
                 <div style="width:100%;max-width:680px;margin-top:16px;">
 
@@ -2117,15 +2138,16 @@
                                 </a>
                             </div>
 
-                            <!-- Nitter Feed: Lightweight, no SDK dependency -->
-                            <iframe 
-                                id="tw-widget"
-                                src="https://nitter.net/aWizardxch" 
-                                width="100%" 
-                                height="600" 
-                                frameborder="0"
-                                style="border-radius:12px;border:1px solid rgba(29,161,242,0.15);background:rgba(5,10,20,0.8);">
-                            </iframe>
+                            <!-- Official X timeline embed -->
+                            <div id="tw-widget" style="border-radius:12px;border:1px solid rgba(29,161,242,0.15);background:rgba(5,10,20,0.8);">
+                                <a class="twitter-timeline"
+                                   data-theme="dark"
+                                   data-height="600"
+                                   data-chrome="noheader nofooter transparent"
+                                   href="https://twitter.com/aWizardxch?ref_src=twsrc%5Etfw">
+                                    Tweets by @aWizardxch
+                                </a>
+                            </div>
 
                         </div>
                     </div>
@@ -4029,24 +4051,6 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
             setInterval(updateData, 60000);
         };
     </script>
-
-    <!-- Spotify Mini Player -->
-    <div id="spotify-miniplayer" class="spotify-mini">
-        <div class="spotify-mini-header">
-            <div class="spotify-mini-title">Now Playing: <span id="spotify-mini-album">Album Shuffle</span></div>
-            <div class="spotify-mini-actions">
-                <a id="spotify-mini-open" class="spotify-mini-btn" href="https://open.spotify.com/" target="_blank" rel="noopener">Open Spotify</a>
-                <button id="spotify-mini-close" class="spotify-mini-close" title="Close">×</button>
-            </div>
-        </div>
-        <div class="spotify-mini-controls">
-            <button id="spotify-mini-prev" type="button" title="Previous">⏮</button>
-            <button id="spotify-mini-play" type="button" title="Play/Pause">▶</button>
-            <button id="spotify-mini-next" type="button" title="Next">⏭</button>
-            <button id="spotify-mini-shuffle" type="button" title="Shuffle Albums">Shuffle Albums</button>
-        </div>
-        <div id="spotify-embed" class="spotify-mini-embed"></div>
-    </div>
 
     <script src="https://open.spotify.com/embed/iframe-api/v1" async></script>
     <script>
