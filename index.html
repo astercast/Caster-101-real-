@@ -1018,87 +1018,70 @@
                 letter-spacing: -0.01em !important;
             }
 
-            /* ── Page Flip Animations for Swipe Navigation ── */
-            @keyframes flipInLeft {
-                0% {
-                    transform: perspective(1400px) rotateY(-85deg) translateZ(-50px);
+            /* ── Smooth Fade Animations for Page Transitions ── */
+            @keyframes fadeIn {
+                from {
                     opacity: 0;
-                    filter: brightness(0.7);
+                    transform: scale(0.98);
                 }
-                60% {
-                    transform: perspective(1400px) rotateY(8deg) translateZ(20px);
+                to {
                     opacity: 1;
-                    filter: brightness(1.1);
-                }
-                100% {
-                    transform: perspective(1400px) rotateY(0) translateZ(0);
-                    opacity: 1;
-                    filter: brightness(1);
+                    transform: scale(1);
                 }
             }
 
-            @keyframes flipInRight {
-                0% {
-                    transform: perspective(1400px) rotateY(85deg) translateZ(-50px);
+            @keyframes fadeOut {
+                from {
+                    opacity: 1;
+                    transform: scale(1);
+                }
+                to {
                     opacity: 0;
-                    filter: brightness(0.7);
-                }
-                60% {
-                    transform: perspective(1400px) rotateY(-8deg) translateZ(20px);
-                    opacity: 1;
-                    filter: brightness(1.1);
-                }
-                100% {
-                    transform: perspective(1400px) rotateY(0) translateZ(0);
-                    opacity: 1;
-                    filter: brightness(1);
-                }
-            }
-
-            @keyframes flipOutLeft {
-                0% {
-                    transform: perspective(1400px) rotateY(0) translateZ(0);
-                    opacity: 1;
-                    filter: brightness(1);
-                }
-                100% {
-                    transform: perspective(1400px) rotateY(85deg) translateZ(-80px);
-                    opacity: 0;
-                    filter: brightness(0.5);
-                }
-            }
-
-            @keyframes flipOutRight {
-                0% {
-                    transform: perspective(1400px) rotateY(0) translateZ(0);
-                    opacity: 1;
-                    filter: brightness(1);
-                }
-                100% {
-                    transform: perspective(1400px) rotateY(-85deg) translateZ(-80px);
-                    opacity: 0;
-                    filter: brightness(0.5);
+                    transform: scale(0.98);
                 }
             }
 
             .content {
-                transform-style: preserve-3d !important;
+                transition: opacity 0.3s ease, transform 0.3s ease !important;
             }
 
-            .content.flip-in-left {
-                animation: flipInLeft 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards !important;
+            .content.fade-in {
+                animation: fadeIn 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
             }
 
-            .content.flip-in-right {
-                animation: flipInRight 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards !important;
+            .content.fade-out {
+                animation: fadeOut 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
             }
 
-            .content.flip-out-left {
-                animation: flipOutLeft 0.35s cubic-bezier(0.55, 0.085, 0.68, 0.53) forwards !important;
+            /* Tab swipe indicator animation */
+            @keyframes tabSlideLeft {
+                0% {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                100% {
+                    transform: translateX(-8px);
+                    opacity: 0.6;
+                }
             }
 
-            .content.flip-out-right {
-                animation: flipOutRight 0.35s cubic-bezier(0.55, 0.085, 0.68, 0.53) forwards !important;
+            @keyframes tabSlideRight {
+                0% {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                100% {
+                    transform: translateX(8px);
+                    opacity: 0.6;
+                }
+            }
+
+            .tab.sliding-left {
+                animation: tabSlideLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
+            }
+
+            .tab.sliding-right {
+                animation: tabSlideRight 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
             }
 
             /* ── Base Layout ── */
@@ -1761,35 +1744,62 @@
                 padding: 5px 2px !important;
             }
 
-            /* Bottom tab nav — larger with header gradient */
+            /* Bottom tab nav — modern glassmorphism design */
             .tabs {
-                padding: 8px 4px !important;
-                background: linear-gradient(to right, rgba(220, 38, 38, 0.4), rgba(251, 191, 36, 0.4), rgba(220, 38, 38, 0.4)) !important;
-                border-top: 2px solid rgba(251, 191, 36, 0.5) !important;
-                box-shadow: 0 -4px 20px rgba(220, 38, 38, 0.3), 0 0 30px rgba(251, 191, 36, 0.15) !important;
+                padding: 10px 6px !important;
+                background: linear-gradient(to right, rgba(220, 38, 38, 0.35), rgba(251, 191, 36, 0.35), rgba(220, 38, 38, 0.35)) !important;
+                backdrop-filter: blur(30px) !important;
+                -webkit-backdrop-filter: blur(30px) !important;
+                border-top: 1.5px solid rgba(251, 191, 36, 0.4) !important;
+                box-shadow: 0 -6px 25px rgba(0, 0, 0, 0.4), 0 -2px 10px rgba(251, 191, 36, 0.2) !important;
             }
 
             .tab {
-                padding: 14px 4px 16px !important;
-                gap: 6px !important;
-                background: linear-gradient(135deg, rgba(20, 20, 30, 0.8), rgba(10, 10, 20, 0.9)) !important;
-                border: 1.5px solid rgba(251, 191, 36, 0.3) !important;
+                padding: 12px 4px 14px !important;
+                gap: 5px !important;
+                background: linear-gradient(135deg, rgba(30, 30, 45, 0.7), rgba(20, 20, 35, 0.85)) !important;
+                backdrop-filter: blur(10px) !important;
+                -webkit-backdrop-filter: blur(10px) !important;
+                border: 1.5px solid rgba(251, 191, 36, 0.25) !important;
+                border-radius: 16px !important;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                transform-origin: center !important;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+            }
+
+            .tab:active {
+                transform: scale(0.95) !important;
             }
 
             .tab.active {
-                background: linear-gradient(135deg, rgba(251, 191, 36, 0.25), rgba(220, 38, 38, 0.2)) !important;
-                border: 1.5px solid rgba(251, 191, 36, 0.6) !important;
-                box-shadow: 0 2px 12px rgba(251, 191, 36, 0.4) !important;
+                background: linear-gradient(135deg, rgba(251, 191, 36, 0.3), rgba(220, 38, 38, 0.25)) !important;
+                border: 1.5px solid rgba(251, 191, 36, 0.7) !important;
+                box-shadow: 0 0 20px rgba(251, 191, 36, 0.4), 0 4px 15px rgba(220, 38, 38, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+                transform: translateY(-2px) scale(1.05) !important;
             }
 
             .tab-emoji {
-                font-size: 22px !important;
+                font-size: 24px !important;
+                filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3)) !important;
+                transition: transform 0.3s ease !important;
+            }
+
+            .tab.active .tab-emoji {
+                transform: scale(1.1) !important;
             }
 
             .tab-label-short {
                 font-size: 9px !important;
                 font-weight: 800 !important;
-                letter-spacing: 0.3px !important;
+                letter-spacing: 0.5px !important;
+                text-transform: uppercase !important;
+                color: rgba(255, 255, 255, 0.85) !important;
+                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5) !important;
+            }
+
+            .tab.active .tab-label-short {
+                color: rgba(251, 191, 36, 1) !important;
+                text-shadow: 0 0 8px rgba(251, 191, 36, 0.6), 0 1px 2px rgba(0, 0, 0, 0.5) !important;
             }
 
             /* ── Inline style overrides for font consistency ── */
@@ -3040,7 +3050,7 @@
         // Tab order for swipe navigation
         const tabOrder = ['market', 'portfolio', 'treasury', 'howto', 'book', 'valley'];
         
-        // Tab switching function
+        // Tab switching function with smooth fade transitions
         function showTab(tabName, direction = null) {
             const isMobile = window.innerWidth <= 768;
             const currentActive = document.querySelector(".content.active");
@@ -3048,39 +3058,44 @@
             
             // Remove animation classes from all content
             document.querySelectorAll(".content").forEach(content => {
-                content.classList.remove("flip-in-left", "flip-in-right", "flip-out-left", "flip-out-right");
+                content.classList.remove("fade-in", "fade-out", "flip-in-left", "flip-in-right", "flip-out-left", "flip-out-right");
             });
             
-            // Mobile flip animation
+            // Get current and new tab buttons for animation
+            const currentTab = document.querySelector(".tab.active");
+            const newTab = Array.from(document.querySelectorAll(".tab")).find(tab => 
+                tab.getAttribute('onclick')?.includes(tabName)
+            );
+            
+            // Mobile fade animation with tab slide
             if (isMobile && currentActive && direction && currentActive !== newContent) {
-                // Animate out current content
-                if (direction === 'left') {
-                    currentActive.classList.add('flip-out-right');
-                } else if (direction === 'right') {
-                    currentActive.classList.add('flip-out-left');
+                // Animate tabs sliding
+                if (newTab && currentTab) {
+                    if (direction === 'left') {
+                        currentTab.classList.add('sliding-left');
+                        newTab.classList.add('sliding-right');
+                    } else if (direction === 'right') {
+                        currentTab.classList.add('sliding-right');
+                        newTab.classList.add('sliding-left');
+                    }
                 }
+                
+                // Animate out current content
+                currentActive.classList.add('fade-out');
                 
                 // Wait for out animation, then switch
                 setTimeout(() => {
-                    document.querySelectorAll(".tab").forEach(tab => tab.classList.remove("active"));
-                    document.querySelectorAll(".content").forEach(content => content.classList.remove("active"));
-                    
-                    // Find and activate the correct tab button
-                    const tabButtons = document.querySelectorAll(".tab");
-                    tabButtons.forEach(tab => {
-                        if (tab.getAttribute('onclick')?.includes(tabName)) {
-                            tab.classList.add("active");
-                        }
+                    document.querySelectorAll(".tab").forEach(tab => {
+                        tab.classList.remove("active", "sliding-left", "sliding-right");
+                    });
+                    document.querySelectorAll(".content").forEach(content => {
+                        content.classList.remove("active", "fade-in", "fade-out");
                     });
                     
-                    // Show new content with flip-in animation
-                    newContent.classList.add("active");
-                    if (direction === 'left') {
-                        newContent.classList.add('flip-in-left');
-                    } else if (direction === 'right') {
-                        newContent.classList.add('flip-in-right');
-                    }
-                }, 300);
+                    // Activate new tab and content
+                    if (newTab) newTab.classList.add("active");
+                    newContent.classList.add("active", "fade-in");
+                }, 250);
             } else {
                 // No animation - instant switch
                 document.querySelectorAll(".tab").forEach(tab => tab.classList.remove("active"));
