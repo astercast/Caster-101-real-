@@ -4485,8 +4485,7 @@ async function loadComprehensiveTreasury(force = false) {
                 }
 
                 const fetchSpacescanWithFallback = async (endpoint, wallet, timeout) => {
-                    const direct = await spacescanFetch(`https://api.spacescan.io/address/${endpoint}/${wallet}`, timeout);
-                    if (direct) return direct;
+                    // Prefer proxy to avoid browser CORS and rate-limit issues
                     try {
                         const ctrl = new AbortController();
                         const timer = setTimeout(() => ctrl.abort(), timeout);
@@ -4497,10 +4496,14 @@ async function loadComprehensiveTreasury(force = false) {
                             signal: ctrl.signal
                         });
                         clearTimeout(timer);
-                        return resp.ok ? await resp.json() : null;
-                    } catch (_) {
-                        return null;
-                    }
+                        if (resp.ok) {
+                            const data = await resp.json();
+                            if (data && !data.error) return data;
+                        }
+                    } catch (_) {}
+
+                    const direct = await spacescanFetch(`https://api.spacescan.io/address/${endpoint}/${wallet}`, timeout);
+                    return direct || null;
                 };
 
                 // Load per-wallet cache for progressive display
@@ -5601,12 +5604,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const hideMiniplayer = () => {
                 miniplayer.classList.add('hidden');
+                miniplayer.style.display = 'none';
                 localStorage.setItem('videoMiniplayerHidden', 'true');
                 setRestoreVisible(true);
             };
 
             const showMiniplayer = () => {
                 miniplayer.classList.remove('hidden');
+                miniplayer.style.display = 'flex';
                 localStorage.removeItem('videoMiniplayerHidden');
                 setRestoreVisible(false);
             };
