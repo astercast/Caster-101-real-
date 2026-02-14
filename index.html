@@ -5566,7 +5566,8 @@ document.addEventListener('DOMContentLoaded', () => {
     <script>
         // Video Miniplayer Playlist & Controls
         (function() {
-            const playlist = [
+            // NFT page URLs - we'll extract video URLs from these
+            const nftPageUrls = [
                 'https://mintgarden.io/nfts/sprout-magic-nft16r6rluvvqlj636u8qj87vdjweegfwr9qw44td0k2m280megp84zqrup0f2',
                 'https://mintgarden.io/nfts/a-wizard-magic-nft1z5z6ya98rt090h0vew9jgx4jqdg0t92yhvule96kgt9d6596v5aqf2u40p',
                 'https://mintgarden.io/nfts/hear-the-drums-in-the-distance-nft1pxzmara9s5y9ne67edj6uwxpkgv7wp6ulq8kwmy9acsur6xn7xksjvmm48',
@@ -5575,6 +5576,8 @@ document.addEventListener('DOMContentLoaded', () => {
             ];
 
             let currentIndex = 0;
+            let videoUrls = []; // Will store extracted video URLs
+            const video = document.getElementById('miniplayer-video');
             const iframe = document.getElementById('miniplayer-iframe');
             const playPauseBtn = document.getElementById('video-playpause');
             const prevBtn = document.getElementById('video-prev');
@@ -5583,36 +5586,124 @@ document.addEventListener('DOMContentLoaded', () => {
             const closeBtn = document.getElementById('close-miniplayer');
             const miniplayer = document.getElementById('video-miniplayer');
 
-            // Load video from MintGarden NFT
+            // Extract video URL from an NFT page URL
+            async function extractVideoUrl(pageUrl) {
+                try {
+                    // Try to fetch the page and extract video URL
+                    const response = await fetch(pageUrl, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'text/html'
+                        },
+                        mode: 'cors'
+                    });
+                    
+                    if (!response.ok) {
+                        console.log(`  Using full MintGarden page (HTTP ${response.status})`);
+                        return pageUrl;
+                    }
+                    
+                    const html = await response.text();
+                    
+                    // Look for direct video URLs in different formats
+                    const patterns = [
+                        /["'](?:url|src)["']?\s*:\s*["']([^"']*\.mp4[^"']*)/gi,
+                        /src=["']([^"']*\.(?:mp4|webm))["']/gi,
+                        /data-video-url=["']([^"']*\.(?:mp4|webm))["']/gi
+                    ];
+                    
+                    for (let pattern of patterns) {
+                        let match;
+                        while ((match = pattern.exec(html)) !== null) {
+                            let videoUrl = match[1];
+                            if (!videoUrl.startsWith('http')) {
+                                videoUrl = videoUrl.startsWith('/') ? 'https://mintgarden.io' + videoUrl : 'https://mintgarden.io/' + videoUrl;
+                            }
+                            console.log(`  ✔️ Found direct video URL: ${videoUrl.substring(0, 60)}...`);
+                            return videoUrl;
+                        }
+                    }
+                    
+                    console.log(`  Using full MintGarden page (no direct video found)`);
+                    return pageUrl;
+                } catch (e) {
+                    console.log(`  Using full MintGarden page (fetch failed: ${e.message})`);
+                    return pageUrl;
+                }
+            }
+
+            // Initialize playlist by extracting video URLs
+            async function initPlaylist() {
+                console.log('🎬 Initializing WTV playlist...');
+                videoUrls = [];
+                
+                for (let i = 0; i < nftPageUrls.length; i++) {
+                    const url = await extractVideoUrl(nftPageUrls[i]);
+                    videoUrls.push(url);
+                    console.log(`  ✅ Video ${i + 1}: ${url.length > 50 ? url.substring(0, 50) + '...' : url}`);
+                }
+                
+                // Load first video
+                if (videoUrls.length > 0) {
+                    loadVideo(0);
+                }
+            }
+
+            // Load video
             function loadVideo(index) {
-                if (index >= 0 && index < playlist.length) {
+                if (index >= 0 && index < videoUrls.length) {
                     currentIndex = index;
-                    iframe.src = playlist[currentIndex];
-                    iframe.style.display = 'block';
-                    playlistInfo.textContent = `${currentIndex + 1} / ${playlist.length}`;
+                    const videoUrl = videoUrls[currentIndex];
+                    
+                    // If it's a direct video URL, use video element
+                    if (videoUrl.includes('.mp4') || videoUrl.includes('.webm') || videoUrl.includes('.mov')) {
+                        video.src = videoUrl;
+                        video.style.display = 'block';
+                        iframe.style.display = 'none';
+                    } else {
+                        // Otherwise show as iframe (for MintGarden page)
+                        iframe.src = videoUrl;
+                        iframe.style.display = 'block';
+                        video.style.display = 'none';
+                    }
+                    
+                    playlistInfo.textContent = `${currentIndex + 1} / ${videoUrls.length}`;
                 }
             }
 
             // Previous
             prevBtn.addEventListener('click', () => {
-                loadVideo((currentIndex - 1 + playlist.length) % playlist.length);
+                if (videoUrls.length > 0) {
+                    loadVideo((currentIndex - 1 + videoUrls.length) % videoUrls.length);
+                }
             });
 
             // Next
             nextBtn.addEventListener('click', () => {
-                loadVideo((currentIndex + 1) % playlist.length);
+                if (videoUrls.length > 0) {
+                    loadVideo((currentIndex + 1) % videoUrls.length);
+                }
             });
 
-            // Play/Pause button - just shows message
+            // Play/Pause button
             playPauseBtn.addEventListener('click', () => {
-                playPauseBtn.textContent = playPauseBtn.textContent === '⏸️' ? '▶️' : '⏸️';
+                if (video && video.style.display !== 'none') {
+                    if (video.paused) {
+                        video.play();
+                        playPauseBtn.textContent = '⏸️';
+                    } else {
+                        video.pause();
+                        playPauseBtn.textContent = '▶️';
+                    }
+                } else {
+                    playPauseBtn.textContent = playPauseBtn.textContent === '⏸️' ? '▶️' : '⏸️';
+                }
             });
 
             // Close miniplayer
             closeBtn.addEventListener('click', () => {
                 miniplayer.classList.add('hidden');
                 localStorage.setItem('videoMiniplayerHidden', 'true');
-                // Show restore button
                 const restoreBtn = document.getElementById('wtv-restore-btn');
                 restoreBtn.style.display = 'flex';
             });
@@ -5729,8 +5820,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
 
-            // Initialize
-            loadVideo(0);
+            // Initialize playlist by extracting video URLs
+            initPlaylist();
         })();
     </script>
 
