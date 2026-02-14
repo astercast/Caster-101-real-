@@ -5401,11 +5401,11 @@ document.addEventListener('DOMContentLoaded', () => {
         position: fixed;
         bottom: 20px;
         left: 20px;
-        width: 680px;
-        max-width: calc(100vw - 40px);
+        width: 220px;
+        height: auto;
         background: linear-gradient(135deg, rgba(15, 15, 25, 0.98), rgba(25, 25, 35, 0.98));
         border: 2px solid rgba(251, 191, 36, 0.6);
-        border-radius: 16px;
+        border-radius: 12px;
         box-shadow: 
             0 12px 48px rgba(0, 0, 0, 0.8),
             0 0 0 1px rgba(251, 191, 36, 0.3),
@@ -5416,7 +5416,9 @@ document.addEventListener('DOMContentLoaded', () => {
         z-index: 999999;
         cursor: move;
         overflow: hidden;
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        resize: both;
+        user-select: none;
     ">
         <!-- Drag Handle Header -->
         <div id="video-miniplayer-header" style="
@@ -5441,29 +5443,29 @@ document.addEventListener('DOMContentLoaded', () => {
             <div style="
                 display: flex;
                 align-items: center;
-                gap: 8px;
-                font-size: 13px;
+                gap: 6px;
+                font-size: 11px;
                 font-weight: 800;
                 color: #fbbf24;
                 font-family: 'Cinzel', serif;
-                letter-spacing: 0.5px;
+                letter-spacing: 0.3px;
                 text-shadow: 0 2px 8px rgba(251, 191, 36, 0.4);
             ">
-                <span style="font-size: 16px;">🎬</span>
-                <span>WIZARD VIBES</span>
+                <span style="font-size: 14px;">🎬</span>
+                <span>WTV</span>
             </div>
             <button id="close-miniplayer" style="
                 background: linear-gradient(135deg, rgba(220, 38, 38, 0.4), rgba(153, 27, 27, 0.3));
                 border: 1px solid rgba(220, 38, 38, 0.6);
-                border-radius: 6px;
+                border-radius: 4px;
                 color: #ef4444;
-                font-size: 14px;
+                font-size: 11px;
                 cursor: pointer;
-                padding: 4px 10px;
+                padding: 2px 6px;
                 font-weight: 900;
                 transition: all 0.2s;
                 box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
-            " onmouseover="this.style.background='linear-gradient(135deg, rgba(220,38,38,0.6), rgba(153,27,27,0.5))'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='linear-gradient(135deg, rgba(220,38,38,0.4), rgba(153,27,27,0.3))'; this.style.transform='';">
+            " onmouseover="this.style.background='linear-gradient(135deg, rgba(220,38,38,0.6), rgba(153,27,27,0.5))'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='linear-gradient(135deg, rgba(220,38,38,0.4), rgba(153,27,27,0.3))'; this.style.transform='';"
                 ✕
             </button>
         </div>
@@ -5475,12 +5477,30 @@ document.addEventListener('DOMContentLoaded', () => {
             aspect-ratio: 16/9;
             background: linear-gradient(135deg, #000000, #0a0a0a);
             box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
+            min-height: 120px;
         ">
-            <video id="miniplayer-video" style="
+            <div id="miniplayer-container" style="
                 width: 100%;
                 height: 100%;
-                object-fit: contain;
-            " autoplay loop muted></video>
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #000;
+            ">
+                <video id="miniplayer-video" style="
+                    width: 100%;
+                    height: 100%;
+                    object-fit: contain;
+                    display: none;
+                " controls></video>
+                <iframe id="miniplayer-iframe" style="
+                    width: 100%;
+                    height: 100%;
+                    border: none;
+                    border-radius: 8px;
+                    display: none;
+                " allowfullscreen></iframe>
+            </div>
             <!-- Video overlay gradient -->
             <div style="
                 position: absolute;
@@ -5495,109 +5515,64 @@ document.addEventListener('DOMContentLoaded', () => {
 
         <!-- Controls -->
         <div style="
-            padding: 12px 14px;
+            padding: 10px 12px;
             background: linear-gradient(180deg, rgba(10, 10, 20, 0.7), rgba(0, 0, 0, 0.8));
             border-top: 1px solid rgba(251, 191, 36, 0.2);
         ">
-            <!-- Progress Bar -->
-            <div style="margin-bottom: 10px; position: relative;">
-                <input type="range" id="video-progress" min="0" max="100" value="0" style="
-                    width: 100%;
-                    height: 6px;
-                    background: linear-gradient(90deg, rgba(251, 191, 36, 0.3), rgba(220, 38, 38, 0.2));
-                    outline: none;
-                    -webkit-appearance: none;
-                    border-radius: 3px;
-                    cursor: pointer;
-                    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
-                ">
-            </div>
-
             <!-- Playlist Info -->
             <div id="video-playlist-info" style="
-                font-size: 11px;
+                font-size: 9px;
                 color: rgba(251, 191, 36, 0.9);
-                margin-bottom: 10px;
+                margin-bottom: 8px;
                 text-align: center;
                 font-family: 'Inter', sans-serif;
                 font-weight: 600;
-                letter-spacing: 0.5px;
-                text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
-            ">1 / 6</div>
+                text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+            ">1 / 5</div>
 
             <!-- Control Buttons -->
-            <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 6px;">
                 <button id="video-prev" style="
                     background: linear-gradient(135deg, rgba(251, 191, 36, 0.25), rgba(251, 191, 36, 0.15));
                     border: 1px solid rgba(251, 191, 36, 0.5);
-                    border-radius: 8px;
+                    border-radius: 6px;
                     color: #fbbf24;
-                    padding: 8px 14px;
+                    padding: 5px 8px;
                     cursor: pointer;
-                    font-size: 16px;
-                    transition: all 0.3s;
-                    box-shadow: 0 2px 8px rgba(251, 191, 36, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-                " onmouseover="this.style.background='linear-gradient(135deg, rgba(251,191,36,0.4), rgba(251,191,36,0.25))'; this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 12px rgba(251,191,36,0.3), inset 0 1px 0 rgba(255,255,255,0.15)';" onmouseout="this.style.background='linear-gradient(135deg, rgba(251,191,36,0.25), rgba(251,191,36,0.15))'; this.style.transform=''; this.style.boxShadow='0 2px 8px rgba(251,191,36,0.2), inset 0 1px 0 rgba(255,255,255,0.1)';">
-                    ⏮️
-                </button>
+                    font-size: 12px;
+                    transition: all 0.2s;
+                    box-shadow: 0 2px 6px rgba(251, 191, 36, 0.2);
+                    flex: 1;
+                    text-align: center;
+                " onmouseover="this.style.transform='scale(1.05)';" onmouseout="this.style.transform='';">⏮️</button>
 
                 <button id="video-playpause" style="
                     background: linear-gradient(135deg, rgba(251, 191, 36, 0.35), rgba(220, 38, 38, 0.35));
                     border: 1px solid rgba(251, 191, 36, 0.6);
-                    border-radius: 8px;
+                    border-radius: 6px;
                     color: white;
-                    padding: 10px 20px;
+                    padding: 6px 12px;
                     cursor: pointer;
-                    font-size: 18px;
+                    font-size: 14px;
                     font-weight: bold;
-                    transition: all 0.3s;
-                    flex: 1;
-                    box-shadow: 0 4px 12px rgba(251, 191, 36, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15);
-                    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-                " onmouseover="this.style.background='linear-gradient(135deg, rgba(251,191,36,0.5), rgba(220,38,38,0.5))'; this.style.transform='scale(1.05)'; this.style.boxShadow='0 6px 16px rgba(251,191,36,0.35), inset 0 1px 0 rgba(255,255,255,0.2)';" onmouseout="this.style.background='linear-gradient(135deg, rgba(251,191,36,0.35), rgba(220,38,38,0.35))'; this.style.transform=''; this.style.boxShadow='0 4px 12px rgba(251,191,36,0.25), inset 0 1px 0 rgba(255,255,255,0.15)';">
-                    ⏸️
-                </button>
+                    transition: all 0.2s;
+                    flex: 1.5;
+                    box-shadow: 0 3px 10px rgba(251, 191, 36, 0.25);
+                " onmouseover="this.style.transform='scale(1.05)';" onmouseout="this.style.transform='';">⏸️</button>
 
                 <button id="video-next" style="
                     background: linear-gradient(135deg, rgba(251, 191, 36, 0.25), rgba(251, 191, 36, 0.15));
                     border: 1px solid rgba(251, 191, 36, 0.5);
-                    border-radius: 8px;
+                    border-radius: 6px;
                     color: #fbbf24;
-                    padding: 8px 14px;
+                    padding: 5px 8px;
                     cursor: pointer;
-                    font-size: 16px;
-                    transition: all 0.3s;
-                    box-shadow: 0 2px 8px rgba(251, 191, 36, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-                " onmouseover="this.style.background='linear-gradient(135deg, rgba(251,191,36,0.4), rgba(251,191,36,0.25))'; this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 12px rgba(251,191,36,0.3), inset 0 1px 0 rgba(255,255,255,0.15)';" onmouseout="this.style.background='linear-gradient(135deg, rgba(251,191,36,0.25), rgba(251,191,36,0.15))'; this.style.transform=''; this.style.boxShadow='0 2px 8px rgba(251,191,36,0.2), inset 0 1px 0 rgba(255,255,255,0.1)';">
-                    ⏭️
-                </button>
-            </div>
-
-            <!-- Volume Control -->
-            <div style="
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                margin-top: 10px;
-                padding: 8px 10px;
-                background: rgba(251, 191, 36, 0.08);
-                border-radius: 8px;
-                border: 1px solid rgba(251, 191, 36, 0.15);
-            ">
-                <span style="
-                    font-size: 16px;
-                    filter: drop-shadow(0 2px 4px rgba(251, 191, 36, 0.4));
-                ">🔊</span>
-                <input type="range" id="video-volume" min="0" max="100" value="80" style="
+                    font-size: 12px;
+                    transition: all 0.2s;
+                    box-shadow: 0 2px 6px rgba(251, 191, 36, 0.2);
                     flex: 1;
-                    height: 6px;
-                    background: linear-gradient(90deg, rgba(251, 191, 36, 0.2), rgba(251, 191, 36, 0.1));
-                    outline: none;
-                    -webkit-appearance: none;
-                    border-radius: 3px;
-                    cursor: pointer;
-                    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
-                ">
+                    text-align: center;
+                " onmouseover="this.style.transform='scale(1.05)';" onmouseout="this.style.transform='';">⏭️</button>
             </div>
         </div>
     </div>
@@ -5653,90 +5628,50 @@ document.addEventListener('DOMContentLoaded', () => {
         // Video Miniplayer Playlist & Controls
         (function() {
             const playlist = [
-                '/images/download-3.mp4',
-                '/images/awizard_lp_mint_sprout.mp4',
-                '/images/keys-fall-slow-like-winter-rain.mp4',
-                '/images/hear-the-drums-in-the-distance.mp4',
-                '/images/seeds-to-sprouts.mp4',
-                '/images/wizard.mp4'
+                'https://mintgarden.io/nfts/sprout-magic-nft16r6rluvvqlj636u8qj87vdjweegfwr9qw44td0k2m280megp84zqrup0f2',
+                'https://mintgarden.io/nfts/a-wizard-magic-nft1z5z6ya98rt090h0vew9jgx4jqdg0t92yhvule96kgt9d6596v5aqf2u40p',
+                'https://mintgarden.io/nfts/hear-the-drums-in-the-distance-nft1pxzmara9s5y9ne67edj6uwxpkgv7wp6ulq8kwmy9acsur6xn7xksjvmm48',
+                'https://mintgarden.io/nfts/keys-fall-slow-like-winter-rai-nft1a0n40mq3q4rm4lcqamscztjgw9rvernwystv6440luz5zdmpewhqce9xkn',
+                'https://mintgarden.io/nfts/caster-nft1vaxt5mzf6m8494xwmne6m023gk4lnch6g0ef859ya4azqwtej7qs9vjsva'
             ];
 
             let currentIndex = 0;
-            const video = document.getElementById('miniplayer-video');
+            const iframe = document.getElementById('miniplayer-iframe');
             const playPauseBtn = document.getElementById('video-playpause');
             const prevBtn = document.getElementById('video-prev');
             const nextBtn = document.getElementById('video-next');
-            const progressBar = document.getElementById('video-progress');
-            const volumeSlider = document.getElementById('video-volume');
             const playlistInfo = document.getElementById('video-playlist-info');
             const closeBtn = document.getElementById('close-miniplayer');
             const miniplayer = document.getElementById('video-miniplayer');
 
-            // Load video
+            // Load video from MintGarden NFT
             function loadVideo(index) {
                 if (index >= 0 && index < playlist.length) {
                     currentIndex = index;
-                    video.src = playlist[currentIndex];
-                    video.load();
+                    iframe.src = playlist[currentIndex];
+                    iframe.style.display = 'block';
                     playlistInfo.textContent = `${currentIndex + 1} / ${playlist.length}`;
                 }
             }
 
-            // Play/Pause
-            playPauseBtn.addEventListener('click', () => {
-                if (video.paused) {
-                    video.play();
-                    playPauseBtn.textContent = '⏸️';
-                } else {
-                    video.pause();
-                    playPauseBtn.textContent = '▶️';
-                }
-            });
-
             // Previous
             prevBtn.addEventListener('click', () => {
                 loadVideo((currentIndex - 1 + playlist.length) % playlist.length);
-                video.play();
-                playPauseBtn.textContent = '⏸️';
             });
 
             // Next
             nextBtn.addEventListener('click', () => {
                 loadVideo((currentIndex + 1) % playlist.length);
-                video.play();
-                playPauseBtn.textContent = '⏸️';
             });
 
-            // Auto-play next video when current ends
-            video.addEventListener('ended', () => {
-                loadVideo((currentIndex + 1) % playlist.length);
-                video.play();
-            });
-
-            // Progress bar update
-            video.addEventListener('timeupdate', () => {
-                if (video.duration) {
-                    progressBar.value = (video.currentTime / video.duration) * 100;
-                }
-            });
-
-            // Seek functionality
-            progressBar.addEventListener('input', (e) => {
-                const seekTime = (e.target.value / 100) * video.duration;
-                video.currentTime = seekTime;
-            });
-
-            // Volume control
-            volumeSlider.addEventListener('input', (e) => {
-                video.volume = e.target.value / 100;
-                video.muted = false;
+            // Play/Pause button - just shows message
+            playPauseBtn.addEventListener('click', () => {
+                playPauseBtn.textContent = playPauseBtn.textContent === '⏸️' ? '▶️' : '⏸️';
             });
 
             // Close miniplayer
             closeBtn.addEventListener('click', () => {
                 miniplayer.classList.add('hidden');
-                video.pause();
-                // Save state to localStorage
                 localStorage.setItem('videoMiniplayerHidden', 'true');
             });
 
@@ -5745,11 +5680,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 miniplayer.classList.add('hidden');
             }
 
-            // Make miniplayer draggable
+            // Make miniplayer draggable & resizable
             let isDragging = false;
-            let currentX, currentY, initialX, initialY;
+            let isResizing = false;
+            let currentX, currentY, initialX, initialY, initialWidth, initialHeight;
             const header = document.getElementById('video-miniplayer-header');
 
+            // Create resize handle
+            const resizeHandle = document.createElement('div');
+            resizeHandle.style.cssText = 'position: absolute; bottom: 0; right: 0; width: 20px; height: 20px; cursor: nwse-resize; background: linear-gradient(135deg, rgba(251,191,36,0.3), transparent); border-radius: 0 0 10px 0;';
+            miniplayer.appendChild(resizeHandle);
+
+            // Dragging
             header.addEventListener('mousedown', dragStart);
             document.addEventListener('mousemove', drag);
             document.addEventListener('mouseup', dragEnd);
@@ -5757,7 +5699,7 @@ document.addEventListener('DOMContentLoaded', () => {
             function dragStart(e) {
                 initialX = e.clientX - miniplayer.offsetLeft;
                 initialY = e.clientY - miniplayer.offsetTop;
-                if (e.target === header || e.target.parentElement === header) {
+                if (e.target === header || e.target.parentElement === header || e.target.parentElement.parentElement === header) {
                     isDragging = true;
                     miniplayer.style.cursor = 'grabbing';
                 }
@@ -5769,7 +5711,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     currentX = e.clientX - initialX;
                     currentY = e.clientY - initialY;
 
-                    // Keep within viewport bounds
                     const maxX = window.innerWidth - miniplayer.offsetWidth;
                     const maxY = window.innerHeight - miniplayer.offsetHeight;
                     
@@ -5786,24 +5727,56 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (isDragging) {
                     isDragging = false;
                     miniplayer.style.cursor = 'move';
-                    // Save position to localStorage
                     localStorage.setItem('videoMiniplayerX', miniplayer.style.left);
                     localStorage.setItem('videoMiniplayerY', miniplayer.style.top);
                 }
             }
 
-            // Restore saved position
+            // Resizing via handle
+            resizeHandle.addEventListener('mousedown', resizeStart);
+            document.addEventListener('mousemove', resize);
+            document.addEventListener('mouseup', resizeEnd);
+
+            function resizeStart(e) {
+                isResizing = true;
+                initialX = e.clientX;
+                initialY = e.clientY;
+                initialWidth = miniplayer.offsetWidth;
+                initialHeight = miniplayer.offsetHeight;
+            }
+
+            function resize(e) {
+                if (isResizing) {
+                    e.preventDefault();
+                    const newWidth = Math.max(180, initialWidth + (e.clientX - initialX));
+                    miniplayer.style.width = newWidth + 'px';
+                }
+            }
+
+            function resizeEnd() {
+                if (isResizing) {
+                    isResizing = false;
+                    localStorage.setItem('videoMiniplayerWidth', miniplayer.style.width);
+                }
+            }
+
+            // Restore saved position & size
             const savedX = localStorage.getItem('videoMiniplayerX');
             const savedY = localStorage.getItem('videoMiniplayerY');
+            const savedWidth = localStorage.getItem('videoMiniplayerWidth');
+            
             if (savedX && savedY) {
                 miniplayer.style.left = savedX;
                 miniplayer.style.top = savedY;
                 miniplayer.style.bottom = 'auto';
             }
+            
+            if (savedWidth) {
+                miniplayer.style.width = savedWidth;
+            }
 
             // Initialize
             loadVideo(0);
-            video.volume = 0.8;
         })();
     </script>
 
