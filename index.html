@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=1200, initial-scale=0.3, minimum-scale=0.2, maximum-scale=5.0, user-scalable=yes">
     <title>Caster101</title>
-    <link rel="icon" type="image/png" href="/images/hodl-diamond.png">
+    <link rel="icon" type="image/webp" href="/images/favicon.webp">
     <!-- Performance: Preconnect to external APIs -->
     <link rel="preconnect" href="https://api.coingecko.com">
     <link rel="preconnect" href="https://api.spacescan.io">
@@ -534,33 +534,51 @@
         }
 
         .token-card {
-            background: linear-gradient(135deg, rgba(20, 20, 30, 0.7), rgba(10, 10, 20, 0.85));
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(251, 191, 36, 0.3);
-            border-radius: 12px;
-            padding: 12px 16px;
-            margin-bottom: 8px;
+            background: linear-gradient(135deg, rgba(20, 20, 30, 0.9), rgba(10, 10, 20, 0.95));
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(251, 191, 36, 0.25);
+            border-radius: 14px;
+            padding: 14px 18px;
+            margin-bottom: 10px;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3),
-                        inset 0 1px 0 rgba(255, 255, 255, 0.05),
-                        0 0 0 1px rgba(251, 191, 36, 0.1);
-            content-visibility: auto; /* Render only when visible */
-            contain: layout style paint; /* Performance containment */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+                        0 2px 8px rgba(251, 191, 36, 0.05);
+            content-visibility: auto;
+            contain: layout style paint;
         }
         
         .token-card::before {
             content: '';
             position: absolute;
             top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(251, 191, 36, 0.08), 
+                transparent
+            );
+            transition: left 0.5s ease;
+            pointer-events: none;
+        }
+        
+        .token-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
             left: 0;
             right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.5), transparent);
-            opacity: 0;
-            transition: opacity 0.3s ease;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(251, 191, 36, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 80% 50%, rgba(220, 38, 38, 0.03) 0%, transparent 50%);
+            pointer-events: none;
+            opacity: 0.6;
         }
 
         @media (max-width: 768px) {
@@ -574,20 +592,21 @@
         /* Desktop specific interactions */
         @media (min-width: 769px) {
             .token-card:hover {
-                transform: translateY(-2px) translate3d(0, 0, 0);
-                border: 1px solid rgba(251, 191, 36, 0.6);
-                box-shadow: 0 8px 24px rgba(251, 191, 36, 0.15),
-                            0 4px 12px rgba(0, 0, 0, 0.4),
-                            inset 0 1px 0 rgba(255, 255, 255, 0.1),
-                            0 0 0 1px rgba(251, 191, 36, 0.3),
-                            0 0 20px rgba(251, 191, 36, 0.2);
-                background: linear-gradient(135deg, rgba(30, 30, 40, 0.8), rgba(15, 15, 25, 0.9));
+                transform: translateY(-3px) scale(1.01) translate3d(0, 0, 0);
+                border: 1px solid rgba(251, 191, 36, 0.7);
+                box-shadow: 0 12px 32px rgba(251, 191, 36, 0.2),
+                            0 6px 16px rgba(0, 0, 0, 0.5),
+                            inset 0 1px 0 rgba(255, 255, 255, 0.15),
+                            0 0 0 1px rgba(251, 191, 36, 0.4),
+                            0 0 24px rgba(251, 191, 36, 0.25),
+                            inset 0 0 30px rgba(251, 191, 36, 0.03);
+                background: linear-gradient(135deg, rgba(35, 35, 45, 0.95), rgba(20, 20, 30, 0.98));
                 cursor: pointer;
                 z-index: 10;
             }
             
             .token-card:hover::before {
-                opacity: 1;
+                left: 100%;
             }
 
             .token-card:hover::after {
@@ -1582,15 +1601,32 @@
                                 <div class="header-title" style="display: flex; align-items: center; gap: 12px; font-size: 20px; font-weight: 900; color: white; margin-bottom: 12px;">
                                     <span class="header-icon" style="font-size: 24px;">🌱</span>
                                     <span>Chia Network</span>
+                                    <button id="refresh-chia-treasury" style="
+                                        background: rgba(74, 222, 128, 0.2);
+                                        border: 1px solid rgba(74, 222, 128, 0.4);
+                                        border-radius: 6px;
+                                        color: #4ade80;
+                                        padding: 4px 10px;
+                                        cursor: pointer;
+                                        font-size: 12px;
+                                        font-weight: 600;
+                                        margin-left: auto;
+                                        transition: all 0.2s;
+                                    " onmouseover="this.style.background='rgba(74,222,128,0.3)'" onmouseout="this.style.background='rgba(74,222,128,0.2)'" title="Refresh Chia treasury data from Spacescan">
+                                        🔄 Refresh
+                                    </button>
                                 </div>
                                 <div class="header-stats" style="display: flex; justify-content: space-between; font-size: 14px; color: rgba(255, 255, 255, 0.6);">
                                     <span id="chia-token-count">0 tokens</span>
                                     <span id="chia-column-total" class="column-total" style="font-weight: 700; color: #4ade80;">$0.00</span>
                                 </div>
+                                <div id="chia-last-updated" style="font-size: 11px; color: rgba(255, 255, 255, 0.4); margin-top: 6px; text-align: center;"></div>
                             </div>
                             <div class="holdings-list" id="chia-holdings-list" style="padding: 16px; max-height: 600px; overflow-y: auto;">
                                 <div style="text-align: center; padding: 60px 20px; color: rgba(255, 255, 255, 0.5);">
-                                    Loading Chia holdings...
+                                    <div style="font-size: 24px; margin-bottom: 8px;">⏳</div>
+                                    <div>Loading Chia holdings...</div>
+                                    <div id="chia-cache-status" style="font-size: 11px; margin-top: 8px; opacity: 0.5;"></div>
                                 </div>
                             </div>
                         </div>
@@ -2265,7 +2301,7 @@
             // All three in parallel — none are Spacescan direct, no rate limits
             // Add cache-busting to ensure fresh prices
             const [xchData, tibetRaw, catPriceData] = await Promise.all([
-                fetch(`https://api.coingecko.com/api/v3/simple/price?ids=chia&vs_currencies=usd&include_24hr_change=true&t=${Date.now()}`)
+                fetch(`https://api.coingecko.com/api/v3/simple/price?ids=chia&vs_currencies=usd&include_24hr_change=true&include_market_cap=true&t=${Date.now()}`)
                     .then(r => r.ok ? r.json() : {}).catch(() => ({})),
                 fetch('https://api.v2.tibetswap.io/pairs?per_page=200')
                     .then(r => r.ok ? r.json() : []).catch(() => []),
@@ -2274,6 +2310,7 @@
             ]);
 
             let xchPriceUSD = xchData.chia?.usd || 0;
+            let xchMarketCap = xchData.chia?.usd_market_cap || 0;
             // Fallback: if CoinGecko fails, try TibetSwap XCH/USD price
             if (xchPriceUSD === 0 && tibetRaw?.length > 0) {
                 const xchUsdPair = tibetRaw.find(p => p.short_name?.toLowerCase().includes('xch-usd'));
@@ -2283,10 +2320,10 @@
             }
             if (xchPriceUSD === 0) xchPriceUSD = 2.80;
             const xchChange   = xchData.chia?.usd_24h_change || 0;
-            console.log(`XCH: $${xchPriceUSD.toFixed(4)}`);
+            console.log(`XCH: $${xchPriceUSD.toFixed(4)} MCap: $${(xchMarketCap/1e6).toFixed(1)}M`);
 
             const xchTarget = chiaTargets.find(t => t.assetId === 'Native');
-            if (xchTarget) results.push({...xchTarget, price: xchPriceUSD, change24h: xchChange, marketCap: 0});
+            if (xchTarget) results.push({...xchTarget, price: xchPriceUSD, change24h: xchChange, marketCap: xchMarketCap});
 
             // TibetSwap map for fallback prices and pair names
             const tibetArr = Array.isArray(tibetRaw) ? tibetRaw : (tibetRaw.results || tibetRaw.pairs || []);
@@ -2311,9 +2348,42 @@
             const batchMcaps   = catPriceData.mcaps   || {};
             const batchSources = catPriceData.sources || {};
 
+            // Pre-fetch circulating supplies for all CATs that need it (parallel with rate limiting)
+            const circulatingSupplyMap = {};
+            const tokensNeedingSupply = catTargets.filter(t => {
+                const aid = t.assetId.toLowerCase();
+                const hasBatchMcap = batchMcaps[t.assetId] > 0;
+                const hasTibetTvl = tibetMap[aid]?.tvl > 0;
+                return !hasBatchMcap; // Fetch supply if we don't have batch mcap
+            });
+
+            console.log(`Fetching circulating supply for ${tokensNeedingSupply.length} CATs...`);
+            const supplyPromises = tokensNeedingSupply.map(async (t) => {
+                try {
+                    const d = await spacescanFetch(`https://api.spacescan.io/cat/info/${t.assetId}`, 8000, 1);
+                    if (d?.data) {
+                        const circ = parseFloat(d.data.circulating_supply || 0);
+                        const price = parseFloat(d.data.amount_price || 0);
+                        const change = parseFloat(d.data.pricepercentage || 0);
+                        return { assetId: t.assetId, circ, price, change };
+                    }
+                } catch(e) {
+                    console.warn(`⚠️ Supply fetch failed for ${t.assetId.slice(0, 8)}...`);
+                }
+                return { assetId: t.assetId, circ: 0, price: 0, change: 0 };
+            });
+
+            const supplyResults = await Promise.all(supplyPromises);
+            supplyResults.forEach(r => {
+                if (r.circ > 0 || r.price > 0) {
+                    circulatingSupplyMap[r.assetId] = r;
+                }
+            });
+
             for (const t of catTargets) {
                 let price = 0, change = 0, mcap = 0, src = 'none';
                 const aid = t.assetId.toLowerCase();
+                const supplyData = circulatingSupplyMap[t.assetId];
 
                 // Try serverless batch first (Spacescan or Dexie on server)
                 if (batchPrices[t.assetId] > 0) {
@@ -2323,32 +2393,41 @@
                     src    = batchSources[t.assetId] || 'batch';
                 }
 
-                // TibetSwap fallback for price + mcap
+                // TibetSwap fallback for price
                 const tibet = tibetMap[aid] || {};
-                if (price === 0 && tibet.priceUsd > 0) { price = tibet.priceUsd; src = 'tibet'; }
-                if (mcap  === 0 && tibet.tvl     > 0) { mcap  = tibet.tvl; }
-
-                // If still no mcap, try Spacescan /cat/info from browser for circulating supply
-                if (mcap === 0 && price > 0) {
-                    try {
-                        const d = await spacescanFetch(`https://api.spacescan.io/cat/info/${t.assetId}`, 6000);
-                        if (d?.data) {
-                            const circ = parseFloat(d.data.circulating_supply || 0);
-                            if (circ > 0) mcap = circ * price;
-                            // Also grab Spacescan price/change if available
-                            const sp = parseFloat(d.data.amount_price || 0);
-                            if (sp > 0 && change === 0) change = parseFloat(d.data.pricepercentage || 0);
-                        }
-                    } catch(_) {}
+                if (price === 0 && tibet.priceUsd > 0) { 
+                    price = tibet.priceUsd; 
+                    src = 'tibet'; 
                 }
 
-                if (price > 0) console.log(`  ✅ ${t.displayName||t.name}: $${price.toFixed(8)} mcap:$${mcap.toFixed(0)} [${src}]`);
+                // Use Spacescan price/change if we have it and better than current
+                if (supplyData) {
+                    if (price === 0 && supplyData.price > 0) {
+                        price = supplyData.price;
+                        src = 'spacescan';
+                    }
+                    if (change === 0 && supplyData.change !== 0) {
+                        change = supplyData.change;
+                    }
+                }
+
+                // Calculate mcap: prefer batch, then circulating supply * price, then TibetSwap TVL
+                if (mcap === 0 && supplyData?.circ > 0 && price > 0) {
+                    mcap = supplyData.circ * price;
+                    src = src + '+supply';
+                }
+                if (mcap === 0 && tibet.tvl > 0) {
+                    mcap = tibet.tvl;
+                    src = src + '+tvl';
+                }
+
+                if (price > 0) console.log(`  ✅ ${t.displayName||t.name}: $${price.toFixed(8)} mcap:$${(mcap/1e6).toFixed(2)}M [${src}]`);
                 else           console.warn(`  ⚠️  ${t.displayName||t.name}: no price`);
 
                 results.push({...t, price, change24h: change, marketCap: mcap});
             }
 
-            console.log(`Chia: ${results.filter(r => r.price > 0).length}/${results.length} priced`);
+            console.log(`Chia: ${results.filter(r => r.price > 0).length}/${results.length} priced, ${results.filter(r => r.marketCap > 0).length} with mcap`);
             return results;
         }
 
@@ -3392,8 +3471,24 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                 <div class="token-card" onclick="openTokenLink('${token.chain}', '${token.assetId || token.contract}', '${token.symbol}')">
                     <div class="token-header">
                         <div class="token-info">
-                            <div class="token-symbol">${getEmoji(token.symbol)}</div>
-                            <div class="token-name">${token.displayName || token.name}</div>
+                            <div style="
+                                width: 52px;
+                                height: 52px;
+                                background: linear-gradient(135deg, rgba(251, 191, 36, 0.12), rgba(220, 38, 38, 0.08));
+                                border-radius: 12px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                box-shadow: 0 4px 12px rgba(251, 191, 36, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+                                border: 1px solid rgba(251, 191, 36, 0.2);
+                                flex-shrink: 0;
+                            ">
+                                <div class="token-symbol">${getEmoji(token.symbol)}</div>
+                            </div>
+                            <div>
+                                <div class="token-name">${token.displayName || token.name}</div>
+                                <div style="font-size: 10px; color: rgba(255,255,255,0.35); font-family: 'Inter', sans-serif; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px;">Base Chain</div>
+                            </div>
                         </div>
                         <div style="text-align: right;">
                             <div class="token-price">$${token.price ? (
@@ -3403,13 +3498,35 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                                 token.price < 1 ? token.price.toFixed(6) :
                                 token.price.toFixed(2)
                             ) : '0.00'}</div>
-                            <div class="token-change" style="color: ${token.change24h >= 0 ? '#4ade80' : '#ef4444'}">
-                                ${token.change24h >= 0 ? '↑' : '↓'} ${Math.abs(token.change24h || 0).toFixed(1)}%
+                            <div class="token-change" style="
+                                color: ${token.change24h >= 0 ? '#4ade80' : '#ef4444'};
+                                font-size: 13px;
+                                font-weight: 700;
+                                font-family: 'Inter', sans-serif;
+                                display: flex;
+                                align-items: center;
+                                justify-content: flex-end;
+                                gap: 3px;
+                                margin-top: 3px;
+                            ">
+                                <span style="font-size: 14px;">${token.change24h >= 0 ? '↑' : '↓'}</span>
+                                <span>${Math.abs(token.change24h || 0).toFixed(1)}%</span>
                             </div>
                         </div>
                     </div>
-                    <div style="display:flex;justify-content:space-between;margin-top:7px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.06);">
-                        <span style="font-size:12px;color:rgba(255,255,255,0.5);">MCap: <span style="color:rgba(251,191,36,0.85)">${token.marketCap > 1e6 ? '$'+(token.marketCap/1e6).toFixed(1)+'M' : token.marketCap > 1e3 ? '$'+(token.marketCap/1e3).toFixed(0)+'K' : token.marketCap > 0 ? '$'+token.marketCap.toFixed(0) : '—'}</span></span>
+                    <div style="
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        margin-top: 10px;
+                        padding-top: 10px;
+                        border-top: 1px solid rgba(251, 191, 36, 0.1);
+                        background: linear-gradient(90deg, rgba(251, 191, 36, 0.03), transparent);
+                        padding: 8px 0;
+                        border-radius: 6px;
+                    ">
+                        <span style="font-size: 11px; color: rgba(255,255,255,0.4); font-family: 'Inter', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Market Cap</span>
+                        <span style="font-size: 13px; color: #fbbf24; font-weight: 700; font-family: 'Cinzel', serif;">${token.marketCap > 1e6 ? '$'+(token.marketCap/1e6).toFixed(1)+'M' : token.marketCap > 1e3 ? '$'+(token.marketCap/1e3).toFixed(0)+'K' : token.marketCap > 0 ? '$'+token.marketCap.toFixed(0) : '—'}</span>
                     </div>
                 </div>
             `;
@@ -3455,8 +3572,24 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                 <div class="token-card" onclick="openTokenLink('${token.chain}', '${token.assetId || token.contract}', '${token.symbol}')">
                     <div class="token-header">
                         <div class="token-info">
-                            <div class="token-symbol">${getEmoji(token.symbol)}</div>
-                            <div class="token-name">${token.displayName || token.name}</div>
+                            <div style="
+                                width: 52px;
+                                height: 52px;
+                                background: linear-gradient(135deg, rgba(74, 222, 128, 0.12), rgba(34, 197, 94, 0.08));
+                                border-radius: 12px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                box-shadow: 0 4px 12px rgba(74, 222, 128, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+                                border: 1px solid rgba(74, 222, 128, 0.2);
+                                flex-shrink: 0;
+                            ">
+                                <div class="token-symbol">${getEmoji(token.symbol)}</div>
+                            </div>
+                            <div>
+                                <div class="token-name">${token.displayName || token.name}</div>
+                                <div style="font-size: 10px; color: rgba(255,255,255,0.35); font-family: 'Inter', sans-serif; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px;">Chia Network</div>
+                            </div>
                         </div>
                         <div style="text-align: right;">
                             <div class="token-price">$${token.price ? (
@@ -3466,13 +3599,34 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                                 token.price < 1 ? token.price.toFixed(6) :
                                 token.price.toFixed(2)
                             ) : '0.00'}</div>
-                            <div class="token-change" style="color: ${arbColor}">
+                            <div class="token-change" style="
+                                color: ${arbColor};
+                                font-size: 13px;
+                                font-weight: 700;
+                                font-family: 'Inter', sans-serif;
+                                display: flex;
+                                align-items: center;
+                                justify-content: flex-end;
+                                gap: 3px;
+                                margin-top: 3px;
+                            ">
                                 ${arbDisplay}
                             </div>
                         </div>
                     </div>
-                    <div style="display:flex;justify-content:space-between;margin-top:7px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.06);">
-                        <span style="font-size:12px;color:rgba(255,255,255,0.5);">${token.isTvl ? 'TVL' : 'MCap'}: <span style="color:rgba(251,191,36,0.85)">${mcap > 0 ? fmt(mcap) : '—'}</span></span>
+                    <div style="
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        margin-top: 10px;
+                        padding-top: 10px;
+                        border-top: 1px solid rgba(74, 222, 128, 0.1);
+                        background: linear-gradient(90deg, rgba(74, 222, 128, 0.03), transparent);
+                        padding: 8px 0;
+                        border-radius: 6px;
+                    ">
+                        <span style="font-size: 11px; color: rgba(255,255,255,0.4); font-family: 'Inter', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">${token.isTvl ? 'Total Value Locked' : 'Market Cap'}</span>
+                        <span style="font-size: 13px; color: #4ade80; font-weight: 700; font-family: 'Cinzel', serif;">${mcap > 0 ? fmt(mcap) : '—'}</span>
                     </div>
                 </div>
             `;
@@ -4310,6 +4464,28 @@ async function loadComprehensiveTreasury() {
 
         let mergedChiaTokens = [], mergedChiaTotal = 0, mergedNFTCols = [], mergedNFTCount = 0;
         let chiaXchPrice = window._chiaXchPrice || 2.80;
+        let chiaTreasuryCacheAge = 0; // Track cache age for display
+        let isRefreshingChiaTreasury = false; // Prevent multiple simultaneous refreshes
+
+        // Helper: format cache age for display
+        function formatCacheAge(ms) {
+            const sec = Math.floor(ms / 1000);
+            if (sec < 60) return sec + 's ago';
+            const min = Math.floor(sec / 60);
+            if (min < 60) return min + 'm ago';
+            const hr = Math.floor(min / 60);
+            if (hr < 24) return hr + 'h ago';
+            const days = Math.floor(hr / 24);
+            return days + 'd ago';
+        }
+
+        // Update last updated timestamp display
+        function updateChiaTimestamp(age) {
+            const el = document.getElementById('chia-last-updated');
+            if (el && age !== undefined) {
+                el.textContent = age === 0 ? 'Just updated' : `Updated ${formatCacheAge(age)}`;
+            }
+        }
 
         // ── Helper: fetch with abort timeout ─────────────────────────────────────
         // ── LOAD CHIA TREASURY: Direct browser calls ──────────────────────────────
@@ -4319,28 +4495,49 @@ async function loadComprehensiveTreasury() {
         async function loadChiaTreasury(useCache = true) {
             const CACHE_KEY = 'awiz_chia_treasury_v3';
             const CACHE_KEY_WALLETS = 'awiz_chia_wallets_v3';
-            const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-            const STALE_TTL = 15 * 60 * 1000; // 15 minutes max stale
+            const CACHE_TTL = 3 * 60 * 60 * 1000; // 3 hour auto-refresh
+            const STALE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days max stale
 
-            // Try cache first for instant display
+            // ALWAYS try cache first for instant display
             let cached = null;
             let cacheAge = 0;
+            let shouldRefresh = false;
+            
             if (useCache) {
                 try {
                     const raw = localStorage.getItem(CACHE_KEY);
                     if (raw) {
                         const parsed = JSON.parse(raw);
                         cacheAge = Date.now() - (parsed.ts || 0);
-                        if (parsed.ts && cacheAge < STALE_TTL) {
-                            console.log('⚡ Chia treasury from cache (' + Math.round(cacheAge/1000) + 's old)');
+                        if (parsed.ts && cacheAge < STALE_TTL && parsed.data && parsed.data.length > 0) {
+                            console.log('⚡ Treasury snapshot loaded (' + formatCacheAge(cacheAge) + ')');
                             cached = parsed.data;
-                            // Return cached immediately if fresh enough
-                            if (cacheAge < CACHE_TTL) {
+                            chiaTreasuryCacheAge = cacheAge; // Store for display
+                            updateChiaTimestamp(cacheAge);
+                            
+                            // Show cache status in UI
+                            const statusEl = document.getElementById('chia-cache-status');
+                            if (statusEl) {
+                                statusEl.textContent = 'Snapshot from Spacescan (' + formatCacheAge(cacheAge) + ')';
+                            }
+                            
+                            // Return cached IMMEDIATELY - don't wait for refresh
+                            // Determine if we should refresh in background
+                            shouldRefresh = cacheAge > CACHE_TTL;
+                            
+                            if (!shouldRefresh) {
+                                console.log('✅ Snapshot is fresh (<3h), using it');
+                                return cached;
+                            } else {
+                                console.log('⌛ Snapshot is old (>3h), returning it but will refresh in background');
+                                // Return stale cache immediately, refresh will happen on next call or in background
                                 return cached;
                             }
                         }
                     }
-                } catch(e) { console.warn('Cache read error:', e); }
+                } catch(e) { 
+                    console.warn('Cache read error:', e); 
+                }
             }
 
             try {
@@ -4478,9 +4675,10 @@ async function loadComprehensiveTreasury() {
                         }
                     } catch(e) {
                         console.warn(`Token fetch error for ${wallet.slice(-8)}:`, e.message);
-                        if (walletCache?.tokens) tokens = walletCache.tokens;
+                    if (walletCache?.tokens) {
+                        console.log(`  💾 Using cached tokens for ${wallet.slice(-8)}`);
+                        tokens = walletCache.tokens;
                     }
-
                     // NFTs
                     try {
                         const nftData = await fetchSpacescanWithFallback('nft-balance', wallet, 15000);
@@ -4495,7 +4693,10 @@ async function loadComprehensiveTreasury() {
                         }
                     } catch(e) {
                         console.warn(`NFT fetch error for ${wallet.slice(-8)}:`, e.message);
-                        if (walletCache?.nfts) nfts = walletCache.nfts;
+                        if (walletCache?.nfts) {
+                            console.log(`  💾 Using cached NFTs for ${wallet.slice(-8)}`);
+                            nfts = walletCache.nfts;
+                        }
                     }
 
                     console.log(`  ✅ ${wallet.slice(-8)}: ${xchBal.toFixed(4)} XCH, ${nfts.length} NFTs, ${tokens.length} tokens`);
@@ -4544,25 +4745,46 @@ async function loadComprehensiveTreasury() {
                     });
                 }
 
-                // Cache the fresh data (both full and per-wallet)
+                // Cache the fresh data (both full and per-wallet) with extended TTL
                 try { 
-                    localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data: results })); 
+                    const cacheData = { ts: Date.now(), data: results };
+                    localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData)); 
                     localStorage.setItem(CACHE_KEY_WALLETS, JSON.stringify(walletCacheUpdate));
-                    console.log('💾 Treasury cache updated');
-                } catch(e) { console.warn('Cache write error:', e); }
+                    chiaTreasuryCacheAge = 0; // Fresh data
+                    console.log('💾 Treasury snapshot saved (auto-refresh every 3h)');
+                    updateChiaTimestamp(0);
+                    
+                    // Update cache status in UI
+                    const statusEl = document.getElementById('chia-cache-status');
+                    if (statusEl) {
+                        statusEl.textContent = 'Data refreshed from Spacescan';
+                    }
+                } catch(e) { 
+                    console.warn('Cache write error:', e);
+                    // Try to clear old cache if write failed due to quota
+                    try {
+                        const oldKeys = ['awiz_chia_treasury_v1', 'awiz_chia_treasury_v2', 'awiz_chia_wallets_v1', 'awiz_chia_wallets_v2'];
+                        oldKeys.forEach(k => localStorage.removeItem(k));
+                        localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data: results }));
+                        console.log('💾 Cleared old cache, retry successful');
+                    } catch(e2) {
+                        console.error('Failed to save cache even after cleanup:', e2);
+                    }
+                }
 
                 return results;
 
             } catch (error) {
-                console.error('Error loading Chia treasury:', error.message, error.stack);
-                // Return cached data if fresh fetch failed
-                if (cached) { 
-                    console.log('⚡ Using stale cache as fallback (' + Math.round(cacheAge/1000) + 's old)'); 
-                    return cached; 
+                console.error('Error fetching Chia treasury:', error.message, error.stack);
+                // ALWAYS return fallback cache if available
+                if (fallbackCache && fallbackCache.length > 0) { 
+                    console.log('⚡ Using fallback cache due to fetch error'); 
+                    return fallbackCache; 
                 }
                 // Try to reset queue if stuck
                 spacescanQueue.reset();
-                return null;
+                console.error('❌ No cached data available and fetch failed');
+                return [];
             }
         }
 
@@ -4622,7 +4844,10 @@ async function loadComprehensiveTreasury() {
         // ── Show loading placeholder ───────────────────────────────────────────────
         const chiaList = document.getElementById('chia-holdings-list');
         if (chiaList) chiaList.innerHTML = `<div style="text-align:center;padding:40px 20px;color:rgba(255,255,255,0.4);font-size:12px;">
-            <div style="font-size:24px;margin-bottom:8px;">⏳</div>Loading Chia holdings…</div>`;
+            <div style="font-size:24px;margin-bottom:8px;">⏳</div>
+            <div>Loading treasury snapshot…</div>
+            <div id="chia-cache-status" style="font-size:11px;margin-top:8px;opacity:0.5;">Loading Spacescan data...</div>
+        </div>`;
 
         // ── CALL CHIA-CAT-PRICES LAMBDA (treasury mode) ──────────────────────────
         console.log('📡 Calling chia-cat-prices Lambda (treasury mode)...');
@@ -4630,7 +4855,15 @@ async function loadComprehensiveTreasury() {
         const chiaWalletsData = await loadChiaTreasury();
         
         if (!chiaWalletsData || chiaWalletsData.length === 0) {
-            console.error('❌ Failed to load Chia treasury data');
+            console.error('❌ Failed to load Chia treasury (no snapshot available)');
+            if (chiaList) {
+                chiaList.innerHTML = `<div style="text-align:center;padding:40px 20px;color:rgba(255,100,100,0.8);font-size:14px;">
+                    <div style="font-size:32px;margin-bottom:12px;">⚠️</div>
+                    <div style="font-weight:bold;margin-bottom:8px;">No Treasury Data Available</div>
+                    <div style="font-size:11px;opacity:0.6;">Spacescan API unavailable and no cached snapshot. Click Refresh to try again.</div>
+                </div>`;
+            }
+            updateChiaTimestamp(undefined);
             mergedChiaTokens = [];
             mergedChiaTotal = 0;
             mergedNFTCols = [];
@@ -5125,9 +5358,453 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load Merkl Magic
     loadMerklMagic();
     
+    // Setup manual treasury refresh button
+    const refreshBtn = document.getElementById('refresh-chia-treasury');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', async () => {
+            if (isRefreshingChiaTreasury) {
+                alert('⏱️ Already refreshing from Spacescan, please wait...');
+                return;
+            }
+            refreshBtn.textContent = '⏳ Fetching...';
+            refreshBtn.disabled = true;
+            isRefreshingChiaTreasury = true;
+            
+            try {
+                // Force fresh fetch by skipping cache
+                const data = await loadChiaTreasury(false);
+                if (data && data.length > 0) {
+                    // Reload the treasury display
+                    showTab('treasury');
+                    alert('✅ Treasury refreshed from Spacescan!');
+                } else {
+                    alert('⚠️ Refresh completed but no data returned');
+                }
+            } catch(e) {
+                console.error('Refresh error:', e);
+                alert('❌ Refresh failed: ' + e.message);
+            } finally {
+                refreshBtn.textContent = '🔄 Refresh';
+                refreshBtn.disabled = false;
+                isRefreshingChiaTreasury = false;
+            }
+        });
+    }
+    
     // Note: treasury loading is handled by showTab() via onclick - no duplicate listener needed
 });
 
+    </script>
+
+    <!-- Floating Video Miniplayer -->
+    <div id="video-miniplayer" style="
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        width: 680px;
+        max-width: calc(100vw - 40px);
+        background: linear-gradient(135deg, rgba(15, 15, 25, 0.98), rgba(25, 25, 35, 0.98));
+        border: 2px solid rgba(251, 191, 36, 0.6);
+        border-radius: 16px;
+        box-shadow: 
+            0 12px 48px rgba(0, 0, 0, 0.8),
+            0 0 0 1px rgba(251, 191, 36, 0.3),
+            0 0 40px rgba(251, 191, 36, 0.15),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        z-index: 999999;
+        cursor: move;
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    ">
+        <!-- Drag Handle Header -->
+        <div id="video-miniplayer-header" style="
+            padding: 10px 14px;
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.25), rgba(220, 38, 38, 0.15));
+            border-bottom: 1px solid rgba(251, 191, 36, 0.4);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: move;
+            user-select: none;
+            position: relative;
+        ">
+            <div style="
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 1px;
+                background: linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.6), transparent);
+            "></div>
+            <div style="
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-size: 13px;
+                font-weight: 800;
+                color: #fbbf24;
+                font-family: 'Cinzel', serif;
+                letter-spacing: 0.5px;
+                text-shadow: 0 2px 8px rgba(251, 191, 36, 0.4);
+            ">
+                <span style="font-size: 16px;">🎬</span>
+                <span>WIZARD VIBES</span>
+            </div>
+            <button id="close-miniplayer" style="
+                background: linear-gradient(135deg, rgba(220, 38, 38, 0.4), rgba(153, 27, 27, 0.3));
+                border: 1px solid rgba(220, 38, 38, 0.6);
+                border-radius: 6px;
+                color: #ef4444;
+                font-size: 14px;
+                cursor: pointer;
+                padding: 4px 10px;
+                font-weight: 900;
+                transition: all 0.2s;
+                box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+            " onmouseover="this.style.background='linear-gradient(135deg, rgba(220,38,38,0.6), rgba(153,27,27,0.5))'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='linear-gradient(135deg, rgba(220,38,38,0.4), rgba(153,27,27,0.3))'; this.style.transform='';">
+                ✕
+            </button>
+        </div>
+
+        <!-- Video Container -->
+        <div style="
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: linear-gradient(135deg, #000000, #0a0a0a);
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
+        ">
+            <video id="miniplayer-video" style="
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+            " autoplay loop muted></video>
+            <!-- Video overlay gradient -->
+            <div style="
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: radial-gradient(circle at center, transparent 40%, rgba(0, 0, 0, 0.1) 100%);
+                pointer-events: none;
+            "></div>
+        </div>
+
+        <!-- Controls -->
+        <div style="
+            padding: 12px 14px;
+            background: linear-gradient(180deg, rgba(10, 10, 20, 0.7), rgba(0, 0, 0, 0.8));
+            border-top: 1px solid rgba(251, 191, 36, 0.2);
+        ">
+            <!-- Progress Bar -->
+            <div style="margin-bottom: 10px; position: relative;">
+                <input type="range" id="video-progress" min="0" max="100" value="0" style="
+                    width: 100%;
+                    height: 6px;
+                    background: linear-gradient(90deg, rgba(251, 191, 36, 0.3), rgba(220, 38, 38, 0.2));
+                    outline: none;
+                    -webkit-appearance: none;
+                    border-radius: 3px;
+                    cursor: pointer;
+                    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+                ">
+            </div>
+
+            <!-- Playlist Info -->
+            <div id="video-playlist-info" style="
+                font-size: 11px;
+                color: rgba(251, 191, 36, 0.9);
+                margin-bottom: 10px;
+                text-align: center;
+                font-family: 'Inter', sans-serif;
+                font-weight: 600;
+                letter-spacing: 0.5px;
+                text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+            ">1 / 6</div>
+
+            <!-- Control Buttons -->
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                <button id="video-prev" style="
+                    background: linear-gradient(135deg, rgba(251, 191, 36, 0.25), rgba(251, 191, 36, 0.15));
+                    border: 1px solid rgba(251, 191, 36, 0.5);
+                    border-radius: 8px;
+                    color: #fbbf24;
+                    padding: 8px 14px;
+                    cursor: pointer;
+                    font-size: 16px;
+                    transition: all 0.3s;
+                    box-shadow: 0 2px 8px rgba(251, 191, 36, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+                " onmouseover="this.style.background='linear-gradient(135deg, rgba(251,191,36,0.4), rgba(251,191,36,0.25))'; this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 12px rgba(251,191,36,0.3), inset 0 1px 0 rgba(255,255,255,0.15)';" onmouseout="this.style.background='linear-gradient(135deg, rgba(251,191,36,0.25), rgba(251,191,36,0.15))'; this.style.transform=''; this.style.boxShadow='0 2px 8px rgba(251,191,36,0.2), inset 0 1px 0 rgba(255,255,255,0.1)';">
+                    ⏮️
+                </button>
+
+                <button id="video-playpause" style="
+                    background: linear-gradient(135deg, rgba(251, 191, 36, 0.35), rgba(220, 38, 38, 0.35));
+                    border: 1px solid rgba(251, 191, 36, 0.6);
+                    border-radius: 8px;
+                    color: white;
+                    padding: 10px 20px;
+                    cursor: pointer;
+                    font-size: 18px;
+                    font-weight: bold;
+                    transition: all 0.3s;
+                    flex: 1;
+                    box-shadow: 0 4px 12px rgba(251, 191, 36, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+                    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+                " onmouseover="this.style.background='linear-gradient(135deg, rgba(251,191,36,0.5), rgba(220,38,38,0.5))'; this.style.transform='scale(1.05)'; this.style.boxShadow='0 6px 16px rgba(251,191,36,0.35), inset 0 1px 0 rgba(255,255,255,0.2)';" onmouseout="this.style.background='linear-gradient(135deg, rgba(251,191,36,0.35), rgba(220,38,38,0.35))'; this.style.transform=''; this.style.boxShadow='0 4px 12px rgba(251,191,36,0.25), inset 0 1px 0 rgba(255,255,255,0.15)';">
+                    ⏸️
+                </button>
+
+                <button id="video-next" style="
+                    background: linear-gradient(135deg, rgba(251, 191, 36, 0.25), rgba(251, 191, 36, 0.15));
+                    border: 1px solid rgba(251, 191, 36, 0.5);
+                    border-radius: 8px;
+                    color: #fbbf24;
+                    padding: 8px 14px;
+                    cursor: pointer;
+                    font-size: 16px;
+                    transition: all 0.3s;
+                    box-shadow: 0 2px 8px rgba(251, 191, 36, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+                " onmouseover="this.style.background='linear-gradient(135deg, rgba(251,191,36,0.4), rgba(251,191,36,0.25))'; this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 12px rgba(251,191,36,0.3), inset 0 1px 0 rgba(255,255,255,0.15)';" onmouseout="this.style.background='linear-gradient(135deg, rgba(251,191,36,0.25), rgba(251,191,36,0.15))'; this.style.transform=''; this.style.boxShadow='0 2px 8px rgba(251,191,36,0.2), inset 0 1px 0 rgba(255,255,255,0.1)';">
+                    ⏭️
+                </button>
+            </div>
+
+            <!-- Volume Control -->
+            <div style="
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-top: 10px;
+                padding: 8px 10px;
+                background: rgba(251, 191, 36, 0.08);
+                border-radius: 8px;
+                border: 1px solid rgba(251, 191, 36, 0.15);
+            ">
+                <span style="
+                    font-size: 16px;
+                    filter: drop-shadow(0 2px 4px rgba(251, 191, 36, 0.4));
+                ">🔊</span>
+                <input type="range" id="video-volume" min="0" max="100" value="80" style="
+                    flex: 1;
+                    height: 6px;
+                    background: linear-gradient(90deg, rgba(251, 191, 36, 0.2), rgba(251, 191, 36, 0.1));
+                    outline: none;
+                    -webkit-appearance: none;
+                    border-radius: 3px;
+                    cursor: pointer;
+                    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+                ">
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* Progress bar styling */
+        #video-progress::-webkit-slider-thumb,
+        #video-volume::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 
+                0 2px 8px rgba(251, 191, 36, 0.6),
+                0 0 0 2px rgba(251, 191, 36, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            transition: all 0.2s;
+        }
+
+        #video-progress::-webkit-slider-thumb:hover,
+        #video-volume::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 
+                0 4px 12px rgba(251, 191, 36, 0.8),
+                0 0 0 3px rgba(251, 191, 36, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.5);
+        }
+
+        #video-progress::-moz-range-thumb,
+        #video-volume::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            box-shadow: 
+                0 2px 8px rgba(251, 191, 36, 0.6),
+                0 0 0 2px rgba(251, 191, 36, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        /* Miniplayer hidden state */
+        #video-miniplayer.hidden {
+            display: none;
+        }
+    </style>
+
+    <script>
+        // Video Miniplayer Playlist & Controls
+        (function() {
+            const playlist = [
+                '/images/download-3.mp4',
+                '/images/awizard_lp_mint_sprout.mp4',
+                '/images/keys-fall-slow-like-winter-rain.mp4',
+                '/images/hear-the-drums-in-the-distance.mp4',
+                '/images/seeds-to-sprouts.mp4',
+                '/images/wizard.mp4'
+            ];
+
+            let currentIndex = 0;
+            const video = document.getElementById('miniplayer-video');
+            const playPauseBtn = document.getElementById('video-playpause');
+            const prevBtn = document.getElementById('video-prev');
+            const nextBtn = document.getElementById('video-next');
+            const progressBar = document.getElementById('video-progress');
+            const volumeSlider = document.getElementById('video-volume');
+            const playlistInfo = document.getElementById('video-playlist-info');
+            const closeBtn = document.getElementById('close-miniplayer');
+            const miniplayer = document.getElementById('video-miniplayer');
+
+            // Load video
+            function loadVideo(index) {
+                if (index >= 0 && index < playlist.length) {
+                    currentIndex = index;
+                    video.src = playlist[currentIndex];
+                    video.load();
+                    playlistInfo.textContent = `${currentIndex + 1} / ${playlist.length}`;
+                }
+            }
+
+            // Play/Pause
+            playPauseBtn.addEventListener('click', () => {
+                if (video.paused) {
+                    video.play();
+                    playPauseBtn.textContent = '⏸️';
+                } else {
+                    video.pause();
+                    playPauseBtn.textContent = '▶️';
+                }
+            });
+
+            // Previous
+            prevBtn.addEventListener('click', () => {
+                loadVideo((currentIndex - 1 + playlist.length) % playlist.length);
+                video.play();
+                playPauseBtn.textContent = '⏸️';
+            });
+
+            // Next
+            nextBtn.addEventListener('click', () => {
+                loadVideo((currentIndex + 1) % playlist.length);
+                video.play();
+                playPauseBtn.textContent = '⏸️';
+            });
+
+            // Auto-play next video when current ends
+            video.addEventListener('ended', () => {
+                loadVideo((currentIndex + 1) % playlist.length);
+                video.play();
+            });
+
+            // Progress bar update
+            video.addEventListener('timeupdate', () => {
+                if (video.duration) {
+                    progressBar.value = (video.currentTime / video.duration) * 100;
+                }
+            });
+
+            // Seek functionality
+            progressBar.addEventListener('input', (e) => {
+                const seekTime = (e.target.value / 100) * video.duration;
+                video.currentTime = seekTime;
+            });
+
+            // Volume control
+            volumeSlider.addEventListener('input', (e) => {
+                video.volume = e.target.value / 100;
+                video.muted = false;
+            });
+
+            // Close miniplayer
+            closeBtn.addEventListener('click', () => {
+                miniplayer.classList.add('hidden');
+                video.pause();
+                // Save state to localStorage
+                localStorage.setItem('videoMiniplayerHidden', 'true');
+            });
+
+            // Check if miniplayer was previously closed
+            if (localStorage.getItem('videoMiniplayerHidden') === 'true') {
+                miniplayer.classList.add('hidden');
+            }
+
+            // Make miniplayer draggable
+            let isDragging = false;
+            let currentX, currentY, initialX, initialY;
+            const header = document.getElementById('video-miniplayer-header');
+
+            header.addEventListener('mousedown', dragStart);
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', dragEnd);
+
+            function dragStart(e) {
+                initialX = e.clientX - miniplayer.offsetLeft;
+                initialY = e.clientY - miniplayer.offsetTop;
+                if (e.target === header || e.target.parentElement === header) {
+                    isDragging = true;
+                    miniplayer.style.cursor = 'grabbing';
+                }
+            }
+
+            function drag(e) {
+                if (isDragging) {
+                    e.preventDefault();
+                    currentX = e.clientX - initialX;
+                    currentY = e.clientY - initialY;
+
+                    // Keep within viewport bounds
+                    const maxX = window.innerWidth - miniplayer.offsetWidth;
+                    const maxY = window.innerHeight - miniplayer.offsetHeight;
+                    
+                    currentX = Math.max(0, Math.min(currentX, maxX));
+                    currentY = Math.max(0, Math.min(currentY, maxY));
+
+                    miniplayer.style.left = currentX + 'px';
+                    miniplayer.style.top = currentY + 'px';
+                    miniplayer.style.bottom = 'auto';
+                }
+            }
+
+            function dragEnd() {
+                if (isDragging) {
+                    isDragging = false;
+                    miniplayer.style.cursor = 'move';
+                    // Save position to localStorage
+                    localStorage.setItem('videoMiniplayerX', miniplayer.style.left);
+                    localStorage.setItem('videoMiniplayerY', miniplayer.style.top);
+                }
+            }
+
+            // Restore saved position
+            const savedX = localStorage.getItem('videoMiniplayerX');
+            const savedY = localStorage.getItem('videoMiniplayerY');
+            if (savedX && savedY) {
+                miniplayer.style.left = savedX;
+                miniplayer.style.top = savedY;
+                miniplayer.style.bottom = 'auto';
+            }
+
+            // Initialize
+            loadVideo(0);
+            video.volume = 0.8;
+        })();
     </script>
 
 </body>
