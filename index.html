@@ -5296,8 +5296,8 @@ document.addEventListener('DOMContentLoaded', () => {
         position: fixed;
         bottom: 20px;
         left: 20px;
-        width: 280px;
-        height: auto;
+        width: 360px;
+        height: 320px;
         background: linear-gradient(135deg, rgba(10, 10, 20, 0.95), rgba(20, 20, 35, 0.95));
         border: 1.5px solid rgba(251, 191, 36, 0.5);
         border-radius: 16px;
@@ -5311,6 +5311,8 @@ document.addEventListener('DOMContentLoaded', () => {
         z-index: 999999;
         cursor: move;
         overflow: hidden;
+        display: flex;
+        flex-direction: column;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         user-select: none;
     ">
@@ -5373,6 +5375,7 @@ document.addEventListener('DOMContentLoaded', () => {
             background: linear-gradient(135deg, #000000, #0a0a0a);
             box-shadow: inset 0 1px 8px rgba(0, 0, 0, 0.7);
             min-height: 140px;
+            flex: 1;
         ">
             <div id="miniplayer-container" style="
                 width: 100%;
@@ -5416,6 +5419,7 @@ document.addEventListener('DOMContentLoaded', () => {
             padding: 12px 14px;
             background: linear-gradient(180deg, rgba(10, 10, 20, 0.6), rgba(0, 0, 0, 0.85));
             border-top: 1px solid rgba(251, 191, 36, 0.2);
+            margin-top: auto;
         ">
             <!-- Video Title -->
             <div id="video-title" style="
@@ -5675,7 +5679,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Make miniplayer draggable & resizable
             let isDragging = false;
             let isResizing = false;
-            let currentX, currentY, initialX, initialY, initialWidth, initialHeight;
+            let currentX, currentY, initialX, initialY, initialWidth, initialHeight, resizeAspect;
             const header = document.getElementById('video-miniplayer-header');
 
             // Create resize handle - clean design without weird shadows
@@ -5744,6 +5748,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 initialY = e.clientY;
                 initialWidth = miniplayer.offsetWidth;
                 initialHeight = miniplayer.offsetHeight;
+                resizeAspect = initialHeight / initialWidth;
                 document.body.style.userSelect = 'none';
             }
 
@@ -5752,17 +5757,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     e.preventDefault();
                     e.stopPropagation();
                     
-                    // Calculate new dimensions
+                    // Calculate new width and lock overall aspect ratio
                     const deltaX = e.clientX - initialX;
-                    const deltaY = e.clientY - initialY;
-                    
-                    // Resize width (maintain minimum)
-                    const newWidth = Math.max(200, Math.min(800, initialWidth + deltaX));
+                    const newWidth = Math.max(260, Math.min(800, initialWidth + deltaX));
+                    const newHeight = Math.round(newWidth * resizeAspect);
                     miniplayer.style.width = newWidth + 'px';
-                    
-                    // Auto-adjust height based on aspect ratio (16:9 video + controls)
-                    // Or allow free height resizing
-                    const newHeight = Math.max(150, initialHeight + deltaY);
                     miniplayer.style.height = newHeight + 'px';
                 }
             }
