@@ -6500,9 +6500,39 @@ document.addEventListener('DOMContentLoaded', () => {
         overflow: hidden;
         display: flex;
         flex-direction: column;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.6s cubic-bezier(0.2, 0.88, 0.1, 1);
         user-select: none;
+        opacity: 0;
+        transform: scale(0.95) translateY(20px);
+        pointer-events: none;
     ">
+        <!-- Fade-in intro overlay -->
+        <div id="wtv-intro-overlay" style="
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(180deg, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.3));
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 1;
+            transition: opacity 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.2s;
+            pointer-events: none;
+        ">
+            <div style="
+                text-align: center;
+                color: rgba(251, 191, 36, 0.6);
+                font-size: 14px;
+                font-weight: 700;
+                letter-spacing: 1.2px;
+                text-transform: uppercase;
+                font-family: 'Cinzel', serif;
+                text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+            ">Loading...</div>
+        </div>
         <!-- Drag Handle Header -->
         <div id="video-miniplayer-header" style="
             padding: 12px 16px;
@@ -6554,7 +6584,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </button>
         </div>
 
-        <!-- Video Container -->
+        <!-- Video Container with Fade-in -->
         <div style="
             position: relative;
             width: 100%;
@@ -6563,6 +6593,7 @@ document.addEventListener('DOMContentLoaded', () => {
             box-shadow: inset 0 1px 8px rgba(0, 0, 0, 0.7);
             min-height: 140px;
             flex: 1;
+            animation: wtv-fade-in 0.6s cubic-bezier(0.2, 0.88, 0.1, 1) 0.3s both;
         ">
             <div id="miniplayer-container" style="
                 width: 100%;
@@ -6772,15 +6803,28 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             const hideMiniplayer = () => {
-                miniplayer.classList.add('hidden');
+                miniplayer.classList.remove('show-wtv');
                 miniplayer.style.display = 'none';
+                miniplayer.style.opacity = '0';
+                miniplayer.style.pointerEvents = 'none';
                 localStorage.setItem('videoMiniplayerHidden', 'true');
                 setRestoreVisible(true);
             };
 
             const showMiniplayer = () => {
-                miniplayer.classList.remove('hidden');
                 miniplayer.style.display = 'flex';
+                miniplayer.style.pointerEvents = 'auto';
+                // Trigger fade-in animation
+                setTimeout(() => {
+                    miniplayer.classList.add('show-wtv');
+                }, 10);
+                // Fade out intro overlay after videos start
+                setTimeout(() => {
+                    const introOverlay = document.getElementById('wtv-intro-overlay');
+                    if (introOverlay) {
+                        introOverlay.classList.add('fade-out');
+                    }
+                }, 600);
                 localStorage.removeItem('videoMiniplayerHidden');
                 setRestoreVisible(false);
             };
@@ -6878,9 +6922,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('✅ WTV restore button shown');
             });
 
-            // WTV is OPEN by default - only hide if explicitly closed before
-            // Remove the check completely so WTV always starts open
-            // User can close it if they want, but default state is VISIBLE
+            // WTV is HIDDEN by default on first visit - user must click to open
+            const wasHiddenInitially = localStorage.getItem('videoMiniplayerHidden');
+            if (wasHiddenInitially === null) {
+                // First visit - hide by default
+                localStorage.setItem('videoMiniplayerHidden', 'true');
+                hideMiniplayer();
+            } else if (wasHiddenInitially === 'true') {
+                hideMiniplayer();
+            } else {
+                showMiniplayer();
+            }
 
             // Make miniplayer draggable & resizable
             let isDragging = false;
@@ -7004,17 +7056,19 @@ document.addEventListener('DOMContentLoaded', () => {
             // Store miniplayer reference globally for restore button
             window._wtvMiniplayer = miniplayer;
 
-            const wasHidden = localStorage.getItem('videoMiniplayerHidden') === 'true';
-            window._wtvHiddenAtLoad = wasHidden;
-            if (wasHidden) {
-                hideMiniplayer();
-            } else {
-                showMiniplayer();
-            }
-
             // Load first video
-            console.log('🎬 WTV initialized with local video playlist');
-            loadVideo(0);
+            console.log('🎬 WTV initialized - video loads on demand');
+            
+            // Add lazy-load video function
+            window._wtvLoadVideo = () => {
+                if (!videoLoaded) {
+                    console.log('🎬 Loading first WTV video...');
+                    loadVideo(0);
+                    videoLoaded = true;
+                }
+            };
+            
+            let videoLoaded = false;
         })();
     </script>
 
@@ -7096,6 +7150,27 @@ document.addEventListener('DOMContentLoaded', () => {
     </button>
 
     <style>
+        @keyframes wtv-fade-in {
+            from {
+                opacity: 0;
+                transform: translateY(4px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        #video-miniplayer.show-wtv {
+            opacity: 1 !important;
+            transform: scale(1) translateY(0) !important;
+            pointer-events: auto !important;
+        }
+
+        #video-miniplayer #wtv-intro-overlay.fade-out {
+            opacity: 0 !important;
+        }
+
         @keyframes wtv-pulse {
             0%, 100% {
                 box-shadow: 0 0 25px rgba(251, 191, 36, 0.6), inset 0 0 15px rgba(251, 191, 36, 0.2);
@@ -7128,10 +7203,21 @@ document.addEventListener('DOMContentLoaded', () => {
             window._wtvOpenDrawer = function() {
                 if (!miniplayer) return;
                 miniplayer.classList.remove('hidden', 'mobile-drawer-closed');
+                miniplayer.classList.add('show-wtv');
                 miniplayer.style.display = 'flex';
+                miniplayer.style.pointerEvents = 'auto';
                 if (overlay) overlay.style.display = 'block';
                 if (mobileTab) mobileTab.style.display = 'none';
                 localStorage.removeItem('videoMiniplayerHidden');
+                // Fade out intro
+                setTimeout(() => {
+                    const introOverlay = document.getElementById('wtv-intro-overlay');
+                    if (introOverlay) {
+                        introOverlay.classList.add('fade-out');
+                    }
+                }, 600);
+                // Load video
+                if (window._wtvLoadVideo) window._wtvLoadVideo();
             };
 
             window._wtvCloseDrawer = function() {
@@ -7171,6 +7257,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     window._wtvOpenDrawer();
                 } else if (origShow) {
                     origShow();
+                    if (window._wtvLoadVideo) window._wtvLoadVideo();
                 }
             };
 
@@ -7184,21 +7271,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // --- Desktop restore button ---
             if (restoreBtn && miniplayer) {
-                const hiddenAtLoad = window._wtvHiddenAtLoad || localStorage.getItem('videoMiniplayerHidden') === 'true';
+                const hiddenAtLoad = localStorage.getItem('videoMiniplayerHidden') === 'true';
                 if (hiddenAtLoad) {
                     if (isMobile()) {
                         miniplayer.classList.add('mobile-drawer-closed');
                         miniplayer.style.display = 'none';
+                        miniplayer.style.opacity = '0';
                         if (mobileTab) mobileTab.style.display = 'flex';
                     } else {
                         restoreBtn.style.display = 'flex';
-                        miniplayer.classList.add('hidden');
                         miniplayer.style.display = 'none';
+                        miniplayer.style.opacity = '0';
                     }
                 } else if (isMobile()) {
                     // WTV starts open on mobile: show drawer
                     miniplayer.classList.remove('mobile-drawer-closed');
+                    miniplayer.classList.add('show-wtv');
                     miniplayer.style.display = 'flex';
+                    miniplayer.style.opacity = '1';
                     if (mobileTab) mobileTab.style.display = 'none';
                     if (overlay) overlay.style.display = 'block';
                 }
