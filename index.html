@@ -6507,7 +6507,7 @@ document.addEventListener('DOMContentLoaded', () => {
         overflow: hidden;
         display: flex;
         flex-direction: column;
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.6s cubic-bezier(0.2, 0.88, 0.1, 1);
+        transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.6s cubic-bezier(0.2, 0.88, 0.1, 1), box-shadow 0.3s ease;
         user-select: none;
         opacity: 0;
         transform: scale(0.95) translateY(20px);
@@ -6783,20 +6783,20 @@ document.addEventListener('DOMContentLoaded', () => {
         (function() {
             // Google Drive video file IDs and titles
             const googleDriveVideos = [
+                '1VO1AQ0Fs0UjXVcayQBi5sKg5yt6nvRsS',  // Hear The Drums in the Distance
                 '16TQ9vT6-DBc4eBkNOEtispHbP29UxCuN',  // The Last Wizard
                 '16aRwSsYWfiUhvdpFTPZkqW7O7_FwdrNX',  // aWizard Magic
                 '1H9rR4Lx8_Cdr8QOTDA_gogSDT3zfjoDU',  // Sprout Magic
-                '1VO1AQ0Fs0UjXVcayQBi5sKg5yt6nvRsS',  // Hear The Drums in the Distance
                 '1G1ei4pCVrP6nJlIiBEWA63-S5sPurhRG',  // Keys Falls Slow Like Winter Rain
                 '14Wlka69GO-25-qv5lAFia0ctK8V2T7Sm',  // 🌱🧙‍♂️
                 '1TKn2oUN-OEjGdJfftmzNU0Jc2pJsQAXk'   // Astral Realm Caster
             ];
             
             const videoTitles = [
+                'Hear The Drums in the Distance',
                 'The Last Wizard',
                 'aWizard Magic',
                 'Sprout Magic',
-                'Hear The Drums in the Distance',
                 'Keys Falls Slow Like Winter Rain',
                 '🌱🧙‍♂️',
                 'Astral Realm Caster'
@@ -6959,8 +6959,24 @@ document.addEventListener('DOMContentLoaded', () => {
             // Make miniplayer draggable & resizable
             let isDragging = false;
             let isResizing = false;
-            let currentX, currentY, initialX, initialY, initialWidth, initialHeight, resizeAspect;
+            let dragStartX = 0;
+            let dragStartY = 0;
+            let startLeft = 0;
+            let startTop = 0;
+            let initialWidth = 0;
+            let initialHeight = 0;
+            let resizeAspect = 1;
             const header = document.getElementById('video-miniplayer-header');
+            const defaultTransition = miniplayer.style.transition;
+            const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+            const getBounds = () => {
+                const maxX = Math.max(0, window.innerWidth - miniplayer.offsetWidth);
+                const maxY = Math.max(0, window.innerHeight - miniplayer.offsetHeight);
+                return { maxX, maxY };
+            };
+            const setInteractionState = (active) => {
+                miniplayer.style.transition = active ? 'none' : defaultTransition;
+            };
 
             // Create resize handle - clean design without weird shadows
             const resizeHandle = document.createElement('div');
@@ -6979,29 +6995,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (e.target === resizeHandle || isResizing) {
                     return;
                 }
-                initialX = e.clientX - miniplayer.offsetLeft;
-                initialY = e.clientY - miniplayer.offsetTop;
+                const rect = miniplayer.getBoundingClientRect();
+                dragStartX = e.clientX;
+                dragStartY = e.clientY;
+                startLeft = rect.left;
+                startTop = rect.top;
                 if (e.target === header || e.target.parentElement === header || e.target.parentElement.parentElement === header) {
                     isDragging = true;
                     miniplayer.style.cursor = 'grabbing';
+                    document.body.style.userSelect = 'none';
+                    setInteractionState(true);
                 }
             }
 
             function drag(e) {
                 if (isDragging) {
                     e.preventDefault();
-                    currentX = e.clientX - initialX;
-                    currentY = e.clientY - initialY;
-
-                    const maxX = window.innerWidth - miniplayer.offsetWidth;
-                    const maxY = window.innerHeight - miniplayer.offsetHeight;
-                    
-                    currentX = Math.max(0, Math.min(currentX, maxX));
-                    currentY = Math.max(0, Math.min(currentY, maxY));
-
-                    miniplayer.style.left = currentX + 'px';
-                    miniplayer.style.top = currentY + 'px';
+                    const deltaX = e.clientX - dragStartX;
+                    const deltaY = e.clientY - dragStartY;
+                    const bounds = getBounds();
+                    const nextLeft = clamp(startLeft + deltaX, 0, bounds.maxX);
+                    const nextTop = clamp(startTop + deltaY, 0, bounds.maxY);
+                    miniplayer.style.left = Math.round(nextLeft) + 'px';
+                    miniplayer.style.top = Math.round(nextTop) + 'px';
                     miniplayer.style.bottom = 'auto';
+                    miniplayer.style.right = 'auto';
                 }
             }
 
@@ -7009,6 +7027,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (isDragging) {
                     isDragging = false;
                     miniplayer.style.cursor = 'move';
+                    document.body.style.userSelect = '';
+                    setInteractionState(false);
                     localStorage.setItem('videoMiniplayerX', miniplayer.style.left);
                     localStorage.setItem('videoMiniplayerY', miniplayer.style.top);
                 }
@@ -7024,12 +7044,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.stopPropagation();
                 isResizing = true;
                 isDragging = false; // Ensure dragging is off
-                initialX = e.clientX;
-                initialY = e.clientY;
-                initialWidth = miniplayer.offsetWidth;
-                initialHeight = miniplayer.offsetHeight;
+                const rect = miniplayer.getBoundingClientRect();
+                dragStartX = e.clientX;
+                dragStartY = e.clientY;
+                startLeft = rect.left;
+                startTop = rect.top;
+                initialWidth = rect.width;
+                initialHeight = rect.height;
                 resizeAspect = initialHeight / initialWidth;
                 document.body.style.userSelect = 'none';
+                setInteractionState(true);
             }
 
             function resize(e) {
@@ -7038,11 +7062,25 @@ document.addEventListener('DOMContentLoaded', () => {
                     e.stopPropagation();
                     
                     // Calculate new width and lock overall aspect ratio
-                    const deltaX = e.clientX - initialX;
-                    const newWidth = Math.max(260, Math.min(800, initialWidth + deltaX));
-                    const newHeight = Math.round(newWidth * resizeAspect);
-                    miniplayer.style.width = newWidth + 'px';
-                    miniplayer.style.height = newHeight + 'px';
+                    const deltaX = e.clientX - dragStartX;
+                    const maxWidth = Math.min(800, window.innerWidth - 20);
+                    const maxHeight = Math.min(800, window.innerHeight - 20);
+                    let newWidth = clamp(initialWidth + deltaX, 260, maxWidth);
+                    let newHeight = Math.round(newWidth * resizeAspect);
+                    if (newHeight > maxHeight) {
+                        newHeight = maxHeight;
+                        newWidth = Math.round(newHeight / resizeAspect);
+                    }
+                    miniplayer.style.width = Math.round(newWidth) + 'px';
+                    miniplayer.style.height = Math.round(newHeight) + 'px';
+
+                    const bounds = getBounds();
+                    const nextLeft = clamp(startLeft, 0, bounds.maxX);
+                    const nextTop = clamp(startTop, 0, bounds.maxY);
+                    miniplayer.style.left = Math.round(nextLeft) + 'px';
+                    miniplayer.style.top = Math.round(nextTop) + 'px';
+                    miniplayer.style.bottom = 'auto';
+                    miniplayer.style.right = 'auto';
                 }
             }
 
@@ -7050,6 +7088,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (isResizing) {
                     isResizing = false;
                     document.body.style.userSelect = '';
+                    setInteractionState(false);
                     localStorage.setItem('videoMiniplayerWidth', miniplayer.style.width);
                     localStorage.setItem('videoMiniplayerHeight', miniplayer.style.height);
                 }
