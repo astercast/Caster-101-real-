@@ -4277,14 +4277,14 @@ function mergeChiaNFTs(cols1, cols2) {
 function forceChiaRefresh() {
     // Clear the unified Chia cache then reload treasury
     try {
+        localStorage.removeItem('awiz_chia_treasury_v3');
+        localStorage.removeItem('awiz_chia_wallets_v3');
         localStorage.removeItem('awizard_chia_tokens_v2');
         localStorage.removeItem('awizard_chia_tokens_v3');
         localStorage.removeItem('awizard_chia_tokens_v6');
         localStorage.removeItem('awizard_chia_tokens_v7');
         localStorage.removeItem('awizard_cat_prices_v1'); // also clear emoji market price cache
     } catch {}
-    const el = document.getElementById('chia-cache-age');
-    if (el) { el.textContent = '⏳ refreshing…'; el.style.display = 'inline'; }
     _treasuryLastLoad = 0; // reset cooldown so it can reload immediately
     loadComprehensiveTreasury();
 }
@@ -4431,9 +4431,8 @@ async function loadComprehensiveTreasury() {
                                 console.log('✅ Snapshot is fresh (<3h), using it');
                                 return cached;
                             } else {
-                                console.log('⌛ Snapshot is old (>3h), returning it but will refresh in background');
-                                // Return stale cache immediately, refresh will happen on next call or in background
-                                return cached;
+                                console.log('⌛ Snapshot is old (>3h), refreshing from Spacescan');
+                                // Continue to fetch fresh data; fall back to cached if fetch fails
                             }
                         }
                     }
