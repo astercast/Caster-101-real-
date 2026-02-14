@@ -640,13 +640,13 @@
                 <div class="left-tab-icon">🌾</div>
                 <div class="left-tab-label">FARM</div>
             </div>
-            <div class="left-tab" id="forest-tab" onclick="game.switchArea('forest')" title="Forest">
-                <div class="left-tab-icon">🌲</div>
-                <div class="left-tab-label">FOREST</div>
-            </div>
             <div class="left-tab" id="mine-tab" onclick="game.switchArea('mine')" title="Mine">
                 <div class="left-tab-icon">⛏️</div>
                 <div class="left-tab-label">MINE</div>
+            </div>
+            <div class="left-tab" id="forest-tab" onclick="game.switchArea('forest')" title="Forest">
+                <div class="left-tab-icon">🌲</div>
+                <div class="left-tab-label">FOREST</div>
             </div>
             <div class="left-tab" id="fishing-tab" onclick="game.switchArea('fishing')" title="Fishing">
                 <div class="left-tab-icon">🎣</div>
@@ -4064,36 +4064,36 @@
 
             switchArea(area) {
                 if (area === 'mine' && !this.unlockedAreas.mine) {
-                    if (this.essence >= 200) {
-                        this.essence -= 200;
+                    if (this.essence >= 250) {
+                        this.essence -= 250;
                         this.unlockedAreas.mine = true;
                         this.showToast('⛏️ Mine unlocked!');
                         this.updateUI();
                         this.updateAreaTabs();
                     } else {
-                        this.showToast('Need 200 SP');
+                        this.showToast('Need 250 SP');
                         return;
                     }
                 } else if (area === 'forest' && !this.unlockedAreas.forest) {
-                    if (this.essence >= 1000) {
-                        this.essence -= 1000;
+                    if (this.essence >= 1500) {
+                        this.essence -= 1500;
                         this.unlockedAreas.forest = true;
                         this.showToast('🌲 Forest unlocked!');
                         this.updateUI();
                         this.updateAreaTabs();
                     } else {
-                        this.showToast('Need 1000 SP');
+                        this.showToast('Need 1500 SP');
                         return;
                     }
                 } else if (area === 'fishing' && !this.unlockedAreas.fishing) {
-                    if (this.essence >= 3000) {
-                        this.essence -= 3000;
+                    if (this.essence >= 4500) {
+                        this.essence -= 4500;
                         this.unlockedAreas.fishing = true;
                         this.showToast('🎣 Fishing unlocked!');
                         this.updateUI();
                         this.updateAreaTabs();
                     } else {
-                        this.showToast('Need 3000 SP');
+                        this.showToast('Need 4500 SP');
                         return;
                     }
                 } else if (area === 'astral' && !this.unlockedAreas.astral) {
@@ -4103,7 +4103,7 @@
                         this.showToast('✨ Astral unlocked!');
                         this.updateAreaTabs();
                     } else {
-                        this.showToast(`Need ${required - this.completedAchievements.length} more!`);
+                        this.showToast(`Need ${required - this.completedAchievements.length} more achievements!`);
                         return;
                     }
                 }
