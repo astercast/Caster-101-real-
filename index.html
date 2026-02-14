@@ -1529,7 +1529,10 @@
 
             .holdings-column-header {
                 padding: 8px 6px !important;
-                min-height: 40px !important;
+                min-height: 88px !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
             }
 
             .header-title {
@@ -1556,6 +1559,12 @@
                 font-family: 'Space Grotesk', sans-serif !important;
                 font-size: 13px !important;
                 font-variant-numeric: tabular-nums !important;
+            }
+
+            /* Hide refresh button and last updated on mobile for uniformity */
+            #refresh-chia-treasury,
+            #chia-last-updated {
+                display: none !important;
             }
 
             .holdings-list {
