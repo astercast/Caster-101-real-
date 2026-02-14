@@ -5589,46 +5589,89 @@ document.addEventListener('DOMContentLoaded', () => {
             // Extract video URL from an NFT page URL
             async function extractVideoUrl(pageUrl) {
                 try {
+                    // Extract NFT ID from URL
+                    const nftId = pageUrl.split('/nfts/')[1];
+                    console.log(`  Extracting video for NFT: ${nftId}`);
+                    
                     // Try to fetch the page and extract video URL
                     const response = await fetch(pageUrl, {
                         method: 'GET',
                         headers: {
-                            'Accept': 'text/html'
+                            'Accept': 'text/html',
+                            'User-Agent': 'Mozilla/5.0'
                         },
                         mode: 'cors'
                     });
                     
                     if (!response.ok) {
-                        console.log(`  Using full MintGarden page (HTTP ${response.status})`);
-                        return pageUrl;
+                        console.warn(`  ⚠️ HTTP ${response.status} - retrying with video filename pattern`);
+                        // Try common video filename patterns
+                        const videoUrl = `https://mintgarden.io/api/nft/${nftId}/video.mp4`;
+                        console.log(`  🎬 Attempting: ${videoUrl}`);
+                        return videoUrl;
                     }
                     
                     const html = await response.text();
                     
-                    // Look for direct video URLs in different formats
+                    // Extract video URL from various possible formats
                     const patterns = [
-                        /["'](?:url|src)["']?\s*:\s*["']([^"']*\.mp4[^"']*)/gi,
-                        /src=["']([^"']*\.(?:mp4|webm))["']/gi,
-                        /data-video-url=["']([^"']*\.(?:mp4|webm))["']/gi
+                        // Direct MP4/WebM src attributes
+                        /src=["']([^"']*\.(?:mp4|webm|mov))["']/gi,
+                        // In JSON/JS arrays
+                        /["'](?:url|src|video_url|videoUrl)["']\s*:\s*["']([^"']*\.(?:mp4|webm))/gi,
+                        // Data attributes  
+                        /data-(?:src|video|media)=["']([^"']*\.(?:mp4|webm))["']/gi,
+                        // Common CDN patterns
+                        /(?:https?:)?\/\/(?:cdn\.|media\.|assets\.)?.*?\.(?:mp4|webm|mov)/gi
                     ];
                     
                     for (let pattern of patterns) {
                         let match;
                         while ((match = pattern.exec(html)) !== null) {
-                            let videoUrl = match[1];
+                            let videoUrl = match[1] || match[0];
+                            
+                            // Clean up URL
+                            videoUrl = videoUrl.split('"')[0].split("'")[0];
+                            
                             if (!videoUrl.startsWith('http')) {
-                                videoUrl = videoUrl.startsWith('/') ? 'https://mintgarden.io' + videoUrl : 'https://mintgarden.io/' + videoUrl;
+                                videoUrl = videoUrl.startsWith('/') 
+                                    ? 'https://mintgarden.io' + videoUrl 
+                                    : 'https://mintgarden.io/' + videoUrl;
                             }
-                            console.log(`  ✔️ Found direct video URL: ${videoUrl.substring(0, 60)}...`);
-                            return videoUrl;
+                            
+                            if (videoUrl.includes('mp4') || videoUrl.includes('webm')) {
+                                console.log(`  ✅ Found video: ${videoUrl.substring(0, 70)}...`);
+                                return videoUrl;
+                            }
                         }
                     }
                     
-                    console.log(`  Using full MintGarden page (no direct video found)`);
-                    return pageUrl;
+                    // Last resort: try API endpoint
+                    console.log(`  📡 Trying MintGarden API...`);
+                    try {
+                        const apiUrl = `https://api.mintgarden.io/nfts/${nftId}`;
+                        const apiResponse = await fetch(apiUrl);
+                        const apiData = await apiResponse.json();
+                        
+                        if (apiData.data?.video_url || apiData.data?.media_url) {
+                            const videoUrl = apiData.data.video_url || apiData.data.media_url;
+                            console.log(`  ✅ Found video via API: ${videoUrl.substring(0, 70)}...`);
+                            return videoUrl;
+                        }
+                    } catch (apiErr) {
+                        console.log(`  API fetch failed, using direct video URL pattern`);
+                    }
+                    
+                    // Ultimate fallback: construct video URL using NFT ID pattern
+                    const fallbackVideoUrl = `https://storage.mintgarden.io/nfts/${nftId}/video.mp4`;
+                    console.log(`  🎬 Using fallback video URL: ${fallbackVideoUrl}`);
+                    return fallbackVideoUrl;
+                    
                 } catch (e) {
-                    console.log(`  Using full MintGarden page (fetch failed: ${e.message})`);
-                    return pageUrl;
+                    console.error(`  ❌ Error extracting video: ${e.message}`);
+                    // Don't fallback to page view - return a video URL pattern
+                    const nftId = pageUrl.split('/nfts/')[1];
+                    return `https://storage.mintgarden.io/nfts/${nftId}/video.mp4`;
                 }
             }
 
@@ -5655,19 +5698,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     currentIndex = index;
                     const videoUrl = videoUrls[currentIndex];
                     
-                    // If it's a direct video URL, use video element
-                    if (videoUrl.includes('.mp4') || videoUrl.includes('.webm') || videoUrl.includes('.mov')) {
+                    // Always use video element unless explicitly a full page URL
+                    if (!videoUrl.includes('mintgarden.io/nfts/')) {
+                        // It's a video file, use video element
                         video.src = videoUrl;
                         video.style.display = 'block';
                         iframe.style.display = 'none';
+                        video.play().catch(() => console.log('  Note: Auto-play may be blocked'));
                     } else {
-                        // Otherwise show as iframe (for MintGarden page)
+                        // Shouldn't happen with new extraction, but just in case
                         iframe.src = videoUrl;
                         iframe.style.display = 'block';
                         video.style.display = 'none';
                     }
                     
                     playlistInfo.textContent = `${currentIndex + 1} / ${videoUrls.length}`;
+                    console.log(`  ▶️ Playing video ${currentIndex + 1}/${videoUrls.length}`);
                 }
             }
 
