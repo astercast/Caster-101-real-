@@ -5597,7 +5597,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     // Extract NFT ID from URL
                     const nftId = pageUrl.split('/nfts/')[1];
-                    console.log(`  Extracting video for NFT: ${nftId}`);
+                    console.log(`  📺 Loading NFT: ${nftId.substring(0, 30)}...`);
                     
                     // Try to fetch the page and extract video URL
                     const response = await fetch(pageUrl, {
@@ -5610,11 +5610,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                     
                     if (!response.ok) {
-                        console.warn(`  ⚠️ HTTP ${response.status} - retrying with video filename pattern`);
-                        // Try common video filename patterns
-                        const videoUrl = `https://mintgarden.io/api/nft/${nftId}/video.mp4`;
-                        console.log(`  🎬 Attempting: ${videoUrl}`);
-                        return videoUrl;
+                        console.log(`  🌐 Using embedded MintGarden player (HTTP ${response.status})`);
+                        return pageUrl;
                     }
                     
                     const html = await response.text();
@@ -5624,11 +5621,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         // Direct MP4/WebM src attributes
                         /src=["']([^"']*\.(?:mp4|webm|mov))["']/gi,
                         // In JSON/JS arrays
-                        /["'](?:url|src|video_url|videoUrl)["']\s*:\s*["']([^"']*\.(?:mp4|webm))/gi,
+                        /["'](?:url|src|video_url|videoUrl|media_url)["']\s*:\s*["']([^"']*\.(?:mp4|webm))/gi,
                         // Data attributes  
                         /data-(?:src|video|media)=["']([^"']*\.(?:mp4|webm))["']/gi,
-                        // Common CDN patterns
-                        /(?:https?:)?\/\/(?:cdn\.|media\.|assets\.)?.*?\.(?:mp4|webm|mov)/gi
+                        // CDN patterns (ipfs, arweave, etc)
+                        /(https?:\/\/[^"'\s]+\.(?:mp4|webm|mov))/gi
                     ];
                     
                     for (let pattern of patterns) {
@@ -5637,23 +5634,26 @@ document.addEventListener('DOMContentLoaded', () => {
                             let videoUrl = match[1] || match[0];
                             
                             // Clean up URL
-                            videoUrl = videoUrl.split('"')[0].split("'")[0];
+                            videoUrl = videoUrl.split('"')[0].split("'")[0].split('\\')[0];
                             
+                            // Make sure it's absolute
                             if (!videoUrl.startsWith('http')) {
-                                videoUrl = videoUrl.startsWith('/') 
-                                    ? 'https://mintgarden.io' + videoUrl 
-                                    : 'https://mintgarden.io/' + videoUrl;
+                                if (videoUrl.startsWith('/')) {
+                                    videoUrl = 'https://mintgarden.io' + videoUrl;
+                                } else if (videoUrl.startsWith('ipfs://')) {
+                                    videoUrl = 'https://ipfs.io/ipfs/' + videoUrl.substring(7);
+                                }
                             }
                             
                             if (videoUrl.includes('mp4') || videoUrl.includes('webm')) {
-                                console.log(`  ✅ Found video: ${videoUrl.substring(0, 70)}...`);
+                                console.log(`  ✅ Found direct video: ${videoUrl.substring(0, 60)}...`);
                                 return videoUrl;
                             }
                         }
                     }
                     
-                    // Last resort: try API endpoint
-                    console.log(`  📡 Trying MintGarden API...`);
+                    // Try API endpoint
+                    console.log(`  📡 Checking MintGarden API...`);
                     try {
                         const apiUrl = `https://api.mintgarden.io/nfts/${nftId}`;
                         const apiResponse = await fetch(apiUrl);
@@ -5661,23 +5661,20 @@ document.addEventListener('DOMContentLoaded', () => {
                         
                         if (apiData.data?.video_url || apiData.data?.media_url) {
                             const videoUrl = apiData.data.video_url || apiData.data.media_url;
-                            console.log(`  ✅ Found video via API: ${videoUrl.substring(0, 70)}...`);
+                            console.log(`  ✅ Found video via API: ${videoUrl.substring(0, 60)}...`);
                             return videoUrl;
                         }
                     } catch (apiErr) {
-                        console.log(`  API fetch failed, using direct video URL pattern`);
+                        console.log(`  ⚠️ API not available`);
                     }
                     
-                    // Ultimate fallback: construct video URL using NFT ID pattern
-                    const fallbackVideoUrl = `https://storage.mintgarden.io/nfts/${nftId}/video.mp4`;
-                    console.log(`  🎬 Using fallback video URL: ${fallbackVideoUrl}`);
-                    return fallbackVideoUrl;
+                    // Fallback: Use MintGarden's embedded player
+                    console.log(`  🌐 Using embedded MintGarden player`);
+                    return pageUrl;
                     
                 } catch (e) {
-                    console.error(`  ❌ Error extracting video: ${e.message}`);
-                    // Don't fallback to page view - return a video URL pattern
-                    const nftId = pageUrl.split('/nfts/')[1];
-                    return `https://storage.mintgarden.io/nfts/${nftId}/video.mp4`;
+                    console.log(`  🌐 Using embedded MintGarden player (${e.message})`);
+                    return pageUrl;
                 }
             }
 
@@ -5704,22 +5701,29 @@ document.addEventListener('DOMContentLoaded', () => {
                     currentIndex = index;
                     const videoUrl = videoUrls[currentIndex];
                     
-                    // Always use video element unless explicitly a full page URL
-                    if (!videoUrl.includes('mintgarden.io/nfts/')) {
-                        // It's a video file, use video element
-                        video.src = videoUrl;
-                        video.style.display = 'block';
-                        iframe.style.display = 'none';
-                        video.play().catch(() => console.log('  Note: Auto-play may be blocked'));
-                    } else {
-                        // Shouldn't happen with new extraction, but just in case
+                    // Check if it's a direct video URL or a MintGarden page
+                    if (videoUrl.includes('mintgarden.io/nfts/')) {
+                        // It's a MintGarden page - use iframe to show embedded player
                         iframe.src = videoUrl;
                         iframe.style.display = 'block';
                         video.style.display = 'none';
+                        console.log(`  🌐 Loading embedded player ${currentIndex + 1}/${videoUrls.length}`);
+                    } else if (videoUrl.includes('.mp4') || videoUrl.includes('.webm') || videoUrl.includes('.mov') || videoUrl.includes('ipfs')) {
+                        // It's a direct video file - use video element
+                        video.src = videoUrl;
+                        video.style.display = 'block';
+                        iframe.style.display = 'none';
+                        video.play().catch(err => console.log('  ℹ️ Auto-play blocked by browser'));
+                        console.log(`  ▶️ Playing direct video ${currentIndex + 1}/${videoUrls.length}`);
+                    } else {
+                        // Unknown format - try iframe
+                        iframe.src = videoUrl;
+                        iframe.style.display = 'block';
+                        video.style.display = 'none';
+                        console.log(`  🌐 Loading in iframe ${currentIndex + 1}/${videoUrls.length}`);
                     }
                     
                     playlistInfo.textContent = `${currentIndex + 1} / ${videoUrls.length}`;
-                    console.log(`  ▶️ Playing video ${currentIndex + 1}/${videoUrls.length}`);
                 }
             }
 
