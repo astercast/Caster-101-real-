@@ -1163,66 +1163,96 @@
                 letter-spacing: 0.02em !important;
             }
 
-            /* Market Columns — stack vertically */
+            /* Market Columns — SIDE BY SIDE on mobile */
             .market-columns {
-                flex-direction: column !important;
-                gap: 16px !important;
+                flex-direction: row !important;
+                gap: 6px !important;
             }
 
             .market-column {
-                flex: none !important;
-                width: 100% !important;
-                padding: 4px !important;
-                border-radius: 14px !important;
+                flex: 1 !important;
+                min-width: 0 !important;
+                width: 50% !important;
+                padding: 3px !important;
+                border-radius: 12px !important;
             }
 
             .column-header {
                 font-family: 'Space Grotesk', sans-serif !important;
-                font-size: 14px !important;
+                font-size: 12px !important;
                 font-weight: 700 !important;
-                padding: 12px !important;
-                margin-bottom: 10px !important;
-                border-radius: 12px !important;
+                padding: 8px 6px !important;
+                margin-bottom: 6px !important;
+                border-radius: 8px !important;
                 letter-spacing: 0.04em !important;
                 text-transform: uppercase !important;
             }
 
-            /* Token Cards — clean, modern */
+            /* Token Cards — compact vertical layout for half-width */
             .token-card {
-                padding: 14px 16px !important;
-                margin-bottom: 8px !important;
-                border-radius: 14px !important;
+                padding: 10px 8px !important;
+                margin-bottom: 6px !important;
+                border-radius: 10px !important;
                 border-width: 1px !important;
             }
 
             .token-grid {
-                gap: 8px !important;
+                gap: 6px !important;
             }
 
+            /* Reflow token-header to vertical stack */
             .token-header {
-                gap: 8px !important;
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 6px !important;
             }
 
+            /* Top row: emoji + name */
             .token-info {
-                gap: 10px !important;
+                gap: 8px !important;
+                width: 100% !important;
+            }
+
+            /* Shrink the emoji icon box */
+            .token-info > div:first-child {
+                width: 32px !important;
+                height: 32px !important;
+                min-width: 32px !important;
+                border-radius: 8px !important;
             }
 
             .token-symbol {
-                font-size: 24px !important;
+                font-size: 16px !important;
             }
 
             .token-name {
                 font-family: 'Space Grotesk', sans-serif !important;
-                font-size: 14px !important;
+                font-size: 11px !important;
                 font-weight: 600 !important;
                 letter-spacing: 0.02em !important;
                 text-transform: uppercase !important;
                 color: rgba(255, 255, 255, 0.95) !important;
+                line-height: 1.3 !important;
+                word-break: break-word !important;
+            }
+
+            /* Chain label under name */
+            .token-info div:last-child > div:last-child {
+                font-size: 8px !important;
+            }
+
+            /* Price + change row: full width, left-aligned */
+            .token-header > div:last-child {
+                text-align: left !important;
+                width: 100% !important;
+                display: flex !important;
+                align-items: baseline !important;
+                gap: 6px !important;
             }
 
             .token-price {
                 font-family: 'Space Grotesk', sans-serif !important;
-                font-size: 16px !important;
+                font-size: 13px !important;
                 font-weight: 700 !important;
                 letter-spacing: -0.01em !important;
                 font-variant-numeric: tabular-nums !important;
@@ -1230,9 +1260,25 @@
 
             .token-change {
                 font-family: 'Inter', sans-serif !important;
-                font-size: 12px !important;
+                font-size: 10px !important;
                 font-weight: 600 !important;
                 font-variant-numeric: tabular-nums !important;
+                margin-top: 0 !important;
+            }
+
+            /* Market cap footer row — tighter */
+            .token-card > div:last-child {
+                margin-top: 6px !important;
+                padding-top: 6px !important;
+                padding: 4px 0 !important;
+            }
+
+            .token-card > div:last-child span:first-child {
+                font-size: 8px !important;
+            }
+
+            .token-card > div:last-child span:last-child {
+                font-size: 11px !important;
             }
 
             /* Merkl Magic Box */
@@ -1346,47 +1392,57 @@
                 font-variant-numeric: tabular-nums !important;
             }
 
-            /* Holdings — Single Column Stack */
+            /* Holdings — SIDE BY SIDE on mobile */
             .holdings-split {
-                grid-template-columns: 1fr !important;
-                gap: 14px !important;
+                grid-template-columns: 1fr 1fr !important;
+                gap: 8px !important;
             }
 
             .holdings-column {
-                border-radius: 16px !important;
+                border-radius: 12px !important;
+                min-width: 0 !important;
             }
 
             .holdings-column-header {
-                padding: 16px !important;
+                padding: 10px 8px !important;
             }
 
             .header-title {
                 font-family: 'Space Grotesk', sans-serif !important;
-                font-size: 16px !important;
+                font-size: 12px !important;
                 font-weight: 700 !important;
                 flex-wrap: wrap !important;
-                gap: 8px !important;
+                gap: 4px !important;
                 letter-spacing: 0 !important;
+            }
+
+            .header-title .header-icon {
+                font-size: 16px !important;
             }
 
             .header-stats {
                 font-family: 'Inter', sans-serif !important;
-                font-size: 12px !important;
+                font-size: 10px !important;
+                flex-direction: column !important;
+                gap: 2px !important;
             }
 
             .column-total {
                 font-family: 'Space Grotesk', sans-serif !important;
+                font-size: 13px !important;
                 font-variant-numeric: tabular-nums !important;
             }
 
             .holdings-list {
-                max-height: none !important;
-                padding: 10px !important;
+                max-height: 400px !important;
+                overflow-y: auto !important;
+                padding: 6px !important;
             }
 
+            /* Treasury split — SIDE BY SIDE */
             .treasury-split {
-                grid-template-columns: 1fr !important;
-                gap: 10px !important;
+                grid-template-columns: 1fr 1fr !important;
+                gap: 8px !important;
             }
 
             /* NFT Collections */
@@ -1486,22 +1542,50 @@
                 font-family: 'Inter', sans-serif !important;
             }
 
-            /* ── Video Miniplayer — Mobile-friendly ── */
+            /* ── Video Miniplayer — Right-edge slide-out drawer ── */
             #video-miniplayer {
-                width: 280px !important;
-                height: 260px !important;
-                border-radius: 14px !important;
-                bottom: 12px !important;
-                left: 12px !important;
+                position: fixed !important;
+                top: 0 !important;
+                right: 0 !important;
+                left: auto !important;
+                bottom: 0 !important;
+                width: 82vw !important;
+                max-width: 340px !important;
+                height: 100vh !important;
+                height: 100dvh !important;
+                border-radius: 20px 0 0 20px !important;
+                border-right: none !important;
+                transform: translateX(0) !important;
+                transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                cursor: default !important;
+                z-index: 999999 !important;
+                flex-direction: column !important;
+                overflow-y: auto !important;
+                box-shadow: -8px 0 40px rgba(0,0,0,0.7), 0 0 30px rgba(251,191,36,0.15) !important;
             }
 
+            #video-miniplayer.mobile-drawer-closed {
+                transform: translateX(100%) !important;
+                pointer-events: none !important;
+            }
+
+            /* Disable drag on mobile */
+            #video-miniplayer-header {
+                cursor: default !important;
+            }
+
+            /* Dark overlay when drawer is open */
+            #wtv-drawer-overlay {
+                display: block !important;
+            }
+
+            /* Restore button → right-edge pull tab */
             #wtv-restore-btn {
-                width: 56px !important;
-                height: 56px !important;
-                border-radius: 14px !important;
-                bottom: 12px !important;
-                left: 12px !important;
-                border-width: 2px !important;
+                display: none !important;
+            }
+
+            #wtv-mobile-tab {
+                display: flex !important;
             }
 
             /* ── Inline style overrides for font consistency ── */
@@ -1565,23 +1649,42 @@
             }
 
             .token-symbol {
-                font-size: 20px !important;
-            }
-
-            .token-name {
-                font-size: 13px !important;
-            }
-
-            .token-price {
                 font-size: 14px !important;
             }
 
-            .token-change {
+            .token-name {
+                font-size: 10px !important;
+            }
+
+            .token-price {
                 font-size: 11px !important;
             }
 
+            .token-change {
+                font-size: 9px !important;
+            }
+
             .column-header {
-                font-size: 13px !important;
+                font-size: 11px !important;
+                padding: 6px 4px !important;
+            }
+
+            .token-card {
+                padding: 8px 6px !important;
+            }
+
+            .token-info > div:first-child {
+                width: 26px !important;
+                height: 26px !important;
+                min-width: 26px !important;
+            }
+
+            .header-title {
+                font-size: 11px !important;
+            }
+
+            .holdings-column-header {
+                padding: 8px 6px !important;
             }
 
             #portfolio-grand-total {
@@ -1617,22 +1720,10 @@
                 font-size: 11px !important;
             }
 
+            /* 480px - drawer stays same, tab stays same */
             #video-miniplayer {
-                width: 240px !important;
-                height: 230px !important;
-                bottom: 8px !important;
-                left: 8px !important;
-            }
-
-            #wtv-restore-btn {
-                width: 48px !important;
-                height: 48px !important;
-                bottom: 8px !important;
-                left: 8px !important;
-            }
-
-            #wtv-restore-btn span:last-child {
-                display: none !important;
+                width: 88vw !important;
+                max-width: 320px !important;
             }
         }
 
@@ -6503,7 +6594,51 @@ document.addEventListener('DOMContentLoaded', () => {
         })();
     </script>
 
-    <!-- WTV Restore Button - More Visible -->
+    <!-- WTV Drawer Overlay (mobile only) -->
+    <div id="wtv-drawer-overlay" style="
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.55);
+        z-index: 999998;
+        backdrop-filter: blur(2px);
+        -webkit-backdrop-filter: blur(2px);
+        transition: opacity 0.3s;
+    " onclick="if(window._wtvCloseDrawer) window._wtvCloseDrawer();"></div>
+
+    <!-- WTV Mobile Edge Tab (right side pull handle) -->
+    <button id="wtv-mobile-tab" style="
+        display: none;
+        position: fixed;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 36px;
+        height: 80px;
+        background: linear-gradient(180deg, rgba(251,191,36,0.9), rgba(220,38,38,0.5));
+        border: 2px solid rgba(251,191,36,0.8);
+        border-right: none;
+        border-radius: 12px 0 0 12px;
+        color: white;
+        font-size: 18px;
+        cursor: pointer;
+        z-index: 999997;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        box-shadow: -4px 0 20px rgba(251,191,36,0.35);
+        transition: all 0.25s;
+        font-family: 'Space Grotesk', sans-serif;
+        writing-mode: vertical-rl;
+        text-orientation: mixed;
+        padding: 6px 2px;
+        animation: wtv-tab-glow 3s infinite;
+    " onclick="if(window._wtvOpenDrawer) window._wtvOpenDrawer();">
+        <span style="font-size: 16px; writing-mode: horizontal-tb;">🎬</span>
+    </button>
+
+    <!-- WTV Restore Button - More Visible (desktop only) -->
     <button id="wtv-restore-btn" style="
         position: fixed;
         bottom: 20px;
@@ -6545,38 +6680,139 @@ document.addEventListener('DOMContentLoaded', () => {
                 box-shadow: 0 0 40px rgba(251, 191, 36, 0.9), inset 0 0 20px rgba(251, 191, 36, 0.4);
             }
         }
+        @keyframes wtv-tab-glow {
+            0%, 100% {
+                box-shadow: -4px 0 20px rgba(251, 191, 36, 0.3);
+            }
+            50% {
+                box-shadow: -4px 0 30px rgba(251, 191, 36, 0.6), 0 0 12px rgba(251, 191, 36, 0.2);
+            }
+        }
     </style>
 
     <script>
-        // WTV Restore Button Handler - runs after button is in DOM
+        // WTV Restore Button Handler + Mobile Drawer Logic
         (function() {
             const restoreBtn = document.getElementById('wtv-restore-btn');
             const miniplayer = window._wtvMiniplayer || document.getElementById('video-miniplayer');
-            
+            const mobileTab = document.getElementById('wtv-mobile-tab');
+            const overlay = document.getElementById('wtv-drawer-overlay');
+
+            const isMobile = () => window.innerWidth <= 768;
+
+            // --- Mobile drawer open/close ---
+            window._wtvOpenDrawer = function() {
+                if (!miniplayer) return;
+                miniplayer.classList.remove('hidden', 'mobile-drawer-closed');
+                miniplayer.style.display = 'flex';
+                if (overlay) overlay.style.display = 'block';
+                if (mobileTab) mobileTab.style.display = 'none';
+                localStorage.removeItem('videoMiniplayerHidden');
+            };
+
+            window._wtvCloseDrawer = function() {
+                if (!miniplayer) return;
+                miniplayer.classList.add('mobile-drawer-closed');
+                if (overlay) overlay.style.display = 'none';
+                if (mobileTab) mobileTab.style.display = 'flex';
+                // After slide-out animation finishes, fully hide
+                setTimeout(() => {
+                    if (miniplayer.classList.contains('mobile-drawer-closed')) {
+                        miniplayer.style.display = 'none';
+                        localStorage.setItem('videoMiniplayerHidden', 'true');
+                    }
+                }, 400);
+            };
+
+            // Override close button behavior on mobile
+            const closeBtn = document.getElementById('close-miniplayer');
+            if (closeBtn) {
+                const origClose = closeBtn.onclick;
+                closeBtn.addEventListener('click', (e) => {
+                    if (isMobile()) {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        window._wtvCloseDrawer();
+                        return false;
+                    }
+                });
+            }
+
+            // Override show/hide for mobile awareness
+            const origShow = window._showWtvMiniplayer;
+            const origHide = window._hideWtvMiniplayer;
+
+            window._showWtvMiniplayer = function() {
+                if (isMobile()) {
+                    window._wtvOpenDrawer();
+                } else if (origShow) {
+                    origShow();
+                }
+            };
+
+            window._hideWtvMiniplayer = function() {
+                if (isMobile()) {
+                    window._wtvCloseDrawer();
+                } else if (origHide) {
+                    origHide();
+                }
+            };
+
+            // --- Desktop restore button ---
             if (restoreBtn && miniplayer) {
                 const hiddenAtLoad = window._wtvHiddenAtLoad || localStorage.getItem('videoMiniplayerHidden') === 'true';
                 if (hiddenAtLoad) {
-                    restoreBtn.style.display = 'flex';
-                    miniplayer.classList.add('hidden');
-                    miniplayer.style.display = 'none';
+                    if (isMobile()) {
+                        miniplayer.classList.add('mobile-drawer-closed');
+                        miniplayer.style.display = 'none';
+                        if (mobileTab) mobileTab.style.display = 'flex';
+                    } else {
+                        restoreBtn.style.display = 'flex';
+                        miniplayer.classList.add('hidden');
+                        miniplayer.style.display = 'none';
+                    }
+                } else if (isMobile()) {
+                    // WTV starts open on mobile: show drawer
+                    miniplayer.classList.remove('mobile-drawer-closed');
+                    miniplayer.style.display = 'flex';
+                    if (mobileTab) mobileTab.style.display = 'none';
+                    if (overlay) overlay.style.display = 'block';
                 }
                 restoreBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     e.preventDefault();
                     console.log('🎬 Restoring WTV miniplayer...');
-                    if (window._showWtvMiniplayer) {
-                        window._showWtvMiniplayer();
-                    } else {
-                        miniplayer.classList.remove('hidden');
-                        localStorage.removeItem('videoMiniplayerHidden');
-                        restoreBtn.style.display = 'none';
-                    }
+                    window._showWtvMiniplayer();
                     console.log('✅ WTV miniplayer restored successfully');
                 });
                 console.log('✅ WTV restore button listener attached');
             } else {
                 console.error('❌ Could not find restore button or miniplayer');
             }
+
+            // On resize, sync state
+            window.addEventListener('resize', () => {
+                const hidden = localStorage.getItem('videoMiniplayerHidden') === 'true';
+                if (isMobile()) {
+                    if (restoreBtn) restoreBtn.style.display = 'none';
+                    if (hidden) {
+                        miniplayer.classList.add('mobile-drawer-closed');
+                        miniplayer.style.display = 'none';
+                        if (mobileTab) mobileTab.style.display = 'flex';
+                        if (overlay) overlay.style.display = 'none';
+                    }
+                } else {
+                    if (mobileTab) mobileTab.style.display = 'none';
+                    if (overlay) overlay.style.display = 'none';
+                    miniplayer.classList.remove('mobile-drawer-closed');
+                    if (hidden) {
+                        miniplayer.style.display = 'none';
+                        if (restoreBtn) restoreBtn.style.display = 'flex';
+                    } else {
+                        miniplayer.style.display = 'flex';
+                    }
+                }
+            });
         })();
     </script>
 
