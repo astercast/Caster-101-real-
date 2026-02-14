@@ -1406,46 +1406,6 @@
             <div class="treasury-wrapper" style="padding: 20px; max-width: 1400px; margin: 0 auto;">
                 
 
-                <!-- CHIA CACHE STATUS ROW -->
-                <div style="
-                    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
-                    margin-bottom: 16px;
-                    padding: 8px 14px;
-                    background: rgba(74,222,128,0.05);
-                    border: 1px solid rgba(74,222,128,0.15);
-                    border-radius: 8px;
-                    font-size: 11px;
-                    font-family: 'Inter', sans-serif;
-                ">
-                    <div style="display:flex; align-items:center; gap:8px; color:rgba(255,255,255,0.4);">
-                        <span style="font-size:13px;">🌱</span>
-                        <span>Chia data is cached to avoid Spacescan rate limits.</span>
-                        <span id="chia-cache-age" style="
-                            display:none;
-                            background: rgba(74,222,128,0.15);
-                            border: 1px solid rgba(74,222,128,0.3);
-                            color: #4ade80;
-                            border-radius: 4px;
-                            padding: 2px 7px;
-                            font-size: 10px;
-                        "></span>
-                    </div>
-                    <button onclick="forceChiaRefresh()" style="
-                        background: rgba(74,222,128,0.12);
-                        border: 1px solid rgba(74,222,128,0.35);
-                        color: #4ade80;
-                        border-radius: 6px;
-                        padding: 4px 12px;
-                        font-size: 11px;
-                        cursor: pointer;
-                        font-family: 'Inter', sans-serif;
-                        transition: all 0.2s;
-                        flex-shrink: 0;
-                    " onmouseover="this.style.background='rgba(74,222,128,0.22)'"
-                       onmouseout="this.style.background='rgba(74,222,128,0.12)'">
-                        🔄 Force Refresh Chia
-                    </button>
-                </div>
                 <div class="treasury-main-header" style="
                     background: linear-gradient(135deg, rgba(70, 58, 25, 0.92) 0%, rgba(160, 132, 60, 0.9) 35%, rgba(50, 42, 20, 0.95) 100%);
                     border: 2px solid rgba(251, 191, 36, 0.6);
@@ -4335,8 +4295,6 @@ async function loadComprehensiveTreasury() {
     if (now - _treasuryLastLoad < 600000) {
         console.log(`⏳ Treasury loaded ${Math.round((now - _treasuryLastLoad)/1000)}s ago, using cache (expires in ${Math.round((600000 - (now - _treasuryLastLoad))/1000)}s)`);
         return;
-        console.log(`⏳ Treasury loaded ${Math.round((now - _treasuryLastLoad)/1000)}s ago, skipping duplicate`);
-        return;
     }
     _treasuryLastLoad = now;
     const BASE_WALLET_1 = '0x8d8cb6D19E32115823Cf0008701A84fB07F43467';
@@ -4619,9 +4577,10 @@ async function loadComprehensiveTreasury() {
                         }
                     } catch(e) {
                         console.warn(`Token fetch error for ${wallet.slice(-8)}:`, e.message);
-                    if (walletCache?.tokens) {
-                        console.log(`  💾 Using cached tokens for ${wallet.slice(-8)}`);
-                        tokens = walletCache.tokens;
+                        if (walletCache?.tokens) {
+                            console.log(`  💾 Using cached tokens for ${wallet.slice(-8)}`);
+                            tokens = walletCache.tokens;
+                        }
                     }
                     // NFTs
                     try {
@@ -4721,9 +4680,9 @@ async function loadComprehensiveTreasury() {
             } catch (error) {
                 console.error('Error fetching Chia treasury:', error.message, error.stack);
                 // ALWAYS return fallback cache if available
-                if (fallbackCache && fallbackCache.length > 0) { 
+                if (cached && cached.length > 0) { 
                     console.log('⚡ Using fallback cache due to fetch error'); 
-                    return fallbackCache; 
+                    return cached; 
                 }
                 // Try to reset queue if stuck
                 spacescanQueue.reset();
