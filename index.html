@@ -1246,6 +1246,9 @@
                 margin-bottom: 6px !important;
                 border-radius: 10px !important;
                 border-width: 1px !important;
+                min-height: 135px !important;
+                display: flex !important;
+                flex-direction: column !important;
             }
 
             .token-grid {
@@ -1267,14 +1270,14 @@
 
             /* Shrink the emoji icon box */
             .token-info > div:first-child {
-                width: 32px !important;
-                height: 32px !important;
-                min-width: 32px !important;
+                width: 28px !important;
+                height: 28px !important;
+                min-width: 28px !important;
                 border-radius: 8px !important;
             }
 
             .token-symbol {
-                font-size: 16px !important;
+                font-size: 14px !important;
             }
 
             .token-name {
@@ -1491,6 +1494,13 @@
                 padding: 6px !important;
             }
 
+            /* Make treasury holding items uniform size */
+            .holdings-list > div,
+            #base-holdings-list > div,
+            #chia-holdings-list > div {
+                min-height: 75px !important;
+            }
+
             /* Treasury split — SIDE BY SIDE */
             .treasury-split {
                 grid-template-columns: 1fr 1fr !important;
@@ -1577,10 +1587,17 @@
                 height: 400px !important;
             }
 
-            /* ── Caster Valley Tab ── */
+            /* ── Caster Valley Tab — optimized mobile iframe ── */
             #caster-valley-frame {
-                min-height: 400px !important;
-                height: 55vh !important;
+                min-height: 500px !important;
+                height: 60vh !important;
+                border-radius: 14px !important;
+            }
+
+            /* Wrapper around valley iframe */
+            #valley > div > div {
+                border-radius: 14px !important;
+                overflow: hidden !important;
             }
 
             /* ── Footer — clean & minimal ── */
@@ -1629,13 +1646,31 @@
             /* Dark overlay when drawer is open — controlled by JS, not forced visible */
             /* #wtv-drawer-overlay visibility is managed by JS only */
 
-            /* Restore button → right-edge pull tab */
-            #wtv-restore-btn {
-                display: none !important;
+            /* WTV mobile tab — thinner and moved down */
+            #wtv-mobile-tab {
+                width: 30px !important;
+                height: 70px !important;
+                top: 55% !important;
+                padding: 5px 2px !important;
             }
 
-            #wtv-mobile-tab {
-                display: flex !important;
+            /* Bottom tab nav — larger, easier to see */
+            .tabs {
+                padding: 6px 0 !important;
+            }
+
+            .tab {
+                padding: 10px 3px 12px !important;
+                gap: 4px !important;
+            }
+
+            .tab-emoji {
+                font-size: 18px !important;
+            }
+
+            .tab-label-short {
+                font-size: 8px !important;
+                font-weight: 700 !important;
             }
 
             /* ── Inline style overrides for font consistency ── */
@@ -1707,15 +1742,21 @@
             }
 
             .token-symbol {
-                font-size: 14px !important;
+                font-size: 12px !important;
             }
 
-            .token-name {
-                font-size: 10px !important;
+            .token-info > div:first-child {
+                width: 24px !important;
+                height: 24px !important;
+                min-width: 24px !important;
             }
 
             .token-price {
                 font-size: 11px !important;
+            }
+
+            .token-name {
+                font-size: 10px !important;
             }
 
             .token-change {
@@ -1770,8 +1811,8 @@
             }
 
             #caster-valley-frame {
-                min-height: 300px !important;
-                height: 45vh !important;
+                min-height: 350px !important;
+                height: 50vh !important;
             }
 
             .footer p {
@@ -1894,7 +1935,7 @@
             <div class="tab" onclick="showTab('treasury')"><span class="tab-emoji">🧙</span><span class="tab-label-full"> aWIZARD TREASURY </span><span class="tab-label-short">VAULT</span><span class="tab-emoji">🧙</span></div>
             <div class="tab" onclick="showTab('howto')"><span class="tab-emoji">🎓</span><span class="tab-label-full"> HOW TO CAST </span><span class="tab-label-short">HOWTO</span><span class="tab-emoji">🎓</span></div>
             <div class="tab" onclick="showTab('book')"><span class="tab-emoji">📜</span><span class="tab-label-full"> BOOK OF WIZARD </span><span class="tab-label-short">BOOK</span><span class="tab-emoji">📜</span></div>
-            <div class="tab" onclick="showTab('valley')"><span class="tab-emoji">🎮</span><span class="tab-label-full"> CASTER VALLEY </span><span class="tab-label-short">VALLEY</span><span class="tab-emoji">🎮</span></div>
+            <div class="tab" onclick="showTab('valley')"><span class="tab-emoji">🎮</span><span class="tab-label-full"> CASTER VALLEY </span><span class="tab-label-short">C.VALLEY</span><span class="tab-emoji">🎮</span></div>
         </div>
 
         <div id="market" class="content">
@@ -6666,31 +6707,31 @@ document.addEventListener('DOMContentLoaded', () => {
         display: none;
         position: fixed;
         right: 0;
-        top: 50%;
+        top: 55%;
         transform: translateY(-50%);
-        width: 36px;
-        height: 80px;
+        width: 30px;
+        height: 70px;
         background: linear-gradient(180deg, rgba(251,191,36,0.9), rgba(220,38,38,0.5));
         border: 2px solid rgba(251,191,36,0.8);
         border-right: none;
         border-radius: 12px 0 0 12px;
         color: white;
-        font-size: 18px;
+        font-size: 16px;
         cursor: pointer;
         z-index: 999997;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 4px;
+        gap: 3px;
         box-shadow: -4px 0 20px rgba(251,191,36,0.35);
         transition: all 0.25s;
         font-family: 'Space Grotesk', sans-serif;
         writing-mode: vertical-rl;
         text-orientation: mixed;
-        padding: 6px 2px;
+        padding: 5px 2px;
         animation: wtv-tab-glow 3s infinite;
     " onclick="if(window._wtvOpenDrawer) window._wtvOpenDrawer();">
-        <span style="font-size: 16px; writing-mode: horizontal-tb;">🎬</span>
+        <span style="font-size: 14px; writing-mode: horizontal-tb;">🎬</span>
     </button>
 
     <!-- WTV Restore Button - More Visible (desktop only) -->
