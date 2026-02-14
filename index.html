@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=1200, initial-scale=0.3, minimum-scale=0.2, maximum-scale=5.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>Caster101</title>
     <link rel="icon" type="image/webp" href="/images/favicon.webp">
     <!-- Performance: Preconnect to external APIs -->
@@ -992,6 +992,402 @@
                 height: 110px;
             }
         }
+
+        /* ==========================================================
+           MOBILE RESPONSIVE LAYOUT — Full Redesign
+           Desktop is untouched. Everything below overrides via
+           media queries only.
+           ========================================================== */
+
+        @media (max-width: 768px) {
+
+            /* ── Base Layout ── */
+            .container {
+                padding: 8px !important;
+                padding-bottom: 32px !important;
+                max-width: 100% !important;
+            }
+
+            .bg-collage {
+                display: none !important;
+            }
+
+            /* ── Header ── */
+            .header {
+                padding: 14px 10px !important;
+                margin-bottom: 14px !important;
+                border-radius: 10px !important;
+            }
+
+            .title {
+                font-size: 28px !important;
+                letter-spacing: 6px !important;
+                padding: 4px !important;
+                margin-bottom: 4px !important;
+            }
+
+            .marquee {
+                font-size: 13px !important;
+                margin-top: 4px !important;
+            }
+
+            .marquee-span {
+                padding-right: 30px !important;
+            }
+
+            .stats {
+                gap: 6px !important;
+                margin-top: 6px !important;
+                justify-content: center !important;
+                flex-wrap: wrap !important;
+            }
+
+            .stat-badge {
+                font-size: 9px !important;
+                padding: 4px 8px !important;
+            }
+
+            /* ── Tab Navigation — Horizontal Scroll ── */
+            .tabs {
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch;
+                flex-wrap: nowrap !important;
+                gap: 4px !important;
+                padding: 3px !important;
+                margin-bottom: 12px !important;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+            }
+
+            .tabs::-webkit-scrollbar {
+                display: none;
+            }
+
+            .tab {
+                flex: 0 0 auto !important;
+                font-size: 10px !important;
+                padding: 10px 14px !important;
+                white-space: nowrap !important;
+                min-width: max-content !important;
+                border-radius: 8px !important;
+            }
+
+            .tab-emoji {
+                display: none !important;
+            }
+
+            /* ── Market Tab ── */
+
+            /* Quick Links */
+            .quick-links {
+                flex-wrap: wrap !important;
+                gap: 6px !important;
+                justify-content: center !important;
+            }
+
+            .quick-link-btn {
+                font-size: 10px !important;
+                padding: 8px 12px !important;
+            }
+
+            /* Search bar */
+            .search-input {
+                font-size: 13px !important;
+                padding: 10px 10px 10px 36px !important;
+            }
+
+            /* Featured Tokens — stack */
+            .featured-tokens-grid {
+                grid-template-columns: 1fr !important;
+                gap: 10px !important;
+                margin-bottom: 16px !important;
+            }
+
+            /* Filter buttons */
+            .filter-section {
+                gap: 6px !important;
+            }
+
+            .filter-btn {
+                padding: 8px 12px !important;
+                font-size: 12px !important;
+            }
+
+            /* Market Columns — stack vertically */
+            .market-columns {
+                flex-direction: column !important;
+                gap: 16px !important;
+            }
+
+            .market-column {
+                flex: none !important;
+                width: 100% !important;
+                padding: 6px !important;
+            }
+
+            .column-header {
+                font-size: 15px !important;
+                padding: 10px !important;
+                margin-bottom: 10px !important;
+            }
+
+            /* Token Cards */
+            .token-card {
+                padding: 12px 14px !important;
+                margin-bottom: 8px !important;
+                border-radius: 12px !important;
+            }
+
+            .token-grid {
+                gap: 8px !important;
+            }
+
+            .token-header {
+                gap: 6px !important;
+            }
+
+            .token-info {
+                gap: 8px !important;
+            }
+
+            .token-symbol {
+                font-size: 22px !important;
+            }
+
+            .token-name {
+                font-size: 13px !important;
+                letter-spacing: 0.3px !important;
+            }
+
+            .token-price {
+                font-size: 15px !important;
+            }
+
+            .token-change {
+                font-size: 12px !important;
+            }
+
+            /* Merkl Magic Box */
+            #merkl-section {
+                padding: 14px !important;
+                margin-top: 20px !important;
+            }
+
+            #merkl-pools {
+                grid-template-columns: 1fr !important;
+                gap: 10px !important;
+            }
+
+            /* ── Portfolio / Bag Tab ── */
+            #portfolio h1 {
+                font-size: 26px !important;
+            }
+
+            .wallet-input-row {
+                flex-direction: column !important;
+                gap: 10px !important;
+            }
+
+            #track-btn {
+                width: 100% !important;
+                box-sizing: border-box !important;
+            }
+
+            /* ── Treasury Tab ── */
+            .treasury-wrapper {
+                padding: 8px !important;
+            }
+
+            .treasury-main-header {
+                padding: 18px 12px !important;
+                border-radius: 12px !important;
+                margin-bottom: 16px !important;
+            }
+
+            #portfolio-grand-total {
+                font-size: 32px !important;
+                letter-spacing: 1px !important;
+                margin-bottom: 16px !important;
+            }
+
+            .portfolio-breakdown {
+                flex-direction: column !important;
+                gap: 10px !important;
+                align-items: stretch !important;
+            }
+
+            .breakdown-item {
+                padding: 10px 14px !important;
+                justify-content: center !important;
+                flex-wrap: wrap !important;
+                gap: 8px !important;
+            }
+
+            /* Holdings — Single Column Stack */
+            .holdings-split {
+                grid-template-columns: 1fr !important;
+                gap: 16px !important;
+            }
+
+            .holdings-column-header {
+                padding: 14px !important;
+            }
+
+            .header-title {
+                font-size: 16px !important;
+                flex-wrap: wrap !important;
+                gap: 8px !important;
+            }
+
+            .holdings-list {
+                max-height: none !important;
+                padding: 10px !important;
+            }
+
+            .treasury-split {
+                grid-template-columns: 1fr !important;
+                gap: 10px !important;
+            }
+
+            /* NFT Collections */
+            #collections-grid {
+                grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important;
+                gap: 10px !important;
+            }
+
+            /* ── How To Cast Tab ── */
+            #howto > div {
+                padding: 12px !important;
+            }
+
+            #howto h1 {
+                font-size: 28px !important;
+            }
+
+            #howto h2 {
+                font-size: 18px !important;
+            }
+
+            #howto h3 {
+                font-size: 20px !important;
+            }
+
+            .howto-images-grid {
+                grid-template-columns: 1fr !important;
+            }
+
+            /* Stack any 2-column inline grids in How-To into single col */
+            #howto div[style*="grid-template-columns: 1fr 1fr"] {
+                grid-template-columns: 1fr !important;
+            }
+
+            /* ── Book of Wizard Tab ── */
+            .spotify-mini {
+                max-width: 100% !important;
+                margin: 14px auto 6px !important;
+            }
+
+            /* Twitter/X feed — reduce height on mobile */
+            #tw-widget {
+                height: 400px !important;
+            }
+
+            /* ── Caster Valley Tab ── */
+            #caster-valley-frame {
+                min-height: 400px !important;
+                height: 55vh !important;
+            }
+
+            /* ── Footer ── */
+            .footer {
+                padding: 12px 8px !important;
+                margin-top: 20px !important;
+            }
+        }
+
+        /* ── Extra Small Screens (≤ 480px) ── */
+
+        @media (max-width: 480px) {
+
+            .container {
+                padding: 5px !important;
+            }
+
+            .header {
+                padding: 10px 8px !important;
+            }
+
+            .tab {
+                font-size: 9px !important;
+                padding: 8px 10px !important;
+            }
+
+            .quick-link-btn {
+                font-size: 9px !important;
+                padding: 6px 8px !important;
+            }
+
+            .token-symbol {
+                font-size: 18px !important;
+            }
+
+            .token-name {
+                font-size: 12px !important;
+            }
+
+            .token-price {
+                font-size: 13px !important;
+            }
+
+            .token-change {
+                font-size: 11px !important;
+            }
+
+            .column-header {
+                font-size: 13px !important;
+            }
+
+            #portfolio-grand-total {
+                font-size: 24px !important;
+            }
+
+            #portfolio h1 {
+                font-size: 22px !important;
+            }
+
+            #howto h1 {
+                font-size: 22px !important;
+            }
+
+            .breakdown-item .breakdown-label {
+                font-size: 12px !important;
+            }
+
+            .breakdown-item .breakdown-value {
+                font-size: 16px !important;
+            }
+
+            #tw-widget {
+                height: 320px !important;
+            }
+
+            #caster-valley-frame {
+                min-height: 300px !important;
+                height: 45vh !important;
+            }
+
+            .footer p {
+                font-size: 11px !important;
+            }
+        }
+
+        /* ── Desktop-only: Ensure viewport change doesn't break wide screens ── */
+        @media (min-width: 769px) {
+            .container {
+                max-width: 1200px;
+                margin: 0 auto;
+            }
+        }
     </style>
 </head>
 
@@ -1122,7 +1518,7 @@
             </div>
 
             <!-- Featured Tokens: XCH and wXCH -->
-            <div style="
+            <div class="featured-tokens-grid" style="
                 display: grid;
                 grid-template-columns: 1fr 1fr;
                 gap: 16px;
@@ -1285,7 +1681,7 @@
             </div>
 
             <!-- Merkl Magic Box -->
-            <div style="
+            <div id="merkl-section" style="
                 margin-top: 32px;
                 background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(139, 92, 246, 0.05));
                 border: none;
@@ -1342,7 +1738,7 @@
 
                 <!-- Address Input -->
                 <div style="background:linear-gradient(135deg,rgba(20,20,30,0.9),rgba(10,10,20,0.95)); border:2px solid rgba(251,191,36,0.4); border-radius:16px; padding:24px; margin-bottom:28px; backdrop-filter:blur(10px);">
-                    <div style="display:flex; gap:12px; align-items:center;">
+                    <div class="wallet-input-row" style="display:flex; gap:12px; align-items:center;">
                         <div style="flex:1; position:relative;">
                             <span style="position:absolute; left:14px; top:50%; transform:translateY(-50%); font-size:18px; pointer-events:none;">🔍</span>
                             <input type="text" id="walletAddress" placeholder="0x... Base wallet address"
