@@ -105,8 +105,8 @@
             width: 46px; box-shadow: -6px 0 18px rgba(0,0,0,0.7); transform: translateX(-2px);
         }
         .side-tab.expanded { 
-            width: 42vw; min-width: 300px; max-width: 450px; height: 65vh; max-height: 550px; padding: 18px; border-radius: 10px 0 0 10px;
-            cursor: default;
+            width: 54vw; min-width: 340px; max-width: 560px; height: 75vh; max-height: 680px; padding: 18px; border-radius: 10px 0 0 10px;
+            cursor: default; overflow: hidden;
         }
         .side-tab.hidden { display: none; }
         #shop-tab {
@@ -134,22 +134,28 @@
         }
         .side-tab.expanded .tab-icon-text { display: none; }
         .tab-content-wrapper {
-            display: none; width: 100%; height: 100%;
+            display: none; width: 100%; height: 100%; overflow: hidden;
         }
-        .side-tab.expanded .tab-content-wrapper { display: block; }
+        .side-tab.expanded .tab-content-wrapper { display: flex; flex-direction: column; }
         .tab-header {
             font-family: 'Press Start 2P'; font-size: 14px; text-align: center;
-            margin-bottom: 20px; color: var(--brown-dark);
+            margin-bottom: 12px; color: var(--brown-dark);
         }
         .tab-content {
             display: none; width: 100%; height: calc(100% - 40px); overflow-y: auto; margin-top: 6px;
         }
         .side-tab.expanded .tab-content { display: block; }
         #shop-content {
-            max-height: calc(100vh - 150px);
+            flex: 1 1 auto;
             overflow-y: auto;
             overflow-x: hidden;
-            padding-right: 12px;
+            padding-right: 10px;
+        }
+        #skills-tab-content {
+            flex: 1 1 auto;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-right: 10px;
         }
         .tab-close {
             position: absolute; top: 12px; right: 15px; font-size: 24px; color: white;
@@ -468,6 +474,38 @@
             .skill-cost-sm { 
                 font-size: 6px !important;
             }
+
+            .side-tab.expanded {
+                width: 88vw !important;
+                min-width: 0 !important;
+                max-width: none !important;
+                height: 78vh !important;
+                max-height: none !important;
+            }
+
+            #skills-tab .skill-tree-scroll {
+                height: 100% !important;
+                max-height: none !important;
+                padding: 6px !important;
+            }
+
+            #skills-tab .skill-tree-container {
+                width: 100% !important;
+                overflow: auto !important;
+            }
+
+            #skills-tab .skill-tree-inner {
+                width: 700px !important;
+                height: 800px !important;
+                display: block !important;
+                transform: scale(0.78) !important;
+                transform-origin: top center !important;
+            }
+
+            #skills-tab .skill-node,
+            #skills-tab .skill-line {
+                position: absolute !important;
+            }
             
 
             .toast,
@@ -754,9 +792,9 @@
                 <div class="left-tab-icon">🌲</div>
                 <div class="left-tab-label">FOREST</div>
             </div>
-            <div class="left-tab" id="fishing-tab" onclick="game.switchArea('fishing')" title="Fishing">
+            <div class="left-tab" id="fishing-tab" onclick="game.switchArea('fishing')" title="Phishing">
                 <div class="left-tab-icon">🎣</div>
-                <div class="left-tab-label">FISHING</div>
+                <div class="left-tab-label">PHISHING</div>
             </div>
             <div class="left-tab locked" id="astral-tab" onclick="game.switchArea('astral')" title="Astral Realm" style="display: none;">
                 <div class="left-tab-icon">🪐</div>
@@ -809,11 +847,11 @@
                     </div>
                     <div class="tutorial-section">
                         <div class="tutorial-title">⚔️ Forest (800 SP)</div>
-                        <div class="tutorial-text">• Fight trolls<br>• Big rewards<br>• <strong>Feed fish to dragon!</strong></div>
+                        <div class="tutorial-text">• Fight trolls<br>• Big rewards<br>• <strong>Feed phish to dragon!</strong></div>
                     </div>
                     <div class="tutorial-section">
-                        <div class="tutorial-title">🎣 Fishing (2200 SP)</div>
-                        <div class="tutorial-text">• Tap swimming fish<br>• Collect fish inventory<br>• Feed to dragon in forest!</div>
+                        <div class="tutorial-title">🎣 Phishing (2200 SP)</div>
+                        <div class="tutorial-text">• Tap swimming phish<br>• Collect phish inventory<br>• Feed to dragon in forest!</div>
                     </div>
                     <div class="tutorial-section">
                         <div class="tutorial-title">🪐 Astral</div>
@@ -821,7 +859,7 @@
                     </div>
                     <div class="tutorial-section">
                         <div class="tutorial-title">🏪 Store</div>
-                        <div class="tutorial-text">• Sell unwanted seeds<br>• Sell extra fish<br>• Get SP + XP!</div>
+                        <div class="tutorial-text">• Sell unwanted seeds<br>• Sell extra phish<br>• Get SP + XP!</div>
                     </div>
                 </div>
             </div>
@@ -924,7 +962,7 @@
             { id: 'regen2', name: 'Regen II', desc: 'Restore 12 HP every 5 seconds. Fast healing!', cost: 1300, stat: 'hpRegen', value: 7, icon: '💚', x: 180, y: 155, requires: ['regen1'] },
             { id: 'plots1', name: 'Plots I', desc: 'Unlock +4 farm plots. More planting space!', cost: 450, stat: 'extraPlots', value: 4, icon: '🏡', x: 180, y: 220, requires: ['growth2'] },
             { id: 'plots2', name: 'Plots II', desc: 'Unlock +4 more farm plots. Massive farm!', cost: 2000, stat: 'extraPlots', value: 4, icon: '🏡', x: 180, y: 285, requires: ['plots1'] },
-            { id: 'fisher', name: 'Fisher', desc: 'Gain 50% more SP from fishing. Oceanborn!', cost: 2800, stat: 'fishLuck', value: 0.5, icon: '🎣', x: 180, y: 350, requires: ['bounty3'] },
+            { id: 'fisher', name: 'Phisher', desc: 'Gain 50% more SP from phishing. Oceanborn!', cost: 2800, stat: 'fishLuck', value: 0.5, icon: '🎣', x: 180, y: 350, requires: ['bounty3'] },
             
             // Column 4 - POWER (x: 250)
             { id: 'power1', name: 'Power I', desc: 'Deal +20 damage to enemies. Start hitting harder!', cost: 180, stat: 'baseDamage', value: 20, icon: '⚡', x: 250, y: 60 },
@@ -967,11 +1005,11 @@
             { id: 'troll_slayer', name: 'Troll Slayer', desc: 'Defeat 5 trolls', icon: '⚔️', reward: 160, check: g => g.stats.totalTrollsKilled >= 5 },
             { id: 'troll_hunter', name: 'Troll Hunter', desc: 'Defeat 15 trolls', icon: '🗡️', reward: 420, check: g => g.stats.totalTrollsKilled >= 15 },
             { id: 'troll_bane', name: 'Troll Bane', desc: 'Defeat 50 trolls', icon: '🏹', reward: 1800, check: g => g.stats.totalTrollsKilled >= 50 },
-            { id: 'first_catch', name: 'First Catch', desc: 'Catch 10 fish', icon: '🎣', reward: 300, check: g => g.stats.fishCaught >= 10 },
-            { id: 'skilled_angler', name: 'Skilled Angler', desc: 'Catch 50 fish', icon: '🐟', reward: 900, check: g => g.stats.fishCaught >= 50 },
-            { id: 'fishing_legend', name: 'Fishing Legend', desc: 'Catch 200 fish', icon: '🐋', reward: 3500, check: g => g.stats.fishCaught >= 200 },
-            { id: 'dragon_friend', name: 'Dragon Friend', desc: 'Feed the dragon 5 fish', icon: '🐉', reward: 400, check: g => g.stats.fishFedToDragon >= 5 },
-            { id: 'dragon_master', name: 'Dragon Master', desc: 'Feed the dragon 20 fish', icon: '🐉', reward: 2000, check: g => g.stats.fishFedToDragon >= 20 },
+            { id: 'first_catch', name: 'First Catch', desc: 'Catch 10 phish', icon: '🎣', reward: 300, check: g => g.stats.fishCaught >= 10 },
+            { id: 'skilled_angler', name: 'Skilled Phisher', desc: 'Catch 50 phish', icon: '🐟', reward: 900, check: g => g.stats.fishCaught >= 50 },
+            { id: 'fishing_legend', name: 'Phishing Legend', desc: 'Catch 200 phish', icon: '🐋', reward: 3500, check: g => g.stats.fishCaught >= 200 },
+            { id: 'dragon_friend', name: 'Dragon Friend', desc: 'Feed the dragon 5 phish', icon: '🐉', reward: 400, check: g => g.stats.fishFedToDragon >= 5 },
+            { id: 'dragon_master', name: 'Dragon Master', desc: 'Feed the dragon 20 phish', icon: '🐉', reward: 2000, check: g => g.stats.fishFedToDragon >= 20 },
             { id: 'apprentice', name: 'Apprentice', desc: 'Reach level 5', icon: '🧙‍♂️', reward: 120, check: g => g.level >= 5 },
             { id: 'skilled_wizard', name: 'Skilled Wizard', desc: 'Reach level 12', icon: '🧙', reward: 500, check: g => g.level >= 12 },
             { id: 'archmage', name: 'Archmage', desc: 'Reach level 25', icon: '🔮', reward: 2500, check: g => g.level >= 25 },
@@ -1002,7 +1040,10 @@
             defaultCameraOffset: { x: 0, y: 28, z: 15 },
             isDraggingCamera: false,
             previousPointerPosition: { x: 0, y: 0 },
-            panSpeed: 0.02, // Slightly reduced for more controlled feel
+            panSpeed: 0.05,
+            panDamping: 0.82,
+            panMaxSpeed: 1.6,
+            panVelocity: { x: 0, z: 0 },
             maxPanX: 25,
             maxPanZ: 25,
             isRecentering: false,
@@ -1347,16 +1388,25 @@
             setupCameraControls() {
                 const canvas = document.getElementById('game-canvas');
                 const updateCamera = (deltaX, deltaY) => {
-                    this.cameraTarget.x -= deltaX * this.panSpeed;
-                    this.cameraTarget.z -= deltaY * this.panSpeed;
-                    this.cameraTarget.x = Math.max(-this.maxPanX, Math.min(this.maxPanX, this.cameraTarget.x));
-                    this.cameraTarget.z = Math.max(-this.maxPanZ, Math.min(this.maxPanZ, this.cameraTarget.z));
+                    if (!this.panVelocity) this.panVelocity = { x: 0, z: 0 };
+                    this.panVelocity.x += -deltaX * this.panSpeed;
+                    this.panVelocity.z += -deltaY * this.panSpeed;
+                    const speed = Math.hypot(this.panVelocity.x, this.panVelocity.z);
+                    if (speed > this.panMaxSpeed) {
+                        const scale = this.panMaxSpeed / speed;
+                        this.panVelocity.x *= scale;
+                        this.panVelocity.z *= scale;
+                    }
                 };
                 
                 // Mouse events for desktop
                 canvas.addEventListener('mousedown', (e) => {
                     if (e.button === 0) {
                         this.isDraggingCamera = true;
+                        if (this.panVelocity) {
+                            this.panVelocity.x = 0;
+                            this.panVelocity.z = 0;
+                        }
                         this.previousPointerPosition = { x: e.clientX, y: e.clientY };
                     }
                 });
@@ -1382,6 +1432,10 @@
                 canvas.addEventListener('touchstart', (e) => {
                     if (e.touches.length === 1) {
                         this.isDraggingCamera = true;
+                        if (this.panVelocity) {
+                            this.panVelocity.x = 0;
+                            this.panVelocity.z = 0;
+                        }
                         this.previousPointerPosition = {
                             x: e.touches[0].clientX,
                             y: e.touches[0].clientY
@@ -1479,6 +1533,16 @@
             },
             
             updateCamera() {
+                if (this.panVelocity) {
+                    this.cameraTarget.x += this.panVelocity.x;
+                    this.cameraTarget.z += this.panVelocity.z;
+                    this.cameraTarget.x = Math.max(-this.maxPanX, Math.min(this.maxPanX, this.cameraTarget.x));
+                    this.cameraTarget.z = Math.max(-this.maxPanZ, Math.min(this.maxPanZ, this.cameraTarget.z));
+                    this.panVelocity.x *= this.panDamping;
+                    this.panVelocity.z *= this.panDamping;
+                    if (Math.abs(this.panVelocity.x) < 0.0005) this.panVelocity.x = 0;
+                    if (Math.abs(this.panVelocity.z) < 0.0005) this.panVelocity.z = 0;
+                }
                 // Smooth camera follow with lerp, applying zoom
                 const zoomedOffsetX = this.cameraOffset.x / this.zoom;
                 const zoomedOffsetY = this.cameraOffset.y / this.zoom;
@@ -4189,7 +4253,7 @@
                     if (Math.random() > catchChance) {
                         // Fish escaped!
                         fish.caught = false; // Allow it to swim away
-                        this.showToast(`${fish.icon} The fish escaped!`);
+                        this.showToast(`${fish.icon} The phish escaped!`);
                         return;
                     }
                     
@@ -4215,7 +4279,7 @@
                         const notif = document.createElement('div');
                         notif.className = 'weather-notification';
                         notif.style.background = 'linear-gradient(135deg, #ffd700, #f4a261)';
-                        notif.innerHTML = `<div class="weather-notification-title">🐉 NEW FEATURE!</div><div class="weather-notification-text">You can now feed fish to the DRAGON in the Forest for big rewards! 🐉</div>`;
+                        notif.innerHTML = `<div class="weather-notification-title">🐉 NEW FEATURE!</div><div class="weather-notification-text">You can now feed phish to the DRAGON in the Forest for big rewards! 🐉</div>`;
                         document.body.appendChild(notif);
                         setTimeout(() => notif.remove(), 6000);
                     }
@@ -4298,7 +4362,7 @@
                     if (this.essence >= 4500) {
                         this.essence -= 4500;
                         this.unlockedAreas.fishing = true;
-                        this.showToast('🎣 Fishing unlocked!');
+                        this.showToast('🎣 Phishing unlocked!');
                         this.updateUI();
                         this.updateAreaTabs();
                     } else {
@@ -4508,7 +4572,7 @@
                 this.stats.totalEssenceEarned += sellPrice;
                 this.xp += 25;
                 this.checkLevel();
-                this.showToast(`💰 Sold fish for ${sellPrice} SP!`);
+                this.showToast(`💰 Sold phish for ${sellPrice} SP!`);
                 this.renderStore();
                 this.updateUI();
             },
@@ -4517,10 +4581,10 @@
                 const content = document.getElementById('shop-content');
                 content.innerHTML = '';
                 
-                // Fish section
+                // Phish section
                 const fishSection = document.createElement('div');
                 fishSection.className = 'store-section';
-                fishSection.innerHTML = `<div class="store-section-title">🐟 FISH (${this.fishInventory})</div>`;
+                fishSection.innerHTML = `<div class="store-section-title">🐟 PHISH (${this.fishInventory})</div>`;
                 
                 if (this.fishInventory > 0) {
                     const fishItem = document.createElement('div');
@@ -4529,7 +4593,7 @@
                         <div class="store-item-info">
                             <div class="store-item-icon">🐟</div>
                             <div class="store-item-details">
-                                <div>Fish x${this.fishInventory}</div>
+                                <div>Phish x${this.fishInventory}</div>
                                 <div style="color: var(--gold);">150 SP + 25 XP</div>
                             </div>
                         </div>
@@ -4572,7 +4636,7 @@
             
             renderSkillsTabContent() {
                 const content = document.getElementById('skills-tab-content');
-                content.innerHTML = '<div class="skill-tree-scroll"><div id="skills-side-tree" class="skill-tree-container"></div></div>';
+                content.innerHTML = '<div class="skill-tree-scroll side-skill-tree"><div id="skills-side-tree" class="skill-tree-container"></div></div>';
                 
                 const tree = document.getElementById('skills-side-tree');
                 tree.innerHTML = '<div class="skill-tree-inner"></div>';
