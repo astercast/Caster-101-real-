@@ -5665,6 +5665,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('🔴 Closing WTV miniplayer...');
                 miniplayer.classList.add('hidden');
                 localStorage.setItem('videoMiniplayerHidden', 'true');
+                window._wtvShouldShowRestoreBtn = true;
                 const restoreBtn = document.getElementById('wtv-restore-btn');
                 if (restoreBtn) {
                     restoreBtn.style.display = 'flex';
@@ -5798,6 +5799,12 @@ document.addEventListener('DOMContentLoaded', () => {
             // Store miniplayer reference globally for restore button
             window._wtvMiniplayer = miniplayer;
 
+            const wasHidden = localStorage.getItem('videoMiniplayerHidden') === 'true';
+            window._wtvShouldShowRestoreBtn = wasHidden;
+            if (wasHidden) {
+                miniplayer.classList.add('hidden');
+            }
+
             // Load first video
             console.log('🎬 WTV initialized with local video playlist');
             loadVideo(0);
@@ -5854,12 +5861,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const miniplayer = window._wtvMiniplayer || document.getElementById('video-miniplayer');
             
             if (restoreBtn && miniplayer) {
+                if (window._wtvShouldShowRestoreBtn) {
+                    restoreBtn.style.display = 'flex';
+                    miniplayer.classList.add('hidden');
+                }
                 restoreBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     e.preventDefault();
                     console.log('🎬 Restoring WTV miniplayer...');
                     miniplayer.classList.remove('hidden');
                     localStorage.removeItem('videoMiniplayerHidden');
+                    window._wtvShouldShowRestoreBtn = false;
                     restoreBtn.style.display = 'none';
                     console.log('✅ WTV miniplayer restored successfully');
                 });
