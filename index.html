@@ -1238,6 +1238,10 @@
                 border-radius: 8px !important;
                 letter-spacing: 0.04em !important;
                 text-transform: uppercase !important;
+                min-height: 40px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
             }
 
             /* Token Cards — compact vertical layout for half-width */
@@ -1459,7 +1463,8 @@
             }
 
             .holdings-column-header {
-                padding: 10px 8px !important;
+                padding: 8px 6px !important;
+                min-height: 40px !important;
             }
 
             .header-title {
@@ -1646,9 +1651,9 @@
             /* Dark overlay when drawer is open — controlled by JS, not forced visible */
             /* #wtv-drawer-overlay visibility is managed by JS only */
 
-            /* WTV mobile tab — thinner and moved down */
+            /* WTV mobile tab — skinnier button */
             #wtv-mobile-tab {
-                width: 30px !important;
+                width: 22px !important;
                 height: 70px !important;
                 top: 55% !important;
                 padding: 5px 2px !important;
@@ -6709,7 +6714,7 @@ document.addEventListener('DOMContentLoaded', () => {
         right: 0;
         top: 55%;
         transform: translateY(-50%);
-        width: 30px;
+        width: 22px;
         height: 70px;
         background: linear-gradient(180deg, rgba(251,191,36,0.9), rgba(220,38,38,0.5));
         border: 2px solid rgba(251,191,36,0.8);
@@ -6731,7 +6736,7 @@ document.addEventListener('DOMContentLoaded', () => {
         padding: 5px 2px;
         animation: wtv-tab-glow 3s infinite;
     " onclick="if(window._wtvOpenDrawer) window._wtvOpenDrawer();">
-        <span style="font-size: 14px; writing-mode: horizontal-tb;">🎬</span>
+        <span style="font-size: 12px; writing-mode: horizontal-tb;">🎬</span>
     </button>
 
     <!-- WTV Restore Button - More Visible (desktop only) -->
