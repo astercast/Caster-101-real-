@@ -5387,6 +5387,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 align-items: center;
                 justify-content: center;
                 background: #000;
+                overflow: hidden;
             ">
                 <video id="miniplayer-video" style="
                     width: 100%;
@@ -5400,6 +5401,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     border: none;
                     border-radius: 8px;
                     display: none;
+                    margin: 0 auto;
+                    background: #000;
                 " allowfullscreen></iframe>
             </div>
             <!-- Video overlay gradient -->
@@ -5431,18 +5434,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 letter-spacing: 0.5px;
                 text-shadow: 0 2px 6px rgba(251, 191, 36, 0.4);
             ">The Last Wizard</div>
-
-            <!-- Playlist Info -->
-            <div id="video-playlist-info" style="
-                font-size: 9px;
-                color: rgba(251, 191, 36, 0.7);
-                margin-bottom: 10px;
-                text-align: center;
-                font-family: 'Inter', sans-serif;
-                font-weight: 600;
-                letter-spacing: 0.3px;
-                text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
-            ">1 / 7</div>
 
             <!-- Control Buttons -->
             <div style="display: flex; justify-content: space-between; align-items: center; gap: 7px;">
@@ -5487,6 +5478,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     flex: 1;
                     text-align: center;
                 " onmouseover="this.style.background='linear-gradient(135deg, rgba(251,191,36,0.35), rgba(251,191,36,0.25))'; this.style.boxShadow='0 4px 12px rgba(251,191,36,0.3)';" onmouseout="this.style.background='linear-gradient(135deg, rgba(251,191,36,0.2), rgba(251,191,36,0.1))'; this.style.boxShadow='0 2px 8px rgba(251,191,36,0.15)';">⏭️</button>
+
+                <button id="video-shuffle" style="
+                    background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(37, 99, 235, 0.15));
+                    border: 1px solid rgba(96, 165, 250, 0.5);
+                    border-radius: 8px;
+                    color: #93c5fd;
+                    padding: 6px 10px;
+                    cursor: pointer;
+                    font-size: 13px;
+                    transition: all 0.2s;
+                    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+                    flex: 1;
+                    text-align: center;
+                " onmouseover="this.style.background='linear-gradient(135deg, rgba(96,165,250,0.35), rgba(59,130,246,0.25))'; this.style.boxShadow='0 4px 12px rgba(59,130,246,0.3)';" onmouseout="this.style.background='linear-gradient(135deg, rgba(59,130,246,0.25), rgba(37,99,235,0.15))'; this.style.boxShadow='0 2px 8px rgba(59,130,246,0.2)';">🔀</button>
             </div>
         </div>
     </div>
@@ -5568,9 +5573,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const playPauseBtn = document.getElementById('video-playpause');
             const prevBtn = document.getElementById('video-prev');
             const nextBtn = document.getElementById('video-next');
-            const playlistInfo = document.getElementById('video-playlist-info');
+            const shuffleBtn = document.getElementById('video-shuffle');
             const closeBtn = document.getElementById('close-miniplayer');
             const miniplayer = document.getElementById('video-miniplayer');
+
+            let isIframePaused = false;
 
             // Load Google Drive video
             function loadVideo(index) {
@@ -5585,15 +5592,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     // Use iframe for Google Drive videos
                     iframe.src = embedUrl;
+                    iframe.dataset.lastSrc = embedUrl;
                     iframe.style.display = 'block';
                     video.style.display = 'none';
+                    isIframePaused = false;
+                    playPauseBtn.textContent = '⏸️';
                     
                     // Update title and playlist info
                     const videoTitle = document.getElementById('video-title');
                     if (videoTitle) {
                         videoTitle.textContent = videoTitles[currentIndex];
                     }
-                    playlistInfo.textContent = `${currentIndex + 1} / ${googleDriveVideos.length}`;
                 }
             }
 
@@ -5613,6 +5622,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Play/Pause button
             playPauseBtn.addEventListener('click', () => {
+                if (iframe.style.display === 'block') {
+                    if (!isIframePaused) {
+                        iframe.dataset.pausedSrc = iframe.src;
+                        iframe.src = 'about:blank';
+                        isIframePaused = true;
+                        playPauseBtn.textContent = '▶️';
+                    } else {
+                        const resumeSrc = iframe.dataset.pausedSrc || iframe.dataset.lastSrc;
+                        if (resumeSrc) {
+                            iframe.src = resumeSrc;
+                        }
+                        isIframePaused = false;
+                        playPauseBtn.textContent = '⏸️';
+                    }
+                    return;
+                }
+
                 if (video.paused) {
                     video.play();
                     playPauseBtn.textContent = '⏸️';
@@ -5621,6 +5647,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     playPauseBtn.textContent = '▶️';
                 }
             });
+
+            // Shuffle playlist
+            if (shuffleBtn) {
+                shuffleBtn.addEventListener('click', () => {
+                    for (let i = googleDriveVideos.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [googleDriveVideos[i], googleDriveVideos[j]] = [googleDriveVideos[j], googleDriveVideos[i]];
+                        [videoTitles[i], videoTitles[j]] = [videoTitles[j], videoTitles[i]];
+                    }
+                    currentIndex = 0;
+                    loadVideo(currentIndex);
+                });
+            }
 
             // Close miniplayer
             closeBtn.addEventListener('click', (e) => {
