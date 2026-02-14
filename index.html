@@ -5360,7 +5360,6 @@ document.addEventListener('DOMContentLoaded', () => {
         cursor: move;
         overflow: hidden;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        resize: both;
         user-select: none;
     ">
         <!-- Drag Handle Header -->
@@ -5779,9 +5778,11 @@ document.addEventListener('DOMContentLoaded', () => {
             let currentX, currentY, initialX, initialY, initialWidth, initialHeight;
             const header = document.getElementById('video-miniplayer-header');
 
-            // Create resize handle
+            // Create resize handle - clean design without weird shadows
             const resizeHandle = document.createElement('div');
-            resizeHandle.style.cssText = 'position: absolute; bottom: 0; right: 0; width: 20px; height: 20px; cursor: nwse-resize; background: linear-gradient(135deg, rgba(251,191,36,0.3), transparent); border-radius: 0 0 10px 0;';
+            resizeHandle.style.cssText = 'position: absolute; bottom: 2px; right: 2px; width: 16px; height: 16px; cursor: nwse-resize; background: transparent; z-index: 10; display: flex; align-items: center; justify-content: center; font-size: 10px; color: rgba(251,191,36,0.6); user-select: none;';
+            resizeHandle.innerHTML = '⋰';
+            resizeHandle.title = 'Drag to resize';
             miniplayer.appendChild(resizeHandle);
 
             // Dragging
@@ -5790,6 +5791,10 @@ document.addEventListener('DOMContentLoaded', () => {
             document.addEventListener('mouseup', dragEnd);
 
             function dragStart(e) {
+                // Don't start dragging if clicking on resize handle
+                if (e.target === resizeHandle || isResizing) {
+                    return;
+                }
                 initialX = e.clientX - miniplayer.offsetLeft;
                 initialY = e.clientY - miniplayer.offsetTop;
                 if (e.target === header || e.target.parentElement === header || e.target.parentElement.parentElement === header) {
@@ -5831,25 +5836,43 @@ document.addEventListener('DOMContentLoaded', () => {
             document.addEventListener('mouseup', resizeEnd);
 
             function resizeStart(e) {
+                e.preventDefault();
+                e.stopPropagation();
                 isResizing = true;
+                isDragging = false; // Ensure dragging is off
                 initialX = e.clientX;
                 initialY = e.clientY;
                 initialWidth = miniplayer.offsetWidth;
                 initialHeight = miniplayer.offsetHeight;
+                document.body.style.userSelect = 'none';
             }
 
             function resize(e) {
                 if (isResizing) {
                     e.preventDefault();
-                    const newWidth = Math.max(180, initialWidth + (e.clientX - initialX));
+                    e.stopPropagation();
+                    
+                    // Calculate new dimensions
+                    const deltaX = e.clientX - initialX;
+                    const deltaY = e.clientY - initialY;
+                    
+                    // Resize width (maintain minimum)
+                    const newWidth = Math.max(200, Math.min(800, initialWidth + deltaX));
                     miniplayer.style.width = newWidth + 'px';
+                    
+                    // Auto-adjust height based on aspect ratio (16:9 video + controls)
+                    // Or allow free height resizing
+                    const newHeight = Math.max(150, initialHeight + deltaY);
+                    miniplayer.style.height = newHeight + 'px';
                 }
             }
 
             function resizeEnd() {
                 if (isResizing) {
                     isResizing = false;
+                    document.body.style.userSelect = '';
                     localStorage.setItem('videoMiniplayerWidth', miniplayer.style.width);
+                    localStorage.setItem('videoMiniplayerHeight', miniplayer.style.height);
                 }
             }
 
@@ -5857,6 +5880,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const savedX = localStorage.getItem('videoMiniplayerX');
             const savedY = localStorage.getItem('videoMiniplayerY');
             const savedWidth = localStorage.getItem('videoMiniplayerWidth');
+            const savedHeight = localStorage.getItem('videoMiniplayerHeight');
             
             if (savedX && savedY) {
                 miniplayer.style.left = savedX;
@@ -5866,6 +5890,10 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (savedWidth) {
                 miniplayer.style.width = savedWidth;
+            }
+            
+            if (savedHeight) {
+                miniplayer.style.height = savedHeight;
             }
 
             // Restore button handler - BULLETPROOF
