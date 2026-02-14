@@ -4396,6 +4396,7 @@ async function loadComprehensiveTreasury(force = false) {
         // Tokens + NFTs from Spacescan via spacescanQueue (browser IPs work)
         // localStorage cache: serve stale data instantly, refresh in background
         async function loadChiaTreasury(useCache = true) {
+            window._chiaLastFromCache = false;
             const CACHE_KEY = 'awiz_chia_treasury_v3';
             const CACHE_KEY_WALLETS = 'awiz_chia_wallets_v3';
             const CACHE_TTL = 3 * 60 * 60 * 1000; // 3 hour auto-refresh
@@ -4436,6 +4437,7 @@ async function loadComprehensiveTreasury(force = false) {
 
                             if (!shouldRefresh) {
                                 console.log('✅ Snapshot is fresh (<3h), using it');
+                                window._chiaLastFromCache = true;
                                 return cached;
                             } else {
                                 console.log('⌛ Snapshot is old (>3h), refreshing from Spacescan');
@@ -4485,23 +4487,7 @@ async function loadComprehensiveTreasury(force = false) {
                 }
 
                 const fetchSpacescanWithFallback = async (endpoint, wallet, timeout) => {
-                    // Prefer proxy to avoid browser CORS and rate-limit issues
-                    try {
-                        const ctrl = new AbortController();
-                        const timer = setTimeout(() => ctrl.abort(), timeout);
-                        const resp = await fetch('/api/chia-address-proxy', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ endpoint, address: wallet }),
-                            signal: ctrl.signal
-                        });
-                        clearTimeout(timer);
-                        if (resp.ok) {
-                            const data = await resp.json();
-                            if (data && !data.error) return data;
-                        }
-                    } catch (_) {}
-
+                    // Direct calls only (proxy disabled by design)
                     const direct = await spacescanFetch(`https://api.spacescan.io/address/${endpoint}/${wallet}`, timeout);
                     return direct || null;
                 };
@@ -4765,6 +4751,7 @@ async function loadComprehensiveTreasury(force = false) {
         console.log('📡 Calling chia-cat-prices Lambda (treasury mode)...');
         
         const chiaWalletsData = await loadChiaTreasury(!force);
+        const usedChiaCache = !!window._chiaLastFromCache && !force;
         
         if (!chiaWalletsData || chiaWalletsData.length === 0) {
             console.error('❌ Failed to load Chia treasury (no snapshot available)');
@@ -4786,114 +4773,126 @@ async function loadComprehensiveTreasury(force = false) {
             return;
         }
 
-        console.log(`✅ chia-all returned ${chiaWalletsData.length} wallets`);
-        
-        // Build token map and NFT collections from Lambda response
-        // chia-all already includes TibetSwap data and LP detection
-        const tMap = new Map();
-        const allNFTs = [];
-        let colMap = {};
-        
-        for (let i = 0; i < chiaWalletsData.length; i++) {
-            const w = chiaWalletsData[i];
-            console.log(`✅ W${i}: ${w.xchBal.toFixed(4)} XCH, ${w.nfts.length} NFTs, ${w.tokens.length} tokens`);
-            
-            // Add XCH balance
-            if (w.xchBal > 0) {
-                if (!tMap.has('XCH_NATIVE')) {
-                    tMap.set('XCH_NATIVE', {
-                        symbol: 'XCH',
-                        name: 'Chia',
-                        assetId: 'XCH_NATIVE',
-                        balance: 0,
-                        price: chiaXchPrice,
-                        value: 0,
-                        type: 'native',
-                        image: ''
-                    });
-                }
-                const xchToken = tMap.get('XCH_NATIVE');
-                xchToken.balance += w.xchBal;
-                xchToken.value += w.xchBal * chiaXchPrice;
-            }
-            
-            // Add CAT/LP tokens (already processed by chia-all Lambda)
-            for (const tok of w.tokens) {
-                const key = tok.assetId || tok.symbol;
-                if (tMap.has(key)) {
-                    const existing = tMap.get(key);
-                    existing.balance += tok.balance;
-                    existing.value += tok.value;
-                } else {
-                    tMap.set(key, { ...tok });
-                }
-            }
-            
-            // Collect NFTs
-            allNFTs.push(...w.nfts);
-        }
-        
-        // Build NFT collections
-        mergedNFTCount = allNFTs.length;
-        if (mergedNFTCount > 0) {
-            colMap = buildNFTCols(allNFTs);
-            mergedNFTCols = Object.values(colMap).sort((a, b) => b.count - a.count);
-            nftsLoaded = true;
-            console.log(`✅ NFTs: ${mergedNFTCount} in ${mergedNFTCols.length} collections`);
-        }
-        
-        // Render everything
-        mergedChiaTokens = Array.from(tMap.values());
-        mergedChiaTotal = mergedChiaTokens.reduce((s, t) => s + (t.value || 0), 0);
-        console.log(`✅ Chia treasury loaded: ${mergedChiaTokens.length} tokens, $${mergedChiaTotal.toFixed(2)}, ${mergedNFTCount} NFTs`);
+        const renderChiaTreasury = (wallets) => {
+            console.log(`✅ chia-all returned ${wallets.length} wallets`);
 
-        const cacheAgeEl = document.getElementById('chia-cache-age');
-        if (cacheAgeEl) cacheAgeEl.style.display = 'none';
+            // Build token map and NFT collections from wallet response
+            const tMap = new Map();
+            const allNFTs = [];
+            let colMap = {};
 
-        const chiaData = { tokens: mergedChiaTokens, total: mergedChiaTotal, xchPrice: chiaXchPrice };
-        const nftData = { collections: mergedNFTCols, totalNFTs: mergedNFTCount, totalValue: 0, totalXch: 0, totalCollections: mergedNFTCols.length };
-        window._chiaNFTData = nftData;
-        window._chiaXchPrice = chiaXchPrice;
-        
-        // Cache the treasury data for quick restoration when switching tabs
-        _treasuryCache.baseData = baseData;
-        _treasuryCache.chiaData = chiaData;
-        _treasuryCache.nftData = nftData;
-        _treasuryCache.timestamp = Date.now();
-        console.log('💾 Treasury data cached for tab switching');
-        
-        updateTreasuryDisplay(baseData, chiaData, nftData);
-        console.log('✅ Treasury display updated');
+            for (let i = 0; i < wallets.length; i++) {
+                const w = wallets[i];
+                console.log(`✅ W${i}: ${w.xchBal.toFixed(4)} XCH, ${w.nfts.length} NFTs, ${w.tokens.length} tokens`);
 
-        // ── Background: MintGarden enrichment for NFT collection names ────────────
-        if (mergedNFTCount > 0) {
-            const allColIds = Object.keys(colMap);
-            (async () => {
-                try {
-                    const ctrl = new AbortController();
-                    setTimeout(() => ctrl.abort(), 25000);
-                    const colResp = await fetch('/api/chia-collections', {
-                        method: 'POST', headers: {'Content-Type':'application/json'},
-                        body: JSON.stringify({ colIds: allColIds }), signal: ctrl.signal,
-                    });
-                    if (colResp.ok) {
-                        const mgMap = (await colResp.json()).collections || {};
-                        let enriched = 0;
-                        for (const cid of allColIds) {
-                            const mg = mgMap[cid]; if (!mg) continue;
-                            if (mg.name)      colMap[cid].name      = mg.name;
-                            if (mg.thumbnail) colMap[cid].image     = mg.thumbnail;
-                            colMap[cid].floor_xch = mg.floor_xch || 0;
-                            enriched++;
-                        }
-                        mergedNFTCols = Object.values(colMap).sort((a,b)=>b.count-a.count);
-                        console.log(`✅ MintGarden: enriched ${enriched}/${allColIds.length} collections`);
-                        const enrichedNFTData = {collections:mergedNFTCols, totalNFTs:mergedNFTCount, totalValue:0, totalXch:0, totalCollections:mergedNFTCols.length};
-                        window._chiaNFTData = enrichedNFTData;
-                        updateNFTGallery(enrichedNFTData);
+                // Add XCH balance
+                if (w.xchBal > 0) {
+                    if (!tMap.has('XCH_NATIVE')) {
+                        tMap.set('XCH_NATIVE', {
+                            symbol: 'XCH',
+                            name: 'Chia',
+                            assetId: 'XCH_NATIVE',
+                            balance: 0,
+                            price: chiaXchPrice,
+                            value: 0,
+                            type: 'native',
+                            image: ''
+                        });
                     }
-                } catch(e) { console.warn('⚠️ MintGarden enrichment skipped:', e.message); }
-            })();
+                    const xchToken = tMap.get('XCH_NATIVE');
+                    xchToken.balance += w.xchBal;
+                    xchToken.value += w.xchBal * chiaXchPrice;
+                }
+
+                // Add CAT/LP tokens
+                for (const tok of w.tokens) {
+                    const key = tok.assetId || tok.symbol;
+                    if (tMap.has(key)) {
+                        const existing = tMap.get(key);
+                        existing.balance += tok.balance;
+                        existing.value += tok.value;
+                    } else {
+                        tMap.set(key, { ...tok });
+                    }
+                }
+
+                // Collect NFTs
+                allNFTs.push(...w.nfts);
+            }
+
+            // Build NFT collections
+            mergedNFTCount = allNFTs.length;
+            if (mergedNFTCount > 0) {
+                colMap = buildNFTCols(allNFTs);
+                mergedNFTCols = Object.values(colMap).sort((a, b) => b.count - a.count);
+                nftsLoaded = true;
+                console.log(`✅ NFTs: ${mergedNFTCount} in ${mergedNFTCols.length} collections`);
+            }
+
+            // Render everything
+            mergedChiaTokens = Array.from(tMap.values());
+            mergedChiaTotal = mergedChiaTokens.reduce((s, t) => s + (t.value || 0), 0);
+            console.log(`✅ Chia treasury loaded: ${mergedChiaTokens.length} tokens, $${mergedChiaTotal.toFixed(2)}, ${mergedNFTCount} NFTs`);
+
+            const cacheAgeEl = document.getElementById('chia-cache-age');
+            if (cacheAgeEl) cacheAgeEl.style.display = 'none';
+
+            const chiaData = { tokens: mergedChiaTokens, total: mergedChiaTotal, xchPrice: chiaXchPrice };
+            const nftData = { collections: mergedNFTCols, totalNFTs: mergedNFTCount, totalValue: 0, totalXch: 0, totalCollections: mergedNFTCols.length };
+            window._chiaNFTData = nftData;
+            window._chiaXchPrice = chiaXchPrice;
+
+            // Cache the treasury data for quick restoration when switching tabs
+            _treasuryCache.baseData = baseData;
+            _treasuryCache.chiaData = chiaData;
+            _treasuryCache.nftData = nftData;
+            _treasuryCache.timestamp = Date.now();
+            console.log('💾 Treasury data cached for tab switching');
+
+            updateTreasuryDisplay(baseData, chiaData, nftData);
+            console.log('✅ Treasury display updated');
+
+            // ── Background: MintGarden enrichment for NFT collection names ────────────
+            if (mergedNFTCount > 0) {
+                const allColIds = Object.keys(colMap);
+                (async () => {
+                    try {
+                        const ctrl = new AbortController();
+                        setTimeout(() => ctrl.abort(), 25000);
+                        const colResp = await fetch('/api/chia-collections', {
+                            method: 'POST', headers: {'Content-Type':'application/json'},
+                            body: JSON.stringify({ colIds: allColIds }), signal: ctrl.signal,
+                        });
+                        if (colResp.ok) {
+                            const mgMap = (await colResp.json()).collections || {};
+                            let enriched = 0;
+                            for (const cid of allColIds) {
+                                const mg = mgMap[cid]; if (!mg) continue;
+                                if (mg.name)      colMap[cid].name      = mg.name;
+                                if (mg.thumbnail) colMap[cid].image     = mg.thumbnail;
+                                colMap[cid].floor_xch = mg.floor_xch || 0;
+                                enriched++;
+                            }
+                            mergedNFTCols = Object.values(colMap).sort((a,b)=>b.count-a.count);
+                            console.log(`✅ MintGarden: enriched ${enriched}/${allColIds.length} collections`);
+                            const enrichedNFTData = {collections:mergedNFTCols, totalNFTs:mergedNFTCount, totalValue:0, totalXch:0, totalCollections:mergedNFTCols.length};
+                            window._chiaNFTData = enrichedNFTData;
+                            updateNFTGallery(enrichedNFTData);
+                        }
+                    } catch(e) { console.warn('⚠️ MintGarden enrichment skipped:', e.message); }
+                })();
+            }
+        };
+
+        renderChiaTreasury(chiaWalletsData);
+
+        if (usedChiaCache) {
+            loadChiaTreasury(false).then((freshWallets) => {
+                if (freshWallets && freshWallets.length > 0) {
+                    console.log('🔁 Refreshing Chia treasury with live data');
+                    renderChiaTreasury(freshWallets);
+                }
+            }).catch((e) => console.warn('⚠️ Live Chia refresh failed:', e.message));
         }
         
     } catch (error) {
