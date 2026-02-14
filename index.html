@@ -5571,17 +5571,16 @@ document.addEventListener('DOMContentLoaded', () => {
     <script>
         // Video Miniplayer Playlist & Controls
         (function() {
-            // NFT page URLs - we'll extract video URLs from these
-            const nftPageUrls = [
-                'https://mintgarden.io/nfts/sprout-magic-nft16r6rluvvqlj636u8qj87vdjweegfwr9qw44td0k2m280megp84zqrup0f2',
-                'https://mintgarden.io/nfts/a-wizard-magic-nft1z5z6ya98rt090h0vew9jgx4jqdg0t92yhvule96kgt9d6596v5aqf2u40p',
-                'https://mintgarden.io/nfts/hear-the-drums-in-the-distance-nft1pxzmara9s5y9ne67edj6uwxpkgv7wp6ulq8kwmy9acsur6xn7xksjvmm48',
-                'https://mintgarden.io/nfts/keys-fall-slow-like-winter-rai-nft1a0n40mq3q4rm4lcqamscztjgw9rvernwystv6440luz5zdmpewhqce9xkn',
-                'https://mintgarden.io/nfts/caster-nft1vaxt5mzf6m8494xwmne6m023gk4lnch6g0ef859ya4azqwtej7qs9vjsva'
+            // Local video files - place your .mp4 files in a 'videos' folder
+            const videoPlaylist = [
+                'videos/sprout-magic.mp4',
+                'videos/a-wizard.mp4',
+                'videos/hear-the-drums.mp4',
+                'videos/keys-fall-slow.mp4',
+                'videos/caster.mp4'
             ];
 
             let currentIndex = 0;
-            let videoUrls = []; // Will store extracted video URLs
             const video = document.getElementById('miniplayer-video');
             const iframe = document.getElementById('miniplayer-iframe');
             const playPauseBtn = document.getElementById('video-playpause');
@@ -5592,166 +5591,51 @@ document.addEventListener('DOMContentLoaded', () => {
             const miniplayer = document.getElementById('video-miniplayer');
 
             // Extract video URL from an NFT page URL
-            async function extractVideoUrl(pageUrl) {
-                try {
-                    // Extract NFT ID from URL
-                    const nftId = pageUrl.split('/nfts/')[1];
-                    console.log(`  📺 Loading NFT: ${nftId.substring(0, 30)}...`);
+            // Load video from local playlist
+            function loadVideo(index) {
+                if (index >= 0 && index < videoPlaylist.length) {
+                    currentIndex = index;
+                    const videoPath = videoPlaylist[currentIndex];
                     
-                    // Try to fetch the page and extract video URL
-                    const response = await fetch(pageUrl, {
-                        method: 'GET',
-                        headers: {
-                            'Accept': 'text/html',
-                            'User-Agent': 'Mozilla/5.0'
-                        },
-                        mode: 'cors'
+                    console.log(`🎬 Loading video ${currentIndex + 1}/${videoPlaylist.length}: ${videoPath}`);
+                    
+                    // Always use video element for local files
+                    video.src = videoPath;
+                    video.style.display = 'block';
+                    iframe.style.display = 'none';
+                    
+                    // Try to play (might be blocked by browser policy)
+                    video.play().catch(err => {
+                        console.log('ℹ️ Auto-play blocked - click play button');
+                        playPauseBtn.textContent = '▶️';
                     });
                     
-                    if (!response.ok) {
-                        console.log(`  🌐 Using embedded MintGarden player (HTTP ${response.status})`);
-                        return pageUrl;
-                    }
-                    
-                    const html = await response.text();
-                    
-                    // Extract video URL from various possible formats
-                    const patterns = [
-                        // Direct MP4/WebM src attributes
-                        /src=["']([^"']*\.(?:mp4|webm|mov))["']/gi,
-                        // In JSON/JS arrays
-                        /["'](?:url|src|video_url|videoUrl|media_url)["']\s*:\s*["']([^"']*\.(?:mp4|webm))/gi,
-                        // Data attributes  
-                        /data-(?:src|video|media)=["']([^"']*\.(?:mp4|webm))["']/gi,
-                        // CDN patterns (ipfs, arweave, etc)
-                        /(https?:\/\/[^"'\s]+\.(?:mp4|webm|mov))/gi
-                    ];
-                    
-                    for (let pattern of patterns) {
-                        let match;
-                        while ((match = pattern.exec(html)) !== null) {
-                            let videoUrl = match[1] || match[0];
-                            
-                            // Clean up URL
-                            videoUrl = videoUrl.split('"')[0].split("'")[0].split('\\')[0];
-                            
-                            // Make sure it's absolute
-                            if (!videoUrl.startsWith('http')) {
-                                if (videoUrl.startsWith('/')) {
-                                    videoUrl = 'https://mintgarden.io' + videoUrl;
-                                } else if (videoUrl.startsWith('ipfs://')) {
-                                    videoUrl = 'https://ipfs.io/ipfs/' + videoUrl.substring(7);
-                                }
-                            }
-                            
-                            if (videoUrl.includes('mp4') || videoUrl.includes('webm')) {
-                                console.log(`  ✅ Found direct video: ${videoUrl.substring(0, 60)}...`);
-                                return videoUrl;
-                            }
-                        }
-                    }
-                    
-                    // Try API endpoint
-                    console.log(`  📡 Checking MintGarden API...`);
-                    try {
-                        const apiUrl = `https://api.mintgarden.io/nfts/${nftId}`;
-                        const apiResponse = await fetch(apiUrl);
-                        const apiData = await apiResponse.json();
-                        
-                        if (apiData.data?.video_url || apiData.data?.media_url) {
-                            const videoUrl = apiData.data.video_url || apiData.data.media_url;
-                            console.log(`  ✅ Found video via API: ${videoUrl.substring(0, 60)}...`);
-                            return videoUrl;
-                        }
-                    } catch (apiErr) {
-                        console.log(`  ⚠️ API not available`);
-                    }
-                    
-                    // Fallback: Use MintGarden's embedded player
-                    console.log(`  🌐 Using embedded MintGarden player`);
-                    return pageUrl;
-                    
-                } catch (e) {
-                    console.log(`  🌐 Using embedded MintGarden player (${e.message})`);
-                    return pageUrl;
-                }
-            }
-
-            // Initialize playlist by extracting video URLs
-            async function initPlaylist() {
-                console.log('🎬 Initializing WTV playlist...');
-                videoUrls = [];
-                
-                for (let i = 0; i < nftPageUrls.length; i++) {
-                    const url = await extractVideoUrl(nftPageUrls[i]);
-                    videoUrls.push(url);
-                    console.log(`  ✅ Video ${i + 1}: ${url.length > 50 ? url.substring(0, 50) + '...' : url}`);
-                }
-                
-                // Load first video
-                if (videoUrls.length > 0) {
-                    loadVideo(0);
-                }
-            }
-
-            // Load video
-            function loadVideo(index) {
-                if (index >= 0 && index < videoUrls.length) {
-                    currentIndex = index;
-                    const videoUrl = videoUrls[currentIndex];
-                    
-                    // Check if it's a direct video URL or a MintGarden page
-                    if (videoUrl.includes('mintgarden.io/nfts/')) {
-                        // It's a MintGarden page - use iframe to show embedded player
-                        iframe.src = videoUrl;
-                        iframe.style.display = 'block';
-                        video.style.display = 'none';
-                        console.log(`  🌐 Loading embedded player ${currentIndex + 1}/${videoUrls.length}`);
-                    } else if (videoUrl.includes('.mp4') || videoUrl.includes('.webm') || videoUrl.includes('.mov') || videoUrl.includes('ipfs')) {
-                        // It's a direct video file - use video element
-                        video.src = videoUrl;
-                        video.style.display = 'block';
-                        iframe.style.display = 'none';
-                        video.play().catch(err => console.log('  ℹ️ Auto-play blocked by browser'));
-                        console.log(`  ▶️ Playing direct video ${currentIndex + 1}/${videoUrls.length}`);
-                    } else {
-                        // Unknown format - try iframe
-                        iframe.src = videoUrl;
-                        iframe.style.display = 'block';
-                        video.style.display = 'none';
-                        console.log(`  🌐 Loading in iframe ${currentIndex + 1}/${videoUrls.length}`);
-                    }
-                    
-                    playlistInfo.textContent = `${currentIndex + 1} / ${videoUrls.length}`;
+                    playlistInfo.textContent = `${currentIndex + 1} / ${videoPlaylist.length}`;
                 }
             }
 
             // Previous
             prevBtn.addEventListener('click', () => {
-                if (videoUrls.length > 0) {
-                    loadVideo((currentIndex - 1 + videoUrls.length) % videoUrls.length);
+                if (videoPlaylist.length > 0) {
+                    loadVideo((currentIndex - 1 + videoPlaylist.length) % videoPlaylist.length);
                 }
             });
 
             // Next
             nextBtn.addEventListener('click', () => {
-                if (videoUrls.length > 0) {
-                    loadVideo((currentIndex + 1) % videoUrls.length);
+                if (videoPlaylist.length > 0) {
+                    loadVideo((currentIndex + 1) % videoPlaylist.length);
                 }
             });
 
             // Play/Pause button
             playPauseBtn.addEventListener('click', () => {
-                if (video && video.style.display !== 'none') {
-                    if (video.paused) {
-                        video.play();
-                        playPauseBtn.textContent = '⏸️';
-                    } else {
-                        video.pause();
-                        playPauseBtn.textContent = '▶️';
-                    }
+                if (video.paused) {
+                    video.play();
+                    playPauseBtn.textContent = '⏸️';
                 } else {
-                    playPauseBtn.textContent = playPauseBtn.textContent === '⏸️' ? '▶️' : '⏸️';
+                    video.pause();
+                    playPauseBtn.textContent = '▶️';
                 }
             });
 
@@ -5896,21 +5780,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 miniplayer.style.height = savedHeight;
             }
 
-            // Restore button handler - BULLETPROOF
-            const restoreBtn = document.getElementById('wtv-restore-btn');
-            if (restoreBtn) {
-                restoreBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    console.log('🎬 Restoring WTV miniplayer...');
-                    miniplayer.classList.remove('hidden');
-                    localStorage.removeItem('videoMiniplayerHidden');
-                    restoreBtn.style.display = 'none';
-                    console.log('✅ WTV miniplayer restored');
-                }, false);
-            }
+            // Store miniplayer reference globally for restore button
+            window._wtvMiniplayer = miniplayer;
 
-            // Initialize playlist by extracting video URLs
-            initPlaylist();
+            // Load first video
+            console.log('🎬 WTV initialized with local video playlist');
+            loadVideo(0);
         })();
     </script>
 
@@ -5956,6 +5831,29 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     </style>
+
+    <script>
+        // WTV Restore Button Handler - runs after button is in DOM
+        (function() {
+            const restoreBtn = document.getElementById('wtv-restore-btn');
+            const miniplayer = window._wtvMiniplayer || document.getElementById('video-miniplayer');
+            
+            if (restoreBtn && miniplayer) {
+                restoreBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    console.log('🎬 Restoring WTV miniplayer...');
+                    miniplayer.classList.remove('hidden');
+                    localStorage.removeItem('videoMiniplayerHidden');
+                    restoreBtn.style.display = 'none';
+                    console.log('✅ WTV miniplayer restored successfully');
+                });
+                console.log('✅ WTV restore button listener attached');
+            } else {
+                console.error('❌ Could not find restore button or miniplayer');
+            }
+        })();
+    </script>
 
 </body>
 
