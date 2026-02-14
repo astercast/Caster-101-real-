@@ -6484,7 +6484,7 @@ document.addEventListener('DOMContentLoaded', () => {
         bottom: 20px;
         left: 20px;
         width: 360px;
-        height: 320px;
+        height: 360px;
         background: linear-gradient(135deg, rgba(10, 10, 20, 0.95), rgba(20, 20, 35, 0.95));
         border: 1.5px solid rgba(251, 191, 36, 0.5);
         border-radius: 16px;
@@ -6524,14 +6524,26 @@ document.addEventListener('DOMContentLoaded', () => {
         ">
             <div style="
                 text-align: center;
-                color: rgba(251, 191, 36, 0.6);
-                font-size: 14px;
-                font-weight: 700;
-                letter-spacing: 1.2px;
-                text-transform: uppercase;
-                font-family: 'Cinzel', serif;
-                text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
-            ">Loading...</div>
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+            ">
+                <div style="
+                    font-size: 48px;
+                    animation: wtv-intro-pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+                ">🎬</div>
+                <div style="
+                    color: rgba(251, 191, 36, 0.9);
+                    font-size: 18px;
+                    font-weight: 900;
+                    letter-spacing: 2px;
+                    text-transform: uppercase;
+                    font-family: 'Cinzel', serif;
+                    text-shadow: 0 2px 12px rgba(251, 191, 36, 0.4);
+                ">WTV</div>
+            </div>
         </div>
         <!-- Drag Handle Header -->
         <div id="video-miniplayer-header" style="
@@ -7131,7 +7143,7 @@ document.addEventListener('DOMContentLoaded', () => {
         font-weight: 900;
         cursor: pointer;
         z-index: 999998;
-        display: none;
+        display: none !important;
         flex-direction: column;
         align-items: center;
         justify-content: center;
@@ -7150,6 +7162,17 @@ document.addEventListener('DOMContentLoaded', () => {
     </button>
 
     <style>
+        @keyframes wtv-intro-pulse {
+            0%, 100% {
+                transform: scale(1) rotate(0deg);
+                filter: drop-shadow(0 0 4px rgba(251, 191, 36, 0.3));
+            }
+            50% {
+                transform: scale(1.08) rotate(-5deg);
+                filter: drop-shadow(0 0 12px rgba(251, 191, 36, 0.6));
+            }
+        }
+
         @keyframes wtv-fade-in {
             from {
                 opacity: 0;
@@ -7278,8 +7301,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         miniplayer.style.display = 'none';
                         miniplayer.style.opacity = '0';
                         if (mobileTab) mobileTab.style.display = 'flex';
+                        if (restoreBtn) restoreBtn.style.display = 'none !important';
                     } else {
-                        restoreBtn.style.display = 'flex';
+                        restoreBtn.style.display = 'flex !important';
                         miniplayer.style.display = 'none';
                         miniplayer.style.opacity = '0';
                     }
@@ -7291,6 +7315,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     miniplayer.style.opacity = '1';
                     if (mobileTab) mobileTab.style.display = 'none';
                     if (overlay) overlay.style.display = 'block';
+                    if (restoreBtn) restoreBtn.style.display = 'none !important';
+                } else {
+                    if (restoreBtn) restoreBtn.style.display = 'none !important';
                 }
                 restoreBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -7308,7 +7335,7 @@ document.addEventListener('DOMContentLoaded', () => {
             window.addEventListener('resize', () => {
                 const hidden = localStorage.getItem('videoMiniplayerHidden') === 'true';
                 if (isMobile()) {
-                    if (restoreBtn) restoreBtn.style.display = 'none';
+                    if (restoreBtn) restoreBtn.style.display = 'none !important';
                     if (hidden) {
                         miniplayer.classList.add('mobile-drawer-closed');
                         miniplayer.style.display = 'none';
@@ -7321,7 +7348,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     miniplayer.classList.remove('mobile-drawer-closed');
                     if (hidden) {
                         miniplayer.style.display = 'none';
-                        if (restoreBtn) restoreBtn.style.display = 'flex';
+                        if (restoreBtn) restoreBtn.style.display = 'flex !important';
                     } else {
                         miniplayer.style.display = 'flex';
                     }

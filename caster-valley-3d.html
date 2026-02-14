@@ -394,39 +394,62 @@
             }
             
             .skill-tree-scroll { 
-                max-height: 55vh !important;
+                max-height: 60vh !important;
                 height: auto !important;
-                padding: 10px !important;
+                padding: 12px !important;
                 overflow-y: auto !important;
                 overflow-x: hidden !important;
+                width: 100% !important;
             }
             
             .skill-tree-container {
                 min-height: auto !important;
-                padding: 8px !important;
+                padding: 10px !important;
                 width: 100% !important;
+                display: flex !important;
+                justify-content: center !important;
             }
             
             .skill-tree-inner { 
                 width: 100% !important;
+                max-width: 400px !important;
                 height: auto !important;
-                min-height: 400px !important;
-                display: flex !important;
-                flex-wrap: wrap !important;
-                justify-content: center !important;
-                align-content: flex-start !important;
-                gap: 12px !important;
+                min-height: 300px !important;
+                display: grid !important;
+                grid-template-columns: repeat(3, 1fr) !important;
+                justify-items: center !important;
+                align-content: start !important;
+                gap: 16px !important;
+                padding: 8px !important;
             }
             
             .skill-node {
-                width: 50px !important;
-                height: 55px !important;
+                width: 60px !important;
+                height: 70px !important;
                 position: relative !important;
+                margin: 0 !important;
             }
             
             .skill-icon-sm { 
-                font-size: 16px !important;
+                font-size: 18px !important;
                 margin-bottom: 2px !important;
+            }
+            
+            .skill-name-sm {
+                font-family: 'Nunito', sans-serif !important;
+                font-size: 8px !important;
+                font-weight: 700 !important;
+                text-align: center !important;
+                line-height: 1.1 !important;
+                margin-bottom: 2px !important;
+                max-width: 50px !important;
+                word-break: break-word !important;
+            }
+            
+            .skill-cost-sm {
+                font-size: 9px !important;
+                font-weight: 700 !important;
+                color: var(--gold) !important;
             }
             
             .skill-name-sm { 
@@ -899,6 +922,17 @@
             { id: 'master', name: 'Mastery', desc: 'Ultimate power! +100% to ALL stats. Requires all tier 5 skills.', cost: 30000, stat: 'all', value: 1, icon: '⭐', x: 180, y: 20, requires: ['growth5', 'bounty5', 'power5', 'hp5'] },
         ];
         
+        // Seeded random number generator for static map generation
+        class SeededRandom {
+            constructor(seed) {
+                this.seed = seed;
+            }
+            next() {
+                this.seed = (this.seed * 9301 + 49297) % 233280;
+                return this.seed / 233280;
+            }
+        }
+
         const ACHIEVEMENTS = [
             { id: 'first_harvest', name: 'First Steps', desc: 'Harvest your first plant', icon: '🌱', reward: 20, check: g => g.stats.totalHarvests >= 1 },
             { id: 'budding_farmer', name: 'Budding Farmer', desc: 'Harvest 10 plants', icon: '🌾', reward: 60, check: g => g.stats.totalHarvests >= 10 },
@@ -954,11 +988,16 @@
             minZoom: 0.5,
             maxZoom: 2.0,
             touchDistance: 0,
+            seededRandom: null, // For static map generation
 
             init() {
                 this.deviceId = this.getOrCreateDeviceId();
                 const localSavedAt = this.loadGame();
                 this.loadCloudSave(localSavedAt);
+                
+                // Initialize seeded random generator (seed based on area + timestamp day)
+                const dayNumber = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
+                this.seededRandom = new SeededRandom(dayNumber * 31337 + ['farm', 'mine', 'forest', 'fishing', 'astral'].indexOf(this.currentArea));
                 
                 // Ensure player always starts with seeds if they have none
                 if (Object.keys(this.seeds).length === 0 || !this.seeds[1]) {
@@ -967,6 +1006,8 @@
                 
                 this.setupThreeJS();
                 document.addEventListener('fullscreenchange', () => this.handleFullscreenChange());
+                document.addEventListener('webkitfullscreenchange', () => this.handleFullscreenChange());
+                document.addEventListener('mozfullscreenchange', () => this.handleFullscreenChange());
                 this.createWorld();
                 this.createWizard();
                 this.renderToolbar();
@@ -1453,6 +1494,10 @@
             },
 
             createWorld() {
+                // Reinitialize seeded random for this area
+                const dayNumber = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
+                this.seededRandom = new SeededRandom(dayNumber * 31337 + ['farm', 'mine', 'forest', 'fishing', 'astral'].indexOf(this.currentArea));
+                
                 this.clearAreaObjects();
                 
                 if (this.currentArea === 'farm') {
