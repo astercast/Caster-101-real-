@@ -5340,30 +5340,30 @@ document.addEventListener('DOMContentLoaded', () => {
         position: fixed;
         bottom: 20px;
         left: 20px;
-        width: 220px;
+        width: 280px;
         height: auto;
-        background: linear-gradient(135deg, rgba(15, 15, 25, 0.98), rgba(25, 25, 35, 0.98));
-        border: 2px solid rgba(251, 191, 36, 0.6);
-        border-radius: 12px;
+        background: linear-gradient(135deg, rgba(10, 10, 20, 0.95), rgba(20, 20, 35, 0.95));
+        border: 1.5px solid rgba(251, 191, 36, 0.5);
+        border-radius: 16px;
         box-shadow: 
-            0 12px 48px rgba(0, 0, 0, 0.8),
-            0 0 0 1px rgba(251, 191, 36, 0.3),
-            0 0 40px rgba(251, 191, 36, 0.15),
-            inset 0 1px 0 rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
+            0 20px 60px rgba(0, 0, 0, 0.9),
+            0 0 0 1px rgba(251, 191, 36, 0.2),
+            0 0 50px rgba(251, 191, 36, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
         z-index: 999999;
         cursor: move;
         overflow: hidden;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         resize: both;
         user-select: none;
     ">
         <!-- Drag Handle Header -->
         <div id="video-miniplayer-header" style="
-            padding: 10px 14px;
-            background: linear-gradient(135deg, rgba(251, 191, 36, 0.25), rgba(220, 38, 38, 0.15));
-            border-bottom: 1px solid rgba(251, 191, 36, 0.4);
+            padding: 12px 16px;
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(220, 38, 38, 0.08));
+            border-bottom: 1px solid rgba(251, 191, 36, 0.3);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -5377,34 +5377,35 @@ document.addEventListener('DOMContentLoaded', () => {
                 left: 0;
                 right: 0;
                 height: 1px;
-                background: linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.6), transparent);
+                background: linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.7), transparent);
             "></div>
             <div style="
                 display: flex;
                 align-items: center;
-                gap: 6px;
-                font-size: 11px;
-                font-weight: 800;
+                gap: 7px;
+                font-size: 12px;
+                font-weight: 900;
                 color: #fbbf24;
                 font-family: 'Cinzel', serif;
-                letter-spacing: 0.3px;
-                text-shadow: 0 2px 8px rgba(251, 191, 36, 0.4);
+                letter-spacing: 0.5px;
+                text-shadow: 0 3px 10px rgba(251, 191, 36, 0.5);
             ">
-                <span style="font-size: 14px;">🎬</span>
+                <span style="font-size: 16px;">🎬</span>
                 <span>WTV</span>
             </div>
             <button id="close-miniplayer" style="
-                background: linear-gradient(135deg, rgba(220, 38, 38, 0.4), rgba(153, 27, 27, 0.3));
-                border: 1px solid rgba(220, 38, 38, 0.6);
-                border-radius: 4px;
-                color: #ef4444;
-                font-size: 11px;
+                background: linear-gradient(135deg, rgba(220, 38, 38, 0.3), rgba(153, 27, 27, 0.2));
+                border: 1px solid rgba(220, 38, 38, 0.5);
+                border-radius: 6px;
+                color: #fca5a5;
+                font-size: 12px;
                 cursor: pointer;
-                padding: 2px 6px;
+                padding: 4px 8px;
                 font-weight: 900;
                 transition: all 0.2s;
-                box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
-            " onmouseover="this.style.background='linear-gradient(135deg, rgba(220,38,38,0.6), rgba(153,27,27,0.5))'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='linear-gradient(135deg, rgba(220,38,38,0.4), rgba(153,27,27,0.3))'; this.style.transform='';"
+                box-shadow: 0 2px 6px rgba(220, 38, 38, 0.25);
+            " onmouseover="this.style.background='linear-gradient(135deg, rgba(220,38,38,0.5), rgba(153,27,27,0.4))'; this.style.transform='scale(1.08)'; this.style.boxShadow='0 4px 12px rgba(220,38,38,0.4)';" onmouseout="this.style.background='linear-gradient(135deg, rgba(220,38,38,0.3), rgba(153,27,27,0.2))'; this.style.transform=''; this.style.boxShadow='0 2px 6px rgba(220,38,38,0.25)';"
+                title="Close WTV">
                 ✕
             </button>
         </div>
@@ -5415,8 +5416,8 @@ document.addEventListener('DOMContentLoaded', () => {
             width: 100%;
             aspect-ratio: 16/9;
             background: linear-gradient(135deg, #000000, #0a0a0a);
-            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
-            min-height: 120px;
+            box-shadow: inset 0 1px 8px rgba(0, 0, 0, 0.7);
+            min-height: 140px;
         ">
             <div id="miniplayer-container" style="
                 width: 100%;
@@ -5454,64 +5455,65 @@ document.addEventListener('DOMContentLoaded', () => {
 
         <!-- Controls -->
         <div style="
-            padding: 10px 12px;
-            background: linear-gradient(180deg, rgba(10, 10, 20, 0.7), rgba(0, 0, 0, 0.8));
+            padding: 12px 14px;
+            background: linear-gradient(180deg, rgba(10, 10, 20, 0.6), rgba(0, 0, 0, 0.85));
             border-top: 1px solid rgba(251, 191, 36, 0.2);
         ">
             <!-- Playlist Info -->
             <div id="video-playlist-info" style="
-                font-size: 9px;
-                color: rgba(251, 191, 36, 0.9);
-                margin-bottom: 8px;
+                font-size: 10px;
+                color: rgba(251, 191, 36, 0.85);
+                margin-bottom: 10px;
                 text-align: center;
                 font-family: 'Inter', sans-serif;
-                font-weight: 600;
-                text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+                font-weight: 700;
+                letter-spacing: 0.3px;
+                text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
             ">1 / 5</div>
 
             <!-- Control Buttons -->
-            <div style="display: flex; justify-content: space-between; align-items: center; gap: 6px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 7px;">
                 <button id="video-prev" style="
-                    background: linear-gradient(135deg, rgba(251, 191, 36, 0.25), rgba(251, 191, 36, 0.15));
-                    border: 1px solid rgba(251, 191, 36, 0.5);
-                    border-radius: 6px;
+                    background: linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(251, 191, 36, 0.1));
+                    border: 1px solid rgba(251, 191, 36, 0.4);
+                    border-radius: 8px;
                     color: #fbbf24;
-                    padding: 5px 8px;
+                    padding: 6px 10px;
                     cursor: pointer;
-                    font-size: 12px;
+                    font-size: 13px;
                     transition: all 0.2s;
-                    box-shadow: 0 2px 6px rgba(251, 191, 36, 0.2);
+                    box-shadow: 0 2px 8px rgba(251, 191, 36, 0.15);
                     flex: 1;
                     text-align: center;
-                " onmouseover="this.style.transform='scale(1.05)';" onmouseout="this.style.transform='';">⏮️</button>
+                " onmouseover="this.style.background='linear-gradient(135deg, rgba(251,191,36,0.35), rgba(251,191,36,0.25))'; this.style.boxShadow='0 4px 12px rgba(251,191,36,0.3)';" onmouseout="this.style.background='linear-gradient(135deg, rgba(251,191,36,0.2), rgba(251,191,36,0.1))'; this.style.boxShadow='0 2px 8px rgba(251,191,36,0.15)';">⏮️</button>
 
                 <button id="video-playpause" style="
-                    background: linear-gradient(135deg, rgba(251, 191, 36, 0.35), rgba(220, 38, 38, 0.35));
-                    border: 1px solid rgba(251, 191, 36, 0.6);
-                    border-radius: 6px;
+                    background: linear-gradient(135deg, rgba(251, 191, 36, 0.35), rgba(220, 38, 38, 0.28));
+                    border: 1px solid rgba(251, 191, 36, 0.5);
+                    border-radius: 8px;
                     color: white;
-                    padding: 6px 12px;
+                    padding: 7px 14px;
                     cursor: pointer;
-                    font-size: 14px;
+                    font-size: 15px;
                     font-weight: bold;
                     transition: all 0.2s;
                     flex: 1.5;
                     box-shadow: 0 3px 10px rgba(251, 191, 36, 0.25);
-                " onmouseover="this.style.transform='scale(1.05)';" onmouseout="this.style.transform='';">⏸️</button>
+                " onmouseover="this.style.background='linear-gradient(135deg, rgba(251,191,36,0.5), rgba(220,38,38,0.4))'; this.style.boxShadow='0 5px 16px rgba(251,191,36,0.4)';" onmouseout="this.style.background='linear-gradient(135deg, rgba(251,191,36,0.35), rgba(220,38,38,0.28))'; this.style.boxShadow='0 3px 10px rgba(251,191,36,0.25)';">⏸️</button>
 
                 <button id="video-next" style="
-                    background: linear-gradient(135deg, rgba(251, 191, 36, 0.25), rgba(251, 191, 36, 0.15));
-                    border: 1px solid rgba(251, 191, 36, 0.5);
-                    border-radius: 6px;
+                    background: linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(251, 191, 36, 0.1));
+                    border: 1px solid rgba(251, 191, 36, 0.4);
+                    border-radius: 8px;
                     color: #fbbf24;
-                    padding: 5px 8px;
+                    padding: 6px 10px;
                     cursor: pointer;
-                    font-size: 12px;
+                    font-size: 13px;
                     transition: all 0.2s;
-                    box-shadow: 0 2px 6px rgba(251, 191, 36, 0.2);
+                    box-shadow: 0 2px 8px rgba(251, 191, 36, 0.15);
                     flex: 1;
                     text-align: center;
-                " onmouseover="this.style.transform='scale(1.05)';" onmouseout="this.style.transform='';">⏭️</button>
+                " onmouseover="this.style.background='linear-gradient(135deg, rgba(251,191,36,0.35), rgba(251,191,36,0.25))'; this.style.boxShadow='0 4px 12px rgba(251,191,36,0.3)';" onmouseout="this.style.background='linear-gradient(135deg, rgba(251,191,36,0.2), rgba(251,191,36,0.1))'; this.style.boxShadow='0 2px 8px rgba(251,191,36,0.15)';">⏭️</button>
             </div>
         </div>
     </div>
@@ -5747,11 +5749,16 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             // Close miniplayer
-            closeBtn.addEventListener('click', () => {
+            closeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                console.log('🔴 Closing WTV miniplayer...');
                 miniplayer.classList.add('hidden');
                 localStorage.setItem('videoMiniplayerHidden', 'true');
                 const restoreBtn = document.getElementById('wtv-restore-btn');
-                restoreBtn.style.display = 'flex';
+                if (restoreBtn) {
+                    restoreBtn.style.display = 'flex';
+                    console.log('✅ WTV restore button shown');
+                }
             });
 
             // Check if miniplayer was previously closed
@@ -5856,14 +5863,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 miniplayer.style.width = savedWidth;
             }
 
-            // Restore button handler
+            // Restore button handler - BULLETPROOF
             const restoreBtn = document.getElementById('wtv-restore-btn');
             if (restoreBtn) {
-                restoreBtn.addEventListener('click', () => {
+                restoreBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    console.log('🎬 Restoring WTV miniplayer...');
                     miniplayer.classList.remove('hidden');
                     localStorage.removeItem('videoMiniplayerHidden');
                     restoreBtn.style.display = 'none';
-                });
+                    console.log('✅ WTV miniplayer restored');
+                }, false);
             }
 
             // Initialize playlist by extracting video URLs
