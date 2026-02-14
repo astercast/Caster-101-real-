@@ -4290,9 +4290,9 @@ function forceChiaRefresh() {
 }
 
 let _treasuryLastLoad = 0;
-async function loadComprehensiveTreasury() {
+async function loadComprehensiveTreasury(force = false) {
     const now = Date.now();
-    if (now - _treasuryLastLoad < 600000) {
+    if (!force && now - _treasuryLastLoad < 600000) {
         console.log(`⏳ Treasury loaded ${Math.round((now - _treasuryLastLoad)/1000)}s ago, using cache (expires in ${Math.round((600000 - (now - _treasuryLastLoad))/1000)}s)`);
         return;
     }
@@ -4754,7 +4754,7 @@ async function loadComprehensiveTreasury() {
         // ── CALL CHIA-CAT-PRICES LAMBDA (treasury mode) ──────────────────────────
         console.log('📡 Calling chia-cat-prices Lambda (treasury mode)...');
         
-        const chiaWalletsData = await loadChiaTreasury();
+        const chiaWalletsData = await loadChiaTreasury(!force);
         
         if (!chiaWalletsData || chiaWalletsData.length === 0) {
             console.error('❌ Failed to load Chia treasury (no snapshot available)');
@@ -5272,15 +5272,9 @@ document.addEventListener('DOMContentLoaded', () => {
             isRefreshingChiaTreasury = true;
             
             try {
-                // Force fresh fetch by skipping cache
-                const data = await loadChiaTreasury(false);
-                if (data && data.length > 0) {
-                    // Reload the treasury display
-                    showTab('treasury');
-                    alert('✅ Treasury refreshed from Spacescan!');
-                } else {
-                    alert('⚠️ Refresh completed but no data returned');
-                }
+                // Force a full treasury refresh (bypass cache + cooldown)
+                await loadComprehensiveTreasury(true);
+                alert('✅ Treasury refreshed from Spacescan!');
             } catch(e) {
                 console.error('Refresh error:', e);
                 alert('❌ Refresh failed: ' + e.message);
