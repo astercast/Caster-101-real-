@@ -1073,6 +1073,7 @@
                 document.addEventListener('mozfullscreenchange', () => this.handleFullscreenChange());
                 this.createWorld();
                 this.createWizard();
+                this.syncWizardVisibility();
                 this.renderToolbar();
                 this.renderStore();
                 this.setupEventListeners();
@@ -1088,6 +1089,14 @@
                 setInterval(() => this.saveGame(), 10000);
                 
                 console.log('🎮 Caster Valley ready!');
+            },
+
+            syncWizardVisibility() {
+                if (!this.wizard) return;
+                const hideMain = this.currentArea === 'fishing';
+                Object.values(this.wizard).forEach(part => {
+                    if (part && part.visible !== undefined) part.visible = !hideMain;
+                });
             },
 
             saveGame() {
@@ -3058,6 +3067,38 @@
                     this.scene.add(driftwood);
                     this.areaObjects.push(driftwood);
                 }
+
+                // Beach grass tufts
+                for (let i = 0; i < 24; i++) {
+                    const angle = r() * Math.PI * 2;
+                    const distance = 18 + r() * 18;
+                    const x = Math.cos(angle) * distance + (r() - 0.5) * 1.6;
+                    const z = Math.sin(angle) * distance + (r() - 0.5) * 1.6;
+                    const tuft = new THREE.Mesh(
+                        new THREE.ConeGeometry(0.14, 0.4, 6),
+                        new THREE.MeshLambertMaterial({ color: 0x5a7647 })
+                    );
+                    tuft.position.set(x, 0.16, z);
+                    tuft.rotation.x = -Math.PI / 2 + (r() - 0.5) * 0.4;
+                    this.scene.add(tuft);
+                    this.areaObjects.push(tuft);
+                }
+
+                // Shallow tide pools near the inner beach edge
+                for (let i = 0; i < 6; i++) {
+                    const angle = r() * Math.PI * 2;
+                    const distance = 13.5 + r() * 4;
+                    const x = Math.cos(angle) * distance;
+                    const z = Math.sin(angle) * distance;
+                    const pool = new THREE.Mesh(
+                        new THREE.CircleGeometry(0.8 + r() * 0.8, 12),
+                        new THREE.MeshLambertMaterial({ color: 0x6bb4d8, transparent: true, opacity: 0.35, depthWrite: false })
+                    );
+                    pool.position.set(x, 0.082, z);
+                    pool.rotation.x = -Math.PI / 2;
+                    this.scene.add(pool);
+                    this.areaObjects.push(pool);
+                }
                 
                 // Minimal beach rocks
                 for (let i = 0; i < 15; i++) {
@@ -3548,7 +3589,7 @@
                 }
                 const body = new THREE.Mesh(
                     new THREE.CylinderGeometry(0.5, 0.6, 1.4, 8),
-                    new THREE.MeshLambertMaterial({ color: 0x2563eb })
+                    new THREE.MeshLambertMaterial({ color: 0xf97316 })
                 );
                 body.position.set(-6, 0.7, 0);
                 body.castShadow = true;
@@ -3564,7 +3605,7 @@
                 this.scene.add(rightEye);
                 const hat = new THREE.Mesh(
                     new THREE.ConeGeometry(0.4, 1.2, 16),
-                    new THREE.MeshLambertMaterial({ color: 0x2563eb })
+                    new THREE.MeshLambertMaterial({ color: 0xf97316 })
                 );
                 hat.position.set(-6, 2.4, 0);
                 hat.castShadow = true;
@@ -4384,20 +4425,12 @@
                 this.currentArea = area;
                 this.createWorld();
                 if (this.wizard) {
-                    if (area === 'fishing') {
-                        // Hide main wizard in fishing area (fishing wizard on dock will be visible instead)
-                        Object.values(this.wizard).forEach(part => {
-                            if (part && part.visible !== undefined) part.visible = false;
-                        });
-                    } else {
-                        // Show main wizard in other areas
-                        Object.values(this.wizard).forEach(part => {
-                            if (part && part.visible !== undefined) part.visible = true;
-                        });
+                    if (area !== 'fishing') {
                         this.wizard.baseX = -6;
                         this.wizard.baseZ = 0;
                         this.wizardTarget = { x: -6, z: 0 };
                     }
+                    this.syncWizardVisibility();
                 }
                 // Reset camera for forest to focus on wizard area
                 if (area === 'forest') {
