@@ -1020,46 +1020,64 @@
 
             /* ── Page Flip Animations for Swipe Navigation ── */
             @keyframes flipInLeft {
-                from {
-                    transform: perspective(1200px) rotateY(-90deg);
+                0% {
+                    transform: perspective(1400px) rotateY(-85deg) translateZ(-50px);
                     opacity: 0;
+                    filter: brightness(0.7);
                 }
-                to {
-                    transform: perspective(1200px) rotateY(0);
+                60% {
+                    transform: perspective(1400px) rotateY(8deg) translateZ(20px);
                     opacity: 1;
+                    filter: brightness(1.1);
+                }
+                100% {
+                    transform: perspective(1400px) rotateY(0) translateZ(0);
+                    opacity: 1;
+                    filter: brightness(1);
                 }
             }
 
             @keyframes flipInRight {
-                from {
-                    transform: perspective(1200px) rotateY(90deg);
+                0% {
+                    transform: perspective(1400px) rotateY(85deg) translateZ(-50px);
                     opacity: 0;
+                    filter: brightness(0.7);
                 }
-                to {
-                    transform: perspective(1200px) rotateY(0);
+                60% {
+                    transform: perspective(1400px) rotateY(-8deg) translateZ(20px);
                     opacity: 1;
+                    filter: brightness(1.1);
+                }
+                100% {
+                    transform: perspective(1400px) rotateY(0) translateZ(0);
+                    opacity: 1;
+                    filter: brightness(1);
                 }
             }
 
             @keyframes flipOutLeft {
-                from {
-                    transform: perspective(1200px) rotateY(0);
+                0% {
+                    transform: perspective(1400px) rotateY(0) translateZ(0);
                     opacity: 1;
+                    filter: brightness(1);
                 }
-                to {
-                    transform: perspective(1200px) rotateY(90deg);
+                100% {
+                    transform: perspective(1400px) rotateY(85deg) translateZ(-80px);
                     opacity: 0;
+                    filter: brightness(0.5);
                 }
             }
 
             @keyframes flipOutRight {
-                from {
-                    transform: perspective(1200px) rotateY(0);
+                0% {
+                    transform: perspective(1400px) rotateY(0) translateZ(0);
                     opacity: 1;
+                    filter: brightness(1);
                 }
-                to {
-                    transform: perspective(1200px) rotateY(-90deg);
+                100% {
+                    transform: perspective(1400px) rotateY(-85deg) translateZ(-80px);
                     opacity: 0;
+                    filter: brightness(0.5);
                 }
             }
 
@@ -1068,19 +1086,19 @@
             }
 
             .content.flip-in-left {
-                animation: flipInLeft 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
+                animation: flipInLeft 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards !important;
             }
 
             .content.flip-in-right {
-                animation: flipInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
+                animation: flipInRight 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards !important;
             }
 
             .content.flip-out-left {
-                animation: flipOutLeft 0.3s cubic-bezier(0.4, 0, 0.6, 1) forwards !important;
+                animation: flipOutLeft 0.35s cubic-bezier(0.55, 0.085, 0.68, 0.53) forwards !important;
             }
 
             .content.flip-out-right {
-                animation: flipOutRight 0.3s cubic-bezier(0.4, 0, 0.6, 1) forwards !important;
+                animation: flipOutRight 0.35s cubic-bezier(0.55, 0.085, 0.68, 0.53) forwards !important;
             }
 
             /* ── Base Layout ── */
@@ -1733,23 +1751,35 @@
                 padding: 5px 2px !important;
             }
 
-            /* Bottom tab nav — larger, easier to see */
+            /* Bottom tab nav — larger with header gradient */
             .tabs {
-                padding: 6px 0 !important;
+                padding: 8px 4px !important;
+                background: linear-gradient(to right, rgba(220, 38, 38, 0.4), rgba(251, 191, 36, 0.4), rgba(220, 38, 38, 0.4)) !important;
+                border-top: 2px solid rgba(251, 191, 36, 0.5) !important;
+                box-shadow: 0 -4px 20px rgba(220, 38, 38, 0.3), 0 0 30px rgba(251, 191, 36, 0.15) !important;
             }
 
             .tab {
-                padding: 10px 3px 12px !important;
-                gap: 4px !important;
+                padding: 14px 4px 16px !important;
+                gap: 6px !important;
+                background: linear-gradient(135deg, rgba(20, 20, 30, 0.8), rgba(10, 10, 20, 0.9)) !important;
+                border: 1.5px solid rgba(251, 191, 36, 0.3) !important;
+            }
+
+            .tab.active {
+                background: linear-gradient(135deg, rgba(251, 191, 36, 0.25), rgba(220, 38, 38, 0.2)) !important;
+                border: 1.5px solid rgba(251, 191, 36, 0.6) !important;
+                box-shadow: 0 2px 12px rgba(251, 191, 36, 0.4) !important;
             }
 
             .tab-emoji {
-                font-size: 18px !important;
+                font-size: 22px !important;
             }
 
             .tab-label-short {
-                font-size: 8px !important;
-                font-weight: 700 !important;
+                font-size: 9px !important;
+                font-weight: 800 !important;
+                letter-spacing: 0.3px !important;
             }
 
             /* ── Inline style overrides for font consistency ── */
@@ -2011,7 +2041,7 @@
         <div class="tabs">
             <div class="tab" onclick="showTab('market')"><span class="tab-emoji">📈</span><span class="tab-label-full"> EMOJI MARKET </span><span class="tab-label-short">MARKET</span><span class="tab-emoji">📈</span></div>
             <div class="tab" onclick="showTab('portfolio')"><span class="tab-emoji">💰</span><span class="tab-label-full"> BAG </span><span class="tab-label-short">BAG</span><span class="tab-emoji">💰</span></div>
-            <div class="tab" onclick="showTab('treasury')"><span class="tab-emoji">🧙</span><span class="tab-label-full"> aWIZARD TREASURY </span><span class="tab-label-short">VAULT</span><span class="tab-emoji">🧙</span></div>
+            <div class="tab" onclick="showTab('treasury')"><span class="tab-emoji">🧙</span><span class="tab-label-full"> aWIZARD TREASURY </span><span class="tab-label-short">TREASURY</span><span class="tab-emoji">🧙</span></div>
             <div class="tab" onclick="showTab('howto')"><span class="tab-emoji">🎓</span><span class="tab-label-full"> HOW TO CAST </span><span class="tab-label-short">HOWTO</span><span class="tab-emoji">🎓</span></div>
             <div class="tab" onclick="showTab('book')"><span class="tab-emoji">📜</span><span class="tab-label-full"> BOOK OF WIZARD </span><span class="tab-label-short">BOOK</span><span class="tab-emoji">📜</span></div>
             <div class="tab" onclick="showTab('valley')"><span class="tab-emoji">🎮</span><span class="tab-label-full"> CASTER VALLEY </span><span class="tab-label-short">C.VALLEY</span><span class="tab-emoji">🎮</span></div>
@@ -2535,7 +2565,7 @@
                         color: #ffd700;
                         text-shadow: 0 0 20px rgba(251, 191, 36, 0.8);
                         margin-bottom: 16px;
-                    ">🧙 Awizard Ecosystem</h1>
+                    ">🧙 aWizard Ecosystem</h1>
                     <h2 style="
                         font-size: 24px;
                         color: #fbbf24;
@@ -2544,7 +2574,7 @@
                     <p style="
                         color: rgba(255, 255, 255, 0.7);
                         font-size: 16px;
-                    ">The Awizard ecosystem rewards long-term participation across Chia assets, NFTs, and liquidity.<br>
+                    ">The aWizard ecosystem rewards long-term participation across Chia assets, NFTs, and liquidity.<br>
                     Grow your Spell Power by stacking, exploring, and contributing.</p>
                 </div>
 
