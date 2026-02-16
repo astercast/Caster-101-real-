@@ -1784,14 +1784,19 @@
             /* Dark overlay when drawer is open — controlled by JS, not forced visible */
             /* #wtv-drawer-overlay visibility is managed by JS only */
 
-            /* WTV mobile tab — square button */
+            /* WTV mobile tab — square button (draggable) */
             #wtv-mobile-tab {
-                width: 60px !important;
-                height: 60px !important;
+                width: 40px !important;
+                height: 40px !important;
                 top: 50% !important;
                 transform: translateY(-50%) !important;
-                padding: 8px !important;
-                border-radius: 12px !important;
+                padding: 4px !important;
+                border-radius: 8px 0 0 8px !important;
+                cursor: grab !important;
+            }
+            
+            #wtv-mobile-tab:active {
+                cursor: grabbing !important;
             }
 
             /* Bottom tab nav — modern glassmorphism design */
@@ -7177,32 +7182,30 @@ document.addEventListener('DOMContentLoaded', () => {
     <button id="wtv-mobile-tab" style="
         display: none;
         position: fixed;
-        right: 0;
-        top: 55%;
+        right: 2px;
+        top: 50%;
         transform: translateY(-50%);
-        width: 22px;
-        height: 70px;
-        background: linear-gradient(180deg, rgba(251,191,36,0.9), rgba(220,38,38,0.5));
-        border: 2px solid rgba(251,191,36,0.8);
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, rgba(251,191,36,0.85), rgba(220,38,38,0.6));
+        border: 1.5px solid rgba(251,191,36,0.7);
         border-right: none;
-        border-radius: 12px 0 0 12px;
+        border-radius: 8px 0 0 8px;
         color: white;
-        font-size: 16px;
-        cursor: pointer;
+        font-size: 18px;
+        cursor: grab;
         z-index: 999997;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 3px;
-        box-shadow: -4px 0 20px rgba(251,191,36,0.35);
+        gap: 0;
+        box-shadow: -3px 0 15px rgba(251,191,36,0.3);
         transition: all 0.25s;
         font-family: 'Space Grotesk', sans-serif;
-        writing-mode: vertical-rl;
-        text-orientation: mixed;
-        padding: 5px 2px;
+        padding: 4px 0;
         animation: wtv-tab-glow 3s infinite;
-    " onclick="if(window._wtvOpenDrawer) window._wtvOpenDrawer();">
-        <span style="font-size: 12px; writing-mode: horizontal-tb;">🎬</span>
+    " onmousedown="if(window._startWtvDrag) window._startWtvDrag(event);" onclick="if(window._wtvOpenDrawer) window._wtvOpenDrawer();">
+        <span style="font-size: 20px;">🎬</span>
     </button>
 
     <!-- WTV Restore Button - More Visible (desktop only) -->
@@ -7304,6 +7307,35 @@ document.addEventListener('DOMContentLoaded', () => {
             const overlay = document.getElementById('wtv-drawer-overlay');
 
             const isMobile = () => window.innerWidth <= 768;
+
+            // --- WTV Mobile Tab Drag Handler ---
+            let isDragging = false;
+            let dragStartY = 0;
+            
+            window._startWtvDrag = function(e) {
+                if (!isMobile()) return;
+                isDragging = true;
+                dragStartY = e.clientY;
+                if (mobileTab) mobileTab.style.cursor = 'grabbing';
+                e.preventDefault();
+            };
+            
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging || !mobileTab) return;
+                const deltaY = e.clientY - dragStartY;
+                const currentTop = parseFloat(mobileTab.style.top) || 50;
+                const newTop = Math.max(5, Math.min(95, (currentTop * window.innerHeight / 100 + deltaY) / window.innerHeight * 100));
+                mobileTab.style.top = newTop + '%';
+                mobileTab.style.transform = 'translateY(-50%)';
+                dragStartY = e.clientY;
+            });
+            
+            document.addEventListener('mouseup', () => {
+                if (isDragging && mobileTab) {
+                    isDragging = false;
+                    mobileTab.style.cursor = 'grab';
+                }
+            });
 
             // --- Mobile drawer open/close ---
             window._wtvOpenDrawer = function() {

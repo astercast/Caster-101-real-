@@ -172,7 +172,7 @@ export default async function handler(req, res) {
         const dexieTickersP = timedFetch('https://dexie.space/v2/prices/tickers', 8000)
             .then(r => r.ok ? r.json() : {}).catch(() => ({}));
 
-        // Try Spacescan sequentially
+        // Try Spacescan sequentially to get prices and supplies
         const catResults = [];
         for (let i = 0; i < CAT_IDS.length; i++) {
             if (i > 0) await sleep(250);
@@ -193,6 +193,7 @@ export default async function handler(req, res) {
 
         const prices = {}, changes = {}, mcaps = {}, sources = {};
         const dexieNeeded = [];
+        const noSupplyTokens = []; // Track tokens missing supplies
 
         for (let i = 0; i < CAT_IDS.length; i++) {
             const id = CAT_IDS[i], r = catResults[i];
@@ -201,6 +202,8 @@ export default async function handler(req, res) {
                 changes[id] = r.change;
                 mcaps[id] = r.mcap;
                 sources[id] = r.source;
+                // If Spacescan gave us a price but no supply cached, mark it
+                if (!r.supply || r.supply === 0) noSupplyTokens.push(id);
             } else {
                 // Try Dexie ticker first
                 const tp = tickerMap[id.toLowerCase()];
@@ -214,6 +217,9 @@ export default async function handler(req, res) {
                     changes[id] = r?.change || 0;
                     mcaps[id] = mcap;
                     sources[id] = src;
+                    
+                    // If no supply found, mark for later lookup
+                    if (!supply) noSupplyTokens.push(id);
                 } else dexieNeeded.push(id);
             }
         }
@@ -246,18 +252,14 @@ export default async function handler(req, res) {
             }
         }
 
-        // Final fallback: for any token with a price but no mcap, try to fetch supply
-        const needsSupply = [];
-        for (const id of CAT_IDS) {
-            if (prices[id] > 0 && mcaps[id] === 0) {
-                needsSupply.push(id);
-            }
-        }
+        // Final fallback: aggressively fetch supplies for any token missing one
+        const suppressyNeeded = new Set([...noSupplyTokens, ...dexieNeeded]);
+        const suppliesToFetch = Array.from(suppressyNeeded).filter(id => prices[id] > 0);
         
-        if (needsSupply.length > 0) {
-            const supplies = await Promise.all(needsSupply.map(id => getSupply(id)));
-            for (let i = 0; i < needsSupply.length; i++) {
-                const id = needsSupply[i];
+        if (suppliesToFetch.length > 0) {
+            const supplies = await Promise.all(suppliesToFetch.map(id => getSupply(id)));
+            for (let i = 0; i < suppliesToFetch.length; i++) {
+                const id = suppliesToFetch[i];
                 const supply = supplies[i];
                 if (supply > 0 && prices[id] > 0) {
                     mcaps[id] = supply * prices[id];
