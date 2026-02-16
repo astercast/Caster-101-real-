@@ -1237,8 +1237,8 @@
 
             .tab.active {
                 color: #fbbf24 !important;
-                background: rgba(251, 191, 36, 0.1) !important;
-                box-shadow: inset 0 2px 0 #fbbf24 !important, 0 0 15px rgba(251, 191, 36, 0.4) !important;
+                background: rgba(251, 191, 36, 0.18) !important;
+                box-shadow: 0 0 0 4px #fbbf24cc, 0 0 20px 8px #fbbf24aa, inset 0 2px 0 #fbbf24 !important;
             }
 
             /* Show emoji as icon above label in bottom bar */
@@ -4598,20 +4598,66 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
         const baseHTML = baseTokens.map(token => {
             const emoji = EMOJI_MAP[token.symbol] || token.symbol;
             const change = token.change24h || 0;
-            
+            // Align with Chia card layout
             return `
-                <div style="
-                    padding: 10px 12px;
-                    border: 2px solid rgba(0, 82, 255, 0.7);
-                    border-radius: 6px;
-                    background: rgba(0, 82, 255, 0.05);
-                    cursor: pointer;
-                    text-align: center;
-                " onclick="window.open('https://dexscreener.com/base/${BASE_TOKENS[token.symbol]}', '_blank')">
-                    <div style="font-size: 32px; margin-bottom: 6px;">${emoji}</div>
-                    <div style="font-weight: 700; color: #4ade80; font-size: 14px; margin-bottom: 6px;">$${(token.price || 0).toFixed(6)}</div>
-                    <div style="font-size: 13px; font-weight: 700; ${change >= 0 ? 'color: #4ade80;' : 'color: #ef4444;'}">
-                        ${change >= 0 ? '↑' : '↓'} ${Math.abs(change).toFixed(1)}%
+                <div class="token-card" onclick="openTokenLink('${token.chain}', '${token.assetId || token.contract}', '${token.symbol}')">
+                    <div class="token-header">
+                        <div class="token-info">
+                            <div style="
+                                width: 40px;
+                                height: 40px;
+                                background: linear-gradient(135deg, rgba(251, 191, 36, 0.12), rgba(220, 38, 38, 0.08));
+                                border-radius: 12px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                box-shadow: 0 4px 12px rgba(251, 191, 36, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+                                border: 1px solid rgba(251, 191, 36, 0.2);
+                                flex-shrink: 0;
+                            ">
+                                <div class="token-symbol">${emoji}</div>
+                            </div>
+                            <div style="margin-left: 6px; flex: 1;">
+                                <div class="token-name">${token.displayName || token.name}</div>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div class="token-price">$${token.price ? (
+                                token.price < 0.0001 ? token.price.toFixed(10) :
+                                token.price < 0.001 ? token.price.toFixed(8) :
+                                token.price < 0.01 ? token.price.toFixed(8) :
+                                token.price < 1 ? token.price.toFixed(6) :
+                                token.price.toFixed(2)
+                            ) : '0.00'}</div>
+                            <div class="token-change" style="
+                                color: ${change >= 0 ? '#4ade80' : '#ef4444'};
+                                font-size: 13px;
+                                font-weight: 700;
+                                font-family: 'Inter', sans-serif;
+                                display: flex;
+                                align-items: center;
+                                justify-content: flex-end;
+                                gap: 3px;
+                                margin-top: 3px;
+                            ">
+                                <span style="font-size: 14px;">${change >= 0 ? '↑' : '↓'}</span>
+                                <span>${Math.abs(change).toFixed(1)}%</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        margin-top: 10px;
+                        padding-top: 10px;
+                        border-top: 1px solid rgba(251, 191, 36, 0.1);
+                        background: linear-gradient(90deg, rgba(251, 191, 36, 0.03), transparent);
+                        padding: 8px 0;
+                        border-radius: 6px;
+                    ">
+                        <span style="font-size: 11px; color: rgba(255,255,255,0.4); font-family: 'Inter', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Market Cap</span>
+                        <span style="font-size: 13px; color: #fbbf24; font-weight: 700; font-family: 'Cinzel', serif;">${token.marketCap > 1e6 ? '$'+(token.marketCap/1e6).toFixed(1)+'M' : token.marketCap > 1e3 ? '$'+(token.marketCap/1e3).toFixed(0)+'K' : token.marketCap > 0 ? '$'+token.marketCap.toFixed(0) : '—'}</span>
                     </div>
                 </div>
             `;
@@ -4626,21 +4672,20 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
             const key = token.symbol.replace(/^w/, '');
             const emoji = EMOJI_MAP[token.symbol] || token.symbol;
             const chiaPrice = token.price || 0;
-            const chiaMarketCap = token.marketCap || 0;
+            let chiaMarketCap = token.marketCap || 0;
             const basePrice = basePriceMap[key]?.price || 0;
-            
-            console.log(`Arbitrage calc for ${key}: Chia=$${chiaPrice.toFixed(6)}, Base=$${basePrice.toFixed(6)}, MCap=$${(chiaMarketCap/1e6).toFixed(2)}M`);
-            
+            // Fallback: if no marketCap, estimate from price and a default supply
+            if (!chiaMarketCap && chiaPrice > 0) {
+                chiaMarketCap = 100000 * chiaPrice;
+            }
             // Calculate arbitrage
             const diff = basePrice - chiaPrice;
             const diffPercent = basePrice > 0 ? (diff / basePrice) * 100 : 0;
             const diffDollars = Math.abs(diff);
-            
             // Determine color and label — always show actual %, no suppression
             let arbColor = '#888';
             let arbLabel;
             let arbIcon;
-            
             if (basePrice === 0 || chiaPrice === 0) {
                 arbColor = 'rgba(255,255,255,0.3)';
                 arbLabel = 'cannot fetch';
@@ -4658,30 +4703,69 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                 arbLabel = '0.0% diff';
                 arbIcon = '⚪';
             }
-            
-            console.log(`${key}: ${arbIcon} ${arbLabel}`);
-            
             // Format market cap display
             const marketCapDisplay = chiaMarketCap > 0 ? 
                 (chiaMarketCap >= 1e6 ? `$${(chiaMarketCap/1e6).toFixed(1)}M` : `$${(chiaMarketCap/1e3).toFixed(0)}K`) : 
                 '—';
-            
             return `
-                <div style="
-                    padding: 10px 12px;
-                    border: 2px solid rgba(74, 222, 128, 0.7);
-                    border-radius: 6px;
-                    background: rgba(74, 222, 128, 0.05);
-                    cursor: pointer;
-                    text-align: center;
-                " onclick="window.open('https://www.tibetswap.io/swap?asset_id=${CHIA_TOKENS[key]}', '_blank')">
-                    <div style="font-size: 32px; margin-bottom: 6px;">${emoji}</div>
-                    <div style="font-weight: 700; color: #4ade80; font-size: 14px; margin-bottom: 4px;">$${chiaPrice.toFixed(6)}</div>
-                    <div style="font-size: 9px; color: rgba(255,255,255,0.6); margin-bottom: 4px;">MCap: ${marketCapDisplay}</div>
-                    <div style="font-size: 10px; color: rgba(255,255,255,0.5); margin-bottom: 4px;">vs Base: $${basePrice.toFixed(6)}</div>
-                    <div style="font-size: 13px; color: ${arbColor}; font-weight: 700;">
-                        ${arbIcon} ${arbLabel}
-                        ${(diffDollars > 0 && basePrice > 0 && chiaPrice > 0) ? `<div style="font-size: 10px; color: rgba(255,255,255,0.6); margin-top: 2px;">$${diffDollars.toFixed(6)} diff</div>` : ''}
+                <div class="token-card" onclick="openTokenLink('${token.chain}', '${token.assetId || token.contract}', '${token.symbol}')">
+                    <div class="token-header">
+                        <div class="token-info">
+                            <div style="
+                                width: 40px;
+                                height: 40px;
+                                background: linear-gradient(135deg, rgba(74, 222, 128, 0.12), rgba(34, 197, 94, 0.08));
+                                border-radius: 12px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                box-shadow: 0 4px 12px rgba(74, 222, 128, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+                                border: 1px solid rgba(74, 222, 128, 0.2);
+                                flex-shrink: 0;
+                            ">
+                                <div class="token-symbol">${emoji}</div>
+                            </div>
+                            <div style="margin-left: 6px; flex: 1;">
+                                <div class="token-name">${token.displayName || token.name}</div>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div class="token-price">$${token.price ? (
+                                token.price < 0.0001 ? token.price.toFixed(10) :
+                                token.price < 0.001 ? token.price.toFixed(8) :
+                                token.price < 0.01 ? token.price.toFixed(8) :
+                                token.price < 1 ? token.price.toFixed(6) :
+                                token.price.toFixed(2)
+                            ) : '0.00'}</div>
+                            <div class="token-change" style="
+                                color: ${arbColor};
+                                font-size: 13px;
+                                font-weight: 700;
+                                font-family: 'Inter', sans-serif;
+                                display: flex;
+                                align-items: center;
+                                justify-content: flex-end;
+                                gap: 3px;
+                                margin-top: 3px;
+                            ">
+                                ${arbIcon} ${arbLabel}
+                                ${(diffDollars > 0 && basePrice > 0 && chiaPrice > 0) ? `<div style=\"font-size: 10px; color: rgba(255,255,255,0.6); margin-top: 2px;\">$${diffDollars.toFixed(6)} diff</div>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div style="
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        margin-top: 10px;
+                        padding-top: 10px;
+                        border-top: 1px solid rgba(74, 222, 128, 0.1);
+                        background: linear-gradient(90deg, rgba(74, 222, 128, 0.03), transparent);
+                        padding: 8px 0;
+                        border-radius: 6px;
+                    ">
+                        <span style="font-size: 11px; color: rgba(255,255,255,0.4); font-family: 'Inter', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Market Cap</span>
+                        <span style="font-size: 13px; color: #4ade80; font-weight: 700; font-family: 'Cinzel', serif;">${marketCapDisplay}</span>
                     </div>
                 </div>
             `;
@@ -6751,6 +6835,9 @@ document.addEventListener('DOMContentLoaded', () => {
         overflow: hidden;
         display: flex;
         flex-direction: column;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        transform: scale(1) translateY(0) !important;
         transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.6s cubic-bezier(0.2, 0.88, 0.1, 1), box-shadow 0.3s ease;
         user-select: none;
         opacity: 0;
