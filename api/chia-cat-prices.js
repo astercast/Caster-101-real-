@@ -267,11 +267,11 @@ export default async function handler(req, res) {
         const tokensNeedingSupply = CAT_IDS.filter(id => prices[id] > 0 && mcaps[id] === 0);
         
         if (tokensNeedingSupply.length > 0) {
-            console.log(`[emoji-market] Fetching supplies for ${tokensNeedingSupply.length} tokens without mcap`);
-            const supplies = await Promise.all(tokensNeedingSupply.map(id => getSupply(id)));
+            console.log(`[emoji-market] Fetching supplies for ${tokensNeedingSupply.length} tokens without mcap (sequential)`);
             for (let i = 0; i < tokensNeedingSupply.length; i++) {
                 const id = tokensNeedingSupply[i];
-                const supply = supplies[i];
+                if (i > 0) await sleep(700);
+                const supply = await getSupply(id);
                 if (supply > 0 && prices[id] > 0) {
                     mcaps[id] = supply * prices[id];
                     sources[id] = (sources[id] || 'dexie') + '+supply';
