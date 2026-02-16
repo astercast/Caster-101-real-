@@ -668,14 +668,14 @@
         }
 
         .token-symbol {
-            font-size: 28px;
+            font-size: 20px;
             line-height: 1;
             flex-shrink: 0;
         }
 
         @media (max-width: 768px) {
             .token-symbol {
-                font-size: 28px;
+                font-size: 18px;
             }
         }
 
@@ -1230,13 +1230,14 @@
 
             /* Quick Links — compact pill row */
             .quick-links {
-                flex-wrap: nowrap !important;
+                flex-wrap: wrap !important;
                 gap: 6px !important;
-                justify-content: flex-start !important;
-                overflow-x: auto !important;
+                justify-content: center !important;
+                overflow-x: hidden !important;
                 -webkit-overflow-scrolling: touch;
                 scrollbar-width: none;
                 padding-bottom: 2px !important;
+                touch-action: pan-y !important;
             }
             .quick-links::-webkit-scrollbar { display: none; }
 
@@ -1344,9 +1345,9 @@
 
             /* Shrink the emoji icon box */
             .token-info > div:first-child {
-                width: 32px !important;
-                height: 32px !important;
-                min-width: 32px !important;
+                width: 28px !important;
+                height: 28px !important;
+                min-width: 28px !important;
                 border-radius: 9px !important;
                 background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(220, 38, 38, 0.1)) !important;
                 border: 1px solid rgba(251, 191, 36, 0.25) !important;
@@ -1356,7 +1357,7 @@
             }
 
             .token-symbol {
-                font-size: 16px !important;
+                font-size: 14px !important;
                 filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.3)) !important;
             }
 
@@ -1917,13 +1918,13 @@
             }
 
             .token-symbol {
-                font-size: 12px !important;
+                font-size: 10px !important;
             }
 
             .token-info > div:first-child {
-                width: 24px !important;
-                height: 24px !important;
-                min-width: 24px !important;
+                width: 22px !important;
+                height: 22px !important;
+                min-width: 22px !important;
             }
 
             .token-price {
@@ -1948,9 +1949,9 @@
             }
 
             .token-info > div:first-child {
-                width: 26px !important;
-                height: 26px !important;
-                min-width: 26px !important;
+                width: 22px !important;
+                height: 22px !important;
+                min-width: 22px !important;
             }
 
             .header-title {
@@ -2223,7 +2224,6 @@
                 <button class="filter-btn active" onclick="sortTokens('name', this)">📝 Name</button>
                 <button class="filter-btn" onclick="sortTokens('marketCap', this)">💰 Market Cap</button>
                 <button class="filter-btn" onclick="sortTokens('arbitrage', this)">💱 Arbitrage</button>
-                <button class="filter-btn" id="market-refresh-btn" style="margin-left:auto;">🔄 Refresh</button>
                 
                 <!-- Info button -->
                 <button onclick="toggleSortInfo()" style="
@@ -3432,6 +3432,7 @@
 
             for (const t of catTargets) {
                 let price = 0, change = 0, mcap = 0, src = 'none';
+                let isTvl = false;
                 const aid = t.assetId.toLowerCase();
 
                 // Try serverless batch first (Spacescan or Dexie on server)
@@ -3453,12 +3454,13 @@
                 if (mcap === 0 && tibet.tvl > 0) {
                     mcap = tibet.tvl;
                     src = src + '+tvl';
+                    isTvl = true;
                 }
 
                 if (price > 0) console.log(`  ✅ ${t.displayName||t.name}: $${price.toFixed(8)} mcap:$${(mcap/1e6).toFixed(2)}M [${src}]`);
                 else           console.warn(`  ⚠️  ${t.displayName||t.name}: no price`);
 
-                results.push({...t, price, change24h: change, marketCap: mcap});
+                results.push({...t, price, change24h: change, marketCap: mcap, isTvl});
             }
 
             console.log(`Chia: ${results.filter(r => r.price > 0).length}/${results.length} priced, ${results.filter(r => r.marketCap > 0).length} with mcap`);
@@ -4528,8 +4530,8 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                     <div class="token-header">
                         <div class="token-info">
                             <div style="
-                                width: 52px;
-                                height: 52px;
+                                width: 40px;
+                                height: 40px;
                                 background: linear-gradient(135deg, rgba(251, 191, 36, 0.12), rgba(220, 38, 38, 0.08));
                                 border-radius: 12px;
                                 display: flex;
@@ -4543,7 +4545,6 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                             </div>
                             <div>
                                 <div class="token-name">${token.displayName || token.name}</div>
-                                <div style="font-size: 10px; color: rgba(255,255,255,0.35); font-family: 'Inter', sans-serif; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px;">Base Chain</div>
                             </div>
                         </div>
                         <div style="text-align: right;">
@@ -4623,14 +4624,15 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
 
                 const mcap = token.marketCap || 0;
                 const fmt  = n => n > 1e6 ? '$'+(n/1e6).toFixed(2)+'M' : n > 1e3 ? '$'+(n/1e3).toFixed(1)+'K' : n > 0 ? '$'+n.toFixed(0) : '—';
+                const mcapText = mcap > 0 ? (fmt(mcap) + (token.isTvl ? ' est.' : '')) : '—';
 
                 return `
                 <div class="token-card" onclick="openTokenLink('${token.chain}', '${token.assetId || token.contract}', '${token.symbol}')">
                     <div class="token-header">
                         <div class="token-info">
                             <div style="
-                                width: 52px;
-                                height: 52px;
+                                width: 40px;
+                                height: 40px;
                                 background: linear-gradient(135deg, rgba(74, 222, 128, 0.12), rgba(34, 197, 94, 0.08));
                                 border-radius: 12px;
                                 display: flex;
@@ -4680,8 +4682,8 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                         padding: 8px 0;
                         border-radius: 6px;
                     ">
-                        <span style="font-size: 11px; color: rgba(255,255,255,0.4); font-family: 'Inter', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">${token.isTvl ? 'Total Value Locked' : 'Market Cap'}</span>
-                        <span style="font-size: 13px; color: #4ade80; font-weight: 700; font-family: 'Cinzel', serif;">${mcap > 0 ? fmt(mcap) : '—'}</span>
+                        <span style="font-size: 11px; color: rgba(255,255,255,0.4); font-family: 'Inter', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Market Cap</span>
+                        <span style="font-size: 13px; color: #4ade80; font-weight: 700; font-family: 'Cinzel', serif;">${mcapText}</span>
                     </div>
                 </div>
             `;
