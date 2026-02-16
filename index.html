@@ -7122,13 +7122,16 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Add lazy-load video function
             window._wtvLoadVideo = () => {
+                if (isIframePaused) return;
                 if (!videoLoaded) {
                     console.log('🎬 Loading first WTV video...');
                     loadVideo(0);
                     videoLoaded = true;
                     return;
                 }
-                loadVideo(currentIndex);
+                if (!iframe || iframe.src === 'about:blank' || !iframe.src) {
+                    loadVideo(currentIndex);
+                }
             };
             
             let videoLoaded = false;
@@ -7213,6 +7216,12 @@ document.addEventListener('DOMContentLoaded', () => {
     </button>
 
     <style>
+        @media (max-width: 768px) {
+            #wtv-restore-btn {
+                display: none !important;
+            }
+        }
+
         @keyframes wtv-intro-pulse {
             0%, 100% {
                 transform: scale(1) rotate(0deg);
