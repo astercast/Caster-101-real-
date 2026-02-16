@@ -1119,7 +1119,8 @@
             }
 
             .bg-collage {
-                display: none !important;
+                opacity: 0.2 !important;
+                filter: blur(2px) brightness(0.6) !important;
             }
 
             /* ── Header ── */
@@ -4324,7 +4325,10 @@
                 'images/IMG_8371.jpeg', 'images/IMG_9197.jpeg', 'images/image0.jpeg',
                 // Themed content
                 'images/plant_your_seed.png', 'images/hodl-diamond.png',
-                'images/Screenshot_2026-01-17_232436-removebg-preview.png'
+                'images/Screenshot_2026-01-17_232436-removebg-preview.png',
+                // Additional images from folder
+                'images/discord-commands.png', 'images/soft-staking-diagram.png',
+                'images/favicon.webp'
             ];
 
             // Create fewer images for better performance while keeping the vibe
@@ -4337,8 +4341,8 @@
                 const src = images[i % images.length];
                 const size = Math.random() * (maxSize - minSize) + minSize;
                 
-                // Random z-index: some go above gradient (11-14) to pop into header, but stay behind text (15)
-                const zIndex = Math.random() > 0.3 ? Math.floor(Math.random() * 4) + 11 : 5; // 70% chance to pop above, 30% stay below
+                // Random z-index: keep all images behind main content but with depth
+                const zIndex = Math.random() > 0.4 ? Math.floor(Math.random() * 3) + 2 : 1; // Most at z-index 2-4, some at 1
                 
                 // Create image element with lazy loading and compression
                 const img = document.createElement('img');
@@ -5615,6 +5619,10 @@ async function loadComprehensiveTreasury(force = false) {
     const now = Date.now();
     if (!force && now - _treasuryLastLoad < 600000) {
         console.log(`⏳ Treasury loaded ${Math.round((now - _treasuryLastLoad)/1000)}s ago, using cache (expires in ${Math.round((600000 - (now - _treasuryLastLoad))/1000)}s)`);
+        // Always update display even with cached data to ensure mobile/desktop consistency
+        if (_treasuryCache.baseData && _treasuryCache.chiaData) {
+            updateTreasuryDisplay(_treasuryCache.baseData, _treasuryCache.chiaData, _treasuryCache.nftData || {});
+        }
         return;
     }
     _treasuryLastLoad = now;
@@ -6249,16 +6257,22 @@ function updateTreasuryDisplay(baseData, chiaData, nftData) {
     const baseTotal = baseData?.total || 0;
     const chiaTotal = chiaData?.total || 0;
     const grandTotal = baseTotal + chiaTotal;
+
+    // Ensure consistent formatting across mobile and desktop
+    const formatCurrency = (value) => {
+        if (!value || isNaN(value)) return '$0.00';
+        return '$' + value.toLocaleString('en-US', { 
+            minimumFractionDigits: 2, 
+            maximumFractionDigits: 2 
+        });
+    };
     
     console.log('   Calculated totals:', { baseTotal, chiaTotal, grandTotal });
     
-    // Update header totals
+    // Update header totals with consistent formatting
     const grandTotalEl = document.getElementById('portfolio-grand-total');
     if (grandTotalEl) {
-        grandTotalEl.textContent = `$${grandTotal.toLocaleString(undefined, {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        })}`;
+        grandTotalEl.textContent = formatCurrency(grandTotal);
         console.log('   ✅ Updated grand total');
     } else {
         console.error('   ❌ portfolio-grand-total element not found');
@@ -6266,10 +6280,7 @@ function updateTreasuryDisplay(baseData, chiaData, nftData) {
     
     const baseNetworkEl = document.getElementById('base-network-total');
     if (baseNetworkEl) {
-        baseNetworkEl.textContent = `$${baseTotal.toLocaleString(undefined, {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        })}`;
+        baseNetworkEl.textContent = formatCurrency(baseTotal);
         console.log('   ✅ Updated base network total');
     } else {
         console.error('   ❌ base-network-total element not found');
@@ -6277,10 +6288,7 @@ function updateTreasuryDisplay(baseData, chiaData, nftData) {
     
     const chiaNetworkEl = document.getElementById('chia-network-total');
     if (chiaNetworkEl) {
-        chiaNetworkEl.textContent = `$${chiaTotal.toLocaleString(undefined, {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        })}`;
+        chiaNetworkEl.textContent = formatCurrency(chiaTotal);
         console.log('   ✅ Updated chia network total');
     } else {
         console.error('   ❌ chia-network-total element not found');
