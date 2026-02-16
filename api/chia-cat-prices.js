@@ -131,13 +131,19 @@ async function getDexieBestAsk(assetId, xchUsd) {
 
 async function getSupply(assetId) {
     try {
-        const r = await timedFetch('https://api.spacescan.io/cat/info/' + assetId, 4000);
+        const r = await timedFetch('https://api.spacescan.io/cat/info/' + assetId, 5000);
         if (!r.ok) return 0;
         const d = await r.json();
         const supply = parseFloat(d?.data?.circulating_supply || d?.data?.total_supply || 0);
-        if (supply > 0) setCachedSupply(assetId, supply);
+        if (supply > 0) {
+            setCachedSupply(assetId, supply);
+            console.log(`[getSupply] ${assetId.slice(0,8)}: ${supply}`);
+        }
         return supply;
-    } catch (_) { return 0; }
+    } catch (e) {
+        console.warn(`[getSupply] Failed for ${assetId.slice(0,8)}: ${e.message}`);
+        return 0;
+    }
 }
 
 // ── HANDLER ──────────────────────────────────────────────────────────────────
@@ -252,18 +258,19 @@ export default async function handler(req, res) {
             }
         }
 
-        // Final fallback: aggressively fetch supplies for any token missing one
-        const suppressyNeeded = new Set([...noSupplyTokens, ...dexieNeeded]);
-        const suppliesToFetch = Array.from(suppressyNeeded).filter(id => prices[id] > 0);
+        // Final fallback: aggressively fetch supplies for any token with a price but missing mcap
+        const tokensNeedingSupply = CAT_IDS.filter(id => prices[id] > 0 && mcaps[id] === 0);
         
-        if (suppliesToFetch.length > 0) {
-            const supplies = await Promise.all(suppliesToFetch.map(id => getSupply(id)));
-            for (let i = 0; i < suppliesToFetch.length; i++) {
-                const id = suppliesToFetch[i];
+        if (tokensNeedingSupply.length > 0) {
+            console.log(`[emoji-market] Fetching supplies for ${tokensNeedingSupply.length} tokens without mcap`);
+            const supplies = await Promise.all(tokensNeedingSupply.map(id => getSupply(id)));
+            for (let i = 0; i < tokensNeedingSupply.length; i++) {
+                const id = tokensNeedingSupply[i];
                 const supply = supplies[i];
                 if (supply > 0 && prices[id] > 0) {
                     mcaps[id] = supply * prices[id];
                     sources[id] = (sources[id] || 'dexie') + '+supply';
+                    console.log(`[emoji-market] ${id.slice(0,8)}: supply=${supply}, price=$${prices[id]}, mcap=$${(mcaps[id]/1e6).toFixed(2)}M`);
                 }
             }
         }
