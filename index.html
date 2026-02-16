@@ -132,7 +132,7 @@
             pointer-events: none;
             opacity: 0.3;
             filter: blur(1px) brightness(0.7);
-            z-index: 0;
+            z-index: -1;
             contain: layout paint;
         }
 
@@ -576,6 +576,10 @@
             border-radius: 14px;
             padding: 14px 18px;
             margin-bottom: 10px;
+            min-height: 280px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
@@ -1119,8 +1123,8 @@
             }
 
             .bg-collage {
-                opacity: 0.2 !important;
-                filter: blur(2px) brightness(0.6) !important;
+                opacity: 0.15 !important;
+                filter: brightness(0.7) !important; /* Remove blur for mobile performance */
             }
 
             /* ── Header ── */
@@ -1627,11 +1631,19 @@
                 padding: 6px !important;
             }
 
-            /* Make treasury holding items uniform size */
+            /* Make treasury holding items uniform height */
             .holdings-list > div,
             #base-holdings-list > div,
             #chia-holdings-list > div {
-                min-height: 75px !important;
+                min-height: 90px !important;
+            }
+            
+            /* Make treasury headers uniform height */
+            .holdings-column-header {
+                min-height: 120px !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
             }
 
             /* Treasury split — SIDE BY SIDE */
@@ -2543,6 +2555,10 @@
                                 border: 2px solid rgba(0, 82, 255, 0.5);
                                 border-bottom: 2px solid rgba(0, 82, 255, 0.3);
                                 box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(0, 82, 255, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+                                min-height: 120px;
+                                display: flex;
+                                flex-direction: column;
+                                justify-content: space-between;
                             ">
                                 <div class="header-title" style="display: flex; align-items: center; gap: 12px; font-size: 20px; font-weight: 900; color: white; margin-bottom: 12px;">
                                     <span class="header-icon" style="font-size: 24px;">🔵</span>
@@ -2552,6 +2568,8 @@
                                     <span id="base-token-count">0 tokens</span>
                                     <span id="base-column-total" class="column-total" style="font-weight: 700; color: #4ade80;">$0.00</span>
                                 </div>
+                                <!-- Spacer for uniform height with Chia header -->
+                                <div style="height: 20px; opacity: 0;">.</div>
                             </div>
                             <div class="holdings-list" id="base-holdings-list" style="padding: 16px; max-height: 450px; overflow-y: auto; will-change: scroll-position; transform: translateZ(0); contain: layout style paint;">
                                 <div style="text-align: center; padding: 60px 20px; color: rgba(255, 255, 255, 0.5);">
@@ -2576,6 +2594,10 @@
                                 border: 2px solid rgba(74, 222, 128, 0.5);
                                 border-bottom: 2px solid rgba(74, 222, 128, 0.3);
                                 box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(74, 222, 128, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+                                min-height: 120px;
+                                display: flex;
+                                flex-direction: column;
+                                justify-content: space-between;
                             ">
                                 <div class="header-title" style="display: flex; align-items: center; gap: 12px; font-size: 20px; font-weight: 900; color: white; margin-bottom: 12px;">
                                     <span class="header-icon" style="font-size: 24px;">🌱</span>
@@ -4281,7 +4303,8 @@
         const bouncingImages = [];
         let bgPaused = false;
         let lastFrameTime = 0;
-        const targetFps = 30;
+        const isMobileDevice = window.innerWidth <= 768;
+        const targetFps = isMobileDevice ? 20 : 30; // Lower FPS on mobile
         const frameInterval = 1000 / targetFps;
         let viewportW = window.innerWidth;
         let viewportH = window.innerHeight;
@@ -4332,17 +4355,17 @@
             ];
 
             // Create fewer images for better performance while keeping the vibe
-            const totalImages = prefersReducedMotion ? 18 : (isMobile ? 28 : 48);
-            const minSize = isMobile ? 70 : 90;
-            const maxSize = isMobile ? 140 : 170;
-            const speedScale = prefersReducedMotion ? 0.2 : 0.32;
+            const totalImages = prefersReducedMotion ? 8 : (isMobile ? 12 : 35); // Significantly fewer on mobile
+            const minSize = isMobile ? 60 : 90;
+            const maxSize = isMobile ? 120 : 170;
+            const speedScale = prefersReducedMotion ? 0.15 : (isMobile ? 0.22 : 0.32); // Slower on mobile
             
             for (let i = 0; i < totalImages; i++) {
                 const src = images[i % images.length];
                 const size = Math.random() * (maxSize - minSize) + minSize;
                 
-                // Random z-index: keep all images behind main content but with depth
-                const zIndex = Math.random() > 0.4 ? Math.floor(Math.random() * 3) + 2 : 1; // Most at z-index 2-4, some at 1
+                // Random z-index: keep all images behind main content
+                const zIndex = -1; // All background images at z-index -1, behind everything
                 
                 // Create image element with lazy loading and compression
                 const img = document.createElement('img');
@@ -4356,39 +4379,31 @@
                 const isLargeImage = src.includes('IMG_') || src.includes('1768') || src.includes('uploaded_');
                 const compressionClass = isLargeImage ? 'compressed-bg' : 'optimized-bg';
                 
+                // Simplified styles for mobile performance
+                const mobileOptimized = viewportW <= 768;
                 img.style.cssText = `
                     width: ${size}px;
                     height: ${size}px;
                     object-fit: contain;
-                    filter: drop-shadow(0 0 6px rgba(255, 0, 0, 0.25));
+                    filter: ${mobileOptimized ? 'none' : 'drop-shadow(0 0 4px rgba(255, 0, 0, 0.15))'};
                     pointer-events: none;
-                    opacity: 0.7;
+                    opacity: ${mobileOptimized ? '0.5' : '0.7'};
                     z-index: ${zIndex};
-                    image-rendering: ${isLargeImage ? 'auto' : 'crisp-edges'};
+                    image-rendering: auto;
                     transform: translate3d(0,0,0);
                     will-change: transform;
                     backface-visibility: hidden;
                 `;
                 img.classList.add(compressionClass);
                 
-                // Progressive loading with size optimization
-                if (i < 8) {
-                    img.src = src;
-                    // Add onload handler to trigger compression
-                    img.onload = () => {
-                        if (isLargeImage && img.naturalWidth > 400) {
-                            // Create a compressed version in canvas for large images
-                            requestIdleCallback(() => compressImage(img));
-                        }
-                    };
-                } else {
-                    requestIdleCallback(() => { 
-                        img.src = src;
-                        if (isLargeImage) {
-                            img.onload = () => requestIdleCallback(() => compressImage(img));
-                        }
-                    });
-                }
+                // Progressive loading with direct src setting
+                img.src = src; // Set src directly instead of lazy loading
+                // Add compression after load
+                img.onload = () => {
+                    if (isLargeImage && img.naturalWidth > 400) {
+                        requestIdleCallback(() => compressImage(img));
+                    }
+                };
                 
                 collage.appendChild(img);
                 
@@ -4445,10 +4460,8 @@
                         img.vx = (Math.random() - 0.5) * 0.32;
                         img.vy = (Math.random() - 0.5) * 0.32;
                         
-                        // Randomize z-index on respawn - dynamic layering!
-                        const newZIndex = Math.random() > 0.3 ? Math.floor(Math.random() * 4) + 11 : 5;
-                        img.zIndex = newZIndex;
-                        img.element.style.zIndex = newZIndex;
+                        // Keep consistent z-index for performance
+                        // No dynamic z-index changes on mobile for better performance
                         
                         img.born = nowTs;
                         img.visible = true;
@@ -4583,16 +4596,17 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
         baseList.innerHTML = baseHTML;
     }
     
-    // Update Chia side - show arbitrage vs Base
+    // Update Chia side - show market cap and arbitrage vs Base
     const chiaList = document.getElementById('chiaTokenList');
     if (chiaList) {
         const chiaHTML = chiaTokens.map(token => {
             const key = token.symbol.replace(/^w/, '');
             const emoji = EMOJI_MAP[token.symbol] || token.symbol;
             const chiaPrice = token.price || 0;
+            const chiaMarketCap = token.marketCap || 0;
             const basePrice = basePriceMap[key]?.price || 0;
             
-            console.log(`Arbitrage calc for ${key}: Chia=$${chiaPrice.toFixed(6)}, Base=$${basePrice.toFixed(6)}`);
+            console.log(`Arbitrage calc for ${key}: Chia=$${chiaPrice.toFixed(6)}, Base=$${basePrice.toFixed(6)}, MCap=$${(chiaMarketCap/1e6).toFixed(2)}M`);
             
             // Calculate arbitrage
             const diff = basePrice - chiaPrice;
@@ -4624,6 +4638,11 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
             
             console.log(`${key}: ${arbIcon} ${arbLabel}`);
             
+            // Format market cap display
+            const marketCapDisplay = chiaMarketCap > 0 ? 
+                (chiaMarketCap >= 1e6 ? `$${(chiaMarketCap/1e6).toFixed(1)}M` : `$${(chiaMarketCap/1e3).toFixed(0)}K`) : 
+                '—';
+            
             return `
                 <div style="
                     padding: 10px 12px;
@@ -4635,6 +4654,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                 " onclick="window.open('https://www.tibetswap.io/swap?asset_id=${CHIA_TOKENS[key]}', '_blank')">
                     <div style="font-size: 32px; margin-bottom: 6px;">${emoji}</div>
                     <div style="font-weight: 700; color: #4ade80; font-size: 14px; margin-bottom: 4px;">$${chiaPrice.toFixed(6)}</div>
+                    <div style="font-size: 9px; color: rgba(255,255,255,0.6); margin-bottom: 4px;">MCap: ${marketCapDisplay}</div>
                     <div style="font-size: 10px; color: rgba(255,255,255,0.5); margin-bottom: 4px;">vs Base: $${basePrice.toFixed(6)}</div>
                     <div style="font-size: 13px; color: ${arbColor}; font-weight: 700;">
                         ${arbIcon} ${arbLabel}
@@ -6799,7 +6819,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span style="font-size: 16px;">🎬</span>
                 <span>WTV</span>
             </div>
-            <button id="close-miniplayer" style="
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="
+                    font-size: 10px;
+                    color: rgba(255,255,255,0.4);
+                    cursor: pointer;
+                    text-decoration: underline;
+                    user-select: none;
+                " onclick="if(window._hideWtvForever) window._hideWtvForever();" title="Permanently hide WTV">Don't show this anymore</span>
+                <button id="close-miniplayer" style="
                 background: linear-gradient(135deg, rgba(220, 38, 38, 0.3), rgba(153, 27, 27, 0.2));
                 border: 1px solid rgba(220, 38, 38, 0.5);
                 border-radius: 6px;
@@ -7156,6 +7184,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 hideMiniplayer();
                 console.log('✅ WTV restore button shown');
             });
+
+            // WTV permanent hide check and initialization
+            const permanentlyHidden = localStorage.getItem('wtvPermanentlyHidden') === 'true';
+            if (permanentlyHidden) {
+                console.log('WTV permanently hidden by user preference');
+                // Hide all WTV elements completely
+                miniplayer.style.display = 'none';
+                miniplayer.classList.add('hidden');
+                if (mobileTab) mobileTab.style.display = 'none';
+                if (overlay) overlay.style.display = 'none';
+                return; // Exit early, don't initialize WTV functionality
+            }
 
             // WTV is HIDDEN by default on first visit - user must click to open
             const wasHiddenInitially = localStorage.getItem('videoMiniplayerHidden');
@@ -7598,6 +7638,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 }, 400);
             };
 
+            // Permanently hide WTV functionality
+            window._hideWtvForever = function() {
+                if (confirm('This will permanently hide the WTV video drawer and cannot be undone without clearing browser data. Continue?')) {
+                    // Hide immediately
+                    if (miniplayer) {
+                        miniplayer.style.display = 'none';
+                        miniplayer.classList.add('hidden');
+                    }
+                    if (mobileTab) {
+                        mobileTab.style.display = 'none';
+                    }
+                    if (overlay) {
+                        overlay.style.display = 'none';
+                    }
+                    
+                    // Set permanent storage flag
+                    localStorage.setItem('wtvPermanentlyHidden', 'true');
+                    console.log('WTV permanently hidden - clear localStorage to restore');
+                }
+            };
+
             // Override close button behavior on mobile
             const closeBtn = document.getElementById('close-miniplayer');
             if (closeBtn) {
@@ -7635,6 +7696,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // --- Desktop restore button ---
             if (restoreBtn && miniplayer) {
+                const permanentlyHidden = localStorage.getItem('wtvPermanentlyHidden') === 'true';
+                if (permanentlyHidden) {
+                    // Hide all elements permanently
+                    restoreBtn.style.display = 'none';
+                    miniplayer.style.display = 'none';
+                    if (mobileTab) mobileTab.style.display = 'none';
+                    if (overlay) overlay.style.display = 'none';
+                    return; // Exit early
+                }
+                
                 const hiddenAtLoad = localStorage.getItem('videoMiniplayerHidden') === 'true';
                 if (hiddenAtLoad) {
                     if (isMobile()) {
@@ -7674,6 +7745,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // On resize, sync state
             window.addEventListener('resize', () => {
+                const permanentlyHidden = localStorage.getItem('wtvPermanentlyHidden') === 'true';
+                if (permanentlyHidden) {
+                    // Ensure WTV stays hidden even on resize
+                    if (miniplayer) miniplayer.style.display = 'none';
+                    if (mobileTab) mobileTab.style.display = 'none';
+                    if (restoreBtn) restoreBtn.style.display = 'none';
+                    if (overlay) overlay.style.display = 'none';
+                    return;
+                }
+                
                 const hidden = localStorage.getItem('videoMiniplayerHidden') === 'true';
                 if (isMobile()) {
                     if (restoreBtn) restoreBtn.style.display = 'none !important';
