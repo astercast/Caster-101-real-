@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Background Animation Test</title>
+    <style>
+        body { 
+            margin: 0; 
+            padding: 20px; 
+            background: #1a1a2e; 
+            color: white; 
+            font-family: Arial;
+        }
+        #bgCollage {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            z-index: -1;
+        }
+        .test-info {
+            position: relative;
+            z-index: 10;
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .bg-image {
+            position: absolute;
+            border: none;
+            object-fit: cover;
+            will-change: transform, opacity;
+            transform: translate3d(0, 0, 0);
+        }
+        .compressed-bg {
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: optimize-contrast;
+            transform-style: preserve-3d;
+        }
+        .optimized-bg {
+            image-rendering: crisp-edges;
+            image-rendering: -webkit-optimize-contrast;
+        }
+    </style>
+</head>
+<body>
+    <div id="bgCollage"></div>
+    
+    <div class="test-info">
+        <h2>🎯 Caster101 Background Animation Test</h2>
+        <p>Testing new images with compression optimization...</p>
+        <div id="imageCount">Images loaded: <span id="count">0</span></div>
+        <div id="performance">Performance: <span id="fps">--</span> FPS</div>
+    </div>
+
+    <script>
+        // Image compression function
+        function compressImage(img) {
+            if (!img.naturalWidth || img.naturalWidth <= 400) return;
+            
+            try {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                const maxSize = 400;
+                const aspectRatio = img.naturalWidth / img.naturalHeight;
+                
+                let newWidth, newHeight;
+                if (img.naturalWidth > img.naturalHeight) {
+                    newWidth = Math.min(maxSize, img.naturalWidth);
+                    newHeight = newWidth / aspectRatio;
+                } else {
+                    newHeight = Math.min(maxSize, img.naturalHeight);
+                    newWidth = newHeight * aspectRatio;
+                }
+                
+                canvas.width = newWidth;
+                canvas.height = newHeight;
+                
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'medium';
+                ctx.drawImage(img, 0, 0, newWidth, newHeight);
+                
+                const isPhoto = img.src.includes('IMG_') || img.src.includes('image0');
+                const dataUrl = canvas.toDataURL(isPhoto ? 'image/jpeg' : 'image/webp', isPhoto ? 0.85 : 0.9);
+                
+                img.src = dataUrl;
+                canvas.width = canvas.height = 0;
+            } catch (e) {
+                console.warn('Image compression failed:', img.src, e);
+            }
+        }
+
+        // Background animation system
+        const bouncingImages = [];
+        let lastFrameTime = 0;
+        const targetFps = 30;
+        const frameInterval = 1000 / targetFps;
+        let viewportW = window.innerWidth;
+        let viewportH = window.innerHeight;
+        let frameCount = 0;
+        let imagesLoaded = 0;
+
+        const images = [
+            'images/wizard1.png', 'images/wizard2.png', 'images/wizard3.png',
+            'images/wizard4.png', 'images/wizard5.png', 'images/wizard6.png',
+            'images/1768724161355_image.png', 'images/1768770350230_image.png',
+            'images/IMG_0199.jpeg', 'images/IMG_5410.jpeg', 'images/plant_your_seed.png'
+        ];
+
+        function initBackground() {
+            const collage = document.getElementById('bgCollage');
+            
+            const totalImages = 20;
+            
+            for (let i = 0; i < totalImages; i++) {
+                const src = images[i % images.length];
+                const size = Math.random() * 80 + 70;
+                
+                const img = document.createElement('img');
+                img.className = 'bg-image';
+                img.loading = 'lazy';
+                img.decoding = 'async';
+                
+                const isLargeImage = src.includes('IMG_') || src.includes('1768');
+                const compressionClass = isLargeImage ? 'compressed-bg' : 'optimized-bg';
+                
+                img.style.cssText = `
+                    width: ${size}px;
+                    height: ${size}px;
+                    object-fit: contain;
+                    filter: drop-shadow(0 0 6px rgba(255, 0, 0, 0.25));
+                    pointer-events: none;
+                    opacity: 0.7;
+                    z-index: ${Math.floor(Math.random() * 4) + 1};
+                    image-rendering: ${isLargeImage ? 'auto' : 'crisp-edges'};
+                    transform: translate3d(0,0,0);
+                    will-change: transform;
+                `;
+                img.classList.add(compressionClass);
+                
+                img.onload = () => {
+                    imagesLoaded++;
+                    document.getElementById('count').textContent = imagesLoaded;
+                    if (isLargeImage && img.naturalWidth > 400) {
+                        requestIdleCallback(() => compressImage(img));
+                    }
+                };
+                
+                img.src = src;
+                collage.appendChild(img);
+                
+                const imageData = {
+                    element: img,
+                    x: Math.random() * (viewportW - size),
+                    y: Math.random() * (viewportH - size),
+                    vx: (Math.random() - 0.5) * 0.3,
+                    vy: (Math.random() - 0.5) * 0.3,
+                    size: size
+                };
+                img.style.transform = `translate3d(${imageData.x}px, ${imageData.y}px, 0)`;
+                
+                bouncingImages.push(imageData);
+            }
+            
+            animateImages();
+        }
+
+        function animateImages() {
+            const now = performance.now();
+            if (now - lastFrameTime < frameInterval) {
+                requestAnimationFrame(animateImages);
+                return;
+            }
+            
+            const dt = Math.min(0.05, (now - lastFrameTime) / 1000);
+            const step = dt * 60;
+            lastFrameTime = now;
+            frameCount++;
+            
+            // Update FPS display every 60 frames
+            if (frameCount % 60 === 0) {
+                const fps = Math.round(1000 / (now - (window.lastFpsTime || now - 1000/60)));
+                document.getElementById('fps').textContent = fps;
+                window.lastFpsTime = now;
+            }
+            
+            bouncingImages.forEach(img => {
+                img.x += img.vx * step;
+                img.y += img.vy * step;
+                
+                if (img.x <= 0 || img.x + img.size >= viewportW) {
+                    img.vx *= -1;
+                    img.x = Math.max(0, Math.min(viewportW - img.size, img.x));
+                }
+                
+                if (img.y <= 0 || img.y + img.size >= viewportH) {
+                    img.vy *= -1;
+                    img.y = Math.max(0, Math.min(viewportH - img.size, img.y));
+                }
+                
+                img.element.style.transform = `translate3d(${img.x}px, ${img.y}px, 0)`;
+            });
+            
+            requestAnimationFrame(animateImages);
+        }
+
+        window.addEventListener('resize', () => {
+            viewportW = window.innerWidth;
+            viewportH = window.innerHeight;
+        });
+
+        // Initialize when DOM loaded
+        document.addEventListener('DOMContentLoaded', initBackground);
+    </script>
+</body>
+</html>

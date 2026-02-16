@@ -133,6 +133,7 @@
             opacity: 0.3;
             filter: blur(1px) brightness(0.7);
             z-index: 0;
+            contain: layout paint;
         }
 
         .bg-image {
@@ -140,7 +141,25 @@
             border: none;
             border: none;
             object-fit: cover;
+            will-change: transform, opacity;
+            transform: translate3d(0, 0, 0);
             /* Animation set inline */
+        }
+
+        .compressed-bg {
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: optimize-contrast;
+            transform-style: preserve-3d;
+        }
+        
+        .optimized-bg {
+            image-rendering: crisp-edges;
+            image-rendering: -webkit-optimize-contrast;
+        }
+        
+        /* Memory management for background images */
+        .bg-image:not(.visible) {
+            content-visibility: hidden;
         }
 
         @keyframes spin {
@@ -3563,8 +3582,7 @@
             if (!el) return;
             const ageSec = marketLastUpdatedAt ? Math.max(0, Math.floor((Date.now() - marketLastUpdatedAt) / 1000)) : null;
             const ageText = ageSec === null ? 'Not loaded yet' : (ageSec < 60 ? `${ageSec}s ago` : `${Math.floor(ageSec / 60)}m ago`);
-            const srcText = note || 'Base: DexScreener/GeckoTerminal · Chia: Lambda/TibetSwap';
-            el.textContent = `Updated ${ageText} · ${srcText}`;
+            el.textContent = ageText === 'Not loaded yet' ? ageText : `Updated ${ageText}`;
         }
 
         async function updateData() {
@@ -4208,65 +4226,157 @@
         }
 
 
+        // Image compression function for performance optimization
+        function compressImage(img) {
+            if (!img.naturalWidth || img.naturalWidth <= 400) return; // Skip small images
+            
+            try {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Limit max size for background images  
+                const maxSize = 400;
+                const aspectRatio = img.naturalWidth / img.naturalHeight;
+                
+                let newWidth, newHeight;
+                if (img.naturalWidth > img.naturalHeight) {
+                    newWidth = Math.min(maxSize, img.naturalWidth);
+                    newHeight = newWidth / aspectRatio;
+                } else {
+                    newHeight = Math.min(maxSize, img.naturalHeight);
+                    newWidth = newHeight * aspectRatio;
+                }
+                
+                canvas.width = newWidth;
+                canvas.height = newHeight;
+                
+                // Draw with slight compression
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'medium';
+                ctx.drawImage(img, 0, 0, newWidth, newHeight);
+                
+                // Convert to optimized data URL (JPEG with 85% quality for photos, PNG for graphics)
+                const isPhoto = img.src.includes('IMG_') || img.src.includes('image0');
+                const dataUrl = canvas.toDataURL(isPhoto ? 'image/jpeg' : 'image/webp', isPhoto ? 0.85 : 0.9);
+                
+                // Replace image source with compressed version
+                img.src = dataUrl;
+                
+                // Clean up canvas
+                canvas.width = canvas.height = 0;
+            } catch (e) {
+                console.warn('Image compression failed for:', img.src, e);
+            }
+        }
+        
         // BOUNCING SCREENSAVER-STYLE BACKGROUND
         const bouncingImages = [];
+        let bgPaused = false;
+        let lastFrameTime = 0;
+        const targetFps = 30;
+        const frameInterval = 1000 / targetFps;
+        let viewportW = window.innerWidth;
+        let viewportH = window.innerHeight;
+
+        const updateViewport = () => {
+            viewportW = window.innerWidth;
+            viewportH = window.innerHeight;
+        };
         
         function initBackground() {
             const collage = document.getElementById('bgCollage');
             collage.innerHTML = ''; // Clear existing
+            bouncingImages.length = 0;
+
+            updateViewport();
+            const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            const isMobile = viewportW <= 768;
 
             const images = [
+                // Wizard series - highest priority for frequent display
                 'images/wizard1.png', 'images/wizard2.png', 'images/wizard3.png',
                 'images/wizard4.png', 'images/wizard5.png', 'images/wizard6.png',
+                // Featured art pieces 
                 'images/1768724161355_image.png', 'images/1768770350230_image.png',
                 'images/1768770712319_image.png', 'images/1768771847908_image.png',
-                'images/1768772304325_image.png', 'images/uploaded_image_2_1768636844588.png',
-                'images/uploaded_image_3_1768636844588.png', 'images/uploaded_image_4_1768636844588.jpg',
-                'images/uploaded_image_1_1768638579775.png', 'images/uploaded_image_2_1768638579775.png',
-                'images/uploaded_image_3_1768638579775.png', 'images/uploaded_image_4_1768638579775.jpg',
-                'images/uploaded_image_1_1768638691015.png', 'images/uploaded_image_2_1768638691015.png',
-                'images/uploaded_image_3_1768638691015.png', 'images/uploaded_image_4_1768638691015.jpg',
-                'images/uploaded_image_1_1768638712026.jpg', 'images/uploaded_image_2_1768638712026.jpg',
-                'images/uploaded_image_3_1768638712026.png', 'images/uploaded_image_4_1768638712026.jpg',
-                'images/IMG_5410.jpeg', 'images/IMG_5288.jpeg', 'images/IMG_9197.jpeg',
-                'images/IMG_2987.jpeg', 'images/IMG_7865.jpeg', 'images/IMG_7828.jpeg',
-                'images/IMG_7578.jpeg', 'images/IMG_7496.jpeg', 'images/IMG_8330.jpeg',
-                'images/Untitled_Artwork_Original.png', 'images/IMG_0199.jpeg', 'images/IMG_0205.jpeg',
-                'images/IMG_7866.jpeg', 'images/IMG_8048.jpeg', 'images/IMG_8371.jpeg',
-                'images/image0.jpeg', 'images/plant_your_seed.png',
+                'images/1768772304325_image.png', 'images/Untitled_Artwork_Original.png',
+                // Uploaded image collections
+                'images/uploaded_image_2_1768636844588.png', 'images/uploaded_image_3_1768636844588.png',
+                'images/uploaded_image_4_1768636844588.jpg', 'images/uploaded_image_1_1768638579775.png', 
+                'images/uploaded_image_2_1768638579775.png', 'images/uploaded_image_3_1768638579775.png',
+                'images/uploaded_image_4_1768638579775.jpg', 'images/uploaded_image_1_1768638691015.png',
+                'images/uploaded_image_2_1768638691015.png', 'images/uploaded_image_3_1768638691015.png',
+                'images/uploaded_image_4_1768638691015.jpg', 'images/uploaded_image_1_1768638712026.jpg',
+                'images/uploaded_image_2_1768638712026.jpg', 'images/uploaded_image_3_1768638712026.png',
+                'images/uploaded_image_4_1768638712026.jpg',
+                // Photography collection
+                'images/IMG_0199.jpeg', 'images/IMG_0205.jpeg', 'images/IMG_2987.jpeg',
+                'images/IMG_5288.jpeg', 'images/IMG_5410.jpeg', 'images/IMG_7496.jpeg',
+                'images/IMG_7578.jpeg', 'images/IMG_7828.jpeg', 'images/IMG_7865.jpeg',
+                'images/IMG_7866.jpeg', 'images/IMG_8048.jpeg', 'images/IMG_8330.jpeg',
+                'images/IMG_8371.jpeg', 'images/IMG_9197.jpeg', 'images/image0.jpeg',
+                // Themed content
+                'images/plant_your_seed.png', 'images/hodl-diamond.png',
                 'images/Screenshot_2026-01-17_232436-removebg-preview.png'
             ];
 
-            // Create 80 bouncing images
-            const totalImages = 80;
+            // Create fewer images for better performance while keeping the vibe
+            const totalImages = prefersReducedMotion ? 18 : (isMobile ? 28 : 48);
+            const minSize = isMobile ? 70 : 90;
+            const maxSize = isMobile ? 140 : 170;
+            const speedScale = prefersReducedMotion ? 0.2 : 0.32;
             
             for (let i = 0; i < totalImages; i++) {
                 const src = images[i % images.length];
-                const size = Math.random() * 100 + 80; // 80-180px
+                const size = Math.random() * (maxSize - minSize) + minSize;
                 
                 // Random z-index: some go above gradient (11-14) to pop into header, but stay behind text (15)
                 const zIndex = Math.random() > 0.3 ? Math.floor(Math.random() * 4) + 11 : 5; // 70% chance to pop above, 30% stay below
                 
-                // Create image element with lazy loading
+                // Create image element with lazy loading and compression
                 const img = document.createElement('img');
+                img.className = 'bg-image';
                 img.dataset.src = src; // Store src in data attribute for lazy loading
                 img.loading = 'lazy'; // Native lazy loading
+                img.decoding = 'async';
+                if (i < 4) img.fetchPriority = 'high';
+                
+                // Add compression hints and optimize rendering
+                const isLargeImage = src.includes('IMG_') || src.includes('1768') || src.includes('uploaded_');
+                const compressionClass = isLargeImage ? 'compressed-bg' : 'optimized-bg';
+                
                 img.style.cssText = `
-                    position: fixed;
                     width: ${size}px;
                     height: ${size}px;
                     object-fit: contain;
-                    filter: drop-shadow(0 0 10px rgba(255, 0, 0, 0.3));
+                    filter: drop-shadow(0 0 6px rgba(255, 0, 0, 0.25));
                     pointer-events: none;
-                    opacity: 0.8;
+                    opacity: 0.7;
                     z-index: ${zIndex};
+                    image-rendering: ${isLargeImage ? 'auto' : 'crisp-edges'};
+                    transform: translate3d(0,0,0);
+                    will-change: transform;
+                    backface-visibility: hidden;
                 `;
+                img.classList.add(compressionClass);
                 
-                // Load immediately for first batch, lazy load rest
+                // Progressive loading with size optimization
                 if (i < 8) {
                     img.src = src;
+                    // Add onload handler to trigger compression
+                    img.onload = () => {
+                        if (isLargeImage && img.naturalWidth > 400) {
+                            // Create a compressed version in canvas for large images
+                            requestIdleCallback(() => compressImage(img));
+                        }
+                    };
                 } else {
-                    requestIdleCallback(() => { img.src = src; });
+                    requestIdleCallback(() => { 
+                        img.src = src;
+                        if (isLargeImage) {
+                            img.onload = () => requestIdleCallback(() => compressImage(img));
+                        }
+                    });
                 }
                 
                 collage.appendChild(img);
@@ -4274,16 +4384,17 @@
                 // Physics properties
                 const imageData = {
                     element: img,
-                    x: Math.random() * window.innerWidth,
-                    y: Math.random() * window.innerHeight,
-                    vx: (Math.random() - 0.5) * 0.4, // Slightly faster than 0.5
-                    vy: (Math.random() - 0.5) * 0.4,
+                    x: Math.random() * (viewportW - size),
+                    y: Math.random() * (viewportH - size),
+                    vx: (Math.random() - 0.5) * speedScale,
+                    vy: (Math.random() - 0.5) * speedScale,
                     size: size,
                     zIndex: zIndex,
                     lifetime: Math.random() * 30000 + 20000, // 20-50 seconds before respawn
                     born: Date.now(),
                     visible: true
                 };
+                img.style.transform = `translate3d(${imageData.x}px, ${imageData.y}px, 0)`;
                 
                 bouncingImages.push(imageData);
             }
@@ -4293,54 +4404,66 @@
         }
         
         function animateBouncingImages() {
-            const now = Date.now();
+            if (bgPaused) {
+                requestAnimationFrame(animateBouncingImages);
+                return;
+            }
+
+            const now = performance.now();
+            if (now - lastFrameTime < frameInterval) {
+                requestAnimationFrame(animateBouncingImages);
+                return;
+            }
+            const dt = Math.min(0.05, (now - lastFrameTime) / 1000);
+            const step = dt * 60;
+            lastFrameTime = now;
+            const nowTs = Date.now();
             
             bouncingImages.forEach(img => {
                 // Check if image should respawn
-                if (now - img.born > img.lifetime) {
+                if (nowTs - img.born > img.lifetime) {
                     // Disappear for a moment
                     if (img.visible) {
                         img.element.style.opacity = '0';
                         img.visible = false;
-                        img.respawnTime = now + Math.random() * 3000 + 1000; // 1-4 seconds
-                    } else if (now > img.respawnTime) {
+                        img.respawnTime = nowTs + Math.random() * 3000 + 1000; // 1-4 seconds
+                    } else if (nowTs > img.respawnTime) {
                         // Respawn at new random position with new z-index!
-                        img.x = Math.random() * window.innerWidth;
-                        img.y = Math.random() * window.innerHeight;
-                        img.vx = (Math.random() - 0.5) * 0.4;
-                        img.vy = (Math.random() - 0.5) * 0.4;
+                        img.x = Math.random() * (viewportW - img.size);
+                        img.y = Math.random() * (viewportH - img.size);
+                        img.vx = (Math.random() - 0.5) * 0.32;
+                        img.vy = (Math.random() - 0.5) * 0.32;
                         
                         // Randomize z-index on respawn - dynamic layering!
                         const newZIndex = Math.random() > 0.3 ? Math.floor(Math.random() * 4) + 11 : 5;
                         img.zIndex = newZIndex;
                         img.element.style.zIndex = newZIndex;
                         
-                        img.born = now;
+                        img.born = nowTs;
                         img.visible = true;
-                        img.element.style.opacity = '0.8';
+                        img.element.style.opacity = '0.7';
                     }
                 }
                 
                 if (!img.visible) return;
                 
                 // Update position
-                img.x += img.vx;
-                img.y += img.vy;
+                img.x += img.vx * step;
+                img.y += img.vy * step;
                 
                 // Bounce off edges (like DVD screensaver!)
-                if (img.x <= 0 || img.x + img.size >= window.innerWidth) {
+                if (img.x <= 0 || img.x + img.size >= viewportW) {
                     img.vx *= -1;
-                    img.x = Math.max(0, Math.min(window.innerWidth - img.size, img.x));
+                    img.x = Math.max(0, Math.min(viewportW - img.size, img.x));
                 }
                 
-                if (img.y <= 0 || img.y + img.size >= window.innerHeight) {
+                if (img.y <= 0 || img.y + img.size >= viewportH) {
                     img.vy *= -1;
-                    img.y = Math.max(0, Math.min(window.innerHeight - img.size, img.y));
+                    img.y = Math.max(0, Math.min(viewportH - img.size, img.y));
                 }
                 
                 // Apply position
-                img.element.style.left = img.x + 'px';
-                img.element.style.top = img.y + 'px';
+                img.element.style.transform = `translate3d(${img.x}px, ${img.y}px, 0)`;
             });
             
             requestAnimationFrame(animateBouncingImages);
@@ -4348,10 +4471,17 @@
         
         // Handle window resize
         window.addEventListener('resize', () => {
+            updateViewport();
             bouncingImages.forEach(img => {
-                img.x = Math.min(img.x, window.innerWidth - img.size);
-                img.y = Math.min(img.y, window.innerHeight - img.size);
+                img.x = Math.min(img.x, viewportW - img.size);
+                img.y = Math.min(img.y, viewportH - img.size);
+                img.element.style.transform = `translate3d(${img.x}px, ${img.y}px, 0)`;
             });
+        });
+
+        document.addEventListener('visibilitychange', () => {
+            bgPaused = document.hidden;
+            if (!bgPaused) lastFrameTime = 0;
         });
         function updateVisitorCount() {
             const visitorEl = document.getElementById('visitorCount');
@@ -7508,7 +7638,8 @@ document.addEventListener('DOMContentLoaded', () => {
             let touchStartY = 0;
             let touchEndX = 0;
             let touchEndY = 0;
-            const minSwipeDistance = 50; // minimum distance for swipe in pixels
+            const minSwipeDistance = 90; // minimum distance for swipe in pixels
+            const maxVerticalDrift = 45; // max vertical drift allowed for a swipe
 
             const container = document.querySelector('.container');
             if (!container) return;
@@ -7534,8 +7665,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const deltaX = touchEndX - touchStartX;
                 const deltaY = touchEndY - touchStartY;
                 
-                // Only trigger swipe if horizontal movement is greater than vertical
-                if (Math.abs(deltaX) < Math.abs(deltaY)) return;
+                // Only trigger swipe if mostly horizontal and not a scroll gesture
+                if (Math.abs(deltaY) > maxVerticalDrift) return;
+                if (Math.abs(deltaX) < Math.abs(deltaY) * 1.8) return;
                 if (Math.abs(deltaX) < minSwipeDistance) return;
 
                 // Get current active tab
