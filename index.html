@@ -3512,7 +3512,7 @@
                             if (best) {
                                 price     = parseFloat(best.priceUsd     || 0);
                                 change24h = parseFloat(best.priceChange?.h24 || 0);
-                                marketCap = parseFloat(best.fdv || best.marketCap || 0);
+                                marketCap = parseFloat(best.marketCap || best.fdv || 0);
                             }
                         }
                         // pairs === null means DexScreener has no index for this token
@@ -3533,7 +3533,11 @@
                             const gtP = parseFloat(attr.price_usd || 0);
                             if (gtP > 0) {
                                 price     = gtP;
-                                marketCap = parseFloat(attr.fdv_usd || attr.market_cap_usd || 0);
+                                marketCap = parseFloat(attr.market_cap_usd || attr.fdv_usd || 0);
+                                if (marketCap === 0 && price > 0) {
+                                    const supply = parseFloat(attr.circulating_supply || attr.total_supply || 0);
+                                    if (supply > 0) marketCap = supply * price;
+                                }
                                 console.log(`  ✅ ${t.name} via GeckoTerminal: $${price.toFixed(10)}`);
                             } else { console.warn(`  ⚠️  ${t.name}: GeckoTerminal also returned $0`); }
                         } else { console.warn(`  GeckoTerminal HTTP ${gtR.status} for ${t.name}`); }
@@ -6266,6 +6270,30 @@ function updateHoldingsColumn(chain, tokensRaw) {
     const totalId = chain === 'base' ? 'base-column-total'  : 'chia-column-total';
 
     tokens = [...tokens].sort((a, b) => (b.value || 0) - (a.value || 0));
+
+    const isUnknownChia = (t) => chain === 'chia' && ((t.name || '').startsWith('Token '));
+
+    if (chain === 'chia') {
+        const knownTokens = tokens.filter(t => !isUnknownChia(t));
+        const unknownTokens = tokens.filter(t => isUnknownChia(t));
+        const displayTotal = knownTokens.reduce((s, t) => s + (t.value || 0), 0);
+
+        document.getElementById(totalId).textContent = `$${displayTotal.toLocaleString(undefined, {minimumFractionDigits:2,maximumFractionDigits:2})}`;
+        document.getElementById(countId).textContent = `${knownTokens.length} tokens`;
+
+        const knownHigh = knownTokens.filter(t => (t.value || 0) >= 1);
+        const knownLow  = knownTokens.filter(t => (t.value || 0) < 1);
+        const unknownSorted = [...unknownTokens].sort((a, b) => (b.value || 0) - (a.value || 0));
+
+        if (tokens.length === 0) {
+            document.getElementById(listId).innerHTML = `<div style="text-align:center;padding:60px 20px;color:rgba(255,255,255,0.4);">No tokens found</div>`;
+            return;
+        }
+
+        const html = [...knownHigh, ...unknownSorted, ...knownLow].map(buildTokenCard).join('');
+        document.getElementById(listId).innerHTML = html;
+        return;
+    }
 
     const total = tokens.reduce((s, t) => s + (t.value || 0), 0);
     document.getElementById(totalId).textContent = `$${total.toLocaleString(undefined, {minimumFractionDigits:2,maximumFractionDigits:2})}`;

@@ -131,13 +131,18 @@ async function getDexieBestAsk(assetId, xchUsd) {
 
 async function getSupply(assetId) {
     try {
-        const r = await timedFetch('https://api.spacescan.io/cat/info/' + assetId, 5000);
-        if (!r.ok) return 0;
+        const r = await timedFetch('https://api.spacescan.io/cat/info/' + assetId, 8000);
+        if (!r.ok) {
+            console.warn(`[getSupply] ${assetId.slice(0,8)}: HTTP ${r.status}`);
+            return 0;
+        }
         const d = await r.json();
         const supply = parseFloat(d?.data?.circulating_supply || d?.data?.total_supply || 0);
         if (supply > 0) {
             setCachedSupply(assetId, supply);
             console.log(`[getSupply] ${assetId.slice(0,8)}: ${supply}`);
+        } else {
+            console.warn(`[getSupply] ${assetId.slice(0,8)}: no supply data`);
         }
         return supply;
     } catch (e) {
