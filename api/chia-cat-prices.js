@@ -129,6 +129,17 @@ async function getDexieBestAsk(assetId, xchUsd) {
     } catch (_) { return null; }
 }
 
+async function getSupply(assetId) {
+    try {
+        const r = await timedFetch('https://api.spacescan.io/cat/info/' + assetId, 4000);
+        if (!r.ok) return 0;
+        const d = await r.json();
+        const supply = parseFloat(d?.data?.circulating_supply || d?.data?.total_supply || 0);
+        if (supply > 0) setCachedSupply(assetId, supply);
+        return supply;
+    } catch (_) { return 0; }
+}
+
 // ── HANDLER ──────────────────────────────────────────────────────────────────
 
 export default async function handler(req, res) {
@@ -194,14 +205,15 @@ export default async function handler(req, res) {
                 // Try Dexie ticker first
                 const tp = tickerMap[id.toLowerCase()];
                 if (tp > 0) {
-                    // First try to use supply from Spacescan result, then cached, then 0
-                    const supply = (r?.supply || getCachedSupply(id) || 0);
-                    const mcap = supply > 0 ? supply * tp : 0;
+                    // Try to use supply from Spacescan result, cached, or estimate
+                    let supply = (r?.supply || getCachedSupply(id) || 0);
+                    let mcap = supply > 0 ? supply * tp : 0;
+                    let src = supply > 0 ? (r?.supply > 0 ? 'dexie' : 'dexie+cache') : 'dexie';
+                    
                     prices[id] = tp;
                     changes[id] = r?.change || 0;
                     mcaps[id] = mcap;
-                    // Mark source based on where supply came from
-                    sources[id] = supply > 0 ? (r?.supply > 0 ? 'dexie' : 'dexie+cache') : 'dexie';
+                    sources[id] = src;
                 } else dexieNeeded.push(id);
             }
         }
@@ -214,12 +226,43 @@ export default async function handler(req, res) {
                 const price = r?.price || 0;
                 // Use any available supply (from failed Spacescan result or cache)
                 const supply = (catResults[CAT_IDS.indexOf(id)]?.supply || getCachedSupply(id) || 0);
+                // If we have supply, always compute mcap even if no Spacescan data
                 const mcap = supply > 0 && price > 0 ? supply * price : (r?.mcap || 0);
+                
                 prices[id] = price;
                 changes[id] = r?.change || 0;
                 mcaps[id] = mcap;
-                // Report source clearly
-                sources[id] = mcap > 0 ? (supply > 0 ? (r?.source ? r.source + '+cache' : 'cache') : (r?.source || 'none')) : (r?.source || 'none');
+                
+                // Build source string
+                if (mcap > 0) {
+                    if (supply > 0) {
+                        sources[id] = (r?.source ? r.source + '+cache' : 'dexie+cache');
+                    } else {
+                        sources[id] = (r?.source || 'dexie');
+                    }
+                } else {
+                    sources[id] = (r?.source || 'none');
+                }
+            }
+        }
+
+        // Final fallback: for any token with a price but no mcap, try to fetch supply
+        const needsSupply = [];
+        for (const id of CAT_IDS) {
+            if (prices[id] > 0 && mcaps[id] === 0) {
+                needsSupply.push(id);
+            }
+        }
+        
+        if (needsSupply.length > 0) {
+            const supplies = await Promise.all(needsSupply.map(id => getSupply(id)));
+            for (let i = 0; i < needsSupply.length; i++) {
+                const id = needsSupply[i];
+                const supply = supplies[i];
+                if (supply > 0 && prices[id] > 0) {
+                    mcaps[id] = supply * prices[id];
+                    sources[id] = (sources[id] || 'dexie') + '+supply';
+                }
             }
         }
 

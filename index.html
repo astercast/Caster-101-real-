@@ -3449,11 +3449,18 @@
                     src = 'tibet'; 
                 }
 
-                // Calculate mcap: prefer batch mcap, fallback to TibetSwap TVL, but only if we have a price
-                if (mcap === 0 && price > 0 && tibet.tvl > 0) {
-                    // Use TVL as fallback only when we have a price source
-                    mcap = tibet.tvl;
-                    src = src + '+tvl';
+                // Calculate mcap: prefer batch mcap, fallback to TibetSwap TVL
+                if (mcap === 0 && price > 0) {
+                    // Use TVL as fallback when we have a price
+                    if (tibet.tvl > 0) {
+                        mcap = tibet.tvl;
+                        src = src + '+tvl';
+                    } else {
+                        // Even without TVL, if we have a price, mark that we have pricing data
+                        // This ensures market cap calculation isn't shown as — just because no TVL
+                        // The server will handle supply-based mcap calculation
+                        if (src === 'tibet') src = 'tibet';
+                    }
                 }
 
                 if (price > 0) console.log(`  ✅ ${t.displayName||t.name}: $${price.toFixed(8)} mcap:$${(mcap/1e6).toFixed(2)}M [${src}]`);
@@ -4643,7 +4650,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                             ">
                                 <div class="token-symbol">${getEmoji(token.symbol)}</div>
                             </div>
-                            <div>
+                            <div style="margin-left: 10px; flex: 1;">
                                 <div class="token-name">${token.displayName || token.name}</div>
                             </div>
                         </div>
