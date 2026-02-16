@@ -4624,7 +4624,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
 
                 const mcap = token.marketCap || 0;
                 const fmt  = n => n > 1e6 ? '$'+(n/1e6).toFixed(2)+'M' : n > 1e3 ? '$'+(n/1e3).toFixed(1)+'K' : n > 0 ? '$'+n.toFixed(0) : '—';
-                const mcapText = mcap > 0 ? (fmt(mcap) + (token.isTvl ? ' est.' : '')) : '—';
+                const mcapText = mcap > 0 ? fmt(mcap) : '—';
 
                 return `
                 <div class="token-card" onclick="openTokenLink('${token.chain}', '${token.assetId || token.contract}', '${token.symbol}')">
