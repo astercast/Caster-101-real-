@@ -931,6 +931,7 @@
         }
 
         .spotify-mini-close {
+            display: none !important;
             border: none;
             background: rgba(255, 255, 255, 0.12);
             color: rgba(255, 255, 255, 0.7);
@@ -5241,7 +5242,6 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                 container: document.getElementById('spotify-miniplayer'),
                 album: document.getElementById('spotify-mini-album'),
                 open: document.getElementById('spotify-mini-open'),
-                close: document.getElementById('spotify-mini-close'),
                 shuffle: document.getElementById('spotify-mini-shuffle'),
             };
 
@@ -5279,12 +5279,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                 // Play button removed from UI; Spotify widget handles playback
             };
 
-            if (ui.close && ui.container) {
-                ui.close.addEventListener('click', () => {
-                    ui.container.style.display = 'none';
-                    if (controller && !isPaused) controller.togglePlay();
-                });
-            }
+            // Spotify mini player cannot be closed - permanently available
 
             // Playback buttons removed; Spotify IFrame widget handles these controls
 
