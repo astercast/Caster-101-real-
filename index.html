@@ -132,7 +132,7 @@
             pointer-events: none;
             opacity: 0.3;
             filter: blur(1px) brightness(0.7);
-            z-index: -1;
+            z-index: 0;
             contain: layout paint;
         }
 
@@ -158,7 +158,7 @@
         }
         
         /* Memory management for background images */
-        .bg-image:not(.visible) {
+        .bg-image.is-hidden {
             content-visibility: hidden;
         }
         
@@ -576,10 +576,6 @@
             border-radius: 14px;
             padding: 14px 18px;
             margin-bottom: 10px;
-            min-height: 280px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
@@ -3446,7 +3442,7 @@
             ]);
 
             let xchPriceUSD = xchData.chia?.usd || 0;
-            let xchMarketCap = xchData.chia?.usd_market_cap || 0;
+            let xchMarketCap = parseFloat(xchData.chia?.usd_market_cap || 0);
             // Fallback: if CoinGecko fails, try TibetSwap XCH/USD price
             if (xchPriceUSD === 0 && tibetRaw?.length > 0) {
                 const xchUsdPair = tibetRaw.find(p => p.short_name?.toLowerCase().includes('xch-usd'));
@@ -3455,7 +3451,7 @@
                 }
             }
             if (xchPriceUSD === 0) xchPriceUSD = 2.80;
-            const xchChange   = xchData.chia?.usd_24h_change || 0;
+            const xchChange   = parseFloat(xchData.chia?.usd_24h_change || 0);
             console.log(`XCH: $${xchPriceUSD.toFixed(4)} MCap: $${(xchMarketCap/1e6).toFixed(1)}M`);
 
             const xchTarget = chiaTargets.find(t => t.assetId === 'Native');
@@ -3489,10 +3485,14 @@
                 const aid = t.assetId.toLowerCase();
 
                 // Try serverless batch first (Spacescan or Dexie on server)
-                if (batchPrices[t.assetId] > 0) {
-                    price  = batchPrices[t.assetId];
-                    change = batchChanges[t.assetId] || 0;
-                    mcap   = batchMcaps[t.assetId] || 0;
+                const batchPrice = parseFloat(batchPrices[t.assetId] || 0);
+                const batchChange = parseFloat(batchChanges[t.assetId] || 0);
+                const batchMcap = parseFloat(batchMcaps[t.assetId] || 0);
+
+                if (batchPrice > 0) {
+                    price  = batchPrice;
+                    change = batchChange;
+                    mcap   = batchMcap;
                     src    = batchSources[t.assetId] || 'batch';
                 }
 
@@ -4365,7 +4365,7 @@
                 const size = Math.random() * (maxSize - minSize) + minSize;
                 
                 // Random z-index: keep all images behind main content
-                const zIndex = -1; // All background images at z-index -1, behind everything
+                const zIndex = 0; // All background images at z-index 0, behind content
                 
                 // Create image element with lazy loading and compression
                 const img = document.createElement('img');
@@ -4451,6 +4451,7 @@
                     // Disappear for a moment
                     if (img.visible) {
                         img.element.style.opacity = '0';
+                        img.element.classList.add('is-hidden');
                         img.visible = false;
                         img.respawnTime = nowTs + Math.random() * 3000 + 1000; // 1-4 seconds
                     } else if (nowTs > img.respawnTime) {
@@ -4466,6 +4467,7 @@
                         img.born = nowTs;
                         img.visible = true;
                         img.element.style.opacity = '0.7';
+                        img.element.classList.remove('is-hidden');
                     }
                 }
                 
@@ -4855,7 +4857,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                             ">
                                 <div class="token-symbol">${getEmoji(token.symbol)}</div>
                             </div>
-                            <div style="margin-left: 10px; flex: 1;">
+                            <div style="margin-left: 6px; flex: 1;">
                                 <div class="token-name">${token.displayName || token.name}</div>
                             </div>
                         </div>
