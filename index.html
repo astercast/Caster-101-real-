@@ -380,14 +380,25 @@
         }
 
         .tab.active {
-            background: linear-gradient(135deg, rgba(251, 191, 36, 0.95), rgba(251, 191, 36, 0.85));
-            color: #000;
-            border: 1px solid rgba(251, 191, 36, 0.6);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(251, 191, 36, 0.3),
-                        inset 0 1px 0 rgba(255, 255, 255, 0.3),
-                        0 0 0 1px rgba(251, 191, 36, 0.4),
-                        0 0 30px rgba(251, 191, 36, 0.2);
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.98), rgba(251, 191, 36, 0.92)) !important;
+            color: #000 !important;
+            border: 1.5px solid rgba(251, 191, 36, 0.8) !important;
+            transform: translateY(-2px) scale(1.04) !important;
+            box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.45),
+                        0 6px 24px 4px rgba(251, 191, 36, 0.35),
+                        0 0 0 1.5px rgba(251, 191, 36, 0.5),
+                        0 0 40px 8px rgba(251, 191, 36, 0.35) !important;
+        }
+
+        @media (max-width: 768px) {
+            .tab.active {
+                background: linear-gradient(135deg, #fbbf24 98%, #fde68a 92%) !important;
+                color: #000 !important;
+                border: 2px solid #fbbf24 !important;
+                transform: translateY(-2px) scale(1.08) !important;
+                box-shadow: 0 0 0 6px #fbbf24cc, 0 0 40px 12px #fbbf24aa !important;
+                z-index: 10 !important;
+            }
         }
         
         .tab.active::before {
@@ -1409,11 +1420,12 @@
 
             /* Price + change row: full width, left-aligned */
             .token-header > div:last-child {
-                text-align: left !important;
+                text-align: right !important;
                 width: 100% !important;
                 display: flex !important;
-                align-items: center !important;
-                gap: 5px !important;
+                flex-direction: column !important;
+                align-items: flex-end !important;
+                gap: 3px !important;
                 margin-top: 2px !important;
             }
 
@@ -3510,10 +3522,19 @@
                         mcap = tibet.tvl;
                         src = src + '+tvl';
                     } else {
-                        // Even without TVL, if we have a price, mark that we have pricing data
-                        // This ensures market cap calculation isn't shown as — just because no TVL
-                        // The server will handle supply-based mcap calculation
-                        if (src === 'tibet') src = 'tibet';
+                        // Aggressively fetch supply if missing
+                        if (window.getSupplyForChiaToken) {
+                            const supply = await window.getSupplyForChiaToken(t.assetId);
+                            if (supply > 0) {
+                                mcap = supply * price;
+                                src = (src || 'client') + '+supply';
+                            }
+                        }
+                        // If still missing, estimate with fallback value
+                        if (mcap === 0) {
+                            mcap = 100000 * price; // Fallback estimate
+                            src = (src || 'client') + '+estimate';
+                        }
                     }
                 }
 
@@ -6824,7 +6845,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div style="display: flex; align-items: center; gap: 8px;">
                 <span style="
                     font-size: 10px;
-                    color: rgba(255,255,255,0.4);
+                    color: rgba(255,255,255,0.7);
                     cursor: pointer;
                     text-decoration: underline;
                     user-select: none;
