@@ -3692,10 +3692,22 @@
         // Render Token Cards (Visual)
         function renderTreasuryTokenCards(baseTokens, chiaTokens) {
             const container = document.getElementById('treasury-token-cards');
-            const allTokens = [
-                ...baseTokens.map(t => ({ ...t, chain: 'Base' })),
-                ...chiaTokens.map(t => ({ ...t, chain: 'Chia' }))
+            
+            // Separate unknown Chia tokens from named ones
+            const unknownChiaTokens = chiaTokens.filter(t => t.name.startsWith('Token '));
+            const namedChiaTokens = chiaTokens.filter(t => !t.name.startsWith('Token '));
+            
+            // Build sorted token list: named tokens first (by value), then unknown tokens at bottom
+            const namedTokens = [
+                ...baseTokens.map(t => ({ ...t, chain: 'Base', isUnknown: false })),
+                ...namedChiaTokens.map(t => ({ ...t, chain: 'Chia', isUnknown: false }))
             ].sort((a, b) => (b.value || 0) - (a.value || 0));
+            
+            const unknownTokenDisplay = unknownChiaTokens
+                .map(t => ({ ...t, chain: 'Chia', isUnknown: true }))
+                .sort((a, b) => (b.value || 0) - (a.value || 0));
+            
+            const allTokens = [...namedTokens, ...unknownTokenDisplay];
 
             // Update stats
             const lpCount = allTokens.filter(t => t.type === 'lp').length;
@@ -3714,9 +3726,30 @@
                 const chainColor = token.chain === 'Base' ? '#0052ff' : '#4ade80';
                 const chainGradient = token.chain === 'Base' ? 
                     'linear-gradient(135deg, rgba(0, 82, 255, 0.2), rgba(0, 82, 255, 0.05))' :
+                    token.isUnknown ?
+                    'linear-gradient(135deg, rgba(100, 100, 100, 0.2), rgba(80, 80, 80, 0.05))' :
                     'linear-gradient(135deg, rgba(74, 222, 128, 0.2), rgba(74, 222, 128, 0.05))';
                 
-                // Type badge
+                // Unknown token label
+                let unknownLabel = '';
+                if (token.isUnknown) {
+                    unknownLabel = `
+                        <div style="
+                            position: absolute;
+                            top: 8px;
+                            right: 8px;
+                            font-size: 9px;
+                            background: rgba(255, 165, 0, 0.3);
+                            border: 1px solid rgba(255, 165, 0, 0.5);
+                            color: rgba(255, 165, 0, 0.8);
+                            padding: 2px 6px;
+                            border-radius: 4px;
+                            text-transform: uppercase;
+                            font-weight: 700;
+                            letter-spacing: 0.5px;
+                        ">⚠️ Unknown</div>
+                    `;
+                }
                 let typeBadge = '';
                 let typeColor = chainColor;
                 if (token.type === 'lp') {
@@ -3763,6 +3796,7 @@
 
                 return `
                     <div style="
+                        position: relative;
                         background: ${chainGradient};
                         border: none;
                         border: none;
@@ -3771,6 +3805,7 @@
                         transition: transform 0.2s, box-shadow 0.2s;
                         cursor: pointer;
                     " onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 24px rgba(0,0,0,0.4), 0 0 30px ${chainColor}44';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.3), 0 0 20px ${chainColor}22';">
+                        ${unknownLabel}
                         <!-- Chain Badge -->
                         <div style="
                             display: flex;
@@ -5971,8 +6006,11 @@ async function loadComprehensiveTreasury(force = false) {
 
             // Render everything
             mergedChiaTokens = Array.from(tMap.values());
-            mergedChiaTotal = mergedChiaTokens.reduce((s, t) => s + (t.value || 0), 0);
-            console.log(`✅ Chia treasury loaded: ${mergedChiaTokens.length} tokens, $${mergedChiaTotal.toFixed(2)}, ${mergedNFTCount} NFTs`);
+            // Filter out unknown tokens (name starts with "Token ") from total calculation
+            const namedTokens = mergedChiaTokens.filter(t => !t.name.startsWith('Token '));
+            const unknownTokens = mergedChiaTokens.filter(t => t.name.startsWith('Token '));
+            mergedChiaTotal = namedTokens.reduce((s, t) => s + (t.value || 0), 0);
+            console.log(`✅ Chia treasury loaded: ${namedTokens.length} named tokens, $${mergedChiaTotal.toFixed(2)}, ${unknownTokens.length} unknown tokens, ${mergedNFTCount} NFTs`);
 
             const cacheAgeEl = document.getElementById('chia-cache-age');
             if (cacheAgeEl) cacheAgeEl.style.display = 'none';
