@@ -13,6 +13,9 @@ const CAT_IDS = [
     'dd37f678dda586fad9b1daeae1f7c5c137ffa6d947e1ed5c7b4f3c430da80638',
 ];
 
+const SUPPLY_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
+const SUPPLY_CACHE = new Map();
+
 const UA = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36', 'Accept': 'application/json' };
 const sleep = ms => new Promise(res => setTimeout(res, ms));
 
@@ -24,6 +27,18 @@ async function timedFetch(url, ms) {
         clearTimeout(timer);
         return r;
     } catch (e) { clearTimeout(timer); throw e; }
+}
+
+function getCachedSupply(assetId) {
+    const entry = SUPPLY_CACHE.get(assetId);
+    if (!entry) return 0;
+    if (Date.now() - entry.ts > SUPPLY_TTL_MS) return 0;
+    return entry.supply || 0;
+}
+
+function setCachedSupply(assetId, supply) {
+    if (!supply || supply <= 0) return;
+    SUPPLY_CACHE.set(assetId, { supply, ts: Date.now() });
 }
 
 // ── TREASURY MODE ────────────────────────────────────────────────────────────
@@ -89,11 +104,17 @@ async function getSpacescanPrice(assetId) {
         if (!r.ok) return null;
         const d = await r.json();
         const price = parseFloat(d?.data?.amount_price || 0);
-        if (price <= 0) return null;
         // Use circulating supply if available, otherwise use total supply
         const supply = parseFloat(d?.data?.circulating_supply || d?.data?.total_supply || 0);
-        const mcap = supply > 0 ? supply * price : parseFloat(d?.data?.market_cap || 0);
-        return { price, change: parseFloat(d?.data?.pricepercentage || 0), mcap, source: 'spacescan' };
+        if (supply > 0) setCachedSupply(assetId, supply);
+        const mcap = (supply > 0 && price > 0) ? (supply * price) : parseFloat(d?.data?.market_cap || 0);
+        return {
+            price,
+            change: parseFloat(d?.data?.pricepercentage || 0),
+            mcap,
+            supply,
+            source: 'spacescan'
+        };
     } catch (_) { return null; }
 }
 
@@ -164,12 +185,22 @@ export default async function handler(req, res) {
 
         for (let i = 0; i < CAT_IDS.length; i++) {
             const id = CAT_IDS[i], r = catResults[i];
-            if (r) { prices[id] = r.price; changes[id] = r.change; mcaps[id] = r.mcap; sources[id] = r.source; }
-            else {
+            if (r && r.price > 0) {
+                prices[id] = r.price;
+                changes[id] = r.change;
+                mcaps[id] = r.mcap;
+                sources[id] = r.source;
+            } else {
                 // Try Dexie ticker first
                 const tp = tickerMap[id.toLowerCase()];
-                if (tp > 0) { prices[id] = tp; changes[id] = 0; mcaps[id] = 0; sources[id] = 'dexie'; }
-                else dexieNeeded.push(id);
+                if (tp > 0) {
+                    const supply = (r?.supply || getCachedSupply(id));
+                    const mcap = supply > 0 ? supply * tp : 0;
+                    prices[id] = tp;
+                    changes[id] = r?.change || 0;
+                    mcaps[id] = mcap;
+                    sources[id] = mcap > 0 ? 'dexie+cache' : 'dexie';
+                } else dexieNeeded.push(id);
             }
         }
 
@@ -178,8 +209,13 @@ export default async function handler(req, res) {
             const dr = await Promise.all(dexieNeeded.map(id => getDexieBestAsk(id, xchUsd)));
             for (let i = 0; i < dexieNeeded.length; i++) {
                 const id = dexieNeeded[i], r = dr[i];
-                prices[id] = r?.price || 0; changes[id] = r?.change || 0;
-                mcaps[id] = r?.mcap || 0; sources[id] = r?.source || 'none';
+                const price = r?.price || 0;
+                const supply = getCachedSupply(id);
+                const mcap = supply > 0 && price > 0 ? supply * price : (r?.mcap || 0);
+                prices[id] = price;
+                changes[id] = r?.change || 0;
+                mcaps[id] = mcap;
+                sources[id] = mcap > 0 ? (r?.source ? r.source + '+cache' : 'cache') : (r?.source || 'none');
             }
         }
 
