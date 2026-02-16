@@ -112,30 +112,53 @@ function decodeString(hex) {
 async function getDexPrices(tokenAddresses) {
     const pm = {};
     const unique = [...new Set(tokenAddresses.filter(Boolean).map(a => a.toLowerCase()))];
-    for (let i = 0; i < unique.length; i += 20) {
-        const batch = unique.slice(i, i + 20);
+    if (unique.length === 0) return pm;
+    
+    // First pass: try to get prices from all tokens in batches of 30
+    for (let i = 0; i < unique.length; i += 30) {
+        const batch = unique.slice(i, i + 30);
         try {
-            // Try new v1 endpoint first, fall back to legacy
-            let pairs = [];
-            const r = await safeFetch(`https://api.dexscreener.com/tokens/v1/base/${batch.join(',')}`, {}, 10000);
+            // Try DexScreener v1 endpoint with all tokens
+            let found = 0;
+            const r = await safeFetch(`https://api.dexscreener.com/tokens/v1/base/${batch.join(',')}`, {}, 12000);
             if (r.ok) {
                 const d = await r.json();
-                pairs = Array.isArray(d) ? d : (d.pairs || []);
+                const pairs = Array.isArray(d) ? d : (d.pairs || []);
+                for (const pair of pairs) {
+                    if (pair.chainId && pair.chainId !== 'base') continue;
+                    const ca = (pair.baseToken?.address || '').toLowerCase();
+                    const price = parseFloat(pair.priceUsd || 0);
+                    const liq = parseFloat(pair.liquidity?.usd || 0);
+                    if (ca && price > 0) {
+                        if (!pm[ca] || liq > (pm[ca].liq || 0)) {
+                            pm[ca] = { price, liq, sym: pair.baseToken?.symbol || '' };
+                            found++;
+                        }
+                    }
+                }
             }
-            if (!pairs.length) {
-                const r2 = await safeFetch(`https://api.dexscreener.com/latest/dex/tokens/${batch.join(',')}`, {}, 10000);
-                if (r2.ok) { const d = await r2.json(); pairs = d.pairs || []; }
+            
+            // If DexScreener didn't get everything, try legacy endpoint for missing tokens
+            if (found < batch.length) {
+                const missing = batch.filter(addr => !pm[addr]);
+                if (missing.length > 0) {
+                    const r2 = await safeFetch(`https://api.dexscreener.com/latest/dex/tokens/${missing.join(',')}`, {}, 12000);
+                    if (r2.ok) {
+                        const d = await r2.json();
+                        const pairs = d.pairs || [];
+                        for (const pair of pairs) {
+                            if (pair.chainId && pair.chainId !== 'base') continue;
+                            const ca = (pair.baseToken?.address || '').toLowerCase();
+                            const price = parseFloat(pair.priceUsd || 0);
+                            if (ca && price > 0 && !pm[ca]) {
+                                pm[ca] = { price, liq: 0, sym: pair.baseToken?.symbol || '' };
+                            }
+                        }
+                    }
+                }
             }
-            for (const pair of pairs) {
-                if (pair.chainId && pair.chainId !== 'base') continue;
-                const ca = (pair.baseToken?.address || '').toLowerCase();
-                const price = parseFloat(pair.priceUsd || 0);
-                const liq = parseFloat(pair.liquidity?.usd || 0);
-                if (ca && price > 0 && (!pm[ca] || liq > (pm[ca].liq || 0)))
-                    pm[ca] = { price, liq, sym: pair.baseToken?.symbol || '' };
-            }
-        } catch (e) { console.warn('[BASE] DexScreener:', e.message); }
-        if (i + 20 < unique.length) await sleep(300);
+        } catch (e) { console.warn('[BASE] getDexPrices batch', i, ':', e.message); }
+        if (i + 30 < unique.length) await sleep(200);
     }
     return pm;
 }
@@ -168,11 +191,19 @@ async function fetchBase(address) {
         const tok = item.token || {}, dec = parseInt(tok.decimals || '18', 10) || 18;
         const bal = parseFloat(item.value || 0) / Math.pow(10, dec);
         if (bal < 0.000001) continue;
-        const sym = tok.symbol || '', nm = tok.name || '';
-        if (sym === '9mm-LP' || sym.includes('-LP') || sym.includes('UNI-V2') || (nm.includes(' LPs') && !nm.includes('Staked')))
+        const sym = (tok.symbol || '').toUpperCase();
+        const nm = (tok.name || '').toUpperCase();
+        
+        // Better LP detection - common patterns for different DEXs
+        const isLP = sym === '9MM-LP' || sym === 'UNI-V2' || sym.includes('-LP') || 
+                     sym.includes('LP') || nm.includes('-LP') || nm.includes('LIQUIDITY') ||
+                     (nm.includes(' LP') && !nm.includes('STAKED'));
+        
+        if (isLP) {
             lpItems.push({ tok, dec, bal });
-        else
+        } else {
             erc20Items.push({ tok, dec, bal });
+        }
     }
     console.log(`[BASE] ${erc20Items.length} erc20, ${lpItems.length} LP`);
 
@@ -265,9 +296,24 @@ async function fetchBase(address) {
         const rv1 = lp.r1 / Math.pow(10, ti1.dec);
         const p0 = lp.t0 ? (lpPrices[lp.t0.toLowerCase()]?.price || 0) : 0;
         const p1 = lp.t1 ? (lpPrices[lp.t1.toLowerCase()]?.price || 0) : 0;
+        
+        // Calculate pool USD value with better fallback logic
         let poolUsd = rv0 * p0 + rv1 * p1;
-        if (poolUsd === 0 && p0 > 0) poolUsd = rv0 * p0 * 2;
-        else if (poolUsd === 0 && p1 > 0) poolUsd = rv1 * p1 * 2;
+        
+        // Fallback if we only have one price
+        if (poolUsd === 0 && p0 > 0 && rv0 > 0) poolUsd = rv0 * p0 * 2;
+        else if (poolUsd === 0 && p1 > 0 && rv1 > 0) poolUsd = rv1 * p1 * 2;
+        
+        // If still no value, try using priceMap fallback (exchange_rate from Blockscout)
+        if (poolUsd === 0 && lp.t0) {
+            const fallbackP0 = priceMap[lp.t0.toLowerCase()] || 0;
+            if (fallbackP0 > 0) poolUsd = rv0 * fallbackP0 * 2;
+        }
+        if (poolUsd === 0 && lp.t1) {
+            const fallbackP1 = priceMap[lp.t1.toLowerCase()] || 0;
+            if (fallbackP1 > 0) poolUsd = rv1 * fallbackP1 * 2;
+        }
+        
         const share = lp.ts > 0 ? lp.bal / lp.ts : 0;
         const userValue = share * poolUsd;
         tokens.push({

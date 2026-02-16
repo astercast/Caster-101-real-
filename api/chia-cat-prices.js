@@ -194,12 +194,14 @@ export default async function handler(req, res) {
                 // Try Dexie ticker first
                 const tp = tickerMap[id.toLowerCase()];
                 if (tp > 0) {
-                    const supply = (r?.supply || getCachedSupply(id));
+                    // First try to use supply from Spacescan result, then cached, then 0
+                    const supply = (r?.supply || getCachedSupply(id) || 0);
                     const mcap = supply > 0 ? supply * tp : 0;
                     prices[id] = tp;
                     changes[id] = r?.change || 0;
                     mcaps[id] = mcap;
-                    sources[id] = mcap > 0 ? 'dexie+cache' : 'dexie';
+                    // Mark source based on where supply came from
+                    sources[id] = supply > 0 ? (r?.supply > 0 ? 'dexie' : 'dexie+cache') : 'dexie';
                 } else dexieNeeded.push(id);
             }
         }
@@ -210,12 +212,14 @@ export default async function handler(req, res) {
             for (let i = 0; i < dexieNeeded.length; i++) {
                 const id = dexieNeeded[i], r = dr[i];
                 const price = r?.price || 0;
-                const supply = getCachedSupply(id);
+                // Use any available supply (from failed Spacescan result or cache)
+                const supply = (catResults[CAT_IDS.indexOf(id)]?.supply || getCachedSupply(id) || 0);
                 const mcap = supply > 0 && price > 0 ? supply * price : (r?.mcap || 0);
                 prices[id] = price;
                 changes[id] = r?.change || 0;
                 mcaps[id] = mcap;
-                sources[id] = mcap > 0 ? (r?.source ? r.source + '+cache' : 'cache') : (r?.source || 'none');
+                // Report source clearly
+                sources[id] = mcap > 0 ? (supply > 0 ? (r?.source ? r.source + '+cache' : 'cache') : (r?.source || 'none')) : (r?.source || 'none');
             }
         }
 

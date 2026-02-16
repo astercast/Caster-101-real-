@@ -1199,7 +1199,7 @@
             .tab.active {
                 color: #fbbf24 !important;
                 background: rgba(251, 191, 36, 0.1) !important;
-                box-shadow: inset 0 2px 0 #fbbf24 !important;
+                box-shadow: inset 0 2px 0 #fbbf24 !important, 0 0 15px rgba(251, 191, 36, 0.4) !important;
             }
 
             /* Show emoji as icon above label in bottom bar */
@@ -2962,10 +2962,7 @@
                         </div>
                     </div>
                     <div class="spotify-mini-controls">
-                        <button id="spotify-mini-prev" type="button" title="Previous">⏮</button>
-                        <button id="spotify-mini-play" type="button" title="Play/Pause">▶</button>
-                        <button id="spotify-mini-next" type="button" title="Next">⏭</button>
-                        <button id="spotify-mini-shuffle" type="button" title="Shuffle Albums">Shuffle Albums</button>
+                        <button id="spotify-mini-shuffle" type="button" title="Album Switch">Album Switch</button>
                     </div>
                     <div id="spotify-embed" class="spotify-mini-embed"></div>
                 </div>
@@ -3432,7 +3429,6 @@
 
             for (const t of catTargets) {
                 let price = 0, change = 0, mcap = 0, src = 'none';
-                let isTvl = false;
                 const aid = t.assetId.toLowerCase();
 
                 // Try serverless batch first (Spacescan or Dexie on server)
@@ -3450,17 +3446,17 @@
                     src = 'tibet'; 
                 }
 
-                // Calculate mcap: prefer batch, then TibetSwap TVL
-                if (mcap === 0 && tibet.tvl > 0) {
+                // Calculate mcap: prefer batch mcap, fallback to TibetSwap TVL, but only if we have a price
+                if (mcap === 0 && price > 0 && tibet.tvl > 0) {
+                    // Use TVL as fallback only when we have a price source
                     mcap = tibet.tvl;
                     src = src + '+tvl';
-                    isTvl = true;
                 }
 
                 if (price > 0) console.log(`  ✅ ${t.displayName||t.name}: $${price.toFixed(8)} mcap:$${(mcap/1e6).toFixed(2)}M [${src}]`);
                 else           console.warn(`  ⚠️  ${t.displayName||t.name}: no price`);
 
-                results.push({...t, price, change24h: change, marketCap: mcap, isTvl});
+                results.push({...t, price, change24h: change, marketCap: mcap});
             }
 
             console.log(`Chia: ${results.filter(r => r.price > 0).length}/${results.length} priced, ${results.filter(r => r.marketCap > 0).length} with mcap`);
@@ -5244,9 +5240,6 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                 album: document.getElementById('spotify-mini-album'),
                 open: document.getElementById('spotify-mini-open'),
                 close: document.getElementById('spotify-mini-close'),
-                play: document.getElementById('spotify-mini-play'),
-                prev: document.getElementById('spotify-mini-prev'),
-                next: document.getElementById('spotify-mini-next'),
                 shuffle: document.getElementById('spotify-mini-shuffle'),
             };
 
@@ -5281,8 +5274,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
             };
 
             const updatePlayButton = () => {
-                if (!ui.play) return;
-                ui.play.textContent = isPaused ? '▶' : '⏸';
+                // Play button removed from UI; Spotify widget handles playback
             };
 
             if (ui.close && ui.container) {
@@ -5292,23 +5284,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                 });
             }
 
-            if (ui.play) {
-                ui.play.addEventListener('click', () => {
-                    if (controller) controller.togglePlay();
-                });
-            }
-
-            if (ui.prev) {
-                ui.prev.addEventListener('click', () => {
-                    if (controller) controller.previous();
-                });
-            }
-
-            if (ui.next) {
-                ui.next.addEventListener('click', () => {
-                    if (controller) controller.next();
-                });
-            }
+            // Playback buttons removed; Spotify IFrame widget handles these controls
 
             if (ui.shuffle) {
                 ui.shuffle.addEventListener('click', () => {
