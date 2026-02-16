@@ -5,12 +5,13 @@
 //   - Spacescan for NFTs/tokens (best effort, may get 403)
 
 const CAT_IDS = [
-    'a09af8b0d12b27772c64f89cf0d1db95186dca5b1871babc5108ff44f36305e6',
-    'eb2155a177b6060535dd8e72e98ddb0c77aea21fab53737de1c1ced3cb38e4c4',
-    'ae1536f56760e471ad85ead45f00d680ff9cca73b8cc3407be778f1c0c606eac',
-    '70010d83542594dd44314efbae75d82b3d9ae7d946921ed981a6cd08f0549e50',
-    'ab558b1b841365a24d1ff2264c55982e55664a8b6e45bc107446b7e667bb463b',
-    'dd37f678dda586fad9b1daeae1f7c5c137ffa6d947e1ed5c7b4f3c430da80638',
+    // Main emoji market tokens
+    'a09af8b0d12b27772c64f89cf0d1db95186dca5b1871babc5108ff44f36305e6', // CASTER
+    'eb2155a177b6060535dd8e72e98ddb0c77aea21fab53737de1c1ced3cb38e4c4', // SPELLPOWER
+    'ae1536f56760e471ad85ead45f00d680ff9cca73b8cc3407be778f1c0c606eac', // WIZ
+    '70010d83542594dd44314efbae75d82b3d9ae7d946921ed981a6cd08f0549e50', // LOVE
+    'ab558b1b841365a24d1ff2264c55982e55664a8b6e45bc107446b7e667bb463b', // SPROUT
+    'dd37f678dda586fad9b1daeae1f7c5c137ffa6d947e1ed5c7b4f3c430da80638', // PIZZA
 ];
 
 const SUPPLY_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
@@ -133,16 +134,33 @@ async function getSupply(assetId) {
     try {
         const r = await timedFetch('https://api.spacescan.io/cat/info/' + assetId, 8000);
         if (!r.ok) {
-            console.warn(`[getSupply] ${assetId.slice(0,8)}: HTTP ${r.status}`);
+            console.warn(`[getSupply] ${assetId.slice(0,8)}: Spacescan HTTP ${r.status}, trying alternatives`);
+            
+            // Fallback to TibetSwap API for token info
+            try {
+                const tibetR = await timedFetch(`https://api.tibetswap.io/tokens/${assetId}`, 6000);
+                if (tibetR.ok) {
+                    const tibetData = await tibetR.json();
+                    const supply = parseFloat(tibetData?.supply || tibetData?.total_supply || 0);
+                    if (supply > 0) {
+                        setCachedSupply(assetId, supply);
+                        console.log(`[getSupply] ${assetId.slice(0,8)}: ${supply} (TibetSwap)`);
+                        return supply;
+                    }
+                }
+            } catch (tibetError) {
+                console.warn(`[getSupply] ${assetId.slice(0,8)}: TibetSwap fallback failed`);
+            }
+            
             return 0;
         }
         const d = await r.json();
         const supply = parseFloat(d?.data?.circulating_supply || d?.data?.total_supply || 0);
         if (supply > 0) {
             setCachedSupply(assetId, supply);
-            console.log(`[getSupply] ${assetId.slice(0,8)}: ${supply}`);
+            console.log(`[getSupply] ${assetId.slice(0,8)}: ${supply} (Spacescan)`);
         } else {
-            console.warn(`[getSupply] ${assetId.slice(0,8)}: no supply data`);
+            console.warn(`[getSupply] ${assetId.slice(0,8)}: no supply data from Spacescan`);
         }
         return supply;
     } catch (e) {

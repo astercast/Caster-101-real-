@@ -161,10 +161,17 @@
         .bg-image:not(.visible) {
             content-visibility: hidden;
         }
-
-        @keyframes spin {
-            from {
-                transform: rotate(0deg);
+        
+        /* Mobile drag handle for WTV drawer */
+        .mobile-only-drag-handle {
+            display: none !important;
+        }
+        
+        @media (max-width: 768px) {
+            .mobile-only-drag-handle {
+                display: block !important;
+            }
+        }
             }
 
             to {
@@ -6749,7 +6756,19 @@ document.addEventListener('DOMContentLoaded', () => {
             cursor: move;
             user-select: none;
             position: relative;
-        ">
+        " onmousedown="if(window._startDrawerDrag) window._startDrawerDrag(event);" ontouchstart="if(window._startDrawerDrag) window._startDrawerDrag(event);">
+            <!-- Mobile drag handle indicator -->
+            <div style="
+                position: absolute;
+                top: 4px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 40px;
+                height: 3px;
+                background: rgba(251, 191, 36, 0.5);
+                border-radius: 2px;
+                display: block;
+            " class="mobile-only-drag-handle"></div>
             <div style="
                 position: absolute;
                 top: 0;
@@ -7466,9 +7485,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const isMobile = () => window.innerWidth <= 768;
 
-            // --- WTV Mobile Tab Drag Handler ---
+            // --- Enhanced WTV Drawer Mobile Drag Handler ---
             let isDragging = false;
+            let isDrawerDragging = false;
             let dragStartY = 0;
+            let drawerStartY = 0;
             
             window._startWtvDrag = function(e) {
                 if (!isMobile()) return;
@@ -7478,14 +7499,49 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.preventDefault();
             };
             
+            // Add drawer drag functionality
+            window._startDrawerDrag = function(e) {
+                if (!isMobile() || !miniplayer || miniplayer.classList.contains('mobile-drawer-closed')) return;
+                isDrawerDragging = true;
+                drawerStartY = e.clientY || e.touches?.[0]?.clientY;
+                e.preventDefault();
+            };
+            
             document.addEventListener('mousemove', (e) => {
-                if (!isDragging || !mobileTab) return;
-                const deltaY = e.clientY - dragStartY;
-                const currentTop = parseFloat(mobileTab.style.top) || 50;
-                const newTop = Math.max(5, Math.min(95, (currentTop * window.innerHeight / 100 + deltaY) / window.innerHeight * 100));
-                mobileTab.style.top = newTop + '%';
-                mobileTab.style.transform = 'translateY(-50%)';
-                dragStartY = e.clientY;
+                if (isDragging && mobileTab) {
+                    const deltaY = e.clientY - dragStartY;
+                    const currentTop = parseFloat(mobileTab.style.top) || 50;
+                    const newTop = Math.max(5, Math.min(95, (currentTop * window.innerHeight / 100 + deltaY) / window.innerHeight * 100));
+                    mobileTab.style.top = newTop + '%';
+                    mobileTab.style.transform = 'translateY(-50%)';
+                    dragStartY = e.clientY;
+                }
+                if (isDrawerDragging && miniplayer) {
+                    const currentY = e.clientY;
+                    const deltaY = currentY - drawerStartY;
+                    const threshold = window.innerHeight * 0.15; // 15% of screen height
+                    
+                    // Allow dragging down to minimize (close) drawer
+                    if (deltaY > threshold) {
+                        window._wtvCloseDrawer();
+                        isDrawerDragging = false;
+                    }
+                }
+            });
+            
+            // Touch events for mobile
+            document.addEventListener('touchmove', (e) => {
+                if (isDrawerDragging && miniplayer) {
+                    const currentY = e.touches[0].clientY;
+                    const deltaY = currentY - drawerStartY;
+                    const threshold = window.innerHeight * 0.15;
+                    
+                    if (deltaY > threshold) {
+                        window._wtvCloseDrawer();
+                        isDrawerDragging = false;
+                    }
+                    e.preventDefault();
+                }
             });
             
             document.addEventListener('mouseup', () => {
@@ -7493,6 +7549,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     isDragging = false;
                     mobileTab.style.cursor = 'grab';
                 }
+                isDrawerDragging = false;
+            });
+            
+            document.addEventListener('touchend', () => {
+                isDrawerDragging = false;
             });
 
             // --- Mobile drawer open/close ---
