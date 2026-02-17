@@ -7017,20 +7017,11 @@ function buildTokenCard(token) {
             ? '$' + (token.totalLiqUsd).toLocaleString(undefined, {maximumFractionDigits: 0}) : '—';
         const shareFmt = parseFloat(token.userSharePct || 0) > 0
             ? parseFloat(token.userSharePct).toFixed(3) + '%' : '—';
-        const p0Fmt = token.price0 > 0 ? fmtPrice(token.price0) : null;
-        const p1Fmt = token.price1 > 0 ? fmtPrice(token.price1) : null;
-        const [sym0, sym1] = (token.pairName || '/').split('/');
-        const priceRow = (p0Fmt || p1Fmt)
-            ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px;color:rgba(255,255,255,0.55);margin-top:5px;">
-                 ${p0Fmt ? `<span style="color:#fbbf24;">${sym0}: ${p0Fmt}</span>` : '<span></span>'}
-                 ${p1Fmt ? `<span style="color:#4ade80;">${sym1}: ${p1Fmt}</span>` : '<span></span>'}
-               </div>` : '';
         detailHtml = `
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;color:rgba(255,255,255,0.6);margin-top:8px;">
                 <span>Share: ${shareFmt}</span>
                 <span>Pool: ${poolFmt}</span>
-            </div>
-            ${priceRow}`;
+            </div>`;
     } else {
         detailHtml = `
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;color:rgba(255,255,255,0.6);margin-top:8px;">
