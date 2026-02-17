@@ -1970,7 +1970,7 @@
                 border: 2px solid #fbbf24 !important;
                 transform: translateY(-2px) scale(1.05) !important;
                 box-shadow: 0 4px 16px rgba(251, 191, 36, 0.5) !important;
-                animation: none !important;
+                animation: tab-active-glow 2s ease-in-out infinite !important;
             }
 
             .tab.active .tab-emoji {
@@ -3701,7 +3701,7 @@
                 // No animation - instant switch
                 document.querySelectorAll(".tab").forEach(tab => tab.classList.remove("active"));
                 document.querySelectorAll(".content").forEach(content => content.classList.remove("active"));
-                if (typeof event !== 'undefined' && event && event.target) event.target.classList.add("active");
+                if (newTab) newTab.classList.add("active");
                 newContent.classList.add("active");
             }
             
