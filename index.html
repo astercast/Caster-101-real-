@@ -674,6 +674,9 @@
             align-items: center;
             margin-top: 6px;
         }
+        .tc-price-inline {
+            display: none;
+        }
         .tc-chain {
             display: none;
         }
@@ -1481,11 +1484,11 @@
 
             /* Token Cards — compact vertical layout for half-width */
             .token-card {
-                padding: 9px 10px !important;
-                margin-bottom: 6px !important;
+                padding: 8px 10px !important;
+                margin-bottom: 5px !important;
                 border-radius: 11px !important;
                 border-width: 1px !important;
-                min-height: 100px !important;
+                min-height: unset !important;
                 display: flex !important;
                 flex-direction: column !important;
                 background: linear-gradient(135deg, rgba(25, 25, 35, 0.92), rgba(15, 15, 25, 0.96)) !important;
@@ -1498,36 +1501,49 @@
 
             /* ── Mobile tc-* card overrides ── */
             .tc-top {
-                flex-wrap: wrap !important;
-                gap: 2px 6px !important;
+                flex-wrap: nowrap !important;
+                gap: 6px !important;
+                margin-bottom: 1px !important;
             }
             .tc-left {
-                flex: 1 1 100% !important;
+                flex: 1 !important;
+                min-width: 0 !important;
             }
             .tc-right {
-                flex: 1 1 100% !important;
-                text-align: left !important;
-                padding-left: 22px !important;
+                display: none !important;
             }
-            .tc-emoji { font-size: 14px !important; }
+            .tc-emoji { font-size: 13px !important; }
             .tc-name {
-                font-size: clamp(8px, 2.6vw, 11px) !important;
+                font-size: clamp(9px, 2.8vw, 12px) !important;
                 font-family: 'Space Grotesk', sans-serif !important;
                 letter-spacing: 0.02em !important;
-                color: rgba(255,255,255,0.95) !important;
+                color: #fbbf24 !important;
                 white-space: nowrap !important;
                 overflow: visible !important;
                 text-overflow: clip !important;
+                font-weight: 800 !important;
             }
-            .tc-price {
-                font-size: 11px !important;
+            .tc-mid {
+                display: flex !important;
+                justify-content: space-between !important;
+                align-items: baseline !important;
+                margin-top: 1px !important;
+                padding: 0 !important;
+            }
+            .tc-price-inline {
+                display: inline !important;
+                font-size: 10px !important;
                 font-family: 'Space Grotesk', sans-serif !important;
-                font-weight: 700 !important;
-                color: rgba(255,255,255,0.8) !important;
+                font-weight: 600 !important;
+                color: rgba(255,255,255,0.5) !important;
+                letter-spacing: -0.01em !important;
             }
-            .tc-mid { margin-top: 4px !important; }
-            .tc-chain { font-size: 8px !important; padding: 1px 5px !important; }
-            .tc-change { font-size: 10px !important; }
+            .tc-change {
+                font-size: clamp(13px, 3.8vw, 16px) !important;
+                font-weight: 900 !important;
+                font-family: 'Space Grotesk', sans-serif !important;
+                letter-spacing: -0.02em !important;
+            }
             .tc-footer {
                 margin-top: 4px !important;
                 padding-top: 4px !important;
@@ -3233,6 +3249,247 @@
                            onmouseover="this.style.color='#1da1f2'" onmouseout="this.style.color='rgba(29,161,242,0.55)'">
                             Follow @aWizardxch on X &#x2192;
                         </a>
+                    </div>
+
+                </div>
+
+                <!-- ═══════════════════════════════════════════════════════ -->
+                <!-- aWizard Collective History                             -->
+                <!-- ═══════════════════════════════════════════════════════ -->
+                <div style="
+                    max-width: 800px;
+                    margin: 40px auto 0;
+                    padding: 0 16px;
+                ">
+                    <!-- Section header -->
+                    <div style="text-align:center; margin-bottom: 32px;">
+                        <div style="
+                            display: inline-block;
+                            padding: 6px 20px;
+                            background: linear-gradient(135deg, rgba(251,191,36,0.12), rgba(220,38,38,0.08));
+                            border: 1px solid rgba(251,191,36,0.25);
+                            border-radius: 20px;
+                            font-size: 11px;
+                            font-weight: 700;
+                            color: rgba(251,191,36,0.7);
+                            text-transform: uppercase;
+                            letter-spacing: 2px;
+                            font-family: 'Space Grotesk', sans-serif;
+                            margin-bottom: 16px;
+                        ">Our Story</div>
+                        <h2 style="
+                            font-family: 'Cinzel', serif;
+                            font-size: clamp(22px, 5vw, 32px);
+                            font-weight: 700;
+                            color: #fbbf24;
+                            margin: 0 0 8px;
+                            line-height: 1.2;
+                            text-shadow: 0 2px 20px rgba(251,191,36,0.3);
+                        ">The aWizard Collective</h2>
+                        <p style="
+                            font-size: 13px;
+                            color: rgba(255,255,255,0.45);
+                            font-family: 'Space Grotesk', sans-serif;
+                            letter-spacing: 0.5px;
+                        ">@aWizardxch</p>
+                    </div>
+
+                    <!-- Intro paragraph -->
+                    <div style="
+                        background: linear-gradient(135deg, rgba(251,191,36,0.06), rgba(220,38,38,0.04));
+                        border: 1px solid rgba(251,191,36,0.15);
+                        border-radius: 16px;
+                        padding: 24px;
+                        margin-bottom: 28px;
+                    ">
+                        <p style="
+                            font-size: 14px;
+                            line-height: 1.75;
+                            color: rgba(255,255,255,0.82);
+                            font-family: 'Space Grotesk', sans-serif;
+                            margin: 0;
+                        ">The aWizard Collective is a close-knit, community-first project on the Chia blockchain (XCH), built around NFTs, tokens, education, generous rewards, and meaningful collaborations. It focuses on growth magic — sprouts, love, wizards — incentivized participation, and leaving holders better off through sustained value.</p>
+                    </div>
+
+                    <!-- Chapter 1: Origins -->
+                    <div style="margin-bottom: 28px;">
+                        <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+                            <div style="
+                                width: 36px; height: 36px;
+                                background: linear-gradient(135deg, #7c3aed, #4f46e5);
+                                border-radius: 10px;
+                                display: flex; align-items: center; justify-content: center;
+                                font-size: 18px; flex-shrink: 0;
+                            ">🌐</div>
+                            <div>
+                                <h3 style="
+                                    font-family: 'Cinzel', serif;
+                                    font-size: clamp(16px, 3.5vw, 20px);
+                                    font-weight: 700;
+                                    color: #c4b5fd;
+                                    margin: 0;
+                                    line-height: 1.3;
+                                ">Origins: Ethereum Beginnings</h3>
+                                <span style="font-size:11px; color:rgba(255,255,255,0.35); font-family:'Space Grotesk',sans-serif;">2022</span>
+                            </div>
+                        </div>
+                        <div style="
+                            border-left: 2px solid rgba(124,58,237,0.3);
+                            padding-left: 20px;
+                            margin-left: 17px;
+                        ">
+                            <p style="font-size:13px; line-height:1.75; color:rgba(255,255,255,0.72); font-family:'Space Grotesk',sans-serif; margin:0 0 12px;">The story starts in 2022 on Ethereum, where core members connected through vibrant NFT communities. They met via mints, discords, giveaways, spaces, traits discussions, and art collaborations — building friendships and exploring web3 together. Members brought all sorts of experiences, knowledge, and talents to the table. Constantly connecting on live X spaces and participating in the same ecosystems the Wizards stuck together.</p>
+                            <p style="font-size:13px; line-height:1.75; color:rgba(255,255,255,0.72); font-family:'Space Grotesk',sans-serif; margin:0;">It was in this environment that <span style="color:#c4b5fd; font-weight:600;">aWizardDao</span> was born as a small, grassroots DAO. Starting modestly, it provided educational resources, community chats, and project links — serving as an early hub for learning and collaboration. This laid the foundation for the collective's emphasis on transparency, onboarding, and shared growth. NFTs were minted here as the very first access tokens to the same Discord we use today. The same Base multi-sig wallet we use now was set up back then with initial High Council members.</p>
+                        </div>
+                    </div>
+
+                    <!-- Chapter 2: Transition to Chia -->
+                    <div style="margin-bottom: 28px;">
+                        <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+                            <div style="
+                                width: 36px; height: 36px;
+                                background: linear-gradient(135deg, #22c55e, #16a34a);
+                                border-radius: 10px;
+                                display: flex; align-items: center; justify-content: center;
+                                font-size: 18px; flex-shrink: 0;
+                            ">🌱</div>
+                            <div>
+                                <h3 style="
+                                    font-family: 'Cinzel', serif;
+                                    font-size: clamp(16px, 3.5vw, 20px);
+                                    font-weight: 700;
+                                    color: #4ade80;
+                                    margin: 0;
+                                    line-height: 1.3;
+                                ">Transition to Chia</h3>
+                                <span style="font-size:11px; color:rgba(255,255,255,0.35); font-family:'Space Grotesk',sans-serif;">Embracing Sustainability</span>
+                            </div>
+                        </div>
+                        <div style="
+                            border-left: 2px solid rgba(74,222,128,0.3);
+                            padding-left: 20px;
+                            margin-left: 17px;
+                        ">
+                            <p style="font-size:13px; line-height:1.75; color:rgba(255,255,255,0.72); font-family:'Space Grotesk',sans-serif; margin:0 0 12px;">Later, the group shifted focus to Chia's greener, proof-of-space-and-time model — drawn to its regulatory alignment, security, enterprise-readiness, and real-world utility potential. This move allowed the DAO and community to evolve on a more sustainable chain, migrating ideas, assets, and energy to XCH while retaining Ethereum roots.</p>
+                            <p style="font-size:13px; line-height:1.75; color:rgba(255,255,255,0.72); font-family:'Space Grotesk',sans-serif; margin:0;">On Chia, aWizard remained intentionally small-scale at first, prioritizing quality connections and real contributions over mass adoption.</p>
+                        </div>
+                    </div>
+
+                    <!-- Chapter 3: Key Milestones -->
+                    <div style="margin-bottom: 28px;">
+                        <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+                            <div style="
+                                width: 36px; height: 36px;
+                                background: linear-gradient(135deg, #fbbf24, #f59e0b);
+                                border-radius: 10px;
+                                display: flex; align-items: center; justify-content: center;
+                                font-size: 18px; flex-shrink: 0;
+                            ">✨</div>
+                            <div>
+                                <h3 style="
+                                    font-family: 'Cinzel', serif;
+                                    font-size: clamp(16px, 3.5vw, 20px);
+                                    font-weight: 700;
+                                    color: #fbbf24;
+                                    margin: 0;
+                                    line-height: 1.3;
+                                ">Key Milestones</h3>
+                                <span style="font-size:11px; color:rgba(255,255,255,0.35); font-family:'Space Grotesk',sans-serif;">Built Organically</span>
+                            </div>
+                        </div>
+                        <div style="
+                            border-left: 2px solid rgba(251,191,36,0.3);
+                            padding-left: 20px;
+                            margin-left: 17px;
+                            display: flex;
+                            flex-direction: column;
+                            gap: 10px;
+                        ">
+                            <div style="display:flex; gap:10px; align-items:flex-start;">
+                                <span style="color:#fbbf24; font-size:14px; flex-shrink:0; margin-top:2px;">❤️‍🔥</span>
+                                <p style="font-size:13px; line-height:1.65; color:rgba(255,255,255,0.72); font-family:'Space Grotesk',sans-serif; margin:0;"><span style="color:#fbbf24; font-weight:600;">$LOVE</span> emoji token and Love Bear NFTs launched as community utility for rewards, liquidity pools, and engagement.</p>
+                            </div>
+                            <div style="display:flex; gap:10px; align-items:flex-start;">
+                                <span style="color:#fbbf24; font-size:14px; flex-shrink:0; margin-top:2px;">🖼️</span>
+                                <p style="font-size:13px; line-height:1.65; color:rgba(255,255,255,0.72); font-family:'Space Grotesk',sans-serif; margin:0;"><span style="color:#fbbf24; font-weight:600;">aWizard NFTs</span> delivered perks like discord access and ongoing incentives, rewarding loyalty.</p>
+                            </div>
+                            <div style="display:flex; gap:10px; align-items:flex-start;">
+                                <span style="color:#fbbf24; font-size:14px; flex-shrink:0; margin-top:2px;">🌱</span>
+                                <p style="font-size:13px; line-height:1.65; color:rgba(255,255,255,0.72); font-family:'Space Grotesk',sans-serif; margin:0;"><span style="color:#fbbf24; font-weight:600;">$SPROUT</span> launched early 2025 — "Seeding Potential Randomness Over Usage Time." Random airdrops to NFT holders made it the "seed" token of the collective, rewarding patience, participation, and long-term holding rather than hype. By March 2025 it was already part of daily drop mechanics for Caster OG holders alongside $LOVE, and it remains one of the most distributed and beloved CATs in the aWizard ecosystem.</p>
+                            </div>
+                            <div style="display:flex; gap:10px; align-items:flex-start;">
+                                <span style="color:#fbbf24; font-size:14px; flex-shrink:0; margin-top:2px;">🤖</span>
+                                <p style="font-size:13px; line-height:1.65; color:rgba(255,255,255,0.72); font-family:'Space Grotesk',sans-serif; margin:0;">Rolled out advanced <span style="color:#fbbf24; font-weight:600;">Discord-integrated features</span>: real-time portfolio snapshots, whitelisted asset sending, bulk airdrop tools, soft staking drips, collection-specific rewards, and a dynamic Spell Power Leaderboard.</p>
+                            </div>
+                            <div style="display:flex; gap:10px; align-items:flex-start;">
+                                <span style="color:#fbbf24; font-size:14px; flex-shrink:0; margin-top:2px;">📚</span>
+                                <p style="font-size:13px; line-height:1.65; color:rgba(255,255,255,0.72); font-family:'Space Grotesk',sans-serif; margin:0;">Through X spaces, educational threads, and collaborations, aWizard continued <span style="color:#fbbf24; font-weight:600;">onboarding users</span> by explaining Chia's advantages and bridging from Ethereum backgrounds — growing the ecosystem one dedicated member at a time.</p>
+                            </div>
+                            <div style="display:flex; gap:10px; align-items:flex-start;">
+                                <span style="color:#fbbf24; font-size:14px; flex-shrink:0; margin-top:2px;">🔐</span>
+                                <p style="font-size:13px; line-height:1.65; color:rgba(255,255,255,0.72); font-family:'Space Grotesk',sans-serif; margin:0;">The community helped test <span style="color:#fbbf24; font-weight:600;">Sage Wallet</span> through beta, providing feedback, later building and minting a custom aWizard theme via MintGarden NFT for the wallet.</p>
+                            </div>
+                            <div style="display:flex; gap:10px; align-items:flex-start;">
+                                <span style="color:#fbbf24; font-size:14px; flex-shrink:0; margin-top:2px;">🔮</span>
+                                <p style="font-size:13px; line-height:1.65; color:rgba(255,255,255,0.72); font-family:'Space Grotesk',sans-serif; margin:0;"><span style="color:#fbbf24; font-weight:600;">$CASTER</span> launched Fall 2025 as the "dimensional shift-onchain-magic asset" tied to the expanding Caster universe, bringing many Wizard coins to Base liquidity. It went live just before <span style="color:#dc2626; font-weight:600;">#Castober</span> and was immediately paired with aggressive Merkl reward campaigns on 9mm.pro. In the first #Castober, the community burned 57 $CASTER (~2% of the 3,000 total supply) and gave away 1/1 hand-drawn NFTs. $CASTER became the high-energy, spell-powered counterpart to the slower, nurturing $SPROUT and $LOVE — tying the whole wizard ecosystem together on Base.</p>
+                            </div>
+                            <div style="display:flex; gap:10px; align-items:flex-start;">
+                                <span style="color:#fbbf24; font-size:14px; flex-shrink:0; margin-top:2px;">🎁</span>
+                                <p style="font-size:13px; line-height:1.65; color:rgba(255,255,255,0.72); font-family:'Space Grotesk',sans-serif; margin:0;">Delivered thousands in <span style="color:#fbbf24; font-weight:600;">emoji tokens and $XCH</span> through generous airdrops and Merkl rewards. <span style="color:#fbbf24; font-weight:600;">Weekly NFT prizes</span></p>
+                            </div>
+                            <div style="display:flex; gap:10px; align-items:flex-start;">
+                                <span style="color:#fbbf24; font-size:14px; flex-shrink:0; margin-top:2px;">🤝</span>
+                                <p style="font-size:13px; line-height:1.65; color:rgba(255,255,255,0.72); font-family:'Space Grotesk',sans-serif; margin:0;">Fostered <span style="color:#fbbf24; font-weight:600;">cross-project growth</span> via collaborations with Tang Gang Green Army, VorobaXCH, MonkeyZoo, PizzaOnChia, and more, attracting a variety of support and donations to treasury.</p>
+                            </div>
+                            <div style="display:flex; gap:10px; align-items:flex-start;">
+                                <span style="color:#fbbf24; font-size:14px; flex-shrink:0; margin-top:2px;">🎵</span>
+                                <p style="font-size:13px; line-height:1.65; color:rgba(255,255,255,0.72); font-family:'Space Grotesk',sans-serif; margin:0;">Built lasting culture with <span style="color:#fbbf24; font-weight:600;">music albums</span> released during lows, X spaces (Wizard Wednesdays), and narrative continuity.</p>
+                            </div>
+                            <div style="display:flex; gap:10px; align-items:flex-start;">
+                                <span style="color:#fbbf24; font-size:14px; flex-shrink:0; margin-top:2px;">💎</span>
+                                <p style="font-size:13px; line-height:1.65; color:rgba(255,255,255,0.72); font-family:'Space Grotesk',sans-serif; margin:0;"><span style="color:#fbbf24; font-weight:600;">New Soft Staking Token:</span> In early 2026 the collective introduced a brand-new soft-staking token built specifically to reward liquidity providers and supercharge future Merkl campaigns.</p>
+                            </div>
+                            <div style="display:flex; gap:10px; align-items:flex-start; margin-top:12px;">
+                                <span style="color:#fbbf24; font-size:14px; flex-shrink:0; margin-top:2px;"></span>
+                                <div style="font-size:12px; line-height:1.5; color:rgba(255,255,255,0.65); font-family:'Space Grotesk',sans-serif;">
+                                    <p style="margin:0 0 6px 0;"><span style="color:#fbbf24; font-weight:600;">Strategic design highlights:</span></p>
+                                    <ul style="margin:0; padding-left:18px;">
+                                        <li style="margin-bottom:4px;">Low initial liquidity → prevents sniping and allows true price discovery</li>
+                                        <li style="margin-bottom:4px;">Gradual, phased rollout of soft-staking rewards → gives the market time to stabilize and find organic support</li>
+                                        <li style="margin-bottom:4px;">Direct incentives for LPs across all major aWizard pair to feed into and amplify future Merkl reward seasons</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Closing statement -->
+                    <div style="
+                        background: linear-gradient(135deg, rgba(251,191,36,0.08), rgba(220,38,38,0.05));
+                        border: 1px solid rgba(251,191,36,0.2);
+                        border-radius: 16px;
+                        padding: 24px;
+                        margin-top: 8px;
+                        position: relative;
+                        overflow: hidden;
+                    ">
+                        <div style="
+                            position: absolute; top: 0; left: 0; right: 0; height: 2px;
+                            background: linear-gradient(90deg, transparent, rgba(251,191,36,0.5), rgba(220,38,38,0.3), transparent);
+                        "></div>
+                        <p style="
+                            font-size: 14px;
+                            line-height: 1.75;
+                            color: rgba(255,255,255,0.8);
+                            font-family: 'Space Grotesk', sans-serif;
+                            margin: 0;
+                            text-align: center;
+                        ">These elements underscore aWizard's focus on <span style="color:#fbbf24; font-weight:700;">value-driven growth</span> rather than hype. The combination of burns (tightening supply), Merkl-optimized rewards (maximizing yields), tooling (empowering the community), and cultural touches (music, narratives) has created a resilient, magical pocket of Chia that's left many participants genuinely <em style="color:#fbbf24;">"speechless."</em></p>
+                    </div>
+
+                    <!-- Decorative divider -->
+                    <div style="text-align:center; margin-top:28px; margin-bottom:8px;">
+                        <span style="font-size:20px; opacity:0.4;">✨ 🧙‍♂️ ✨</span>
                     </div>
 
                 </div>
@@ -4996,7 +5253,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                         </div>
                     </div>
                     <div class="tc-mid">
-                        
+                        <span class="tc-price-inline">$${priceStr}</span>
                         <span class="tc-change" style="color:${changeColor};">${changeIcon} ${Math.abs(change).toFixed(1)}%</span>
                     </div>
                     <div class="tc-footer">
@@ -5072,7 +5329,13 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                         </div>
                     </div>
                     <div class="tc-mid">
-                        
+                        <span class="tc-price-inline">$${token.price ? (
+                                token.price < 0.0001 ? token.price.toFixed(10) :
+                                token.price < 0.001 ? token.price.toFixed(8) :
+                                token.price < 0.01 ? token.price.toFixed(6) :
+                                token.price < 1 ? token.price.toFixed(4) :
+                                token.price.toFixed(2)
+                            ) : '0.00'}</span>
                         <span class="tc-change" style="color:${arbColor};">${arbIcon} ${arbLabel}</span>
                     </div>
                     <div class="tc-footer">
@@ -5181,7 +5444,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                         </div>
                     </div>
                     <div class="tc-mid">
-                        
+                        <span class="tc-price-inline">$${priceStr}</span>
                         <span class="tc-change" style="color:${changeColor};">${changeIcon} ${Math.abs(change).toFixed(1)}%</span>
                     </div>
                     <div class="tc-footer">
@@ -5244,7 +5507,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                         </div>
                     </div>
                     <div class="tc-mid">
-                        
+                        <span class="tc-price-inline">$${priceStr}</span>
                         <span class="tc-change" style="color:${arbColor};">${arbDisplay}</span>
                     </div>
                     <div class="tc-footer">
@@ -5471,7 +5734,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                                     </div>
                                 </div>
                                 <div class="tc-mid">
-                                    
+                                    <span class="tc-price-inline">$${Number(token.price).toLocaleString(undefined, { maximumSignificantDigits: 4 })}</span>
                                     <span class="tc-change" style="color:${token.change24h >= 0 ? '#4ade80' : '#ef4444'};">${token.change24h >= 0 ? '↑' : '↓'} ${Math.abs(token.change24h).toFixed(2)}%</span>
                                 </div>
                                 <div class="tc-footer">
