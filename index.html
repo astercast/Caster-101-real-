@@ -1885,19 +1885,7 @@
             /* #wtv-drawer-overlay visibility is managed by JS only */
 
             /* WTV mobile tab — square button (draggable) */
-            #wtv-mobile-tab {
-                width: 40px !important;
-                height: 40px !important;
-                top: 50% !important;
-                transform: translateY(-50%) !important;
-                padding: 4px !important;
-                border-radius: 8px 0 0 8px !important;
-                cursor: grab !important;
-            }
-            
-            #wtv-mobile-tab:active {
-                cursor: grabbing !important;
-            }
+            /* wtv-mobile-tab removed — restore button used instead */
 
             /* Bottom tab nav — modern glassmorphism design */
             .tabs {
@@ -7180,6 +7168,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ✕
             </button>
         </div>
+        </div><!-- close video-miniplayer-header -->
 
         <!-- Video Container -->
         <div style="
@@ -7417,7 +7406,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 setRestoreVisible(false);
             };
 
-            window._showWtvMiniplayer = showMiniplayer;
+            window._showWtvMiniplayer = function() {
+                if (window.innerWidth <= 768 && window._wtvOpenDrawer) {
+                    window._wtvOpenDrawer();
+                } else {
+                    showMiniplayer();
+                }
+            };
             window._hideWtvMiniplayer = hideMiniplayer;
 
             // Load Google Drive video
@@ -7708,35 +7703,7 @@ document.addEventListener('DOMContentLoaded', () => {
         transition: opacity 0.3s;
     " onclick="if(window._wtvCloseDrawer) window._wtvCloseDrawer();"></div>
 
-    <!-- WTV Mobile Edge Tab (right side pull handle) -->
-    <button id="wtv-mobile-tab" style="
-        display: none;
-        position: fixed;
-        right: 2px;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 32px;
-        height: 32px;
-        background: linear-gradient(135deg, rgba(251,191,36,0.85), rgba(220,38,38,0.6));
-        border: 1.5px solid rgba(251,191,36,0.7);
-        border-right: none;
-        border-radius: 8px 0 0 8px;
-        color: white;
-        font-size: 16px;
-        cursor: grab;
-        z-index: 999997;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 0;
-        box-shadow: -3px 0 15px rgba(251,191,36,0.3);
-        transition: all 0.25s;
-        font-family: 'Space Grotesk', sans-serif;
-        padding: 4px 0;
-        animation: wtv-tab-glow 3s infinite;
-    " onmousedown="if(window._startWtvDrag) window._startWtvDrag(event);" onclick="if(window._wtvOpenDrawer) window._wtvOpenDrawer();">
-        <span style="font-size: 20px;">🎬</span>
-    </button>
+    <!-- WTV mobile tab removed — restore button handles open/close -->
 
     <!-- Old WTV button removed — now at top of body -->
 
@@ -7801,7 +7768,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // WTV Restore Button Handler + Mobile Drawer Logic
         (function() {
             const miniplayer = window._wtvMiniplayer || document.getElementById('video-miniplayer');
-            const mobileTab = document.getElementById('wtv-mobile-tab');
+            const mobileTab = null; // removed — restore button handles WTV open
             const overlay = document.getElementById('wtv-drawer-overlay');
 
             const isMobile = () => window.innerWidth <= 768;
