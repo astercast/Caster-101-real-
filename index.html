@@ -421,14 +421,7 @@
         }
 
         @media (max-width: 768px) {
-            .tab.active {
-                background: linear-gradient(135deg, #fbbf24 98%, #fde68a 92%) !important;
-                color: #000 !important;
-                border: 2px solid #fbbf24 !important;
-                transform: translateY(-2px) scale(1.08) !important;
-                animation: tab-active-glow 2s ease-in-out infinite !important;
-                z-index: 10 !important;
-            }
+            /* tab.active — unified in bottom mobile section */
         }
         
         .tab.active::before {
@@ -682,13 +675,7 @@
             margin-top: 6px;
         }
         .tc-chain {
-            font-size: 10px;
-            font-weight: 700;
-            font-family: 'Inter', sans-serif;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            padding: 2px 8px;
-            border-radius: 4px;
+            display: none;
         }
         .tc-chain-base {
             color: #60a5fa;
@@ -1381,12 +1368,7 @@
                 }
             }
 
-            .tab.active {
-                color: #000 !important;
-                background: linear-gradient(135deg, #fbbf24, #f59e0b) !important;
-                box-shadow: 0 4px 12px rgba(251, 191, 36, 0.4) !important;
-                border-radius: 10px !important;
-            }
+            /* tab.active — unified in later block */
 
             /* Show emoji as icon above label in bottom bar */
             .tab-emoji {
@@ -1518,10 +1500,13 @@
             .tc-top { gap: 6px !important; }
             .tc-emoji { font-size: 14px !important; }
             .tc-name {
-                font-size: 10px !important;
+                font-size: clamp(8px, 2.6vw, 11px) !important;
                 font-family: 'Space Grotesk', sans-serif !important;
                 letter-spacing: 0.02em !important;
                 color: rgba(255,255,255,0.95) !important;
+                white-space: nowrap !important;
+                overflow: visible !important;
+                text-overflow: clip !important;
             }
             .tc-price {
                 font-size: 12px !important;
@@ -1946,18 +1931,18 @@
                 color: #000 !important;
                 border: 2px solid #fbbf24 !important;
                 transform: translateY(-2px) scale(1.05) !important;
-                box-shadow: 0 4px 12px rgba(251, 191, 36, 0.4) !important;
-            }
-
-            .tab-emoji {
-                font-size: 24px !important;
-                filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3)) !important;
-                transition: transform 0.3s ease !important;
+                box-shadow: 0 4px 16px rgba(251, 191, 36, 0.5) !important;
+                animation: none !important;
             }
 
             .tab.active .tab-emoji {
                 transform: scale(1.1) !important;
                 filter: none !important;
+            }
+
+            .tab.active .tab-label-short {
+                color: #000 !important;
+                text-shadow: none !important;
             }
 
             .tab-label-short {
@@ -3470,17 +3455,6 @@
                                 if (iframeDoc && iframeDoc.body) {
                                     // Inject mobile fullscreen handler into iframe
                                     const script = iframeDoc.createElement('script');
-            if (tabName === "market") {
-                initMarketData();
-            }
-            if (tabName === "secretgame") {
-                const gf = document.getElementById('awizard-game-frame');
-                if (gf && !gf.dataset.loaded) {
-                    gf.src = gf.dataset.src;
-                    gf.dataset.loaded = 'true';
-                    console.log('🎮 aWizard game loaded');
-                }
-            }
                                     script.textContent = `
                                         (function() {
                                             // Override toggleFullscreen to fullscreen the iframe instead
@@ -3526,9 +3500,18 @@
                     }
                 }
             }
+            if (tabName === "market") {
+                initMarketData();
+            }
+            if (tabName === "secretgame") {
+                const gf = document.getElementById('awizard-game-frame');
+                if (gf && !gf.dataset.loaded) {
+                    gf.src = gf.dataset.src;
+                    gf.dataset.loaded = 'true';
+                    console.log('🎮 aWizard game loaded');
+                }
+            }
         }
-
-        // Hash routing is handled in window.onload below (after all DOM + scripts are ready)
         
         // Configuration for tokens to track - filtered
         const trackedTokens = [
@@ -5003,7 +4986,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                         </div>
                     </div>
                     <div class="tc-mid">
-                        <span class="tc-chain tc-chain-base">Base</span>
+                        
                         <span class="tc-change" style="color:${changeColor};">${changeIcon} ${Math.abs(change).toFixed(1)}%</span>
                     </div>
                     <div class="tc-footer">
@@ -5079,7 +5062,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                         </div>
                     </div>
                     <div class="tc-mid">
-                        <span class="tc-chain tc-chain-chia">Chia</span>
+                        
                         <span class="tc-change" style="color:${arbColor};">${arbIcon} ${arbLabel}</span>
                     </div>
                     <div class="tc-footer">
@@ -5188,7 +5171,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                         </div>
                     </div>
                     <div class="tc-mid">
-                        <span class="tc-chain tc-chain-base">Base</span>
+                        
                         <span class="tc-change" style="color:${changeColor};">${changeIcon} ${Math.abs(change).toFixed(1)}%</span>
                     </div>
                     <div class="tc-footer">
@@ -5251,7 +5234,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                         </div>
                     </div>
                     <div class="tc-mid">
-                        <span class="tc-chain tc-chain-chia">Chia</span>
+                        
                         <span class="tc-change" style="color:${arbColor};">${arbDisplay}</span>
                     </div>
                     <div class="tc-footer">
@@ -5478,7 +5461,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                                     </div>
                                 </div>
                                 <div class="tc-mid">
-                                    <span class="tc-chain tc-chain-base">Base</span>
+                                    
                                     <span class="tc-change" style="color:${token.change24h >= 0 ? '#4ade80' : '#ef4444'};">${token.change24h >= 0 ? '↑' : '↓'} ${Math.abs(token.change24h).toFixed(2)}%</span>
                                 </div>
                                 <div class="tc-footer">
@@ -5730,7 +5713,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
         window.onload = function () {
             // ── Hash-based routing: restore the active tab from URL ──────────
             (function() {
-                const validTabs = ['market', 'portfolio', 'treasury', 'howto', 'book', 'valley'];
+                const validTabs = ['market', 'portfolio', 'treasury', 'howto', 'book', 'valley', 'secretgame'];
                 const hash = window.location.hash.replace('#', '');
                 const activeTab = (hash && validTabs.includes(hash)) ? hash : 'market';
                 
@@ -7073,27 +7056,19 @@ document.addEventListener('DOMContentLoaded', () => {
         position: fixed;
         bottom: 20px;
         left: 20px;
-        width: 420px;
-        height: 420px;
-        background: linear-gradient(135deg, rgba(10, 10, 20, 0.95), rgba(20, 20, 35, 0.95));
+        width: 360px;
+        height: auto;
+        background: rgba(8, 8, 16, 0.98);
         border: 1.5px solid rgba(251, 191, 36, 0.5);
-        border-radius: 16px;
-        box-shadow: 
-            0 20px 60px rgba(0, 0, 0, 0.9),
-            0 0 0 1px rgba(251, 191, 36, 0.2),
-            0 0 50px rgba(251, 191, 36, 0.2),
-            inset 0 1px 0 rgba(255, 255, 255, 0.15);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
+        border-radius: 14px;
+        box-shadow: 0 12px 40px rgba(0,0,0,0.8), 0 0 30px rgba(251,191,36,0.15);
         z-index: 999999;
-        cursor: move;
         overflow: hidden;
         display: flex;
         flex-direction: column;
-        transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.6s cubic-bezier(0.2, 0.88, 0.1, 1), box-shadow 0.3s ease;
+        transition: opacity 0.35s, transform 0.35s;
         user-select: none;
         opacity: 0;
-        transform: scale(0.95) translateY(20px);
         pointer-events: none;
     ">
         <!-- Fade-in intro overlay -->
@@ -7432,17 +7407,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const showMiniplayer = () => {
                 miniplayer.style.display = 'flex';
                 miniplayer.style.opacity = '1';
-                miniplayer.style.transform = 'scale(1) translateY(0)';
                 miniplayer.style.pointerEvents = 'auto';
-                if (window._wtvLoadVideo) {
-                    window._wtvLoadVideo();
-                }
+                miniplayer.classList.add('show-wtv');
+                if (window._wtvLoadVideo) window._wtvLoadVideo();
                 setTimeout(() => {
-                    miniplayer.classList.add('show-wtv');
-                }, 10);
-                setTimeout(() => {
-                    const introOverlay = document.getElementById('wtv-intro-overlay');
-                    if (introOverlay) introOverlay.classList.add('fade-out');
+                    const intro = document.getElementById('wtv-intro-overlay');
+                    if (intro) intro.classList.add('fade-out');
                 }, 600);
                 setRestoreVisible(false);
             };
@@ -7796,13 +7766,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         #video-miniplayer.show-wtv {
             opacity: 1 !important;
-            transform: scale(1) translateY(0) !important;
             pointer-events: auto !important;
         }
 
         @media (max-width: 768px) {
             #video-miniplayer.show-wtv {
-                transform: translateX(-50%) scale(1) translateY(0) !important;
+                transform: translateX(-50%) !important;
             }
         }
 
@@ -8057,6 +8026,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         })();
+
+        // ── Click outside WTV to close ──
+        document.addEventListener('click', (e) => {
+            const mp = document.getElementById('video-miniplayer');
+            if (!mp || mp.style.display === 'none') return;
+            if (!mp.classList.contains('show-wtv')) return;
+            if (e.target.closest('#video-miniplayer')) return;
+            if (e.target.closest('#wtv-restore-btn')) return;
+            if (e.target.closest('#wtv-mobile-tab')) return;
+            if (e.target.closest('#wtv-drawer-overlay')) return;
+            if (window.innerWidth <= 768) {
+                if (window._wtvCloseDrawer) window._wtvCloseDrawer();
+            } else {
+                if (window._hideWtvMiniplayer) window._hideWtvMiniplayer();
+            }
+        });
 
         // ══════════════════════════════════════════════════════════════════════════
         // MOBILE SWIPE NAVIGATION
