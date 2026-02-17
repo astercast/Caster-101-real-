@@ -606,11 +606,108 @@
                         0 2px 8px rgba(251, 191, 36, 0.05);
             content-visibility: auto;
             contain: layout style paint;
-            /* Uniform card height */
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             min-height: 110px;
+        }
+
+        /* ── Unified token card inner layout (tc-*) ── */
+        .tc-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .tc-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+            flex: 1;
+        }
+        .tc-emoji {
+            font-size: 18px;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+        .tc-name {
+            font-size: 14px;
+            color: #fbbf24;
+            font-weight: 700;
+            font-family: 'Cinzel', serif;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+            line-height: 1.3;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .tc-right {
+            text-align: right;
+            flex-shrink: 0;
+        }
+        .tc-price {
+            font-weight: 700;
+            color: white;
+            font-family: 'Space Grotesk', 'Cinzel', serif;
+            font-size: 15px;
+            line-height: 1.2;
+            white-space: nowrap;
+        }
+        .tc-mid {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 6px;
+        }
+        .tc-chain {
+            font-size: 10px;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .tc-chain-base {
+            color: #60a5fa;
+            background: rgba(96, 165, 250, 0.12);
+            border: 1px solid rgba(96, 165, 250, 0.25);
+        }
+        .tc-chain-chia {
+            color: #4ade80;
+            background: rgba(74, 222, 128, 0.12);
+            border: 1px solid rgba(74, 222, 128, 0.25);
+        }
+        .tc-change {
+            font-size: 13px;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            white-space: nowrap;
+        }
+        .tc-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: auto;
+            padding-top: 8px;
+            border-top: 1px solid rgba(251, 191, 36, 0.1);
+        }
+        .tc-mcap-label {
+            font-size: 10px;
+            color: rgba(255,255,255,0.4);
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .tc-mcap-value {
+            font-size: 13px;
+            color: #fbbf24;
+            font-weight: 700;
+            font-family: 'Cinzel', serif;
         }
         
         .token-card::before {
@@ -1239,7 +1336,7 @@
                 letter-spacing: 0 !important;
                 text-transform: uppercase !important;
                 border: none !important;
-                box-shadow: none !important;
+                box-shadow: none;
                 display: flex !important;
                 flex-direction: column !important;
                 align-items: center !important;
@@ -1247,7 +1344,7 @@
                 gap: 3px !important;
                 color: rgba(255,255,255,0.5) !important;
                 background: transparent !important;
-                transition: color 0.2s, background 0.15s !important;
+                transition: color 0.2s, background 0.15s, box-shadow 0.3s !important;
                 overflow: hidden !important;
                 text-overflow: ellipsis !important;
             }
@@ -1267,8 +1364,10 @@
 
             .tab.active {
                 color: #fbbf24 !important;
-                background: rgba(251, 191, 36, 0.18) !important;
-                animation: tab-mobile-glow 2s ease-in-out infinite !important;
+                background: rgba(251, 191, 36, 0.22) !important;
+                box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.7),
+                            0 0 18px 5px rgba(251, 191, 36, 0.4),
+                            inset 0 2px 0 #fbbf24 !important;
                 border-radius: 10px !important;
             }
 
@@ -1387,7 +1486,7 @@
                 margin-bottom: 6px !important;
                 border-radius: 11px !important;
                 border-width: 1px !important;
-                min-height: 108px !important;
+                min-height: 100px !important;
                 display: flex !important;
                 flex-direction: column !important;
                 background: linear-gradient(135deg, rgba(25, 25, 35, 0.92), rgba(15, 15, 25, 0.96)) !important;
@@ -1398,109 +1497,29 @@
                 gap: 6px !important;
             }
 
-            /* Reflow token-header to vertical stack */
-            .token-header {
-                flex-direction: column !important;
-                align-items: flex-start !important;
-                gap: 5px !important;
-            }
-
-            /* Top row: emoji + name */
-            .token-info {
-                gap: 7px !important;
-                width: 100% !important;
-                display: flex !important;
-                align-items: center !important;
-            }
-
-            /* Shrink the emoji icon box */
-            .token-info > div:first-child {
-                width: 28px !important;
-                height: 28px !important;
-                min-width: 28px !important;
-                border-radius: 9px !important;
-                background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(220, 38, 38, 0.1)) !important;
-                border: 1px solid rgba(251, 191, 36, 0.25) !important;
-                display: flex !important;
-                align-items: center !important;
-                justify-content: center !important;
-            }
-
-            .token-symbol {
-                font-size: 14px !important;
-                filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.3)) !important;
-            }
-
-            .token-name {
-                font-family: 'Space Grotesk', sans-serif !important;
-                font-size: 12px !important;
-                font-weight: 700 !important;
-                letter-spacing: 0.03em !important;
-                text-transform: uppercase !important;
-                color: rgba(255, 255, 255, 0.98) !important;
-                line-height: 1.2 !important;
-                word-break: break-word !important;
-                flex: 1 !important;
-            }
-
-            /* Chain label under name */
-            .token-info div:last-child > div:last-child {
-                font-size: 9px !important;
-                color: rgba(251, 191, 36, 0.7) !important;
-            }
-
-            /* Price + change row: full width, left-aligned */
-            .token-header > div:last-child {
-                text-align: right !important;
-                width: 100% !important;
-                display: flex !important;
-                flex-direction: column !important;
-                align-items: flex-end !important;
-                gap: 3px !important;
-                margin-top: 2px !important;
-            }
-
-            .token-price {
-                font-family: 'Space Grotesk', sans-serif !important;
-                font-size: 14px !important;
-                font-weight: 800 !important;
-                letter-spacing: -0.02em !important;
-                font-variant-numeric: tabular-nums !important;
-                color: rgba(255, 255, 255, 0.98) !important;
-            }
-
-            .token-change {
-                font-family: 'Inter', sans-serif !important;
+            /* ── Mobile tc-* card overrides ── */
+            .tc-top { gap: 6px !important; }
+            .tc-emoji { font-size: 15px !important; }
+            .tc-name {
                 font-size: 11px !important;
-                font-weight: 700 !important;
-                font-variant-numeric: tabular-nums !important;
-                margin-top: 0 !important;
-                min-width: fit-content !important;
+                font-family: 'Space Grotesk', sans-serif !important;
+                letter-spacing: 0.02em !important;
+                color: rgba(255,255,255,0.95) !important;
             }
-
-            /* Market cap footer row — tighter */
-            .token-card > div:last-child {
-                margin-top: 5px !important;
-                padding-top: 5px !important;
-                padding: 3px 0 !important;
-                border-top: 1px solid rgba(251, 191, 36, 0.15) !important;
-                display: flex !important;
-                justify-content: space-between !important;
-                align-items: center !important;
+            .tc-price {
+                font-size: 13px !important;
+                font-family: 'Space Grotesk', sans-serif !important;
+                font-weight: 800 !important;
             }
-
-            .token-card > div:last-child span:first-child {
-                font-size: 9px !important;
-                color: rgba(255, 255, 255, 0.6) !important;
-                text-transform: uppercase !important;
-                letter-spacing: 0.5px !important;
+            .tc-mid { margin-top: 4px !important; }
+            .tc-chain { font-size: 8px !important; padding: 1px 5px !important; }
+            .tc-change { font-size: 11px !important; }
+            .tc-footer {
+                margin-top: 4px !important;
+                padding-top: 4px !important;
             }
-
-            .token-card > div:last-child span:last-child {
-                font-size: 12px !important;
-                font-weight: 700 !important;
-                color: rgba(251, 191, 36, 0.9) !important;
-            }
+            .tc-mcap-label { font-size: 8px !important; }
+            .tc-mcap-value { font-size: 11px !important; }
 
             /* Merkl Magic Box */
             #merkl-section {
@@ -1897,7 +1916,7 @@
                 border-radius: 16px !important;
                 transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
                 transform-origin: center !important;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
             }
 
             .tab:active {
@@ -1905,10 +1924,13 @@
             }
 
             .tab.active {
-                background: linear-gradient(135deg, rgba(251, 191, 36, 0.3), rgba(220, 38, 38, 0.25)) !important;
-                border: 1.5px solid rgba(251, 191, 36, 0.7) !important;
-                transform: translateY(-2px) scale(1.05) !important;
-                animation: tab-mobile-glow 2s ease-in-out infinite !important;
+                background: linear-gradient(135deg, rgba(251, 191, 36, 0.3), rgba(220, 38, 38, 0.2)) !important;
+                border: 2px solid rgba(251, 191, 36, 0.8) !important;
+                transform: translateY(-3px) scale(1.06) !important;
+                box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.65),
+                            0 0 20px 6px rgba(251, 191, 36, 0.45),
+                            0 4px 15px rgba(220, 38, 38, 0.25),
+                            inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
             }
 
             .tab-emoji {
@@ -1918,7 +1940,8 @@
             }
 
             .tab.active .tab-emoji {
-                transform: scale(1.1) !important;
+                transform: scale(1.15) !important;
+                filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.6)) !important;
             }
 
             .tab-label-short {
@@ -2032,12 +2055,6 @@
 
             .token-card {
                 padding: 8px 6px !important;
-            }
-
-            .token-info > div:first-child {
-                width: 22px !important;
-                height: 22px !important;
-                min-width: 22px !important;
             }
 
             .header-title {
@@ -3672,19 +3689,24 @@
 
                 const supply = supplyResults[t.assetId] || 0;
                 let mcap = 0;
+                let mcapStatus = 'ok'; // 'ok' | 'no_supply' | 'no_price'
 
                 if (supply > 0 && price > 0) {
                     mcap = supply * price;
                     src += '+supply';
+                } else if (price > 0 && supply === 0) {
+                    mcapStatus = 'no_supply'; // Has price but supply fetch failed (rate limit)
+                } else {
+                    mcapStatus = 'no_price';
                 }
 
                 if (price > 0) {
-                    console.log(`  ✅ ${t.displayName||t.name}: $${price.toFixed(8)} supply=${supply.toLocaleString()} mcap=$${mcap > 0 ? (mcap/1e6).toFixed(3)+'M' : '—'} [${src}]`);
+                    console.log(`  ✅ ${t.displayName||t.name}: $${price.toFixed(8)} supply=${supply.toLocaleString()} mcap=$${mcap > 0 ? (mcap/1e6).toFixed(3)+'M' : '—'} [${src}] status=${mcapStatus}`);
                 } else {
                     console.warn(`  ⚠️  ${t.displayName||t.name}: no price from any source`);
                 }
 
-                results.push({...t, price, change24h: change, marketCap: mcap});
+                results.push({...t, price, change24h: change, marketCap: mcap, mcapStatus});
             }
 
             console.log(`Chia: ${results.filter(r => r.price > 0).length}/${results.length} priced, ${results.filter(r => r.marketCap > 0).length} with mcap`);
@@ -4782,69 +4804,38 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
         const baseHTML = baseTokens.map(token => {
             const emoji = EMOJI_MAP[token.symbol] || token.symbol;
             const change = token.change24h || 0;
-            // Align with Chia card layout
+            const changeColor = change >= 0 ? '#4ade80' : '#ef4444';
+            const changeIcon = change >= 0 ? '↑' : '↓';
+            const priceStr = token.price ? (
+                token.price < 0.0001 ? token.price.toFixed(10) :
+                token.price < 0.001 ? token.price.toFixed(8) :
+                token.price < 0.01 ? token.price.toFixed(6) :
+                token.price < 1 ? token.price.toFixed(4) :
+                token.price.toFixed(2)
+            ) : '0.00';
+            const mcap = token.marketCap || 0;
+            const mcapStr = mcap > 1e6 ? '$'+(mcap/1e6).toFixed(1)+'M' : mcap > 1e3 ? '$'+(mcap/1e3).toFixed(0)+'K' : mcap > 0 ? '$'+mcap.toFixed(0) : '—';
+
             return `
                 <div class="token-card" onclick="openTokenLink('${token.chain}', '${token.assetId || token.contract}', '${token.symbol}')">
-                    <div class="token-header">
-                        <div class="token-info">
-                            <div style="
-                                width: 40px;
-                                height: 40px;
-                                background: linear-gradient(135deg, rgba(251, 191, 36, 0.12), rgba(220, 38, 38, 0.08));
-                                border-radius: 12px;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                box-shadow: 0 4px 12px rgba(251, 191, 36, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-                                border: 1px solid rgba(251, 191, 36, 0.2);
-                                flex-shrink: 0;
-                            ">
-                                <div class="token-symbol">${emoji}</div>
-                            </div>
-                            <div style="margin-left: 6px; flex: 1;">
-                                <div class="token-name">${token.displayName || token.name}</div>
-                            </div>
+                    <div class="tc-top">
+                        <div class="tc-left">
+                            <span class="tc-emoji">${emoji}</span>
+                            <span class="tc-name">${token.displayName || token.name}</span>
                         </div>
-                        <div style="text-align: right;">
-                            <div class="token-price">$${token.price ? (
-                                token.price < 0.0001 ? token.price.toFixed(10) :
-                                token.price < 0.001 ? token.price.toFixed(8) :
-                                token.price < 0.01 ? token.price.toFixed(8) :
-                                token.price < 1 ? token.price.toFixed(6) :
-                                token.price.toFixed(2)
-                            ) : '0.00'}</div>
-                            <div class="token-change" style="
-                                color: ${change >= 0 ? '#4ade80' : '#ef4444'};
-                                font-size: 13px;
-                                font-weight: 700;
-                                font-family: 'Inter', sans-serif;
-                                display: flex;
-                                align-items: center;
-                                justify-content: flex-end;
-                                gap: 3px;
-                                margin-top: 3px;
-                            ">
-                                <span style="font-size: 14px;">${change >= 0 ? '↑' : '↓'}</span>
-                                <span>${Math.abs(change).toFixed(1)}%</span>
-                            </div>
+                        <div class="tc-right">
+                            <span class="tc-price">$${priceStr}</span>
                         </div>
                     </div>
-                    <div style="
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                        margin-top: auto;
-                        padding-top: 10px;
-                        border-top: 1px solid rgba(251, 191, 36, 0.1);
-                        background: linear-gradient(90deg, rgba(251, 191, 36, 0.03), transparent);
-                        padding: 8px 0;
-                        border-radius: 6px;
-                    ">
-                        <span style="font-size: 11px; color: rgba(255,255,255,0.4); font-family: 'Inter', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Market Cap</span>
-                        <span style="font-size: 13px; color: #fbbf24; font-weight: 700; font-family: 'Cinzel', serif;">${token.marketCap > 1e6 ? '$'+(token.marketCap/1e6).toFixed(1)+'M' : token.marketCap > 1e3 ? '$'+(token.marketCap/1e3).toFixed(0)+'K' : token.marketCap > 0 ? '$'+token.marketCap.toFixed(0) : '—'}</span>
+                    <div class="tc-mid">
+                        <span class="tc-chain tc-chain-base">Base</span>
+                        <span class="tc-change" style="color:${changeColor};">${changeIcon} ${Math.abs(change).toFixed(1)}%</span>
                     </div>
-                </div>
-            `;
+                    <div class="tc-footer">
+                        <span class="tc-mcap-label">Market Cap</span>
+                        <span class="tc-mcap-value">${mcapStr}</span>
+                    </div>
+                </div>`;
         }).join('');
         baseList.innerHTML = baseHTML;
     }
@@ -4884,71 +4875,43 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                 arbIcon = '⚪';
             }
             // Format market cap display
-            const marketCapDisplay = chiaMarketCap > 0 ? 
-                (chiaMarketCap >= 1e6 ? `$${(chiaMarketCap/1e6).toFixed(1)}M` : `$${(chiaMarketCap/1e3).toFixed(0)}K`) : 
-                '—';
+            let marketCapDisplay, marketCapColor;
+            if (chiaMarketCap > 0) {
+                marketCapDisplay = chiaMarketCap >= 1e6 ? `$${(chiaMarketCap/1e6).toFixed(1)}M` : chiaMarketCap >= 1e3 ? `$${(chiaMarketCap/1e3).toFixed(0)}K` : `$${chiaMarketCap.toFixed(0)}`;
+                marketCapColor = '#fbbf24';
+            } else if (token.mcapStatus === 'no_supply' && token.price > 0) {
+                marketCapDisplay = '⚠️ cannot fetch';
+                marketCapColor = 'rgba(255,255,255,0.35)';
+            } else {
+                marketCapDisplay = '—';
+                marketCapColor = 'rgba(255,255,255,0.3)';
+            }
             return `
                 <div class="token-card" onclick="openTokenLink('${token.chain}', '${token.assetId || token.contract}', '${token.symbol}')">
-                    <div class="token-header">
-                        <div class="token-info">
-                            <div style="
-                                width: 40px;
-                                height: 40px;
-                                background: linear-gradient(135deg, rgba(74, 222, 128, 0.12), rgba(34, 197, 94, 0.08));
-                                border-radius: 12px;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                box-shadow: 0 4px 12px rgba(74, 222, 128, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-                                border: 1px solid rgba(74, 222, 128, 0.2);
-                                flex-shrink: 0;
-                            ">
-                                <div class="token-symbol">${emoji}</div>
-                            </div>
-                            <div style="margin-left: 6px; flex: 1;">
-                                <div class="token-name">${token.displayName || token.name}</div>
-                            </div>
+                    <div class="tc-top">
+                        <div class="tc-left">
+                            <span class="tc-emoji">${emoji}</span>
+                            <span class="tc-name">${token.displayName || token.name}</span>
                         </div>
-                        <div style="text-align: right;">
-                            <div class="token-price">$${token.price ? (
+                        <div class="tc-right">
+                            <span class="tc-price">$${token.price ? (
                                 token.price < 0.0001 ? token.price.toFixed(10) :
                                 token.price < 0.001 ? token.price.toFixed(8) :
-                                token.price < 0.01 ? token.price.toFixed(8) :
-                                token.price < 1 ? token.price.toFixed(6) :
+                                token.price < 0.01 ? token.price.toFixed(6) :
+                                token.price < 1 ? token.price.toFixed(4) :
                                 token.price.toFixed(2)
-                            ) : '0.00'}</div>
-                            <div class="token-change" style="
-                                color: ${arbColor};
-                                font-size: 13px;
-                                font-weight: 700;
-                                font-family: 'Inter', sans-serif;
-                                display: flex;
-                                align-items: center;
-                                justify-content: flex-end;
-                                gap: 3px;
-                                margin-top: 3px;
-                            ">
-                                ${arbIcon} ${arbLabel}
-                                ${(diffDollars > 0 && basePrice > 0 && chiaPrice > 0) ? `<div style=\"font-size: 10px; color: rgba(255,255,255,0.6); margin-top: 2px;\">$${diffDollars.toFixed(6)} diff</div>` : ''}
-                            </div>
+                            ) : '0.00'}</span>
                         </div>
                     </div>
-                    <div style="
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                        margin-top: auto;
-                        padding-top: 10px;
-                        border-top: 1px solid rgba(251, 191, 36, 0.1);
-                        background: linear-gradient(90deg, rgba(251, 191, 36, 0.03), transparent);
-                        padding: 8px 0;
-                        border-radius: 6px;
-                    ">
-                        <span style="font-size: 11px; color: rgba(255,255,255,0.4); font-family: 'Inter', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Market Cap</span>
-                        <span style="font-size: 13px; color: #fbbf24; font-weight: 700; font-family: 'Cinzel', serif;">${marketCapDisplay}</span>
+                    <div class="tc-mid">
+                        <span class="tc-chain tc-chain-chia">Chia</span>
+                        <span class="tc-change" style="color:${arbColor};">${arbIcon} ${arbLabel}</span>
                     </div>
-                </div>
-            `;
+                    <div class="tc-footer">
+                        <span class="tc-mcap-label">Market Cap</span>
+                        <span class="tc-mcap-value" style="color:${marketCapColor};">${marketCapDisplay}</span>
+                    </div>
+                </div>`;
         }).join('');
         chiaList.innerHTML = chiaHTML;
     }
@@ -5023,168 +4986,104 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                 return EMOJI_MAP[sym] || EMOJI_MAP[sym.replace(/^w/,'')] || sym;
             };
 
-            const createBaseCard = (token) => `
+            const createBaseCard = (token) => {
+                const emoji = getEmoji(token.symbol);
+                const priceStr = token.price ? (
+                    token.price < 0.0001 ? token.price.toFixed(10) :
+                    token.price < 0.001 ? token.price.toFixed(8) :
+                    token.price < 0.01 ? token.price.toFixed(6) :
+                    token.price < 1 ? token.price.toFixed(4) :
+                    token.price.toFixed(2)
+                ) : '0.00';
+                const change = token.change24h || 0;
+                const changeColor = change >= 0 ? '#4ade80' : '#ef4444';
+                const changeIcon = change >= 0 ? '↑' : '↓';
+                const mcap = token.marketCap || 0;
+                const mcapStr = mcap > 1e6 ? '$'+(mcap/1e6).toFixed(1)+'M' : mcap > 1e3 ? '$'+(mcap/1e3).toFixed(0)+'K' : mcap > 0 ? '$'+mcap.toFixed(0) : '—';
+
+                return `
                 <div class="token-card" onclick="openTokenLink('${token.chain}', '${token.assetId || token.contract}', '${token.symbol}')">
-                    <div class="token-header">
-                        <div class="token-info">
-                            <div style="
-                                width: 40px;
-                                height: 40px;
-                                background: linear-gradient(135deg, rgba(251, 191, 36, 0.12), rgba(220, 38, 38, 0.08));
-                                border-radius: 12px;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                box-shadow: 0 4px 12px rgba(251, 191, 36, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-                                border: 1px solid rgba(251, 191, 36, 0.2);
-                                flex-shrink: 0;
-                            ">
-                                <div class="token-symbol">${getEmoji(token.symbol)}</div>
-                            </div>
-                            <div>
-                                <div class="token-name">${token.displayName || token.name}</div>
-                            </div>
+                    <div class="tc-top">
+                        <div class="tc-left">
+                            <span class="tc-emoji">${emoji}</span>
+                            <span class="tc-name">${token.displayName || token.name}</span>
                         </div>
-                        <div style="text-align: right;">
-                            <div class="token-price">$${token.price ? (
-                                token.price < 0.0001 ? token.price.toFixed(10) :
-                                token.price < 0.001 ? token.price.toFixed(8) :
-                                token.price < 0.01 ? token.price.toFixed(8) :
-                                token.price < 1 ? token.price.toFixed(6) :
-                                token.price.toFixed(2)
-                            ) : '0.00'}</div>
-                            <div class="token-change" style="
-                                color: ${token.change24h >= 0 ? '#4ade80' : '#ef4444'};
-                                font-size: 13px;
-                                font-weight: 700;
-                                font-family: 'Inter', sans-serif;
-                                display: flex;
-                                align-items: center;
-                                justify-content: flex-end;
-                                gap: 3px;
-                                margin-top: 3px;
-                            ">
-                                <span style="font-size: 14px;">${token.change24h >= 0 ? '↑' : '↓'}</span>
-                                <span>${Math.abs(token.change24h || 0).toFixed(1)}%</span>
-                            </div>
+                        <div class="tc-right">
+                            <span class="tc-price">$${priceStr}</span>
                         </div>
                     </div>
-                    <div style="
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                        margin-top: auto;
-                        padding-top: 10px;
-                        border-top: 1px solid rgba(251, 191, 36, 0.1);
-                        background: linear-gradient(90deg, rgba(251, 191, 36, 0.03), transparent);
-                        padding: 8px 0;
-                        border-radius: 6px;
-                    ">
-                        <span style="font-size: 11px; color: rgba(255,255,255,0.4); font-family: 'Inter', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Market Cap</span>
-                        <span style="font-size: 13px; color: #fbbf24; font-weight: 700; font-family: 'Cinzel', serif;">${token.marketCap > 1e6 ? '$'+(token.marketCap/1e6).toFixed(1)+'M' : token.marketCap > 1e3 ? '$'+(token.marketCap/1e3).toFixed(0)+'K' : token.marketCap > 0 ? '$'+token.marketCap.toFixed(0) : '—'}</span>
+                    <div class="tc-mid">
+                        <span class="tc-chain tc-chain-base">Base</span>
+                        <span class="tc-change" style="color:${changeColor};">${changeIcon} ${Math.abs(change).toFixed(1)}%</span>
                     </div>
-                </div>
-            `;
+                    <div class="tc-footer">
+                        <span class="tc-mcap-label">Market Cap</span>
+                        <span class="tc-mcap-value">${mcapStr}</span>
+                    </div>
+                </div>`;
+            };
 
             // Helper to create Chia token card HTML (shows arbitrage vs Base)
             const BYC_ASSET_ID = 'ae1536f56760e471ad85ead45f00d680ff9cca73b8cc3407be778f1c0c606eac';
             const createChiaCard = (token) => {
-                // BYC (Bytecash on Chia) = Wizard Bucks on Base once bridged
-                // Match by assetId for BYC, otherwise by symbol
+                const BYC_ASSET_ID_LC = BYC_ASSET_ID.toLowerCase();
                 let baseToken;
                 if (token.assetId === BYC_ASSET_ID) {
                     baseToken = baseTokens.find(b => b.name === 'Wizard Bucks');
                 } else {
                     baseToken = baseTokens.find(b => b.symbol === token.symbol);
                 }
-                
-                let arbDisplay = '';
-                let arbColor = '#888';
-                
+
+                // Arb calculation
+                let arbDisplay = '', arbColor = '#888';
                 if (baseToken && baseToken.price > 0 && token.price > 0) {
                     const diff = baseToken.price - token.price;
                     const diffPercent = (diff / baseToken.price) * 100;
-                    // Always show the actual % difference — no "same price" suppression
-                    if (diff > 0) {
-                        arbColor = '#4ade80';
-                        arbDisplay = `🟢 ${Math.abs(diffPercent).toFixed(1)}% cheaper`;
-                    } else if (diff < 0) {
-                        arbColor = '#ef4444';
-                        arbDisplay = `🔴 ${Math.abs(diffPercent).toFixed(1)}% premium`;
-                    } else {
-                        arbColor = 'rgba(255,255,255,0.3)';
-                        arbDisplay = `⚪ 0.0% diff`;
-                    }
+                    if (diff > 0) { arbColor = '#4ade80'; arbDisplay = `🟢 ${Math.abs(diffPercent).toFixed(1)}% cheaper`; }
+                    else if (diff < 0) { arbColor = '#ef4444'; arbDisplay = `🔴 ${Math.abs(diffPercent).toFixed(1)}% premium`; }
+                    else { arbColor = 'rgba(255,255,255,0.3)'; arbDisplay = '⚪ 0.0% diff'; }
                 } else {
                     arbColor = 'rgba(255,255,255,0.25)';
                     arbDisplay = '⚠️ cannot fetch';
                 }
 
+                // Mcap
                 const mcap = token.marketCap || 0;
-                const fmt  = n => n > 1e6 ? '$'+(n/1e6).toFixed(2)+'M' : n > 1e3 ? '$'+(n/1e3).toFixed(1)+'K' : n > 0 ? '$'+n.toFixed(0) : '—';
-                const mcapText = mcap > 0 ? fmt(mcap) : '—';
+                const fmtMcap = n => n > 1e6 ? '$'+(n/1e6).toFixed(2)+'M' : n > 1e3 ? '$'+(n/1e3).toFixed(1)+'K' : n > 0 ? '$'+n.toFixed(0) : '—';
+                let mcapText, mcapColor;
+                if (mcap > 0) { mcapText = fmtMcap(mcap); mcapColor = '#fbbf24'; }
+                else if (token.mcapStatus === 'no_supply' && token.price > 0) { mcapText = '⚠️ cannot fetch'; mcapColor = 'rgba(255,255,255,0.35)'; }
+                else { mcapText = '—'; mcapColor = 'rgba(255,255,255,0.3)'; }
+
+                const emoji = getEmoji(token.symbol);
+                const priceStr = token.price ? (
+                    token.price < 0.0001 ? token.price.toFixed(10) :
+                    token.price < 0.001 ? token.price.toFixed(8) :
+                    token.price < 0.01 ? token.price.toFixed(6) :
+                    token.price < 1 ? token.price.toFixed(4) :
+                    token.price.toFixed(2)
+                ) : '0.00';
 
                 return `
                 <div class="token-card" onclick="openTokenLink('${token.chain}', '${token.assetId || token.contract}', '${token.symbol}')">
-                    <div class="token-header">
-                        <div class="token-info">
-                            <div style="
-                                width: 40px;
-                                height: 40px;
-                                background: linear-gradient(135deg, rgba(74, 222, 128, 0.12), rgba(34, 197, 94, 0.08));
-                                border-radius: 12px;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                box-shadow: 0 4px 12px rgba(74, 222, 128, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-                                border: 1px solid rgba(74, 222, 128, 0.2);
-                                flex-shrink: 0;
-                            ">
-                                <div class="token-symbol">${getEmoji(token.symbol)}</div>
-                            </div>
-                            <div style="margin-left: 6px; flex: 1;">
-                                <div class="token-name">${token.displayName || token.name}</div>
-                            </div>
+                    <div class="tc-top">
+                        <div class="tc-left">
+                            <span class="tc-emoji">${emoji}</span>
+                            <span class="tc-name">${token.displayName || token.name}</span>
                         </div>
-                        <div style="text-align: right;">
-                            <div class="token-price">$${token.price ? (
-                                token.price < 0.0001 ? token.price.toFixed(10) :
-                                token.price < 0.001 ? token.price.toFixed(8) :
-                                token.price < 0.01 ? token.price.toFixed(8) :
-                                token.price < 1 ? token.price.toFixed(6) :
-                                token.price.toFixed(2)
-                            ) : '0.00'}</div>
-                            <div class="token-change" style="
-                                color: ${arbColor};
-                                font-size: 13px;
-                                font-weight: 700;
-                                font-family: 'Inter', sans-serif;
-                                display: flex;
-                                align-items: center;
-                                justify-content: flex-end;
-                                gap: 3px;
-                                margin-top: 3px;
-                            ">
-                                ${arbDisplay}
-                            </div>
+                        <div class="tc-right">
+                            <span class="tc-price">$${priceStr}</span>
                         </div>
                     </div>
-                    <div style="
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                        margin-top: auto;
-                        padding-top: 10px;
-                        border-top: 1px solid rgba(251, 191, 36, 0.1);
-                        background: linear-gradient(90deg, rgba(251, 191, 36, 0.03), transparent);
-                        padding: 8px 0;
-                        border-radius: 6px;
-                    ">
-                        <span style="font-size: 11px; color: rgba(255,255,255,0.4); font-family: 'Inter', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Market Cap</span>
-                        <span style="font-size: 13px; color: #fbbf24; font-weight: 700; font-family: 'Cinzel', serif;">${mcapText}</span>
+                    <div class="tc-mid">
+                        <span class="tc-chain tc-chain-chia">Chia</span>
+                        <span class="tc-change" style="color:${arbColor};">${arbDisplay}</span>
                     </div>
-                </div>
-            `;
+                    <div class="tc-footer">
+                        <span class="tc-mcap-label">Market Cap</span>
+                        <span class="tc-mcap-value" style="color:${mcapColor};">${mcapText}</span>
+                    </div>
+                </div>`;
             };
 
             baseList.innerHTML = baseTokens.map(createBaseCard).join('');
@@ -5393,23 +5292,23 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                         }));
 
                         const createCard = (token) => `
-                            <div class="token-card" style="border: none;" onclick="openTokenLink('${token.chain}', '${token.contract}', '${token.symbol}')">
-                                <div class="token-header">
-                                    <div class="token-info">
-                                        <div class="token-avatar">${token.symbol.substring(0, 2)}</div>
-                                        <div>
-                                            <div class="token-symbol">
-                                                <span>${token.symbol}</span>
-                                            </div>
-                                            <div class="token-name">♪ ${token.name} ♪</div>
-                                        </div>
+                            <div class="token-card" onclick="openTokenLink('${token.chain}', '${token.contract}', '${token.symbol}')">
+                                <div class="tc-top">
+                                    <div class="tc-left">
+                                        <span class="tc-emoji">${token.symbol.substring(0, 2)}</span>
+                                        <span class="tc-name">${token.name}</span>
                                     </div>
-                                    <div style="text-align: right;">
-                                        <div class="token-price">$${Number(token.price).toLocaleString(undefined, { maximumSignificantDigits: 4 })}</div>
-                                        <div class="token-change" style="color: ${token.change24h >= 0 ? '#4ade80' : '#ef4444'}">
-                                            ${token.change24h >= 0 ? '↑' : '↓'} ${Math.abs(token.change24h).toFixed(2)}%
-                                        </div>
+                                    <div class="tc-right">
+                                        <span class="tc-price">$${Number(token.price).toLocaleString(undefined, { maximumSignificantDigits: 4 })}</span>
                                     </div>
+                                </div>
+                                <div class="tc-mid">
+                                    <span class="tc-chain tc-chain-base">Base</span>
+                                    <span class="tc-change" style="color:${token.change24h >= 0 ? '#4ade80' : '#ef4444'};">${token.change24h >= 0 ? '↑' : '↓'} ${Math.abs(token.change24h).toFixed(2)}%</span>
+                                </div>
+                                <div class="tc-footer">
+                                    <span class="tc-mcap-label">Market Cap</span>
+                                    <span class="tc-mcap-value">${token.marketCap > 1e6 ? '$'+(token.marketCap/1e6).toFixed(1)+'M' : token.marketCap > 0 ? '$'+(token.marketCap/1e3).toFixed(0)+'K' : '—'}</span>
                                 </div>
                             </div>
                         `;
@@ -7117,7 +7016,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     cursor: pointer;
                     text-decoration: underline;
                     user-select: none;
-                " onclick="if(window._hideWtvForever) window._hideWtvForever();" title="Permanently hide WTV">Don't show this anymore</span>
+                " onclick="if(window._hideWtvForever) window._hideWtvForever();" title="Hide WTV for this session">Don't show this anymore</span>
                 <button id="close-miniplayer" style="
                 background: linear-gradient(135deg, rgba(220, 38, 38, 0.3), rgba(153, 27, 27, 0.2));
                 border: 1px solid rgba(220, 38, 38, 0.5);
@@ -7474,18 +7373,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('✅ WTV restore button shown');
             });
 
-            // WTV permanent hide check and initialization
-            const permanentlyHidden = localStorage.getItem('wtvPermanentlyHidden') === 'true';
-            if (permanentlyHidden) {
-                console.log('WTV permanently hidden by user preference');
-                // Hide all WTV elements completely
-                miniplayer.style.display = 'none';
-                miniplayer.classList.add('hidden');
-                if (mobileTab) mobileTab.style.display = 'none';
-                if (overlay) overlay.style.display = 'none';
-                return; // Exit early, don't initialize WTV functionality
-            }
-
             // WTV starts hidden with restore button visible
             // User clicks the restore/WTV button to open it
             hideMiniplayer();
@@ -7717,11 +7604,11 @@ document.addEventListener('DOMContentLoaded', () => {
     <!-- WTV Restore Button - More Visible (desktop only) -->
     <button id="wtv-restore-btn" style="
         position: fixed;
-        bottom: 20px;
-        left: 20px;
-        width: 80px;
-        height: 80px;
-        background: linear-gradient(135deg, rgba(251, 191, 36, 0.8), rgba(220, 38, 38, 0.4));
+        bottom: 90px;
+        left: 16px;
+        width: 64px;
+        height: 64px;
+        background: linear-gradient(135deg, rgba(251, 191, 36, 0.9), rgba(220, 38, 38, 0.5));
         border: 3px solid rgba(251, 191, 36, 1);
         border-radius: 15px;
         color: #fbbf24;
@@ -7729,7 +7616,7 @@ document.addEventListener('DOMContentLoaded', () => {
         font-weight: 900;
         cursor: pointer;
         z-index: 999998;
-        display: none;
+        display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
@@ -7740,28 +7627,32 @@ document.addEventListener('DOMContentLoaded', () => {
         line-height: 1.2;
         gap: 4px;
         animation: wtv-pulse 2s infinite;
-    " onmouseover="this.style.background='linear-gradient(135deg, rgba(251,191,36,1), rgba(220,38,38,0.6))'; this.style.transform='scale(1.15)'; this.style.boxShadow='0 0 35px rgba(251,191,36,0.85), inset 0 0 20px rgba(251,191,36,0.4)';" onmouseout="this.style.background='linear-gradient(135deg, rgba(251,191,36,0.8), rgba(220,38,38,0.4))'; this.style.transform=''; this.style.boxShadow='0 0 25px rgba(251,191,36,0.6), inset 0 0 15px rgba(251,191,36,0.2)';"
+    " onmouseover="this.style.background='linear-gradient(135deg, rgba(251,191,36,1), rgba(220,38,38,0.6))'; this.style.transform='scale(1.15)'; this.style.boxShadow='0 0 35px rgba(251,191,36,0.85), inset 0 0 20px rgba(251,191,36,0.4)';" onmouseout="this.style.background='linear-gradient(135deg, rgba(251,191,36,0.9), rgba(220,38,38,0.5))'; this.style.transform=''; this.style.boxShadow='0 0 25px rgba(251,191,36,0.6), inset 0 0 15px rgba(251,191,36,0.2)';"
         onclick="if (window._showWtvMiniplayer) window._showWtvMiniplayer();"
         title="Click to restore WTV miniplayer">
-        <span style="font-size: 28px;">🎬</span>
-        <span style="font-size: 10px; opacity: 0.9;">WTV</span>
+        <span style="font-size: 24px;">🎬</span>
+        <span style="font-size: 9px; opacity: 0.9;">WTV</span>
     </button>
+    <script>
+        // WTV button is always visible on page load (no localStorage persistence)
+    </script>
 
     <style>
         @media (max-width: 768px) {
-            /* WTV restore button: visible on mobile too (smaller) */
+            /* WTV restore button: position above mobile tab bar */
             #wtv-restore-btn {
-                width: 56px !important;
-                height: 56px !important;
-                bottom: 12px !important;
-                left: 12px !important;
-                border-radius: 12px !important;
+                width: 52px !important;
+                height: 52px !important;
+                bottom: 85px !important;
+                left: 10px !important;
+                border-radius: 14px !important;
+                border-width: 2px !important;
             }
             #wtv-restore-btn span:first-child {
-                font-size: 22px !important;
+                font-size: 20px !important;
             }
             #wtv-restore-btn span:last-child {
-                font-size: 8px !important;
+                font-size: 7px !important;
             }
         }
 
@@ -7936,24 +7827,25 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             // Permanently hide WTV functionality
+            window._wtvSessionHidden = false; // Session-only flag
+
             window._hideWtvForever = function() {
-                if (confirm('This will permanently hide the WTV video drawer and cannot be undone without clearing browser data. Continue?')) {
-                    // Hide immediately
-                    if (miniplayer) {
-                        miniplayer.style.display = 'none';
-                        miniplayer.classList.add('hidden');
-                    }
-                    if (mobileTab) {
-                        mobileTab.style.display = 'none';
-                    }
-                    if (overlay) {
-                        overlay.style.display = 'none';
-                    }
-                    
-                    // Set permanent storage flag
-                    localStorage.setItem('wtvPermanentlyHidden', 'true');
-                    console.log('WTV permanently hidden - clear localStorage to restore');
+                // Hide WTV for this session only - will reappear on refresh
+                if (miniplayer) {
+                    miniplayer.style.display = 'none';
+                    miniplayer.classList.add('hidden');
                 }
+                if (mobileTab) {
+                    mobileTab.style.display = 'none';
+                }
+                if (overlay) {
+                    overlay.style.display = 'none';
+                }
+                // Also hide the restore button
+                const rb = document.getElementById('wtv-restore-btn');
+                if (rb) rb.style.display = 'none';
+                window._wtvSessionHidden = true;
+                console.log('WTV hidden for this session — will reappear on refresh');
             };
 
             // Override close button behavior on mobile
@@ -7993,14 +7885,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // --- Desktop + Mobile restore button ---
             if (restoreBtn && miniplayer) {
-                const permanentlyHidden = localStorage.getItem('wtvPermanentlyHidden') === 'true';
-                if (permanentlyHidden) {
-                    // Hide all elements permanently
+                // Check session-only hide flag (set by "Don't show this anymore")
+                if (window._wtvSessionHidden) {
                     restoreBtn.style.display = 'none';
                     miniplayer.style.display = 'none';
                     if (mobileTab) mobileTab.style.display = 'none';
                     if (overlay) overlay.style.display = 'none';
-                    return; // Exit early
+                    return;
                 }
 
                 // WTV starts closed — restore button visible on both desktop and mobile
@@ -8023,9 +7914,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // On resize, sync state
             window.addEventListener('resize', () => {
-                const permanentlyHidden = localStorage.getItem('wtvPermanentlyHidden') === 'true';
-                if (permanentlyHidden) {
-                    // Ensure WTV stays hidden even on resize
+                if (window._wtvSessionHidden) {
                     if (miniplayer) miniplayer.style.display = 'none';
                     if (mobileTab) mobileTab.style.display = 'none';
                     if (restoreBtn) restoreBtn.style.display = 'none';
