@@ -219,6 +219,63 @@
             }
         }
 
+        /* ═══════════════════════════════════════════════════ */
+        /* GAME INTEGRATION - Secret aWizard Game Overlay */
+        /* ═══════════════════════════════════════════════════ */
+        #game-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.98);
+            z-index: 9999;
+            overflow: hidden;
+            animation: fadeInOverlay 0.4s ease;
+        }
+
+        #game-overlay.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes fadeInOverlay {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        #game-frame {
+            width: 100%;
+            height: 100%;
+            max-width: 1200px;
+            border: none;
+            background: #0a0a0a;
+            border-radius: 0.5rem;
+        }
+
+        .game-title-trigger {
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+
+        .game-title-trigger:hover {
+            filter: brightness(1.2) drop-shadow(0 0 15px rgba(251, 191, 36, 0.8));
+            transform: scale(1.02);
+        }
+
+        .game-title-trigger:active {
+            transform: scale(0.98);
+        }
+
+        /* Mobile optimization for game overlay */
+        @media (max-width: 768px) {
+            #game-frame {
+                max-width: 100%;
+                height: 100vh;
+                border-radius: 0;
+            }
+        }
+
         .header {
             background: linear-gradient(to right, rgba(220, 38, 38, 0.65), rgba(251, 191, 36, 0.65), rgba(220, 38, 38, 0.65));
             border: 2px solid rgba(251, 191, 36, 0.7);
@@ -1363,11 +1420,9 @@
             }
 
             .tab.active {
-                color: #fbbf24 !important;
-                background: rgba(251, 191, 36, 0.22) !important;
-                box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.7),
-                            0 0 18px 5px rgba(251, 191, 36, 0.4),
-                            inset 0 2px 0 #fbbf24 !important;
+                color: #000 !important;
+                background: linear-gradient(135deg, #fbbf24, #f59e0b) !important;
+                box-shadow: 0 4px 12px rgba(251, 191, 36, 0.4) !important;
                 border-radius: 10px !important;
             }
 
@@ -1499,27 +1554,27 @@
 
             /* ── Mobile tc-* card overrides ── */
             .tc-top { gap: 6px !important; }
-            .tc-emoji { font-size: 15px !important; }
+            .tc-emoji { font-size: 14px !important; }
             .tc-name {
-                font-size: 11px !important;
+                font-size: 10px !important;
                 font-family: 'Space Grotesk', sans-serif !important;
                 letter-spacing: 0.02em !important;
                 color: rgba(255,255,255,0.95) !important;
             }
             .tc-price {
-                font-size: 13px !important;
+                font-size: 12px !important;
                 font-family: 'Space Grotesk', sans-serif !important;
                 font-weight: 800 !important;
             }
             .tc-mid { margin-top: 4px !important; }
             .tc-chain { font-size: 8px !important; padding: 1px 5px !important; }
-            .tc-change { font-size: 11px !important; }
+            .tc-change { font-size: 10px !important; }
             .tc-footer {
                 margin-top: 4px !important;
                 padding-top: 4px !important;
             }
             .tc-mcap-label { font-size: 8px !important; }
-            .tc-mcap-value { font-size: 11px !important; }
+            .tc-mcap-value { font-size: 10px !important; }
 
             /* Merkl Magic Box */
             #merkl-section {
@@ -1924,13 +1979,11 @@
             }
 
             .tab.active {
-                background: linear-gradient(135deg, rgba(251, 191, 36, 0.3), rgba(220, 38, 38, 0.2)) !important;
-                border: 2px solid rgba(251, 191, 36, 0.8) !important;
-                transform: translateY(-3px) scale(1.06) !important;
-                box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.65),
-                            0 0 20px 6px rgba(251, 191, 36, 0.45),
-                            0 4px 15px rgba(220, 38, 38, 0.25),
-                            inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+                background: linear-gradient(135deg, #fbbf24, #f59e0b) !important;
+                color: #000 !important;
+                border: 2px solid #fbbf24 !important;
+                transform: translateY(-2px) scale(1.05) !important;
+                box-shadow: 0 4px 12px rgba(251, 191, 36, 0.4) !important;
             }
 
             .tab-emoji {
@@ -1940,8 +1993,8 @@
             }
 
             .tab.active .tab-emoji {
-                transform: scale(1.15) !important;
-                filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.6)) !important;
+                transform: scale(1.1) !important;
+                filter: none !important;
             }
 
             .tab-label-short {
@@ -1954,8 +2007,8 @@
             }
 
             .tab.active .tab-label-short {
-                color: rgba(251, 191, 36, 1) !important;
-                text-shadow: 0 0 8px rgba(251, 191, 36, 0.6), 0 1px 2px rgba(0, 0, 0, 0.5) !important;
+                color: #000 !important;
+                text-shadow: none !important;
             }
 
             /* ── Inline style overrides for font consistency ── */
@@ -2140,7 +2193,7 @@
                 background-clip: text;
                 filter: drop-shadow(0 0 18px rgba(255,215,0,0.9)) drop-shadow(0 0 40px rgba(255,165,0,0.6)) drop-shadow(3px 4px 6px rgba(0,0,0,0.9));
                 animation: titlePulse 5s ease-in-out infinite;
-            ">CASTER101</div>
+            " id="caster-title-trigger" class="game-title-trigger">CASTER101</div>
             <style>
                 @keyframes titlePulse {
                     0%, 100% { 
@@ -3553,9 +3606,38 @@
 
             // ── Phase 1: Fetch prices from 3 sources in parallel (no Spacescan = no rate limit issues) ──
             const [xchData, dexieTickerData, tibetRaw, catPriceData] = await Promise.all([
-                // XCH price from CoinGecko via proxy
-                fetch(`/api/coingecko-proxy?ids=chia&vs_currencies=usd&include_24hr_change=true&include_market_cap=true&t=${Date.now()}`)
-                    .then(r => r.ok ? r.json() : {}).catch(() => ({})),
+                // XCH price — try proxy first, then direct browser call
+                (async () => {
+                    // Attempt 1: Serverless proxy
+                    try {
+                        const r = await fetch(`/api/coingecko-proxy?ids=chia&vs_currencies=usd&include_24hr_change=true&include_market_cap=true&t=${Date.now()}`);
+                        if (r.ok) {
+                            const d = await r.json();
+                            if (d.chia?.usd > 0) { console.log('[XCH] Price from proxy:', d.chia.usd); return d; }
+                        }
+                    } catch(e) { console.warn('[XCH] Proxy failed:', e.message); }
+                    // Attempt 2: Direct CoinGecko browser call
+                    try {
+                        const r = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=chia&vs_currencies=usd&include_24hr_change=true&include_market_cap=true`);
+                        if (r.ok) {
+                            const d = await r.json();
+                            if (d.chia?.usd > 0) { console.log('[XCH] Price from direct CoinGecko:', d.chia.usd); return d; }
+                        }
+                    } catch(e) { console.warn('[XCH] Direct CoinGecko failed:', e.message); }
+                    // Attempt 3: xchscan
+                    try {
+                        const r = await fetch('https://xchscan.com/api/chia-price');
+                        if (r.ok) {
+                            const d = await r.json();
+                            const p = parseFloat(d.usd || 0);
+                            if (p > 0) {
+                                console.log('[XCH] Price from xchscan:', p);
+                                return { chia: { usd: p, usd_24h_change: 0, usd_market_cap: 0 } };
+                            }
+                        }
+                    } catch(e) { console.warn('[XCH] xchscan failed:', e.message); }
+                    return {};
+                })(),
                 // Dexie tickers — single call gets prices for ALL CATs (reliable, no rate limit)
                 fetch('https://dexie.space/v2/prices/tickers')
                     .then(r => r.ok ? r.json() : {}).catch(() => ({})),
@@ -7248,7 +7330,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const setRestoreVisible = (visible) => {
                 const restoreBtn = document.getElementById('wtv-restore-btn');
                 if (restoreBtn) {
-                    restoreBtn.style.display = visible ? 'flex' : 'none';
+                    if (visible) restoreBtn.classList.remove('wtv-btn-hidden');
+                    else restoreBtn.classList.add('wtv-btn-hidden');
                 }
             };
 
@@ -7638,6 +7721,15 @@ document.addEventListener('DOMContentLoaded', () => {
     </script>
 
     <style>
+        /* Force WTV restore button visible by default via CSS */
+        #wtv-restore-btn {
+            display: flex !important;
+        }
+        /* JS adds this class to hide the button when player is open or session-hidden */
+        #wtv-restore-btn.wtv-btn-hidden {
+            display: none !important;
+        }
+
         @media (max-width: 768px) {
             /* WTV restore button: position above mobile tab bar */
             #wtv-restore-btn {
@@ -7798,7 +7890,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (mobileTab) mobileTab.style.display = 'none';
                 // Hide restore button when player is open
                 const rb = document.getElementById('wtv-restore-btn');
-                if (rb) rb.style.display = 'none';
+                if (rb) rb.classList.add('wtv-btn-hidden');
                 if (window._wtvLoadVideo) window._wtvLoadVideo();
                 // Fade out intro
                 setTimeout(() => {
@@ -7817,7 +7909,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (mobileTab) mobileTab.style.display = 'flex';
                 // Show restore button on mobile too
                 const rb = document.getElementById('wtv-restore-btn');
-                if (rb) rb.style.display = 'flex';
+                if (rb) rb.classList.remove('wtv-btn-hidden');
                 // After slide-out animation finishes, fully hide
                 setTimeout(() => {
                     if (miniplayer.classList.contains('mobile-drawer-closed')) {
@@ -7843,7 +7935,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 // Also hide the restore button
                 const rb = document.getElementById('wtv-restore-btn');
-                if (rb) rb.style.display = 'none';
+                if (rb) rb.classList.add('wtv-btn-hidden');
                 window._wtvSessionHidden = true;
                 console.log('WTV hidden for this session — will reappear on refresh');
             };
@@ -7887,7 +7979,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (restoreBtn && miniplayer) {
                 // Check session-only hide flag (set by "Don't show this anymore")
                 if (window._wtvSessionHidden) {
-                    restoreBtn.style.display = 'none';
+                    restoreBtn.classList.add('wtv-btn-hidden');
                     miniplayer.style.display = 'none';
                     if (mobileTab) mobileTab.style.display = 'none';
                     if (overlay) overlay.style.display = 'none';
@@ -7895,7 +7987,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 // WTV starts closed — restore button visible on both desktop and mobile
-                restoreBtn.style.display = 'flex';
+                restoreBtn.classList.remove('wtv-btn-hidden');
                 miniplayer.style.display = 'none';
                 miniplayer.style.opacity = '0';
                 if (mobileTab) mobileTab.style.display = isMobile() ? 'flex' : 'none';
@@ -7917,7 +8009,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (window._wtvSessionHidden) {
                     if (miniplayer) miniplayer.style.display = 'none';
                     if (mobileTab) mobileTab.style.display = 'none';
-                    if (restoreBtn) restoreBtn.style.display = 'none';
+                    if (restoreBtn) restoreBtn.classList.add('wtv-btn-hidden');
                     if (overlay) overlay.style.display = 'none';
                     return;
                 }
@@ -7930,17 +8022,19 @@ document.addEventListener('DOMContentLoaded', () => {
                         miniplayer.style.display = 'none';
                         if (overlay) overlay.style.display = 'none';
                     }
-                    // Keep restore button visible on mobile too
-                    if (restoreBtn) restoreBtn.style.display = miniplayerOpen ? 'none' : 'flex';
+                    if (restoreBtn) {
+                        if (miniplayerOpen) restoreBtn.classList.add('wtv-btn-hidden');
+                        else restoreBtn.classList.remove('wtv-btn-hidden');
+                    }
                 } else {
                     if (mobileTab) mobileTab.style.display = 'none';
                     if (overlay) overlay.style.display = 'none';
                     miniplayer.classList.remove('mobile-drawer-closed');
                     if (!miniplayerOpen) {
                         miniplayer.style.display = 'none';
-                        if (restoreBtn) restoreBtn.style.display = 'flex';
+                        if (restoreBtn) restoreBtn.classList.remove('wtv-btn-hidden');
                     } else {
-                        if (restoreBtn) restoreBtn.style.display = 'none';
+                        if (restoreBtn) restoreBtn.classList.add('wtv-btn-hidden');
                     }
                 }
             });
@@ -7956,8 +8050,8 @@ document.addEventListener('DOMContentLoaded', () => {
             let touchStartY = 0;
             let touchEndX = 0;
             let touchEndY = 0;
-            const minSwipeDistance = 90; // minimum distance for swipe in pixels
-            const maxVerticalDrift = 45; // max vertical drift allowed for a swipe
+            const minSwipeDistance = 130; // minimum horizontal distance for swipe (was 90)
+            const maxVerticalDrift = 35; // max vertical drift allowed (was 45)
 
             const container = document.querySelector('.container');
             if (!container) return;
@@ -7985,7 +8079,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Only trigger swipe if mostly horizontal and not a scroll gesture
                 if (Math.abs(deltaY) > maxVerticalDrift) return;
-                if (Math.abs(deltaX) < Math.abs(deltaY) * 1.8) return;
+                if (Math.abs(deltaX) < Math.abs(deltaY) * 2.5) return;
                 if (Math.abs(deltaX) < minSwipeDistance) return;
 
                 // Get current active tab
@@ -8097,6 +8191,39 @@ document.addEventListener('DOMContentLoaded', () => {
                 setTimeout(updateFullscreenUI, 100);
             });
         }
+    </script>
+
+    <!-- ═══════════════════════════════════════════════════ -->
+    <!-- SECRET GAME OVERLAY -->
+    <!-- ═══════════════════════════════════════════════════ -->
+    <div id="game-overlay"></div>
+
+    <script>
+        // aWizard Secret Game Trigger
+        const titleTrigger = document.getElementById('caster-title-trigger');
+        if (titleTrigger) {
+            titleTrigger.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🎮 Opening aWizard Secret Game...');
+                // Open the game in a new window/tab
+                window.open('awizard-game.html', 'aWizard', 'width=1000,height=900,scrollbars=yes');
+            });
+
+            // Visual feedback on hover
+            titleTrigger.style.cursor = 'pointer';
+        }
+
+        // Close game overlay on ESC key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const overlay = document.getElementById('game-overlay');
+                if (overlay && overlay.style.display !== 'none') {
+                    overlay.style.display = 'none';
+                    document.body.style.overflow = '';
+                }
+            }
+        });
     </script>
 
 </body>
