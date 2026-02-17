@@ -146,28 +146,6 @@
             font-weight: 600;
         }
 
-        .close-game-btn {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            background: rgba(220, 38, 38, 0.8);
-            border: 1px solid var(--gold);
-            color: var(--text-primary);
-            padding: 0.5rem 1rem;
-            border-radius: 0.4rem;
-            cursor: pointer;
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 0.75rem;
-            z-index: 100;
-            transition: all 0.2s;
-            text-shadow: 0 0 5px rgba(220, 38, 38, 0.8);
-        }
-
-        .close-game-btn:hover {
-            background: var(--red);
-            box-shadow: 0 0 20px rgba(220, 38, 38, 0.8);
-        }
-
         #status {
             background: rgba(10, 10, 10, 0.8);
             padding: 1rem;
@@ -385,7 +363,6 @@
             #combat-log { padding: 0.8rem 1rem; max-height: 140px; font-size: 0.75rem; }
             #options { padding: 1rem; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.6rem; }
             button { padding: 0.8rem 1rem; font-size: 0.75rem; min-height: 44px; }
-            .close-game-btn { padding: 0.4rem 0.8rem; font-size: 0.65rem; }
             .version-badge { top: 0.5rem; left: 0.5rem; font-size: 0.6rem; }
         }
     </style>
@@ -396,7 +373,6 @@
 
 <div id="game-container">
     <header>
-        <button class="close-game-btn" onclick="closeGame()">✕ CLOSE</button>
         <h1>✨ aWizard ✨<br>The Arcane Ascension</h1>
         <div id="realm-indicator">🌙 Bridging Astral & Earthly Realms 🌍</div>
     </header>
@@ -1376,11 +1352,6 @@ function updateDisplay() {
             document.getElementById('options').appendChild(encBtn);
         }
     }
-}
-
-function closeGame() {
-    saveGame(gameState);
-    document.getElementById('game-container').style.display = 'none';
 }
 
 // ====================== INITIALIZATION ======================
