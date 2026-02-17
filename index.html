@@ -5,6 +5,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>Caster101</title>
+    <meta name="description" content="Explore aWizard: A thriving web3 community built on Chia. Discover our journey from Ethereum to proof-of-space, our rewarding tokens, and culture-first approach.">
+    <meta name="theme-color" content="#0a0a0a">
+    
+    <!-- Open Graph Meta Tags for Social Media -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://caster101.com">
+    <meta property="og:title" content="Caster101 - aWizard Community on Chia">
+    <meta property="og:description" content="Join the aWizard collective. A grassroots DAO rewarding community participation with airdrops, Merkl campaigns, and cultural experiences since 2022.">
+    <meta property="og:image" content="https://caster101.com/preview.webp">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="aWizard - Chia Community">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://caster101.com">
+    <meta name="twitter:title" content="Caster101 - aWizard Community">
+    <meta name="twitter:description" content="Discover aWizard on Chia: Sustainable, rewarding, culture-first web3 community. 🧙‍♂️">
+    <meta name="twitter:image" content="https://caster101.com/preview.webp">
+    <meta name="twitter:image:alt" content="aWizard Community">
+    <meta name="twitter:creator" content="@aWizardDAO">
+    
     <link rel="icon" type="image/webp" href="/images/favicon.webp">
     <!-- Performance: Preconnect to external APIs -->
     <link rel="preconnect" href="https://api.coingecko.com">
@@ -1854,7 +1876,7 @@
                 }
                 
                 #valley-close-btn.visible {
-                    display: flex !important;
+                    display: none !important;
                 }
             }
 
@@ -2208,14 +2230,8 @@
         document.addEventListener('mouseup', onUp);
         document.addEventListener('touchend', onUp);
 
-        // Pulse glow
-        let glow = false;
-        setInterval(() => {
-            glow = !glow;
-            btn.style.boxShadow = glow
-                ? '0 0 30px rgba(251,191,36,0.9), 0 4px 12px rgba(0,0,0,0.4)'
-                : '0 0 20px rgba(251,191,36,0.7), 0 4px 12px rgba(0,0,0,0.4)';
-        }, 1200);
+        // Pulse glow removed
+
 
         // Mobile: right side, smaller
         if (window.innerWidth <= 768) {
@@ -3523,7 +3539,7 @@
                         letter-spacing: 1px;
                     ">🧙 Caster Valley</h2>
                     <button id="valley-close-btn" style="
-                        display: none;
+                        display: none !important;
                         position: absolute;
                         top: 0;
                         right: 0;
@@ -3537,7 +3553,6 @@
                         font-size: 18px;
                         font-weight: bold;
                         padding: 0;
-                        display: flex;
                         align-items: center;
                         justify-content: center;
                         transition: all 0.2s ease;
@@ -7370,7 +7385,6 @@ document.addEventListener('DOMContentLoaded', () => {
             ">
                 <div style="
                     font-size: 48px;
-                    animation: wtv-intro-pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
                 ">🎬</div>
                 <div style="
                     color: rgba(251, 191, 36, 0.9);
