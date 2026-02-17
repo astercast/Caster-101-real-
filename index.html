@@ -2176,6 +2176,103 @@
 </head>
 
 <body>
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <!-- WTV RESTORE BUTTON — FIRST ELEMENT IN BODY FOR GUARANTEED VISIBILITY -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <button id="wtv-restore-btn" style="
+        position: fixed;
+        bottom: 120px;
+        left: 12px;
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #fbbf24, #dc2626);
+        border: 2px solid #fbbf24;
+        border-radius: 12px;
+        color: white;
+        font-weight: 900;
+        cursor: grab;
+        z-index: 2147483647;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 0 20px rgba(251,191,36,0.7), 0 4px 12px rgba(0,0,0,0.4);
+        font-family: sans-serif;
+        text-align: center;
+        line-height: 1;
+        gap: 2px;
+        touch-action: none;
+        -webkit-user-select: none;
+        user-select: none;
+        outline: none;
+    " title="Drag to move · Tap to open WTV">
+        <span style="font-size: 18px; pointer-events: none;">🎬</span>
+        <span style="font-size: 7px; font-weight: 800; opacity: 0.9; pointer-events: none;">WTV</span>
+    </button>
+    <script>
+    // Verify WTV button exists immediately
+    console.log('🎬 WTV BUTTON CHECK:', document.getElementById('wtv-restore-btn') ? '✅ EXISTS' : '❌ MISSING');
+
+    // ── WTV button: draggable vertically, click opens player ──
+    (function() {
+        const btn = document.getElementById('wtv-restore-btn');
+        if (!btn) { console.error('❌ WTV btn not found!'); return; }
+        let dragging = false, startY = 0, startBottom = 0, moved = false;
+        function pY(e) { return e.clientY ?? e.touches?.[0]?.clientY ?? 0; }
+        function onDown(e) {
+            dragging = true; moved = false;
+            startY = pY(e);
+            startBottom = parseInt(btn.style.bottom) || 120;
+            btn.style.cursor = 'grabbing';
+            e.preventDefault();
+        }
+        function onMove(e) {
+            if (!dragging) return;
+            const dy = startY - pY(e);
+            if (Math.abs(dy) > 5) moved = true;
+            btn.style.bottom = Math.max(10, Math.min(window.innerHeight - 60, startBottom + dy)) + 'px';
+            e.preventDefault();
+        }
+        function onUp() {
+            if (!dragging) return;
+            dragging = false;
+            btn.style.cursor = 'grab';
+            if (!moved) {
+                console.log('🎬 WTV button tapped');
+                if (window._showWtvMiniplayer) window._showWtvMiniplayer();
+                else console.warn('⚠️ _showWtvMiniplayer not yet defined');
+            }
+        }
+        btn.addEventListener('mousedown', onDown);
+        btn.addEventListener('touchstart', onDown, { passive: false });
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('touchmove', onMove, { passive: false });
+        document.addEventListener('mouseup', onUp);
+        document.addEventListener('touchend', onUp);
+
+        // Pulse glow
+        let glow = false;
+        setInterval(() => {
+            glow = !glow;
+            btn.style.boxShadow = glow
+                ? '0 0 30px rgba(251,191,36,0.9), 0 4px 12px rgba(0,0,0,0.4)'
+                : '0 0 20px rgba(251,191,36,0.7), 0 4px 12px rgba(0,0,0,0.4)';
+        }, 1200);
+
+        // Mobile size adjustment
+        if (window.innerWidth <= 768) {
+            btn.style.width = '42px';
+            btn.style.height = '42px';
+            btn.style.bottom = '90px';
+            btn.style.left = '8px';
+        }
+
+        // Global show/hide for other scripts
+        window._wtvBtnShow = function() { btn.style.display = 'flex'; };
+        window._wtvBtnHide = function() { btn.style.display = 'none'; };
+        console.log('✅ WTV button drag handler ready');
+    })();
+    </script>
     <div class="bg-collage" id="bgCollage"></div>
 
     <div class="container">
@@ -7328,11 +7425,8 @@ document.addEventListener('DOMContentLoaded', () => {
             let isIframePaused = false;
 
             const setRestoreVisible = (visible) => {
-                const restoreBtn = document.getElementById('wtv-restore-btn');
-                if (restoreBtn) {
-                    if (visible) restoreBtn.classList.remove('wtv-btn-hidden');
-                    else restoreBtn.classList.add('wtv-btn-hidden');
-                }
+                if (visible && window._wtvBtnShow) window._wtvBtnShow();
+                else if (!visible && window._wtvBtnHide) window._wtvBtnHide();
             };
 
             const hideMiniplayer = () => {
@@ -7684,69 +7778,9 @@ document.addEventListener('DOMContentLoaded', () => {
         <span style="font-size: 20px;">🎬</span>
     </button>
 
-    <!-- WTV Restore Button - More Visible (desktop only) -->
-    <button id="wtv-restore-btn" style="
-        position: fixed;
-        bottom: 90px;
-        left: 16px;
-        width: 64px;
-        height: 64px;
-        background: linear-gradient(135deg, rgba(251, 191, 36, 0.9), rgba(220, 38, 38, 0.5));
-        border: 3px solid rgba(251, 191, 36, 1);
-        border-radius: 15px;
-        color: #fbbf24;
-        font-size: 16px;
-        font-weight: 900;
-        cursor: pointer;
-        z-index: 999998;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.3s;
-        box-shadow: 0 0 25px rgba(251, 191, 36, 0.6), inset 0 0 15px rgba(251, 191, 36, 0.2);
-        font-family: 'Cinzel', serif;
-        text-align: center;
-        line-height: 1.2;
-        gap: 4px;
-        animation: wtv-pulse 2s infinite;
-    " onmouseover="this.style.background='linear-gradient(135deg, rgba(251,191,36,1), rgba(220,38,38,0.6))'; this.style.transform='scale(1.15)'; this.style.boxShadow='0 0 35px rgba(251,191,36,0.85), inset 0 0 20px rgba(251,191,36,0.4)';" onmouseout="this.style.background='linear-gradient(135deg, rgba(251,191,36,0.9), rgba(220,38,38,0.5))'; this.style.transform=''; this.style.boxShadow='0 0 25px rgba(251,191,36,0.6), inset 0 0 15px rgba(251,191,36,0.2)';"
-        onclick="if (window._showWtvMiniplayer) window._showWtvMiniplayer();"
-        title="Click to restore WTV miniplayer">
-        <span style="font-size: 24px;">🎬</span>
-        <span style="font-size: 9px; opacity: 0.9;">WTV</span>
-    </button>
-    <script>
-        // WTV button is always visible on page load (no localStorage persistence)
-    </script>
+    <!-- Old WTV button removed — now at top of body -->
 
     <style>
-        /* Force WTV restore button visible by default via CSS */
-        #wtv-restore-btn {
-            display: flex !important;
-        }
-        /* JS adds this class to hide the button when player is open or session-hidden */
-        #wtv-restore-btn.wtv-btn-hidden {
-            display: none !important;
-        }
-
-        @media (max-width: 768px) {
-            /* WTV restore button: position above mobile tab bar */
-            #wtv-restore-btn {
-                width: 52px !important;
-                height: 52px !important;
-                bottom: 85px !important;
-                left: 10px !important;
-                border-radius: 14px !important;
-                border-width: 2px !important;
-            }
-            #wtv-restore-btn span:first-child {
-                font-size: 20px !important;
-            }
-            #wtv-restore-btn span:last-child {
-                font-size: 7px !important;
-            }
-        }
 
         @keyframes wtv-intro-pulse {
             0%, 100% {
@@ -7801,7 +7835,6 @@ document.addEventListener('DOMContentLoaded', () => {
     <script>
         // WTV Restore Button Handler + Mobile Drawer Logic
         (function() {
-            const restoreBtn = document.getElementById('wtv-restore-btn');
             const miniplayer = window._wtvMiniplayer || document.getElementById('video-miniplayer');
             const mobileTab = document.getElementById('wtv-mobile-tab');
             const overlay = document.getElementById('wtv-drawer-overlay');
@@ -7889,8 +7922,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (overlay) overlay.style.display = 'block';
                 if (mobileTab) mobileTab.style.display = 'none';
                 // Hide restore button when player is open
-                const rb = document.getElementById('wtv-restore-btn');
-                if (rb) rb.classList.add('wtv-btn-hidden');
+                if (window._wtvBtnHide) window._wtvBtnHide();
                 if (window._wtvLoadVideo) window._wtvLoadVideo();
                 // Fade out intro
                 setTimeout(() => {
@@ -7908,8 +7940,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (overlay) overlay.style.display = 'none';
                 if (mobileTab) mobileTab.style.display = 'flex';
                 // Show restore button on mobile too
-                const rb = document.getElementById('wtv-restore-btn');
-                if (rb) rb.classList.remove('wtv-btn-hidden');
+                if (window._wtvBtnShow) window._wtvBtnShow();
                 // After slide-out animation finishes, fully hide
                 setTimeout(() => {
                     if (miniplayer.classList.contains('mobile-drawer-closed')) {
@@ -7934,8 +7965,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     overlay.style.display = 'none';
                 }
                 // Also hide the restore button
-                const rb = document.getElementById('wtv-restore-btn');
-                if (rb) rb.classList.add('wtv-btn-hidden');
+                if (window._wtvBtnHide) window._wtvBtnHide();
                 window._wtvSessionHidden = true;
                 console.log('WTV hidden for this session — will reappear on refresh');
             };
@@ -7976,10 +8006,10 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             // --- Desktop + Mobile restore button ---
-            if (restoreBtn && miniplayer) {
+            if (miniplayer) {
                 // Check session-only hide flag (set by "Don't show this anymore")
                 if (window._wtvSessionHidden) {
-                    restoreBtn.classList.add('wtv-btn-hidden');
+                    if (window._wtvBtnHide) window._wtvBtnHide();
                     miniplayer.style.display = 'none';
                     if (mobileTab) mobileTab.style.display = 'none';
                     if (overlay) overlay.style.display = 'none';
@@ -7987,21 +8017,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 // WTV starts closed — restore button visible on both desktop and mobile
-                restoreBtn.classList.remove('wtv-btn-hidden');
+                if (window._wtvBtnShow) window._wtvBtnShow();
                 miniplayer.style.display = 'none';
                 miniplayer.style.opacity = '0';
                 if (mobileTab) mobileTab.style.display = isMobile() ? 'flex' : 'none';
 
-                restoreBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    console.log('🎬 Restoring WTV miniplayer...');
-                    window._showWtvMiniplayer();
-                    console.log('✅ WTV miniplayer restored successfully');
-                });
-                console.log('✅ WTV restore button listener attached');
+                // Click handled by drag IIFE at top of body
+                console.log('✅ WTV init complete — button at top of body');
             } else {
-                console.error('❌ Could not find restore button or miniplayer');
+                console.error('❌ Could not find miniplayer element');
             }
 
             // On resize, sync state
@@ -8009,7 +8033,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (window._wtvSessionHidden) {
                     if (miniplayer) miniplayer.style.display = 'none';
                     if (mobileTab) mobileTab.style.display = 'none';
-                    if (restoreBtn) restoreBtn.classList.add('wtv-btn-hidden');
+                    if (window._wtvBtnHide) window._wtvBtnHide();
                     if (overlay) overlay.style.display = 'none';
                     return;
                 }
@@ -8022,9 +8046,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         miniplayer.style.display = 'none';
                         if (overlay) overlay.style.display = 'none';
                     }
-                    if (restoreBtn) {
-                        if (miniplayerOpen) restoreBtn.classList.add('wtv-btn-hidden');
-                        else restoreBtn.classList.remove('wtv-btn-hidden');
+                    if (true) {
+                        if (miniplayerOpen) if (window._wtvBtnHide) window._wtvBtnHide();
+                        else if (window._wtvBtnShow) window._wtvBtnShow();
                     }
                 } else {
                     if (mobileTab) mobileTab.style.display = 'none';
@@ -8032,9 +8056,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     miniplayer.classList.remove('mobile-drawer-closed');
                     if (!miniplayerOpen) {
                         miniplayer.style.display = 'none';
-                        if (restoreBtn) restoreBtn.classList.remove('wtv-btn-hidden');
+                        if (window._wtvBtnShow) window._wtvBtnShow();
                     } else {
-                        if (restoreBtn) restoreBtn.classList.add('wtv-btn-hidden');
+                        if (window._wtvBtnHide) window._wtvBtnHide();
                     }
                 }
             });
@@ -8196,32 +8220,57 @@ document.addEventListener('DOMContentLoaded', () => {
     <!-- ═══════════════════════════════════════════════════ -->
     <!-- SECRET GAME OVERLAY -->
     <!-- ═══════════════════════════════════════════════════ -->
-    <div id="game-overlay"></div>
+    <div id="game-overlay">
+        <button id="game-close-btn" onclick="window._closeGame && window._closeGame()" aria-label="Close game" style="
+            position: absolute; top: 14px; right: 14px; z-index: 10001;
+            width: 46px; height: 46px; border-radius: 50%;
+            background: rgba(0,0,0,0.85); border: 2px solid rgba(251,191,36,0.8);
+            color: #fbbf24; font-size: 26px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.6); font-family: sans-serif; line-height: 1;
+        ">×</button>
+        <iframe id="game-iframe" style="width:100%;height:100%;border:none;background:#0a0a0a;"></iframe>
+    </div>
 
     <script>
-        // aWizard Secret Game Trigger
+        // ══════════════════════════════════════════════════════════
+        // GAME OVERLAY — inline embed (no new tab)
+        // ══════════════════════════════════════════════════════════
+        window._openGame = function() {
+            const ov = document.getElementById('game-overlay');
+            const fr = document.getElementById('game-iframe');
+            if (!ov || !fr) return;
+            fr.src = 'awizard-game.html';
+            ov.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            console.log('🎮 Game opened');
+        };
+        window._closeGame = function() {
+            const ov = document.getElementById('game-overlay');
+            const fr = document.getElementById('game-iframe');
+            if (!ov) return;
+            ov.classList.remove('active');
+            document.body.style.overflow = '';
+            setTimeout(() => { if (fr) fr.src = 'about:blank'; }, 400);
+            console.log('🎮 Game closed');
+        };
+
+        // CASTER101 title → open game
         const titleTrigger = document.getElementById('caster-title-trigger');
         if (titleTrigger) {
             titleTrigger.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('🎮 Opening aWizard Secret Game...');
-                // Open the game in a new window/tab
-                window.open('awizard-game.html', 'aWizard', 'width=1000,height=900,scrollbars=yes');
+                window._openGame();
             });
-
-            // Visual feedback on hover
             titleTrigger.style.cursor = 'pointer';
         }
 
-        // Close game overlay on ESC key
+        // ESC closes game
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
-                const overlay = document.getElementById('game-overlay');
-                if (overlay && overlay.style.display !== 'none') {
-                    overlay.style.display = 'none';
-                    document.body.style.overflow = '';
-                }
+                const ov = document.getElementById('game-overlay');
+                if (ov && ov.classList.contains('active')) window._closeGame();
             }
         });
     </script>
