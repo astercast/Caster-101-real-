@@ -222,36 +222,7 @@
         /* ═══════════════════════════════════════════════════ */
         /* GAME INTEGRATION - Secret aWizard Game Overlay */
         /* ═══════════════════════════════════════════════════ */
-        #game-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.98);
-            z-index: 9999;
-            overflow: hidden;
-            animation: fadeInOverlay 0.4s ease;
-        }
-
-        #game-overlay.active {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        @keyframes fadeInOverlay {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        #game-frame {
-            width: 100%;
-            height: 100%;
-            max-width: 1200px;
-            border: none;
-            background: #0a0a0a;
-            border-radius: 0.5rem;
-        }
-
+        /* Game title trigger (CASTER101 click → game tab) */
         .game-title-trigger {
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -265,15 +236,6 @@
 
         .game-title-trigger:active {
             transform: scale(0.98);
-        }
-
-        /* Mobile optimization for game overlay */
-        @media (max-width: 768px) {
-            #game-frame {
-                max-width: 100%;
-                height: 100vh;
-                border-radius: 0;
-            }
         }
 
         .header {
@@ -1904,27 +1866,28 @@
             /* ── Video Miniplayer — Right-edge slide-out drawer ── */
             #video-miniplayer {
                 position: fixed !important;
-                top: 0 !important;
-                right: 0 !important;
-                left: auto !important;
-                bottom: 0 !important;
-                width: 45vw !important;
-                max-width: 450px !important;
-                height: 100vh !important;
-                height: 100dvh !important;
-                border-radius: 20px 0 0 20px !important;
-                border-right: none !important;
-                transform: translateX(0) !important;
-                transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                bottom: 70px !important;
+                left: 50% !important;
+                top: auto !important;
+                right: auto !important;
+                transform: translateX(-50%) !important;
+                width: 92vw !important;
+                max-width: 400px !important;
+                height: auto !important;
+                max-height: 80vh !important;
+                border-radius: 16px !important;
+                border-right: 1.5px solid rgba(251, 191, 36, 0.5) !important;
+                transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s !important;
                 cursor: default !important;
                 z-index: 999999 !important;
                 flex-direction: column !important;
-                overflow-y: auto !important;
-                box-shadow: -8px 0 40px rgba(0,0,0,0.7), 0 0 30px rgba(251,191,36,0.15) !important;
+                overflow: hidden !important;
+                box-shadow: 0 -4px 40px rgba(0,0,0,0.7), 0 0 20px rgba(251,191,36,0.15) !important;
             }
 
             #video-miniplayer.mobile-drawer-closed {
-                transform: translateX(100%) !important;
+                transform: translateX(-50%) translateY(120%) !important;
+                opacity: 0 !important;
                 pointer-events: none !important;
             }
 
@@ -2157,12 +2120,6 @@
             .footer p {
                 font-size: 11px !important;
             }
-
-            /* 480px - drawer more square for smaller screens */
-            #video-miniplayer {
-                width: 90vw !important;
-                max-width: 380px !important;
-            }
         }
 
         /* ── Desktop-only: Ensure viewport change doesn't break wide screens ── */
@@ -2259,12 +2216,13 @@
                 : '0 0 20px rgba(251,191,36,0.7), 0 4px 12px rgba(0,0,0,0.4)';
         }, 1200);
 
-        // Mobile size adjustment
+        // Mobile: right side, smaller
         if (window.innerWidth <= 768) {
             btn.style.width = '42px';
             btn.style.height = '42px';
-            btn.style.bottom = '90px';
-            btn.style.left = '8px';
+            btn.style.bottom = '80px';
+            btn.style.left = 'auto';
+            btn.style.right = '10px';
         }
 
         // Global show/hide for other scripts
@@ -3374,6 +3332,36 @@
             </div>
         </div>
 
+        <!-- SECRET GAME TAB (hidden from tab bar, triggered by CASTER101 title) -->
+        <div id="secretgame" class="content">
+            <div style="width:100%;max-width:1400px;margin:0 auto;padding:0;position:relative;">
+                <button onclick="showTab('market')" style="
+                    position:absolute;top:12px;right:12px;z-index:10;
+                    width:40px;height:40px;border-radius:50%;
+                    background:rgba(0,0,0,0.7);border:2px solid rgba(251,191,36,0.7);
+                    color:#fbbf24;font-size:22px;cursor:pointer;
+                    display:flex;align-items:center;justify-content:center;
+                    box-shadow:0 4px 12px rgba(0,0,0,0.5);font-family:sans-serif;line-height:1;
+                " title="Back to Market">×</button>
+                <iframe
+                    id="awizard-game-frame"
+                    src="about:blank"
+                    data-src="/awizard-game.html"
+                    style="
+                        width:100%;
+                        height:85vh;
+                        min-height:500px;
+                        border:none;
+                        display:block;
+                        background:#0a0a0a;
+                        border-radius:12px;
+                    "
+                    allow="fullscreen; autoplay"
+                    allowfullscreen
+                ></iframe>
+            </div>
+        </div>
+
 
         <div class="footer">
             <p style="font-weight: bold; font-size: 14px; color: #fbbf24; margin-bottom: 8px;">★彡 aWizard is multi chain
@@ -3484,6 +3472,14 @@
                                     const script = iframeDoc.createElement('script');
             if (tabName === "market") {
                 initMarketData();
+            }
+            if (tabName === "secretgame") {
+                const gf = document.getElementById('awizard-game-frame');
+                if (gf && !gf.dataset.loaded) {
+                    gf.src = gf.dataset.src;
+                    gf.dataset.loaded = 'true';
+                    console.log('🎮 aWizard game loaded');
+                }
             }
                                     script.textContent = `
                                         (function() {
@@ -7094,9 +7090,6 @@ document.addEventListener('DOMContentLoaded', () => {
         overflow: hidden;
         display: flex;
         flex-direction: column;
-        opacity: 1 !important;
-        pointer-events: auto !important;
-        transform: scale(1) translateY(0) !important;
         transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.6s cubic-bezier(0.2, 0.88, 0.1, 1), box-shadow 0.3s ease;
         user-select: none;
         opacity: 0;
@@ -7213,16 +7206,15 @@ document.addEventListener('DOMContentLoaded', () => {
             </button>
         </div>
 
-        <!-- Video Container with Fade-in -->
+        <!-- Video Container -->
         <div style="
             position: relative;
             width: 100%;
             aspect-ratio: 16/9;
             background: linear-gradient(135deg, #000000, #0a0a0a);
             box-shadow: inset 0 1px 8px rgba(0, 0, 0, 0.7);
-            min-height: 140px;
-            flex: 1;
-            animation: wtv-fade-in 0.6s cubic-bezier(0.2, 0.88, 0.1, 1) 0.3s both;
+            min-height: 120px;
+            flex-shrink: 0;
         ">
             <div id="miniplayer-container" style="
                 width: 100%;
@@ -7439,20 +7431,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const showMiniplayer = () => {
                 miniplayer.style.display = 'flex';
+                miniplayer.style.opacity = '1';
+                miniplayer.style.transform = 'scale(1) translateY(0)';
                 miniplayer.style.pointerEvents = 'auto';
                 if (window._wtvLoadVideo) {
                     window._wtvLoadVideo();
                 }
-                // Trigger fade-in animation
                 setTimeout(() => {
                     miniplayer.classList.add('show-wtv');
                 }, 10);
-                // Fade out intro overlay after videos start
                 setTimeout(() => {
                     const introOverlay = document.getElementById('wtv-intro-overlay');
-                    if (introOverlay) {
-                        introOverlay.classList.add('fade-out');
-                    }
+                    if (introOverlay) introOverlay.classList.add('fade-out');
                 }, 600);
                 setRestoreVisible(false);
             };
@@ -7810,6 +7800,12 @@ document.addEventListener('DOMContentLoaded', () => {
             pointer-events: auto !important;
         }
 
+        @media (max-width: 768px) {
+            #video-miniplayer.show-wtv {
+                transform: translateX(-50%) scale(1) translateY(0) !important;
+            }
+        }
+
         #video-miniplayer #wtv-intro-overlay.fade-out {
             opacity: 0 !important;
         }
@@ -7916,20 +7912,18 @@ document.addEventListener('DOMContentLoaded', () => {
             window._wtvOpenDrawer = function() {
                 if (!miniplayer) return;
                 miniplayer.classList.remove('hidden', 'mobile-drawer-closed');
-                miniplayer.classList.add('show-wtv');
                 miniplayer.style.display = 'flex';
+                miniplayer.style.opacity = '1';
+                miniplayer.style.transform = 'translateX(-50%)';
                 miniplayer.style.pointerEvents = 'auto';
+                miniplayer.classList.add('show-wtv');
                 if (overlay) overlay.style.display = 'block';
                 if (mobileTab) mobileTab.style.display = 'none';
-                // Hide restore button when player is open
                 if (window._wtvBtnHide) window._wtvBtnHide();
                 if (window._wtvLoadVideo) window._wtvLoadVideo();
-                // Fade out intro
                 setTimeout(() => {
                     const introOverlay = document.getElementById('wtv-intro-overlay');
-                    if (introOverlay) {
-                        introOverlay.classList.add('fade-out');
-                    }
+                    if (introOverlay) introOverlay.classList.add('fade-out');
                 }, 600);
             };
 
@@ -7937,11 +7931,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!miniplayer) return;
                 miniplayer.classList.add('mobile-drawer-closed');
                 miniplayer.classList.remove('show-wtv');
+                miniplayer.style.opacity = '0';
+                miniplayer.style.pointerEvents = 'none';
                 if (overlay) overlay.style.display = 'none';
                 if (mobileTab) mobileTab.style.display = 'flex';
-                // Show restore button on mobile too
                 if (window._wtvBtnShow) window._wtvBtnShow();
-                // After slide-out animation finishes, fully hide
                 setTimeout(() => {
                     if (miniplayer.classList.contains('mobile-drawer-closed')) {
                         miniplayer.style.display = 'none';
@@ -8217,62 +8211,35 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     </script>
 
-    <!-- ═══════════════════════════════════════════════════ -->
-    <!-- SECRET GAME OVERLAY -->
-    <!-- ═══════════════════════════════════════════════════ -->
-    <div id="game-overlay">
-        <button id="game-close-btn" onclick="window._closeGame && window._closeGame()" aria-label="Close game" style="
-            position: absolute; top: 14px; right: 14px; z-index: 10001;
-            width: 46px; height: 46px; border-radius: 50%;
-            background: rgba(0,0,0,0.85); border: 2px solid rgba(251,191,36,0.8);
-            color: #fbbf24; font-size: 26px; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.6); font-family: sans-serif; line-height: 1;
-        ">×</button>
-        <iframe id="game-iframe" style="width:100%;height:100%;border:none;background:#0a0a0a;"></iframe>
-    </div>
+    <!-- Game is now a tab — no overlay needed -->
 
     <script>
-        // ══════════════════════════════════════════════════════════
-        // GAME OVERLAY — inline embed (no new tab)
-        // ══════════════════════════════════════════════════════════
-        window._openGame = function() {
-            const ov = document.getElementById('game-overlay');
-            const fr = document.getElementById('game-iframe');
-            if (!ov || !fr) return;
-            fr.src = 'awizard-game.html';
-            ov.classList.add('active');
-            document.body.style.overflow = 'hidden';
-            console.log('🎮 Game opened');
-        };
-        window._closeGame = function() {
-            const ov = document.getElementById('game-overlay');
-            const fr = document.getElementById('game-iframe');
-            if (!ov) return;
-            ov.classList.remove('active');
-            document.body.style.overflow = '';
-            setTimeout(() => { if (fr) fr.src = 'about:blank'; }, 400);
-            console.log('🎮 Game closed');
-        };
-
-        // CASTER101 title → open game
-        const titleTrigger = document.getElementById('caster-title-trigger');
-        if (titleTrigger) {
-            titleTrigger.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                window._openGame();
-            });
-            titleTrigger.style.cursor = 'pointer';
-        }
-
-        // ESC closes game
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                const ov = document.getElementById('game-overlay');
-                if (ov && ov.classList.contains('active')) window._closeGame();
+        // CASTER101 title → open secret game tab
+        (function() {
+            const trigger = document.getElementById('caster-title-trigger');
+            if (trigger) {
+                trigger.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('🎮 Opening secret game tab...');
+                    showTab('secretgame');
+                });
+                trigger.style.cursor = 'pointer';
+                console.log('🎮 GAME TITLE CHECK: ✅ FOUND — click opens game tab');
+            } else {
+                console.error('🎮 GAME TITLE CHECK: ❌ NOT FOUND');
             }
-        });
+
+            // ESC from game returns to market
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    const gameTab = document.getElementById('secretgame');
+                    if (gameTab && gameTab.classList.contains('active')) {
+                        showTab('market');
+                    }
+                }
+            });
+        })();
     </script>
 
 </body>
