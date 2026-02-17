@@ -1,21 +1,16 @@
 // chia-cat-prices.js — Vercel API route
-// MODE 1: emoji market prices (default) - Spacescan → Dexie fallback
+// MODE 1: emoji market prices (default) - Dexie tickers (reliable) + Spacescan (best effort)
+//   Browser handles supply fetching directly via Spacescan (Vercel IPs often blocked)
 // MODE 2: treasury wallets (?mode=treasury&wallets=...)
-//   - xchscan.com for XCH balance (Spacescan blocks Vercel IPs)
-//   - Spacescan for NFTs/tokens (best effort, may get 403)
 
 const CAT_IDS = [
-    // Main emoji market tokens
     'a09af8b0d12b27772c64f89cf0d1db95186dca5b1871babc5108ff44f36305e6', // CASTER
     'eb2155a177b6060535dd8e72e98ddb0c77aea21fab53737de1c1ced3cb38e4c4', // SPELLPOWER
-    'ae1536f56760e471ad85ead45f00d680ff9cca73b8cc3407be778f1c0c606eac', // WIZ
+    'ae1536f56760e471ad85ead45f00d680ff9cca73b8cc3407be778f1c0c606eac', // WIZ/BYC
     '70010d83542594dd44314efbae75d82b3d9ae7d946921ed981a6cd08f0549e50', // LOVE
     'ab558b1b841365a24d1ff2264c55982e55664a8b6e45bc107446b7e667bb463b', // SPROUT
     'dd37f678dda586fad9b1daeae1f7c5c137ffa6d947e1ed5c7b4f3c430da80638', // PIZZA
 ];
-
-const SUPPLY_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
-const SUPPLY_CACHE = new Map();
 
 const UA = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36', 'Accept': 'application/json' };
 const sleep = ms => new Promise(res => setTimeout(res, ms));
@@ -30,26 +25,41 @@ async function timedFetch(url, ms) {
     } catch (e) { clearTimeout(timer); throw e; }
 }
 
-function getCachedSupply(assetId) {
-    const entry = SUPPLY_CACHE.get(assetId);
-    if (!entry) return 0;
-    if (Date.now() - entry.ts > SUPPLY_TTL_MS) return 0;
-    return entry.supply || 0;
+// Spacescan price — best effort, may 403 from Vercel IPs
+async function getSpacescanPrice(assetId) {
+    try {
+        const r = await timedFetch('https://api.spacescan.io/cat/info/' + assetId, 5000);
+        if (!r.ok) return null;
+        const d = await r.json();
+        const data = d?.data || {};
+        return {
+            price: parseFloat(data.amount_price || 0),
+            change: parseFloat(data.pricepercentage || 0),
+            supply: parseFloat(data.circulating_supply || data.total_supply || 0),
+            source: 'spacescan'
+        };
+    } catch (_) { return null; }
 }
 
-function setCachedSupply(assetId, supply) {
-    if (!supply || supply <= 0) return;
-    SUPPLY_CACHE.set(assetId, { supply, ts: Date.now() });
+// Dexie individual offer fallback
+async function getDexieBestAsk(assetId, xchUsd) {
+    try {
+        const r = await timedFetch('https://dexie.space/v1/offers?offered=' + assetId + '&requested=xch&page=1&page_size=5&sort=price&order=asc', 7000);
+        if (!r.ok) return null;
+        const d = await r.json();
+        const offers = (d.offers || []).filter(o => o.price > 0);
+        if (!offers.length) return null;
+        return { price: Math.min(...offers.map(o => o.price)) * xchUsd, source: 'dexie-offer' };
+    } catch (_) { return null; }
 }
 
-// ── TREASURY MODE ────────────────────────────────────────────────────────────
+// ── TREASURY MODE ──
 
 async function fetchTreasuryWallets(wallets) {
     const results = [];
     for (const wallet of wallets) {
         const walletData = { wallet, xchBal: 0, nfts: [], tokens: [] };
         try {
-            // XCH Balance via xchscan (works from Vercel)
             try {
                 const balResp = await timedFetch(`https://xchscan.com/api/account/balance?address=${wallet}`, 10000);
                 if (balResp.ok) {
@@ -59,7 +69,6 @@ async function fetchTreasuryWallets(wallets) {
             } catch (e) { console.warn(`[treasury] xchscan balance failed: ${e.message}`); }
             await sleep(300);
 
-            // NFTs via Spacescan (best effort)
             try {
                 const nftResp = await timedFetch(`https://api.spacescan.io/address/nft-balance/${wallet}`, 12000);
                 if (nftResp.ok) {
@@ -72,7 +81,6 @@ async function fetchTreasuryWallets(wallets) {
             } catch (_) {}
             await sleep(800);
 
-            // Tokens via Spacescan (best effort)
             try {
                 const tokResp = await timedFetch(`https://api.spacescan.io/address/token-balance/${wallet}`, 25000);
                 if (tokResp.ok) {
@@ -97,84 +105,11 @@ async function fetchTreasuryWallets(wallets) {
     return results;
 }
 
-// ── EMOJI MARKET MODE ────────────────────────────────────────────────────────
-
-async function getSpacescanPrice(assetId) {
-    try {
-        const r = await timedFetch('https://api.spacescan.io/cat/info/' + assetId, 5000);
-        if (!r.ok) return null;
-        const d = await r.json();
-        const price = parseFloat(d?.data?.amount_price || 0);
-        // Use circulating supply if available, otherwise use total supply
-        const supply = parseFloat(d?.data?.circulating_supply || d?.data?.total_supply || 0);
-        if (supply > 0) setCachedSupply(assetId, supply);
-        const mcap = (supply > 0 && price > 0) ? (supply * price) : parseFloat(d?.data?.market_cap || 0);
-        return {
-            price,
-            change: parseFloat(d?.data?.pricepercentage || 0),
-            mcap,
-            supply,
-            source: 'spacescan'
-        };
-    } catch (_) { return null; }
-}
-
-async function getDexieBestAsk(assetId, xchUsd) {
-    try {
-        const r = await timedFetch('https://dexie.space/v1/offers?offered=' + assetId + '&requested=xch&page=1&page_size=5&sort=price&order=asc', 7000);
-        if (!r.ok) return null;
-        const d = await r.json();
-        const offers = (d.offers || []).filter(o => o.price > 0);
-        if (!offers.length) return null;
-        return { price: Math.min(...offers.map(o => o.price)) * xchUsd, change: 0, mcap: 0, source: 'dexie' };
-    } catch (_) { return null; }
-}
-
-async function getSupply(assetId) {
-    try {
-        const r = await timedFetch('https://api.spacescan.io/cat/info/' + assetId, 8000);
-        if (!r.ok) {
-            console.warn(`[getSupply] ${assetId.slice(0,8)}: Spacescan HTTP ${r.status}, trying alternatives`);
-            
-            // Fallback to TibetSwap API for token info
-            try {
-                const tibetR = await timedFetch(`https://api.tibetswap.io/tokens/${assetId}`, 6000);
-                if (tibetR.ok) {
-                    const tibetData = await tibetR.json();
-                    const supply = parseFloat(tibetData?.supply || tibetData?.total_supply || 0);
-                    if (supply > 0) {
-                        setCachedSupply(assetId, supply);
-                        console.log(`[getSupply] ${assetId.slice(0,8)}: ${supply} (TibetSwap)`);
-                        return supply;
-                    }
-                }
-            } catch (tibetError) {
-                console.warn(`[getSupply] ${assetId.slice(0,8)}: TibetSwap fallback failed`);
-            }
-            
-            return 0;
-        }
-        const d = await r.json();
-        const supply = parseFloat(d?.data?.circulating_supply || d?.data?.total_supply || 0);
-        if (supply > 0) {
-            setCachedSupply(assetId, supply);
-            console.log(`[getSupply] ${assetId.slice(0,8)}: ${supply} (Spacescan)`);
-        } else {
-            console.warn(`[getSupply] ${assetId.slice(0,8)}: no supply data from Spacescan`);
-        }
-        return supply;
-    } catch (e) {
-        console.warn(`[getSupply] Failed for ${assetId.slice(0,8)}: ${e.message}`);
-        return 0;
-    }
-}
-
-// ── HANDLER ──────────────────────────────────────────────────────────────────
+// ── HANDLER ──
 
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-    // Cache for 60s, serve stale for 5min while revalidating
     res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
     if (req.method === 'OPTIONS') return res.status(200).end();
 
@@ -193,26 +128,24 @@ export default async function handler(req, res) {
     }
 
     // EMOJI MARKET MODE
+    // Strategy: Dexie tickers (reliable from Vercel) + Spacescan best-effort for price/change
+    // Browser handles circulating supply fetching directly
     try {
-        const xchRespP = timedFetch('https://api.coingecko.com/api/v3/simple/price?ids=chia&vs_currencies=usd', 6000)
-            .then(r => r.ok ? r.json() : {}).catch(() => ({}));
+        // Fetch all sources in parallel
+        const [xchResp, dexieTickers, ...catResults] = await Promise.all([
+            timedFetch('https://api.coingecko.com/api/v3/simple/price?ids=chia&vs_currencies=usd', 6000)
+                .then(r => r.ok ? r.json() : {}).catch(() => ({})),
+            timedFetch('https://dexie.space/v2/prices/tickers', 8000)
+                .then(r => r.ok ? r.json() : {}).catch(() => ({})),
+            // Spacescan calls — best effort, may fail from Vercel IPs
+            ...CAT_IDS.map((id, i) =>
+                sleep(i * 300).then(() => getSpacescanPrice(id))
+            ),
+        ]);
 
-        // Also fetch Dexie tickers in parallel (for fallback)
-        const dexieTickersP = timedFetch('https://dexie.space/v2/prices/tickers', 8000)
-            .then(r => r.ok ? r.json() : {}).catch(() => ({}));
-
-        // Try Spacescan sequentially to get prices and supplies
-        const catResults = [];
-        for (let i = 0; i < CAT_IDS.length; i++) {
-            if (i > 0) await sleep(250);
-            catResults.push(await getSpacescanPrice(CAT_IDS[i]));
-        }
-
-        const xchResp = await xchRespP;
         const xchUsd = xchResp?.chia?.usd || 3;
-        const dexieTickers = await dexieTickersP;
 
-        // Build Dexie ticker map
+        // Build Dexie ticker map: assetId -> priceUsd
         const tickerMap = {};
         for (const tick of (dexieTickers.tickers || [])) {
             const bid = (tick.base_id || '').toLowerCase();
@@ -221,85 +154,51 @@ export default async function handler(req, res) {
         }
 
         const prices = {}, changes = {}, mcaps = {}, sources = {};
-        const dexieNeeded = [];
-        const noSupplyTokens = []; // Track tokens missing supplies
 
         for (let i = 0; i < CAT_IDS.length; i++) {
-            const id = CAT_IDS[i], r = catResults[i];
-            if (r && r.price > 0) {
-                prices[id] = r.price;
-                changes[id] = r.change;
-                mcaps[id] = r.mcap;
-                sources[id] = r.source;
-                // If Spacescan gave us a price but no supply cached, mark it
-                if (!r.supply || r.supply === 0) noSupplyTokens.push(id);
-            } else {
-                // Try Dexie ticker first
-                const tp = tickerMap[id.toLowerCase()];
-                if (tp > 0) {
-                    // Try to use supply from Spacescan result, cached, or estimate
-                    let supply = (r?.supply || getCachedSupply(id) || 0);
-                    let mcap = supply > 0 ? supply * tp : 0;
-                    let src = supply > 0 ? (r?.supply > 0 ? 'dexie' : 'dexie+cache') : 'dexie';
-                    
-                    prices[id] = tp;
-                    changes[id] = r?.change || 0;
-                    mcaps[id] = mcap;
-                    sources[id] = src;
-                    
-                    // If no supply found, mark for later lookup
-                    if (!supply) noSupplyTokens.push(id);
-                } else dexieNeeded.push(id);
+            const id = CAT_IDS[i];
+            const ss = catResults[i];
+            const dexiePrice = tickerMap[id.toLowerCase()] || 0;
+
+            let price = 0, change = 0, src = 'none';
+
+            // Priority 1: Spacescan (has price + 24h change + supply)
+            if (ss && ss.price > 0) {
+                price = ss.price;
+                change = ss.change || 0;
+                src = 'spacescan';
+                if (ss.supply > 0) mcaps[id] = ss.supply * price;
             }
+            // Priority 2: Dexie tickers (reliable, always works from Vercel)
+            else if (dexiePrice > 0) {
+                price = dexiePrice;
+                src = 'dexie';
+                if (ss && ss.change) change = ss.change;
+            }
+
+            prices[id] = price;
+            changes[id] = change;
+            if (!mcaps[id]) mcaps[id] = 0;
+            sources[id] = src;
         }
 
-        // Individual Dexie offers for anything still missing
-        if (dexieNeeded.length > 0) {
-            const dr = await Promise.all(dexieNeeded.map(id => getDexieBestAsk(id, xchUsd)));
-            for (let i = 0; i < dexieNeeded.length; i++) {
-                const id = dexieNeeded[i], r = dr[i];
-                const price = r?.price || 0;
-                // Use any available supply (from failed Spacescan result or cache)
-                const supply = (catResults[CAT_IDS.indexOf(id)]?.supply || getCachedSupply(id) || 0);
-                // If we have supply, always compute mcap even if no Spacescan data
-                const mcap = supply > 0 && price > 0 ? supply * price : (r?.mcap || 0);
-                
-                prices[id] = price;
-                changes[id] = r?.change || 0;
-                mcaps[id] = mcap;
-                
-                // Build source string
-                if (mcap > 0) {
-                    if (supply > 0) {
-                        sources[id] = (r?.source ? r.source + '+cache' : 'dexie+cache');
-                    } else {
-                        sources[id] = (r?.source || 'dexie');
-                    }
-                } else {
-                    sources[id] = (r?.source || 'none');
+        // Fallback: individual Dexie offers for tokens still missing a price
+        const missing = CAT_IDS.filter(id => !prices[id] || prices[id] === 0);
+        if (missing.length > 0) {
+            const dr = await Promise.all(missing.map(id => getDexieBestAsk(id, xchUsd)));
+            for (let i = 0; i < missing.length; i++) {
+                const id = missing[i], r = dr[i];
+                if (r && r.price > 0) {
+                    prices[id] = r.price;
+                    sources[id] = 'dexie-offer';
                 }
             }
         }
 
-        // Final fallback: aggressively fetch supplies for any token with a price but missing mcap
-        const tokensNeedingSupply = CAT_IDS.filter(id => prices[id] > 0 && mcaps[id] === 0);
-        
-        if (tokensNeedingSupply.length > 0) {
-            console.log(`[emoji-market] Fetching supplies for ${tokensNeedingSupply.length} tokens without mcap (sequential)`);
-            for (let i = 0; i < tokensNeedingSupply.length; i++) {
-                const id = tokensNeedingSupply[i];
-                if (i > 0) await sleep(700);
-                const supply = await getSupply(id);
-                if (supply > 0 && prices[id] > 0) {
-                    mcaps[id] = supply * prices[id];
-                    sources[id] = (sources[id] || 'dexie') + '+supply';
-                    console.log(`[emoji-market] ${id.slice(0,8)}: supply=${supply}, price=$${prices[id]}, mcap=$${(mcaps[id]/1e6).toFixed(2)}M`);
-                }
-            }
-        }
-
-        return res.status(200).json({ prices, changes, mcaps, xch_usd: xchUsd, sources, success: true });
+        console.log(`[emoji-market] ${CAT_IDS.filter(id => prices[id] > 0).length}/${CAT_IDS.length} priced in ${Date.now()-t0}ms`);
+        return res.status(200).json({ prices, changes, mcaps, xch_usd: xchUsd, sources, success: true, elapsed_ms: Date.now() - t0 });
     } catch (e) {
+        console.error(`[emoji-market] Error: ${e.message}`);
         return res.status(200).json({ prices: {}, changes: {}, mcaps: {}, xch_usd: 3, success: false, error: e.message });
     }
 }

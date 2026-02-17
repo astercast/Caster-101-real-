@@ -379,15 +379,26 @@
             transition: opacity 0.3s ease;
         }
 
+        @keyframes tab-active-glow {
+            0%, 100% {
+                box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.5),
+                            0 6px 20px 4px rgba(251, 191, 36, 0.3),
+                            0 0 30px 6px rgba(251, 191, 36, 0.25);
+            }
+            50% {
+                box-shadow: 0 0 0 5px rgba(251, 191, 36, 0.7),
+                            0 6px 28px 6px rgba(251, 191, 36, 0.5),
+                            0 0 50px 12px rgba(251, 191, 36, 0.4);
+            }
+        }
+
         .tab.active {
             background: linear-gradient(135deg, rgba(251, 191, 36, 0.98), rgba(251, 191, 36, 0.92)) !important;
             color: #000 !important;
             border: 1.5px solid rgba(251, 191, 36, 0.8) !important;
             transform: translateY(-2px) scale(1.04) !important;
-            box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.45),
-                        0 6px 24px 4px rgba(251, 191, 36, 0.35),
-                        0 0 0 1.5px rgba(251, 191, 36, 0.5),
-                        0 0 40px 8px rgba(251, 191, 36, 0.35) !important;
+            animation: tab-active-glow 2s ease-in-out infinite !important;
+            z-index: 10 !important;
         }
 
         @media (max-width: 768px) {
@@ -396,7 +407,7 @@
                 color: #000 !important;
                 border: 2px solid #fbbf24 !important;
                 transform: translateY(-2px) scale(1.08) !important;
-                box-shadow: 0 0 0 6px #fbbf24cc, 0 0 40px 12px #fbbf24aa !important;
+                animation: tab-active-glow 2s ease-in-out infinite !important;
                 z-index: 10 !important;
             }
         }
@@ -595,6 +606,11 @@
                         0 2px 8px rgba(251, 191, 36, 0.05);
             content-visibility: auto;
             contain: layout style paint;
+            /* Uniform card height */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 110px;
         }
         
         .token-card::before {
@@ -632,6 +648,7 @@
                 padding: 10px 12px;
                 margin-bottom: 6px;
                 border-radius: 10px;
+                min-height: 95px;
             }
         }
 
@@ -1235,10 +1252,24 @@
                 text-overflow: ellipsis !important;
             }
 
+            @keyframes tab-mobile-glow {
+                0%, 100% {
+                    box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.6),
+                                0 0 15px 4px rgba(251, 191, 36, 0.35),
+                                inset 0 2px 0 #fbbf24;
+                }
+                50% {
+                    box-shadow: 0 0 0 5px rgba(251, 191, 36, 0.8),
+                                0 0 30px 8px rgba(251, 191, 36, 0.55),
+                                inset 0 2px 0 #fbbf24;
+                }
+            }
+
             .tab.active {
                 color: #fbbf24 !important;
                 background: rgba(251, 191, 36, 0.18) !important;
-                box-shadow: 0 0 0 4px #fbbf24cc, 0 0 20px 8px #fbbf24aa, inset 0 2px 0 #fbbf24 !important;
+                animation: tab-mobile-glow 2s ease-in-out infinite !important;
+                border-radius: 10px !important;
             }
 
             /* Show emoji as icon above label in bottom bar */
@@ -1876,8 +1907,8 @@
             .tab.active {
                 background: linear-gradient(135deg, rgba(251, 191, 36, 0.3), rgba(220, 38, 38, 0.25)) !important;
                 border: 1.5px solid rgba(251, 191, 36, 0.7) !important;
-                box-shadow: 0 0 20px rgba(251, 191, 36, 0.4), 0 4px 15px rgba(220, 38, 38, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
                 transform: translateY(-2px) scale(1.05) !important;
+                animation: tab-mobile-glow 2s ease-in-out infinite !important;
             }
 
             .tab-emoji {
@@ -3434,42 +3465,116 @@
         // Wrapper for Spacescan API calls - use this everywhere for coordination
         const spacescanFetch = (url, timeout = 12000, retries = 1) => spacescanQueue.enqueue(url, timeout, retries);
 
+        // ══════════════════════════════════════════════════════════════════════════
+        // BROWSER-DIRECT SUPPLY FETCHER (Spacescan works from browsers, not Vercel)
+        // ══════════════════════════════════════════════════════════════════════════
+        const supplyCache = {}; // In-memory: { assetId: { supply, total, ts } }
+        const SUPPLY_CACHE_TTL = 3 * 60 * 60 * 1000; // 3 hours
+
+        // Load cached supplies from localStorage on startup
+        try {
+            const saved = JSON.parse(localStorage.getItem('chia_supply_cache') || '{}');
+            for (const [k, v] of Object.entries(saved)) {
+                if (v.ts && (Date.now() - v.ts) < SUPPLY_CACHE_TTL) supplyCache[k] = v;
+            }
+            console.log(`[supply] Loaded ${Object.keys(supplyCache).length} cached supplies`);
+        } catch (_) {}
+
+        function saveSupplyCache() {
+            try { localStorage.setItem('chia_supply_cache', JSON.stringify(supplyCache)); } catch (_) {}
+        }
+
+        // Fetch circulating supply for a Chia CAT via direct browser call to Spacescan
+        // Uses the spacescanQueue to respect rate limits
+        window.getSupplyForChiaToken = async function(assetId) {
+            // Check in-memory cache first
+            const cached = supplyCache[assetId];
+            if (cached && (Date.now() - cached.ts) < SUPPLY_CACHE_TTL) {
+                return cached.supply || cached.total || 0;
+            }
+
+            try {
+                const data = await spacescanFetch(`https://api.spacescan.io/cat/info/${assetId}`, 10000, 2);
+                if (!data || !data.data) return 0;
+
+                const d = data.data;
+                const circ = parseFloat(d.circulating_supply || 0);
+                const total = parseFloat(d.total_supply || 0);
+                const supply = circ > 0 ? circ : total;
+
+                if (supply > 0) {
+                    supplyCache[assetId] = { supply: circ, total, ts: Date.now() };
+                    saveSupplyCache();
+                    console.log(`[supply] ${(d.asset_name || assetId.slice(0,8))}: circ=${circ}, total=${total}, using=${supply}`);
+                }
+                return supply;
+            } catch (e) {
+                console.warn(`[supply] Failed for ${assetId.slice(0,8)}: ${e.message}`);
+                return 0;
+            }
+        };
+
+        // Bulk-fetch all CAT supplies for emoji market tokens (browser-direct)
+        async function fetchAllChiaSupplies(assetIds) {
+            console.log(`[supply] Fetching supplies for ${assetIds.length} tokens via browser-direct Spacescan...`);
+            const results = {};
+            for (const id of assetIds) {
+                const supply = await window.getSupplyForChiaToken(id);
+                results[id] = supply;
+            }
+            console.log(`[supply] Got supplies for ${Object.values(results).filter(v => v > 0).length}/${assetIds.length} tokens`);
+            return results;
+        }
+
 
         async function fetchChiaData(baseData = []) {
-            console.log('--- CHIA PRICES: /api/chia-cat-prices + TibetSwap (no direct Spacescan) ---');
+            console.log('--- CHIA PRICES: Browser-direct (Dexie tickers + Spacescan supply) ---');
 
             const chiaTargets = trackedTokens.filter(t => t.chain === 'Chia');
             const catTargets  = chiaTargets.filter(t => t.assetId !== 'Native');
             const results     = [];
 
-            // All three in parallel — none are Spacescan direct, no rate limits
-            // Add cache-busting to ensure fresh prices
-            const [xchData, tibetRaw, catPriceData] = await Promise.all([
+            // ── Phase 1: Fetch prices from 3 sources in parallel (no Spacescan = no rate limit issues) ──
+            const [xchData, dexieTickerData, tibetRaw, catPriceData] = await Promise.all([
+                // XCH price from CoinGecko via proxy
                 fetch(`/api/coingecko-proxy?ids=chia&vs_currencies=usd&include_24hr_change=true&include_market_cap=true&t=${Date.now()}`)
                     .then(r => r.ok ? r.json() : {}).catch(() => ({})),
+                // Dexie tickers — single call gets prices for ALL CATs (reliable, no rate limit)
+                fetch('https://dexie.space/v2/prices/tickers')
+                    .then(r => r.ok ? r.json() : {}).catch(() => ({})),
+                // TibetSwap pairs — fallback price source
                 fetch('https://api.v2.tibetswap.io/pairs?per_page=200')
                     .then(r => r.ok ? r.json() : []).catch(() => []),
+                // Serverless function — tertiary fallback (may be stale or blocked)
                 fetch(`/api/chia-cat-prices?t=${Date.now()}`)
                     .then(r => r.ok ? r.json() : {}).catch(() => ({})),
             ]);
 
+            // ── XCH price ──
             let xchPriceUSD = xchData.chia?.usd || 0;
             let xchMarketCap = parseFloat(xchData.chia?.usd_market_cap || 0);
-            // Fallback: if CoinGecko fails, try TibetSwap XCH/USD price
-            if (xchPriceUSD === 0 && tibetRaw?.length > 0) {
-                const xchUsdPair = tibetRaw.find(p => p.short_name?.toLowerCase().includes('xch-usd'));
-                if (xchUsdPair) {
-                    xchPriceUSD = parseFloat(xchUsdPair.xch_reserve || 0) / parseFloat(xchUsdPair.asset_reserve || 1);
-                }
-            }
-            if (xchPriceUSD === 0) xchPriceUSD = 2.80;
-            const xchChange   = parseFloat(xchData.chia?.usd_24h_change || 0);
+            if (xchPriceUSD === 0) xchPriceUSD = 2.80; // hard fallback
+            const xchChange = parseFloat(xchData.chia?.usd_24h_change || 0);
             console.log(`XCH: $${xchPriceUSD.toFixed(4)} MCap: $${(xchMarketCap/1e6).toFixed(1)}M`);
 
             const xchTarget = chiaTargets.find(t => t.assetId === 'Native');
             if (xchTarget) results.push({...xchTarget, price: xchPriceUSD, change24h: xchChange, marketCap: xchMarketCap});
 
-            // TibetSwap map for fallback prices and pair names
+            // ── Build Dexie ticker map: assetId → { priceXch, priceUsd } ──
+            const dexieMap = {};
+            for (const tick of (dexieTickerData.tickers || [])) {
+                const bid = (tick.base_id || '').toLowerCase();
+                const lastPriceXch = parseFloat(tick.last_price || 0);
+                if (bid && lastPriceXch > 0) {
+                    dexieMap[bid] = {
+                        priceXch: lastPriceXch,
+                        priceUsd: lastPriceXch * xchPriceUSD
+                    };
+                }
+            }
+            console.log(`Dexie tickers: ${Object.keys(dexieMap).length} tokens`);
+
+            // ── Build TibetSwap map for fallback prices ──
             const tibetArr = Array.isArray(tibetRaw) ? tibetRaw : (tibetRaw.results || tibetRaw.pairs || []);
             const tibetMap = {};
             for (const pair of tibetArr) {
@@ -3478,68 +3583,106 @@
                 const xchRes = parseFloat(pair.xch_reserve  || 0) / 1e12;
                 const catRes = parseFloat(pair.asset_reserve || 0) / 1e3;
                 tibetMap[aid] = {
-                    tvl:        2 * xchRes * xchPriceUSD,
-                    priceUsd:   catRes > 0 ? (xchRes / catRes) * xchPriceUSD : 0,
-                    short_name: pair.short_name || '',
-                    name:       pair.name || ''
+                    priceUsd: catRes > 0 ? (xchRes / catRes) * xchPriceUSD : 0,
                 };
             }
             console.log(`TibetSwap: ${Object.keys(tibetMap).length} pools`);
 
-            // Batch prices from serverless function (Spacescan→Dexie fallback on server)
+            // ── Serverless batch data (tertiary fallback) ──
             const batchPrices  = catPriceData.prices  || {};
             const batchChanges = catPriceData.changes || {};
-            const batchMcaps   = catPriceData.mcaps   || {};
             const batchSources = catPriceData.sources || {};
 
+            // ── Phase 2: Assign best price for each token ──
+            // Priority: Spacescan (from serverless) > Dexie tickers > TibetSwap
+            const tokenPrices = {}; // assetId → { price, change, src }
             for (const t of catTargets) {
-                let price = 0, change = 0, mcap = 0, src = 'none';
                 const aid = t.assetId.toLowerCase();
+                let price = 0, change = 0, src = 'none';
 
-                // Try serverless batch first (Spacescan or Dexie on server)
-                const batchPrice = parseFloat(batchPrices[t.assetId] || 0);
-                const batchChange = parseFloat(batchChanges[t.assetId] || 0);
-                const batchMcap = parseFloat(batchMcaps[t.assetId] || 0);
-
-                if (batchPrice > 0) {
-                    price  = batchPrice;
-                    change = batchChange;
-                    mcap   = batchMcap;
-                    src    = batchSources[t.assetId] || 'batch';
+                // 1) Dexie tickers — most reliable, single call, fresh
+                const dexie = dexieMap[aid];
+                if (dexie && dexie.priceUsd > 0) {
+                    price = dexie.priceUsd;
+                    src = 'dexie';
                 }
 
-                // TibetSwap fallback for price
-                const tibet = tibetMap[aid] || {};
-                if (price === 0 && tibet.priceUsd > 0) { 
-                    price = tibet.priceUsd; 
-                    src = 'tibet'; 
+                // 2) Serverless batch (Spacescan price if server got it — includes 24h change)
+                const bp = parseFloat(batchPrices[t.assetId] || 0);
+                if (bp > 0) {
+                    // Prefer serverless if it has the price — it also carries 24h change
+                    price = bp;
+                    change = parseFloat(batchChanges[t.assetId] || 0);
+                    src = batchSources[t.assetId] || 'batch';
+                } else if (price > 0) {
+                    // Dexie had price, try to get 24h change from serverless anyway
+                    change = parseFloat(batchChanges[t.assetId] || 0);
                 }
 
-                // Calculate mcap: prefer batch mcap, fallback to TibetSwap TVL
-                if (mcap === 0 && price > 0) {
-                    // Use TVL as fallback when we have a price
-                    if (tibet.tvl > 0) {
-                        mcap = tibet.tvl;
-                        src = src + '+tvl';
-                    } else {
-                        // Aggressively fetch supply if missing
-                        if (window.getSupplyForChiaToken) {
-                            const supply = await window.getSupplyForChiaToken(t.assetId);
-                            if (supply > 0) {
-                                mcap = supply * price;
-                                src = (src || 'client') + '+supply';
-                            }
-                        }
-                        // If still missing, estimate with fallback value
-                        if (mcap === 0) {
-                            mcap = 100000 * price; // Fallback estimate
-                            src = (src || 'client') + '+estimate';
-                        }
+                // 3) TibetSwap fallback
+                if (price === 0) {
+                    const tibet = tibetMap[aid];
+                    if (tibet && tibet.priceUsd > 0) {
+                        price = tibet.priceUsd;
+                        src = 'tibet';
                     }
                 }
 
-                if (price > 0) console.log(`  ✅ ${t.displayName||t.name}: $${price.toFixed(8)} mcap:$${(mcap/1e6).toFixed(2)}M [${src}]`);
-                else           console.warn(`  ⚠️  ${t.displayName||t.name}: no price`);
+                tokenPrices[t.assetId] = { price, change, src };
+            }
+
+            // ── Phase 3: Fetch circulating supply from Spacescan (browser-direct) ──
+            // Spacescan allows browser calls but rate-limits aggressively.
+            // Fetch supplies sequentially with gaps. Use cache to avoid redundant calls.
+            console.log('[supply] Fetching circulating supplies from Spacescan (browser-direct)...');
+            const supplyResults = {}; // assetId → circSupply
+
+            for (let i = 0; i < catTargets.length; i++) {
+                const t = catTargets[i];
+                const tp = tokenPrices[t.assetId];
+
+                // Skip supply fetch if no price (mcap will be 0 anyway)
+                if (!tp || tp.price === 0) {
+                    supplyResults[t.assetId] = 0;
+                    continue;
+                }
+
+                // Try cache first (avoids Spacescan call entirely)
+                const cached = supplyCache[t.assetId];
+                if (cached && (Date.now() - cached.ts) < SUPPLY_CACHE_TTL) {
+                    const cs = cached.supply || cached.total || 0;
+                    if (cs > 0) {
+                        supplyResults[t.assetId] = cs;
+                        console.log(`  [cache] ${t.displayName||t.name}: supply=${cs.toLocaleString()}`);
+                        continue;
+                    }
+                }
+
+                // Browser-direct Spacescan call via the global rate-limited queue
+                const supply = await window.getSupplyForChiaToken(t.assetId);
+                supplyResults[t.assetId] = supply;
+            }
+
+            // ── Phase 4: Assemble final results — mcap = circulating_supply × price ──
+            for (const t of catTargets) {
+                const tp = tokenPrices[t.assetId];
+                const price  = tp.price;
+                const change = tp.change;
+                let src      = tp.src;
+
+                const supply = supplyResults[t.assetId] || 0;
+                let mcap = 0;
+
+                if (supply > 0 && price > 0) {
+                    mcap = supply * price;
+                    src += '+supply';
+                }
+
+                if (price > 0) {
+                    console.log(`  ✅ ${t.displayName||t.name}: $${price.toFixed(8)} supply=${supply.toLocaleString()} mcap=$${mcap > 0 ? (mcap/1e6).toFixed(3)+'M' : '—'} [${src}]`);
+                } else {
+                    console.warn(`  ⚠️  ${t.displayName||t.name}: no price from any source`);
+                }
 
                 results.push({...t, price, change24h: change, marketCap: mcap});
             }
@@ -3549,7 +3692,7 @@
         }
 
         async function fetchBaseData() {
-            console.log('--- BASE PRICES: DexScreener per-token, GeckoTerminal inline fallback ---');
+            console.log('--- BASE PRICES: DexScreener batch + GeckoTerminal fallback ---');
 
             const baseTargets     = trackedTokens.filter(t => t.chain === 'Base');
             const withContract    = baseTargets.filter(t => t.contract);
@@ -3558,42 +3701,67 @@
 
             const results = [];
 
-            for (let i = 0; i < withContract.length; i++) {
-                if (i > 0) await new Promise(res => setTimeout(res, 100));
-                const t = withContract[i];
-                let price = 0, change24h = 0, marketCap = 0;
+            // ── 1. Batch DexScreener (all contracts in one call) ──
+            const dexData = {};  // contract → { price, change24h, marketCap }
+            try {
+                const contracts = withContract.map(t => t.contract.toLowerCase());
+                const r = await fetch(`https://api.dexscreener.com/tokens/v1/base/${contracts.join(',')}`);
+                if (r.ok) {
+                    const d = await r.json();
+                    const pairs = Array.isArray(d) ? d : (d.pairs || []);
+                    for (const p of pairs) {
+                        if (p.chainId && p.chainId !== 'base') continue;
+                        const quote = (p.quoteToken?.symbol || '').toUpperCase();
+                        if (!['WETH','USDC','ETH','USDT'].includes(quote)) continue;
+                        const ca = (p.baseToken?.address || '').toLowerCase();
+                        const price = parseFloat(p.priceUsd || 0);
+                        const vol = parseFloat(p.volume?.h24 || 0);
+                        if (ca && price > 0 && (!dexData[ca] || vol > (dexData[ca].vol || 0))) {
+                            dexData[ca] = {
+                                price,
+                                change24h: parseFloat(p.priceChange?.h24 || 0),
+                                marketCap: parseFloat(p.marketCap || p.fdv || 0),
+                                vol
+                            };
+                        }
+                    }
+                }
+                console.log(`  DexScreener batch: ${Object.keys(dexData).length}/${contracts.length} tokens priced`);
+            } catch (e) { console.warn('  DexScreener batch error:', e.message); }
 
-                // ── 1. Try DexScreener ──────────────────────────────────────────
-                try {
-                    const r = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${t.contract.toLowerCase()}`);
-                    if (r.ok) {
-                        const d = await r.json();
-                        const pairs = d.pairs;  // may be null for low-liquidity tokens
-                        if (pairs && Array.isArray(pairs)) {
-                            // Filter for WETH/USDC quote tokens (avoid meme-to-meme pairs), then sort by volume
-                            const validPairs = pairs.filter(p => {
-                                if (p.chainId !== 'base') return false;
-                                const quote = (p.quoteToken?.symbol || '').toUpperCase();
-                                return quote === 'WETH' || quote === 'USDC' || quote === 'ETH' || quote === 'USDT';
-                            });
-                            const best = validPairs.sort((a, b) => 
-                                (parseFloat(b.volume?.h24 || 0)) - (parseFloat(a.volume?.h24 || 0))
-                            )[0];
+            // ── 2. Also try legacy endpoint for tokens missed by batch ──
+            const missed = withContract.filter(t => !dexData[t.contract.toLowerCase()]);
+            if (missed.length > 0) {
+                for (const t of missed) {
+                    try {
+                        const r = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${t.contract.toLowerCase()}`);
+                        if (r.ok) {
+                            const d = await r.json();
+                            const pairs = d.pairs || [];
+                            const valid = pairs.filter(p => p.chainId === 'base' && ['WETH','USDC','ETH','USDT'].includes((p.quoteToken?.symbol||'').toUpperCase()));
+                            const best = valid.sort((a,b) => parseFloat(b.volume?.h24||0) - parseFloat(a.volume?.h24||0))[0];
                             if (best) {
-                                price     = parseFloat(best.priceUsd     || 0);
-                                change24h = parseFloat(best.priceChange?.h24 || 0);
-                                marketCap = parseFloat(best.marketCap || best.fdv || 0);
+                                dexData[t.contract.toLowerCase()] = {
+                                    price: parseFloat(best.priceUsd || 0),
+                                    change24h: parseFloat(best.priceChange?.h24 || 0),
+                                    marketCap: parseFloat(best.marketCap || best.fdv || 0),
+                                };
                             }
                         }
-                        // pairs === null means DexScreener has no index for this token
-                        // → fall through to GeckoTerminal below
-                    } else { console.warn(`  DexScreener HTTP ${r.status} for ${t.name}`); }
-                } catch (e) { console.warn(`  DexScreener error for ${t.name}:`, e.message); }
+                    } catch {}
+                    await new Promise(res => setTimeout(res, 100));
+                }
+            }
 
-                // ── 2. GeckoTerminal inline fallback ──
-                if (price === 0) {
+            // ── 3. GeckoTerminal for tokens still missing price OR missing mcap ──
+            const needsGT = withContract.filter(t => {
+                const d = dexData[t.contract.toLowerCase()];
+                return !d || d.price === 0 || !d.marketCap;
+            });
+            if (needsGT.length > 0) {
+                console.log(`  Checking GeckoTerminal for ${needsGT.length} tokens (price/mcap fallback)...`);
+                for (const t of needsGT) {
                     try {
-                        console.log(`  🔄 DexScreener had no pairs for ${t.name} — trying GeckoTerminal...`);
                         const gtR = await fetch(
                             `https://api.geckoterminal.com/api/v2/networks/base/tokens/${t.contract.toLowerCase()}`
                         );
@@ -3601,22 +3769,38 @@
                             const gtD = await gtR.json();
                             const attr = gtD?.data?.attributes || {};
                             const gtP = parseFloat(attr.price_usd || 0);
-                            if (gtP > 0) {
-                                price     = gtP;
-                                marketCap = parseFloat(attr.market_cap_usd || attr.fdv_usd || 0);
-                                if (marketCap === 0 && price > 0) {
-                                    const supply = parseFloat(attr.circulating_supply || attr.total_supply || 0);
-                                    if (supply > 0) marketCap = supply * price;
+                            const gtMcap = parseFloat(attr.market_cap_usd || attr.fdv_usd || 0);
+                            const ca = t.contract.toLowerCase();
+                            const existing = dexData[ca];
+                            if (!existing || existing.price === 0) {
+                                // No DexScreener data at all — use GeckoTerminal fully
+                                if (gtP > 0) {
+                                    dexData[ca] = {
+                                        price: gtP,
+                                        change24h: existing?.change24h || 0,
+                                        marketCap: gtMcap,
+                                    };
+                                    console.log(`  ✅ ${t.name} price via GeckoTerminal: $${gtP.toFixed(10)}`);
                                 }
-                                console.log(`  ✅ ${t.name} via GeckoTerminal: $${price.toFixed(10)}`);
-                            } else { console.warn(`  ⚠️  ${t.name}: GeckoTerminal also returned $0`); }
-                        } else { console.warn(`  GeckoTerminal HTTP ${gtR.status} for ${t.name}`); }
-                    } catch (gte) { console.warn(`  GeckoTerminal error for ${t.name}:`, gte.message); }
+                            } else if (!existing.marketCap && gtMcap > 0) {
+                                // DexScreener has price but no mcap — fill in from GT
+                                existing.marketCap = gtMcap;
+                                console.log(`  ✅ ${t.name} mcap via GeckoTerminal: $${gtMcap.toFixed(0)}`);
+                            }
+                        }
+                    } catch {}
+                    await new Promise(res => setTimeout(res, 80));
                 }
+            }
 
+            // ── 4. Build results ──
+            for (const t of withContract) {
+                const d = dexData[t.contract.toLowerCase()] || {};
+                const price = d.price || 0;
+                const change24h = d.change24h || 0;
+                const marketCap = d.marketCap || 0;
                 if (price > 0) console.log(`  ✅ ${t.name}: $${price.toFixed(10)} mcap:$${marketCap.toFixed(0)}`);
                 else           console.warn(`  ⚠️  ${t.name}: no price from DexScreener or GeckoTerminal`);
-
                 results.push({...t, price, change24h, marketCap});
             }
 
@@ -4649,7 +4833,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                         display: flex;
                         justify-content: space-between;
                         align-items: center;
-                        margin-top: 10px;
+                        margin-top: auto;
                         padding-top: 10px;
                         border-top: 1px solid rgba(251, 191, 36, 0.1);
                         background: linear-gradient(90deg, rgba(251, 191, 36, 0.03), transparent);
@@ -4674,10 +4858,6 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
             const chiaPrice = token.price || 0;
             let chiaMarketCap = token.marketCap || 0;
             const basePrice = basePriceMap[key]?.price || 0;
-            // Fallback: if no marketCap, estimate from price and a default supply
-            if (!chiaMarketCap && chiaPrice > 0) {
-                chiaMarketCap = 100000 * chiaPrice;
-            }
             // Calculate arbitrage
             const diff = basePrice - chiaPrice;
             const diffPercent = basePrice > 0 ? (diff / basePrice) * 100 : 0;
@@ -4757,15 +4937,15 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                         display: flex;
                         justify-content: space-between;
                         align-items: center;
-                        margin-top: 10px;
+                        margin-top: auto;
                         padding-top: 10px;
-                        border-top: 1px solid rgba(74, 222, 128, 0.1);
-                        background: linear-gradient(90deg, rgba(74, 222, 128, 0.03), transparent);
+                        border-top: 1px solid rgba(251, 191, 36, 0.1);
+                        background: linear-gradient(90deg, rgba(251, 191, 36, 0.03), transparent);
                         padding: 8px 0;
                         border-radius: 6px;
                     ">
                         <span style="font-size: 11px; color: rgba(255,255,255,0.4); font-family: 'Inter', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Market Cap</span>
-                        <span style="font-size: 13px; color: #4ade80; font-weight: 700; font-family: 'Cinzel', serif;">${marketCapDisplay}</span>
+                        <span style="font-size: 13px; color: #fbbf24; font-weight: 700; font-family: 'Cinzel', serif;">${marketCapDisplay}</span>
                     </div>
                 </div>
             `;
@@ -4893,7 +5073,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                         display: flex;
                         justify-content: space-between;
                         align-items: center;
-                        margin-top: 10px;
+                        margin-top: auto;
                         padding-top: 10px;
                         border-top: 1px solid rgba(251, 191, 36, 0.1);
                         background: linear-gradient(90deg, rgba(251, 191, 36, 0.03), transparent);
@@ -4993,15 +5173,15 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                         display: flex;
                         justify-content: space-between;
                         align-items: center;
-                        margin-top: 10px;
+                        margin-top: auto;
                         padding-top: 10px;
-                        border-top: 1px solid rgba(74, 222, 128, 0.1);
-                        background: linear-gradient(90deg, rgba(74, 222, 128, 0.03), transparent);
+                        border-top: 1px solid rgba(251, 191, 36, 0.1);
+                        background: linear-gradient(90deg, rgba(251, 191, 36, 0.03), transparent);
                         padding: 8px 0;
                         border-radius: 6px;
                     ">
                         <span style="font-size: 11px; color: rgba(255,255,255,0.4); font-family: 'Inter', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Market Cap</span>
-                        <span style="font-size: 13px; color: #4ade80; font-weight: 700; font-family: 'Cinzel', serif;">${mcapText}</span>
+                        <span style="font-size: 13px; color: #fbbf24; font-weight: 700; font-family: 'Cinzel', serif;">${mcapText}</span>
                     </div>
                 </div>
             `;
@@ -6523,6 +6703,7 @@ function buildTokenCard(token) {
         background:linear-gradient(135deg,rgba(30,30,40,0.7),rgba(15,15,25,0.9));
         border:2px solid ${borderColor};border-radius:12px;padding:14px;margin-bottom:10px;
         transition:all 0.3s;cursor:${explorerUrl ? 'pointer' : 'default'};
+        min-height:90px;display:flex;flex-direction:column;justify-content:space-between;
         will-change:transform;contain:layout style paint;"
         ${clickHandler}
         onmouseover="this.style.borderColor='${hoverBorder}';this.style.transform='translateX(4px)';this.style.boxShadow='0 4px 16px rgba(251,191,36,0.15)';"
@@ -7177,7 +7358,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 miniplayer.style.display = 'none';
                 miniplayer.style.opacity = '0';
                 miniplayer.style.pointerEvents = 'none';
-                localStorage.setItem('videoMiniplayerHidden', 'true');
                 setRestoreVisible(true);
             };
 
@@ -7198,7 +7378,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         introOverlay.classList.add('fade-out');
                     }
                 }, 600);
-                localStorage.removeItem('videoMiniplayerHidden');
                 setRestoreVisible(false);
             };
 
@@ -7307,17 +7486,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 return; // Exit early, don't initialize WTV functionality
             }
 
-            // WTV is HIDDEN by default on first visit - user must click to open
-            const wasHiddenInitially = localStorage.getItem('videoMiniplayerHidden');
-            if (wasHiddenInitially === null) {
-                // First visit - hide by default
-                localStorage.setItem('videoMiniplayerHidden', 'true');
-                hideMiniplayer();
-            } else if (wasHiddenInitially === 'true') {
-                hideMiniplayer();
-            } else {
-                showMiniplayer();
-            }
+            // WTV starts hidden with restore button visible
+            // User clicks the restore/WTV button to open it
+            hideMiniplayer();
 
             // Make miniplayer draggable & resizable
             let isDragging = false;
@@ -7578,8 +7749,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     <style>
         @media (max-width: 768px) {
+            /* WTV restore button: visible on mobile too (smaller) */
             #wtv-restore-btn {
-                display: none !important;
+                width: 56px !important;
+                height: 56px !important;
+                bottom: 12px !important;
+                left: 12px !important;
+                border-radius: 12px !important;
+            }
+            #wtv-restore-btn span:first-child {
+                font-size: 22px !important;
+            }
+            #wtv-restore-btn span:last-child {
+                font-size: 8px !important;
             }
         }
 
@@ -7723,7 +7905,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 miniplayer.style.pointerEvents = 'auto';
                 if (overlay) overlay.style.display = 'block';
                 if (mobileTab) mobileTab.style.display = 'none';
-                localStorage.removeItem('videoMiniplayerHidden');
+                // Hide restore button when player is open
+                const rb = document.getElementById('wtv-restore-btn');
+                if (rb) rb.style.display = 'none';
                 if (window._wtvLoadVideo) window._wtvLoadVideo();
                 // Fade out intro
                 setTimeout(() => {
@@ -7737,13 +7921,16 @@ document.addEventListener('DOMContentLoaded', () => {
             window._wtvCloseDrawer = function() {
                 if (!miniplayer) return;
                 miniplayer.classList.add('mobile-drawer-closed');
+                miniplayer.classList.remove('show-wtv');
                 if (overlay) overlay.style.display = 'none';
                 if (mobileTab) mobileTab.style.display = 'flex';
+                // Show restore button on mobile too
+                const rb = document.getElementById('wtv-restore-btn');
+                if (rb) rb.style.display = 'flex';
                 // After slide-out animation finishes, fully hide
                 setTimeout(() => {
                     if (miniplayer.classList.contains('mobile-drawer-closed')) {
                         miniplayer.style.display = 'none';
-                        localStorage.setItem('videoMiniplayerHidden', 'true');
                     }
                 }, 400);
             };
@@ -7804,7 +7991,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             };
 
-            // --- Desktop restore button ---
+            // --- Desktop + Mobile restore button ---
             if (restoreBtn && miniplayer) {
                 const permanentlyHidden = localStorage.getItem('wtvPermanentlyHidden') === 'true';
                 if (permanentlyHidden) {
@@ -7815,32 +8002,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (overlay) overlay.style.display = 'none';
                     return; // Exit early
                 }
-                
-                const hiddenAtLoad = localStorage.getItem('videoMiniplayerHidden') === 'true';
-                if (hiddenAtLoad) {
-                    if (isMobile()) {
-                        miniplayer.classList.add('mobile-drawer-closed');
-                        miniplayer.style.display = 'none';
-                        miniplayer.style.opacity = '0';
-                        if (mobileTab) mobileTab.style.display = 'flex';
-                        if (restoreBtn) restoreBtn.style.display = 'none';
-                    } else {
-                        restoreBtn.style.display = 'flex';
-                        miniplayer.style.display = 'none';
-                        miniplayer.style.opacity = '0';
-                    }
-                } else if (isMobile()) {
-                    // WTV starts open on mobile: show drawer
-                    miniplayer.classList.remove('mobile-drawer-closed');
-                    miniplayer.classList.add('show-wtv');
-                    miniplayer.style.display = 'flex';
-                    miniplayer.style.opacity = '1';
-                    if (mobileTab) mobileTab.style.display = 'none';
-                    if (overlay) overlay.style.display = 'block';
-                    if (restoreBtn) restoreBtn.style.display = 'none';
-                } else {
-                    if (restoreBtn) restoreBtn.style.display = 'none';
-                }
+
+                // WTV starts closed — restore button visible on both desktop and mobile
+                restoreBtn.style.display = 'flex';
+                miniplayer.style.display = 'none';
+                miniplayer.style.opacity = '0';
+                if (mobileTab) mobileTab.style.display = isMobile() ? 'flex' : 'none';
+
                 restoreBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     e.preventDefault();
@@ -7865,24 +8033,25 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
                 
-                const hidden = localStorage.getItem('videoMiniplayerHidden') === 'true';
+                const miniplayerOpen = miniplayer.classList.contains('show-wtv');
                 if (isMobile()) {
-                    if (restoreBtn) restoreBtn.style.display = 'none !important';
-                    if (hidden) {
+                    if (mobileTab) mobileTab.style.display = miniplayerOpen ? 'none' : 'flex';
+                    if (!miniplayerOpen) {
                         miniplayer.classList.add('mobile-drawer-closed');
                         miniplayer.style.display = 'none';
-                        if (mobileTab) mobileTab.style.display = 'flex';
                         if (overlay) overlay.style.display = 'none';
                     }
+                    // Keep restore button visible on mobile too
+                    if (restoreBtn) restoreBtn.style.display = miniplayerOpen ? 'none' : 'flex';
                 } else {
                     if (mobileTab) mobileTab.style.display = 'none';
                     if (overlay) overlay.style.display = 'none';
                     miniplayer.classList.remove('mobile-drawer-closed');
-                    if (hidden) {
+                    if (!miniplayerOpen) {
                         miniplayer.style.display = 'none';
-                        if (restoreBtn) restoreBtn.style.display = 'flex !important';
+                        if (restoreBtn) restoreBtn.style.display = 'flex';
                     } else {
-                        miniplayer.style.display = 'flex';
+                        if (restoreBtn) restoreBtn.style.display = 'none';
                     }
                 }
             });

@@ -229,8 +229,8 @@ async function fetchBase(address) {
 
     // ── LP positions: batched JSON-RPC batch calls to avoid rate limits ──────────
     // Each LP needs: token0, token1, getReserves, totalSupply, decimals (5 calls)
-    // We fire them as JSON-RPC batch requests in groups of 5 LP contracts at once.
-    const BATCH_SIZE = 5;
+    // We fire them as JSON-RPC batch requests in groups of 10 LP contracts at once.
+    const BATCH_SIZE = 10;
     const lpMeta = [];
     for (let i = 0; i < lpItems.length; i += BATCH_SIZE) {
         const chunk = lpItems.slice(i, i + BATCH_SIZE);
@@ -288,6 +288,26 @@ async function fetchBase(address) {
         if (price > 0 && !lpPrices[ca]) lpPrices[ca] = { price };
     }
 
+    // GeckoTerminal fallback for LP underlying tokens still missing prices
+    const unpricedLpTokens = lpTokenAddrs.filter(a => !lpPrices[a] || !lpPrices[a].price);
+    if (unpricedLpTokens.length > 0) {
+        console.log(`[BASE] GeckoTerminal fallback for ${unpricedLpTokens.length} unpriced LP underlying tokens`);
+        for (const addr of unpricedLpTokens) {
+            try {
+                const r = await safeFetch(`https://api.geckoterminal.com/api/v2/networks/base/tokens/${addr}`, {}, 8000);
+                if (r.ok) {
+                    const d = await r.json();
+                    const p = parseFloat(d?.data?.attributes?.price_usd || 0);
+                    if (p > 0) {
+                        lpPrices[addr] = { price: p };
+                        console.log(`[BASE]   ✅ GT price for ${addr.slice(0,10)}: $${p}`);
+                    }
+                }
+            } catch {}
+            await sleep(80);
+        }
+    }
+
     for (const lp of lpMeta) {
         const ti0 = lp.t0 ? (tokInfo[lp.t0.toLowerCase()] || { dec: 18, sym: '?' }) : { dec: 18, sym: '?' };
         const ti1 = lp.t1 ? (tokInfo[lp.t1.toLowerCase()] || { dec: 18, sym: '?' }) : { dec: 18, sym: '?' };
@@ -316,6 +336,11 @@ async function fetchBase(address) {
         
         const share = lp.ts > 0 ? lp.bal / lp.ts : 0;
         const userValue = share * poolUsd;
+        if (userValue > 0.01) {
+            console.log(`[BASE]   LP ${pairName}: pool=$${poolUsd.toFixed(2)} share=${(share*100).toFixed(4)}% val=$${userValue.toFixed(2)}`);
+        } else if (lp.bal > 0) {
+            console.log(`[BASE]   LP ${pairName}: $0 (p0=$${p0.toFixed(6)} p1=$${p1.toFixed(6)} r0=${rv0.toFixed(2)} r1=${rv1.toFixed(2)} ts=${lp.ts.toFixed(2)})`);
+        }
         tokens.push({
             symbol: pairName, name: `${pairName} LP`, balance: lp.bal,
             price: lp.bal > 0 ? userValue / lp.bal : 0,
