@@ -1852,6 +1852,35 @@
                 height: 400px !important;
             }
 
+            /* Book of Wizard — top row: tweets left, links right */
+            .book-top-grid {
+                display: grid;
+                grid-template-columns: 1fr 290px;
+                gap: 28px;
+                align-items: start;
+            }
+
+            .book-links-panel {
+                position: sticky;
+                top: 80px;
+            }
+
+            @media (max-width: 860px) {
+                .book-top-grid {
+                    grid-template-columns: 1fr;
+                }
+                .book-links-panel {
+                    position: static;
+                    flex-direction: row !important;
+                    flex-wrap: wrap !important;
+                    padding-top: 0 !important;
+                }
+                .book-links-panel .quick-link-btn {
+                    flex: 1 1 calc(50% - 5px);
+                    min-width: 120px;
+                }
+            }
+
             /* ── Caster Valley Tab — optimized mobile iframe ── */
             @media (max-width: 768px) {
                 #caster-valley-frame {
@@ -3153,130 +3182,121 @@
         </div>
         
         <div id="book" class="content">
-            <div style="
-                min-height: 400px;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                text-align: center;
-                border: none;
-                border: none;
-                background: rgba(0,0,0,0.6);
-                padding: 40px;
-            ">
-                <div
-                    style="margin-bottom: 30px; display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 340px;">
-                    <!-- Purple Wizard Links Together at Top -->
-                    <a href="https://love.awizard.dev/" target="_blank" class="quick-link-btn"
-                        style="justify-content: center; padding: 10px 16px; border: 2px solid rgba(217, 70, 239, 0.8); color: #d946ef;">
-                        ❤️ aWizard
-                    </a>
-                    <a href="https://warp.awizard.dev" target="_blank" class="quick-link-btn warp-btn"
-                        style="justify-content: center; padding: 10px 16px; border: 2px solid rgba(217, 70, 239, 0.8); color: #d946ef;">
-                        ⚡ warp.awizard.dev
-                    </a>
-                    <a href="https://discord.gg/awizard" target="_blank" class="quick-link-btn"
-                        style="justify-content: center; padding: 10px 16px; border: 2px solid rgba(88, 101, 242, 0.8); color: #5865F2;">
-                        💬 discord.gg/awizard
-                    </a>
-                    
-                    <!-- Other Links -->
-                    <a href="https://mintgarden.io/aWizard" target="_blank" class="quick-link-btn"
-                        style="justify-content: center; padding: 10px 16px; border: 2px solid rgba(251, 191, 36, 0.7);">
-                        🍃 aWizard mintgarden
-                    </a>
-                    <a href="https://mintgarden.io/profile/astercast-15a3f45ca34abd78b76241dd346ed1acc696dad22768735a7b929a54679d5922?tab=collections"
-                        target="_blank" class="quick-link-btn" style="justify-content: center; padding: 10px 16px; border: 2px solid rgba(251, 191, 36, 0.7);">
-                        🍃 astercast mintgarden
-                    </a>
-                    <a href="https://open.spotify.com/artist/4pYearnilXYOKzJk4qFTxE" target="_blank" class="quick-link-btn"
-                        style="justify-content: center; padding: 10px 16px; border: 2px solid rgba(29, 185, 84, 0.8); color: #1db954;">
-                        🎵 Spotify
-                    </a>
-                    <a href="https://x.com/aWizardxch" target="_blank" class="quick-link-btn"
-                        style="justify-content: center; padding: 10px 16px; background: rgba(0,0,0,0.8); border: 2px solid rgba(255, 255, 255, 0.7); color: #fff;">
-                        ✖ FOLLOW US
-                    </a>
-                </div>
+            <div style="background: rgba(0,0,0,0.6); padding: 40px 24px; min-height: 400px;">
 
-                <!-- Spotify Mini Player -->
-                <div id="spotify-miniplayer" class="spotify-mini">
-                    <div class="spotify-mini-header">
-                        <div class="spotify-mini-title">Now Playing: <span id="spotify-mini-album">Album Shuffle</span></div>
-                        <div class="spotify-mini-actions">
-                            <a id="spotify-mini-open" class="spotify-mini-btn" href="https://open.spotify.com/" target="_blank" rel="noopener">Open Spotify</a>
-                            <button id="spotify-mini-close" class="spotify-mini-close" title="Close">×</button>
-                        </div>
-                    </div>
-                    <div class="spotify-mini-controls">
-                        <button id="spotify-mini-shuffle" type="button" title="Album Switch">Album Switch</button>
-                    </div>
-                    <div id="spotify-embed" class="spotify-mini-embed"></div>
-                </div>
+                <!-- ── Top Row: Tweets + Links ── -->
+                <div class="book-top-grid" style="max-width: 1060px; margin: 0 auto;">
 
-                <!-- Latest Tweets from @aWizardxch -->
-                <div style="width:100%;max-width:680px;margin-top:16px;">
-
-                    <!-- Section header -->
-                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;justify-content:center;">
-                        <div style="height:1px;flex:1;background:linear-gradient(to right,transparent,rgba(29,161,242,0.35));max-width:120px;"></div>
-                        <div style="display:flex;align-items:center;gap:8px;">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="#1da1f2"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.911-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-                            <span style="font-size:12px;color:rgba(29,161,242,0.85);text-transform:uppercase;letter-spacing:2px;font-weight:700;">Latest from @aWizardxch</span>
-                        </div>
-                        <div style="height:1px;flex:1;background:linear-gradient(to left,transparent,rgba(29,161,242,0.35));max-width:120px;"></div>
-                    </div>
-
-                    <!-- Outer glow wrapper -->
-                    <div style="position:relative;">
-                        <div style="position:absolute;inset:-2px;border-radius:20px;background:linear-gradient(135deg,rgba(29,161,242,0.28),rgba(120,80,255,0.18),rgba(29,161,242,0.12));pointer-events:none;z-index:0;"></div>
-
-                        <!-- Card -->
-                        <div id="tw-card" style="position:relative;z-index:1;background:linear-gradient(180deg,rgba(6,12,22,0.96),rgba(5,8,14,0.92));border-radius:18px;overflow:hidden;border:1px solid rgba(29,161,242,0.25);backdrop-filter:blur(12px);">
-
-                            <!-- Profile header strip -->
-                            <div style="background:linear-gradient(135deg,rgba(29,161,242,0.16),rgba(120,80,255,0.12));padding:14px 16px;border-bottom:1px solid rgba(29,161,242,0.18);display:flex;align-items:center;gap:12px;">
-                                <div style="width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,rgba(29,161,242,0.25),rgba(120,80,255,0.25));display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 14px rgba(29,161,242,0.35);border:1px solid rgba(255,255,255,0.12);">
-                                    <img src="images/hodl-diamond.png" alt="Hodl Diamond" style="width:34px;height:34px;object-fit:contain;filter:drop-shadow(0 0 8px rgba(29,161,242,0.6));">
-                                </div>
-                                <div style="text-align:left;">
-                                    <div style="font-size:14px;font-weight:800;color:white;letter-spacing:0.3px;">aWizard</div>
-                                    <div style="font-size:12px;color:rgba(29,161,242,0.75);margin-top:2px;">@aWizardxch</div>
-                                </div>
-                                <a href="https://x.com/aWizardxch" target="_blank"
-                                   style="margin-left:auto;display:flex;align-items:center;gap:6px;background:rgba(0,0,0,0.55);border:1px solid rgba(255,255,255,0.18);border-radius:20px;padding:7px 14px;color:white;font-size:12px;font-weight:700;text-decoration:none;transition:all 0.2s;"
-                                   onmouseover="this.style.background='rgba(29,161,242,0.25)';this.style.borderColor='rgba(29,161,242,0.6)'"
-                                   onmouseout="this.style.background='rgba(0,0,0,0.55)';this.style.borderColor='rgba(255,255,255,0.18)'">
-                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="white"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.911-5.622z"/></svg>
-                                    Follow on X
-                                </a>
+                    <!-- LEFT: Tweets feed -->
+                    <div>
+                        <!-- Section header -->
+                        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;justify-content:flex-start;">
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="#1da1f2"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.911-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                                <span style="font-size:12px;color:rgba(29,161,242,0.85);text-transform:uppercase;letter-spacing:2px;font-weight:700;">Latest from @aWizardxch</span>
                             </div>
-
-                            <!-- Nitter Feed: Lightweight, no SDK dependency -->
-                            <div style="padding:10px;">
-                                <iframe 
-                                    id="tw-widget"
-                                    src="https://nitter.net/aWizardxch" 
-                                    width="100%" 
-                                    height="560" 
-                                    frameborder="0"
-                                    style="border-radius:12px;border:1px solid rgba(29,161,242,0.15);background:rgba(5,10,20,0.8);">
-                                </iframe>
-                            </div>
-
                         </div>
-                    </div>
 
-                    <!-- Footer link -->
-                    <div style="text-align:center;margin-top:12px;">
-                        <a href="https://x.com/aWizardxch" target="_blank"
-                           style="font-size:11px;color:rgba(29,161,242,0.55);text-decoration:none;letter-spacing:0.5px;transition:color 0.2s;"
-                           onmouseover="this.style.color='#1da1f2'" onmouseout="this.style.color='rgba(29,161,242,0.55)'">
-                            Follow @aWizardxch on X &#x2192;
+                        <!-- Outer glow wrapper -->
+                        <div style="position:relative;">
+                            <div style="position:absolute;inset:-2px;border-radius:20px;background:linear-gradient(135deg,rgba(29,161,242,0.28),rgba(120,80,255,0.18),rgba(29,161,242,0.12));pointer-events:none;z-index:0;"></div>
+
+                            <!-- Card -->
+                            <div id="tw-card" style="position:relative;z-index:1;background:linear-gradient(180deg,rgba(6,12,22,0.96),rgba(5,8,14,0.92));border-radius:18px;overflow:hidden;border:1px solid rgba(29,161,242,0.25);backdrop-filter:blur(12px);">
+
+                                <!-- Profile header strip -->
+                                <div style="background:linear-gradient(135deg,rgba(29,161,242,0.16),rgba(120,80,255,0.12));padding:14px 16px;border-bottom:1px solid rgba(29,161,242,0.18);display:flex;align-items:center;gap:12px;">
+                                    <div style="width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,rgba(29,161,242,0.25),rgba(120,80,255,0.25));display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 14px rgba(29,161,242,0.35);border:1px solid rgba(255,255,255,0.12);">
+                                        <img src="images/hodl-diamond.png" alt="Hodl Diamond" style="width:34px;height:34px;object-fit:contain;filter:drop-shadow(0 0 8px rgba(29,161,242,0.6));">
+                                    </div>
+                                    <div style="text-align:left;">
+                                        <div style="font-size:14px;font-weight:800;color:white;letter-spacing:0.3px;">aWizard</div>
+                                        <div style="font-size:12px;color:rgba(29,161,242,0.75);margin-top:2px;">@aWizardxch</div>
+                                    </div>
+                                    <a href="https://x.com/aWizardxch" target="_blank"
+                                       style="margin-left:auto;display:flex;align-items:center;gap:6px;background:rgba(0,0,0,0.55);border:1px solid rgba(255,255,255,0.18);border-radius:20px;padding:7px 14px;color:white;font-size:12px;font-weight:700;text-decoration:none;transition:all 0.2s;"
+                                       onmouseover="this.style.background='rgba(29,161,242,0.25)';this.style.borderColor='rgba(29,161,242,0.6)'"
+                                       onmouseout="this.style.background='rgba(0,0,0,0.55)';this.style.borderColor='rgba(255,255,255,0.18)'">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="white"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.911-5.622z"/></svg>
+                                        Follow on X
+                                    </a>
+                                </div>
+
+                                <!-- Nitter Feed: Lightweight, no SDK dependency -->
+                                <div style="padding:10px;">
+                                    <iframe 
+                                        id="tw-widget"
+                                        src="https://nitter.net/aWizardxch" 
+                                        width="100%" 
+                                        height="560" 
+                                        frameborder="0"
+                                        style="border-radius:12px;border:1px solid rgba(29,161,242,0.15);background:rgba(5,10,20,0.8);">
+                                    </iframe>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <!-- Footer link -->
+                        <div style="text-align:left;margin-top:12px;">
+                            <a href="https://x.com/aWizardxch" target="_blank"
+                               style="font-size:11px;color:rgba(29,161,242,0.55);text-decoration:none;letter-spacing:0.5px;transition:color 0.2s;"
+                               onmouseover="this.style.color='#1da1f2'" onmouseout="this.style.color='rgba(29,161,242,0.55)'">
+                                Follow @aWizardxch on X &#x2192;
+                            </a>
+                        </div>
+                    </div><!-- /tweets -->
+
+                    <!-- RIGHT: Links Panel -->
+                    <div class="book-links-panel" style="display:flex;flex-direction:column;gap:10px;padding-top:48px;">
+                        <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:2px;margin-bottom:4px;font-family:'Space Grotesk',sans-serif;">Links</div>
+                        <a href="https://love.awizard.dev/" target="_blank" class="quick-link-btn"
+                            style="justify-content: center; padding: 10px 16px; border: 2px solid rgba(217, 70, 239, 0.8); color: #d946ef;">
+                            ❤️ aWizard
                         </a>
-                    </div>
+                        <a href="https://warp.awizard.dev" target="_blank" class="quick-link-btn warp-btn"
+                            style="justify-content: center; padding: 10px 16px; border: 2px solid rgba(217, 70, 239, 0.8); color: #d946ef;">
+                            ⚡ warp.awizard.dev
+                        </a>
+                        <a href="https://discord.gg/awizard" target="_blank" class="quick-link-btn"
+                            style="justify-content: center; padding: 10px 16px; border: 2px solid rgba(88, 101, 242, 0.8); color: #5865F2;">
+                            💬 discord.gg/awizard
+                        </a>
+                        <a href="https://mintgarden.io/aWizard" target="_blank" class="quick-link-btn"
+                            style="justify-content: center; padding: 10px 16px; border: 2px solid rgba(251, 191, 36, 0.7);">
+                            🍃 aWizard mintgarden
+                        </a>
+                        <a href="https://mintgarden.io/profile/astercast-15a3f45ca34abd78b76241dd346ed1acc696dad22768735a7b929a54679d5922?tab=collections"
+                            target="_blank" class="quick-link-btn" style="justify-content: center; padding: 10px 16px; border: 2px solid rgba(251, 191, 36, 0.7);">
+                            🍃 astercast mintgarden
+                        </a>
+                        <a href="https://open.spotify.com/artist/4pYearnilXYOKzJk4qFTxE" target="_blank" class="quick-link-btn"
+                            style="justify-content: center; padding: 10px 16px; border: 2px solid rgba(29, 185, 84, 0.8); color: #1db954;">
+                            🎵 Spotify
+                        </a>
+                        <a href="https://x.com/aWizardxch" target="_blank" class="quick-link-btn"
+                            style="justify-content: center; padding: 10px 16px; background: rgba(0,0,0,0.8); border: 2px solid rgba(255, 255, 255, 0.7); color: #fff;">
+                            ✖ FOLLOW US
+                        </a>
+                    </div><!-- /links panel -->
 
+                </div><!-- /book-top-grid -->
+
+                <!-- ── Spotify Mini Player — full width below tweets+links ── -->
+                <div style="max-width: 1060px; margin: 28px auto 0;">
+                    <div id="spotify-miniplayer" class="spotify-mini">
+                        <div class="spotify-mini-header">
+                            <div class="spotify-mini-title">Now Playing: <span id="spotify-mini-album">Album Shuffle</span></div>
+                            <div class="spotify-mini-actions">
+                                <a id="spotify-mini-open" class="spotify-mini-btn" href="https://open.spotify.com/" target="_blank" rel="noopener">Open Spotify</a>
+                                <button id="spotify-mini-close" class="spotify-mini-close" title="Close">×</button>
+                            </div>
+                        </div>
+                        <div class="spotify-mini-controls">
+                            <button id="spotify-mini-shuffle" type="button" title="Album Switch">Album Switch</button>
+                        </div>
+                        <div id="spotify-embed" class="spotify-mini-embed"></div>
+                    </div>
                 </div>
 
                 <!-- ═══════════════════════════════════════════════════════ -->
@@ -3419,7 +3439,8 @@
                                     color: #fbbf24;
                                     margin: 0;
                                     line-height: 1.3;
-                                ">Key Milestones Grown Organically</h3>
+                                ">Key Milestones</h3>
+                                <span style="font-size:11px; color:rgba(255,255,255,0.35); font-family:'Space Grotesk',sans-serif;">Grown Organically</span>
                             </div>
                         </div>
                         <div style="
