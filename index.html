@@ -28,6 +28,10 @@
     <meta name="twitter:creator" content="@aWizardDAO">
     
     <link rel="icon" type="image/webp" href="/images/favicon.webp">
+    <!-- Non-blocking Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Inter:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&family=Press+Start+2P&display=swap">
     <!-- Performance: Preconnect to external APIs -->
     <link rel="preconnect" href="https://api.coingecko.com">
     <link rel="preconnect" href="https://api.spacescan.io">
@@ -35,8 +39,7 @@
     <link rel="preconnect" href="https://xchscan.com">
     <link rel="preconnect" href="https://api.mintgarden.io">
     <style>
-        /* Optimized font loading - reduced to essential families */
-        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Press+Start+2P&display=swap');
+        /* Fonts loaded via <link> above — no blocking @import */
         
         @font-face {
             font-family: 'Valve Occult';
@@ -158,20 +161,25 @@
             contain: layout paint;
         }
 
+        @media (max-width: 768px) {
+            /* Drop expensive blur filter on mobile \u2014 forces full repaint every frame */
+            .bg-collage {
+                filter: brightness(0.6);
+                opacity: 0.25;
+            }
+        }
+
         .bg-image {
             position: absolute;
             border: none;
-            border: none;
             object-fit: cover;
-            will-change: transform, opacity;
             transform: translate3d(0, 0, 0);
-            /* Animation set inline */
+            /* will-change set per-device in JS */
         }
 
         .compressed-bg {
             image-rendering: -webkit-optimize-contrast;
             image-rendering: optimize-contrast;
-            transform-style: preserve-3d;
         }
         
         .optimized-bg {
@@ -206,8 +214,11 @@
             pointer-events: none;
             animation: twinkle 2s ease-in-out infinite;
             z-index: 1;
-            will-change: opacity, transform;
-            transform: translate3d(0, 0, 0); /* GPU acceleration */
+            transform: translate3d(0, 0, 0);
+        }
+
+        @media (max-width: 768px) {
+            .glitter { display: none !important; }
         }
 
         @keyframes twinkle {
@@ -2241,6 +2252,11 @@
             startY = pY(e);
             startBottom = parseInt(btn.style.bottom) || 120;
             btn.style.cursor = 'grabbing';
+            // Attach move/up listeners only during active drag so we don't block all page scrolling
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('touchmove', onMove, { passive: false });
+            document.addEventListener('mouseup', onUp);
+            document.addEventListener('touchend', onUp);
             e.preventDefault();
         }
         function onMove(e) {
@@ -2254,6 +2270,11 @@
             if (!dragging) return;
             dragging = false;
             btn.style.cursor = 'grab';
+            // Remove document-level listeners when drag ends
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('touchmove', onMove);
+            document.removeEventListener('mouseup', onUp);
+            document.removeEventListener('touchend', onUp);
             if (!moved) {
                 console.log('🎬 WTV button tapped');
                 if (window._showWtvMiniplayer) window._showWtvMiniplayer();
@@ -2262,10 +2283,6 @@
         }
         btn.addEventListener('mousedown', onDown);
         btn.addEventListener('touchstart', onDown, { passive: false });
-        document.addEventListener('mousemove', onMove);
-        document.addEventListener('touchmove', onMove, { passive: false });
-        document.addEventListener('mouseup', onUp);
-        document.addEventListener('touchend', onUp);
 
         // Pulse glow removed
 
@@ -3742,7 +3759,22 @@
                     console.log('🎮 aWizard game loaded');
                 }
             }
-        }
+            if (tabName === "book") {
+                // Lazily inject Spotify + Twitter widget scripts once, only when needed
+                if (!window._bookScriptsLoaded) {
+                    window._bookScriptsLoaded = true;
+                    const sp = document.createElement('script');
+                    sp.src = 'https://open.spotify.com/embed/iframe-api/v1';
+                    sp.async = true;
+                    document.head.appendChild(sp);
+                    const tw = document.createElement('script');
+                    tw.src = 'https://platform.twitter.com/widgets.js';
+                    tw.async = true;
+                    tw.charset = 'utf-8';
+                    tw.onload = () => { twttr && twttr.widgets && twttr.widgets.load(document.getElementById('book')); };
+                    document.head.appendChild(tw);
+                }
+            }
         
         // Configuration for tokens to track - filtered
         const trackedTokens = [
@@ -4982,7 +5014,7 @@
         let bgPaused = false;
         let lastFrameTime = 0;
         const isMobileDevice = window.innerWidth <= 768;
-        const targetFps = isMobileDevice ? 20 : 30; // Lower FPS on mobile
+        const targetFps = isMobileDevice ? 12 : 30; // 12fps on mobile saves ~40% CPU vs 20fps
         const frameInterval = 1000 / targetFps;
         let viewportW = window.innerWidth;
         let viewportH = window.innerHeight;
@@ -5033,10 +5065,10 @@
             ];
 
             // Create fewer images for better performance while keeping the vibe
-            const totalImages = prefersReducedMotion ? 8 : (isMobile ? 12 : 35); // Significantly fewer on mobile
-            const minSize = isMobile ? 60 : 90;
-            const maxSize = isMobile ? 120 : 170;
-            const speedScale = prefersReducedMotion ? 0.15 : (isMobile ? 0.22 : 0.32); // Slower on mobile
+            const totalImages = prefersReducedMotion ? 5 : (isMobile ? 5 : 35); // 5 on mobile — fewer GPU layers
+            const minSize = isMobile ? 55 : 90;
+            const maxSize = isMobile ? 100 : 170;
+            const speedScale = prefersReducedMotion ? 0.15 : (isMobile ? 0.18 : 0.32); // Slower on mobile
             
             for (let i = 0; i < totalImages; i++) {
                 const src = images[i % images.length];
@@ -5065,12 +5097,11 @@
                     object-fit: contain;
                     filter: ${mobileOptimized ? 'none' : 'drop-shadow(0 0 4px rgba(255, 0, 0, 0.15))'};
                     pointer-events: none;
-                    opacity: ${mobileOptimized ? '0.5' : '0.7'};
+                    opacity: ${mobileOptimized ? '0.45' : '0.7'};
                     z-index: ${zIndex};
                     image-rendering: auto;
                     transform: translate3d(0,0,0);
-                    will-change: transform;
-                    backface-visibility: hidden;
+                    ${mobileOptimized ? '' : 'will-change: transform;'}
                 `;
                 img.classList.add(compressionClass);
                 
@@ -5078,7 +5109,8 @@
                 img.src = src; // Set src directly instead of lazy loading
                 // Add compression after load
                 img.onload = () => {
-                    if (isLargeImage && img.naturalWidth > 400) {
+                    // Skip expensive canvas compress on mobile — not worth the CPU cost
+                    if (!isMobile && isLargeImage && img.naturalWidth > 400) {
                         requestIdleCallback(() => compressImage(img));
                     }
                 };
@@ -6041,6 +6073,21 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                             frame.dataset.loaded = 'true';
                         }
                     }
+                    if (activeTab === 'book') {
+                        // Load deferred scripts for book tab if landing directly on it
+                        if (!window._bookScriptsLoaded) {
+                            window._bookScriptsLoaded = true;
+                            const sp = document.createElement('script');
+                            sp.src = 'https://open.spotify.com/embed/iframe-api/v1';
+                            sp.async = true;
+                            document.head.appendChild(sp);
+                            const tw = document.createElement('script');
+                            tw.src = 'https://platform.twitter.com/widgets.js';
+                            tw.async = true;
+                            tw.charset = 'utf-8';
+                            document.head.appendChild(tw);
+                        }
+                    }
                 }
             })();
             // ────────────────────────────────────────────────────────────────
@@ -6088,9 +6135,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
         };
     </script>
 
-    <script src="https://open.spotify.com/embed/iframe-api/v1" async></script>
-    <!-- X / Twitter timeline widget -->
-    <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+    <!-- Spotify + Twitter widgets deferred — injected only when Book tab is first opened -->
     <script>
         (function() {
             const albums = [
