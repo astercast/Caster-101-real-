@@ -1,10 +1,30 @@
-# 🧙‍♂️
-https://casterx101.vercel.app/
+# Caster101
 
-## Market Index (Blob Cache)
+Live site: https://caster101.xyz/
 
-- Added `api/market-index.js` to precompute and cache Base + Chia market data snapshots.
-- Added `api/treasury-index.js` to precompute/cache treasury + NFT snapshot for fast tab load.
-- Added `api/game-index.js` to cache game Normie stat lookups.
-- Requires `BLOB_READ_WRITE_TOKEN` in Vercel project env vars to persist snapshots to Vercel Blob.
-- If Blob is unavailable, endpoint still works with safe in-memory fallback (no site breakage).
+## Current Site Scope
+
+- Single-page community portal with tabs for:
+	- Emoji Market
+	- Bag (portfolio)
+	- aWizard Treasury
+	- How To Cast
+	- Book of Wizard
+	- Caster Valley
+- Floating WTV miniplayer/drawer with Google Drive playlist support.
+- Book of Wizard links are in a 2x4 grid (desktop + mobile), including aWizard, Discord, MintGarden links, Follow on X, and Spotify.
+- Dynamic background collage/animation system drawing from `images/` assets.
+
+## API + Caching
+
+- `api/market-index.js` precomputes/caches Base + Chia market snapshots.
+- `api/treasury-index.js` precomputes/caches treasury + NFT snapshots.
+- `api/game-index.js` caches game Normie stat lookups.
+- `BLOB_READ_WRITE_TOKEN` is required in Vercel env vars for persistent Blob caching.
+- If Blob is unavailable, APIs fall back safely in-memory.
+
+## Deployment
+
+- Hosted on Vercel.
+- Pushes to `main` trigger deploys.
+- Domain migration target is `caster101.xyz`.
