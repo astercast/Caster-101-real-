@@ -3336,7 +3336,8 @@
                         <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
                             <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #fbbf24, #f59e0b); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;">✨</div>
                             <div>
-                                <h3 style="font-family: 'Cinzel', serif; font-size: clamp(16px, 3.5vw, 20px); font-weight: 700; color: #fbbf24; margin: 0; line-height: 1.3;">Key Milestones Grown Organically</h3>
+                                <h3 style="font-family: 'Cinzel', serif; font-size: clamp(16px, 3.5vw, 20px); font-weight: 700; color: #fbbf24; margin: 0; line-height: 1.3;">Key Milestones</h3>
+                                <p style="font-family: 'Space Grotesk', sans-serif; font-size: 12px; color: rgba(255,255,255,0.45); margin: 3px 0 0; font-style: italic; letter-spacing: 0.03em;">Grown Organically</p>
                             </div>
                         </div>
                         <div style="border-left: 2px solid rgba(251,191,36,0.3); padding-left: 20px; margin-left: 17px; display: flex; flex-direction: column; gap: 10px;">
@@ -5537,10 +5538,10 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
 
         function openTokenLink(chain, id, symbol) {
             if (chain === 'Chia') {
-                if (id === 'Native') {
-                    window.open(`https://spacescan.io/xch/coin/xch`, '_blank');
+                if (id === 'Native' || id === 'XCH_NATIVE' || !id) {
+                    window.open('https://www.spacescan.io', '_blank');
                 } else {
-                    window.open(`https://spacescan.io/xch/token/${id}`, '_blank');
+                    window.open(`https://www.spacescan.io/chia/cat/${id}`, '_blank');
                 }
             } else if (chain === 'Base') {
                 // Link to 9mm Pro swap with specific token
@@ -7092,11 +7093,11 @@ function buildTokenCard(token) {
     }
 
     // Build explorer link — LP positions are never clickable
-    // Chia CATs → TailDatabase, Base tokens → BaseScan
+    // Chia CATs → Spacescan, Base tokens → BaseScan
     let explorerUrl = '';
     if (!isLP) {
         if (token.assetId && token.assetId !== 'XCH_NATIVE') {
-            explorerUrl = `https://www.taildatabase.com/tail/${token.assetId}`;
+            explorerUrl = `https://www.spacescan.io/chia/cat/${token.assetId}`;
         } else if (token.assetId === 'XCH_NATIVE') {
             explorerUrl = 'https://www.spacescan.io';
         } else if (token.contract) {
