@@ -2868,20 +2868,6 @@
                                 <div class="header-title" style="display: flex; align-items: center; gap: 12px; font-size: 20px; font-weight: 900; color: white; margin-bottom: 12px;">
                                     <span class="header-icon" style="font-size: 24px;">🌱</span>
                                     <span>Chia Network</span>
-                                    <button id="refresh-chia-treasury" style="
-                                        background: rgba(74, 222, 128, 0.2);
-                                        border: 1px solid rgba(74, 222, 128, 0.4);
-                                        border-radius: 6px;
-                                        color: #4ade80;
-                                        padding: 4px 10px;
-                                        cursor: pointer;
-                                        font-size: 12px;
-                                        font-weight: 600;
-                                        margin-left: auto;
-                                        transition: all 0.2s;
-                                    " onmouseover="this.style.background='rgba(74,222,128,0.3)'" onmouseout="this.style.background='rgba(74,222,128,0.2)'" title="Refresh Chia treasury data from Spacescan">
-                                        🔄 Refresh
-                                    </button>
                                 </div>
                                 <div class="header-stats" style="display: flex; justify-content: space-between; font-size: 14px; color: rgba(255, 255, 255, 0.6);">
                                     <span id="chia-token-count">0 tokens</span>
@@ -5541,7 +5527,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                 if (id === 'Native' || id === 'XCH_NATIVE' || !id) {
                     window.open('https://www.spacescan.io', '_blank');
                 } else {
-                    window.open(`https://www.spacescan.io/chia/cat/${id}`, '_blank');
+                    window.open(`https://spacescan.io/xch/token/${id}`, '_blank');
                 }
             } else if (chain === 'Base') {
                 // Link to 9mm Pro swap with specific token
@@ -7097,7 +7083,7 @@ function buildTokenCard(token) {
     let explorerUrl = '';
     if (!isLP) {
         if (token.assetId && token.assetId !== 'XCH_NATIVE') {
-            explorerUrl = `https://www.spacescan.io/chia/cat/${token.assetId}`;
+            explorerUrl = `https://spacescan.io/xch/token/${token.assetId}`;
         } else if (token.assetId === 'XCH_NATIVE') {
             explorerUrl = 'https://www.spacescan.io';
         } else if (token.contract) {
