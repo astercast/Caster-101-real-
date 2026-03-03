@@ -235,26 +235,32 @@ export default async function handler(req, res) {
         if (!force) {
             const blobSnap = await loadBlobSnapshot();
             if (blobSnap?.savedAt && blobSnap.baseData && blobSnap.chiaData) {
-                _memSnapshot = blobSnap;
-                _memAt = Date.now();
-                const blobAge = Date.now() - blobSnap.savedAt;
+                const chiaOk = Array.isArray(blobSnap.chiaData.tokens) && blobSnap.chiaData.tokens.length > 0;
+                if (!chiaOk) {
+                    // Blob was saved with empty Chia data (chia-cat-prices timed out) — discard it and rebuild
+                    console.warn('[treasury-index] Blob has empty chiaData — discarding, rebuilding fresh');
+                } else {
+                    _memSnapshot = blobSnap;
+                    _memAt = Date.now();
+                    const blobAge = Date.now() - blobSnap.savedAt;
 
-                if (blobAge > BLOB_TTL_MS && !_inflight) {
-                    // Blob is stale — kick off background rebuild, respond immediately
-                    console.log(`[treasury-index] Blob stale (${Math.round(blobAge/60000)}m old) — SWR background rebuild`);
-                    _inflight = buildSnapshot(req)
-                        .then(async snapshot => {
-                            _memSnapshot = snapshot;
-                            _memAt = Date.now();
-                            await saveBlobSnapshot(snapshot);
-                            return snapshot;
-                        })
-                        .finally(() => { _inflight = null; });
-                    // Respond with stale-but-valid blob right away
-                    return res.status(200).json({ ...blobSnap, source: 'blob-stale' });
+                    if (blobAge > BLOB_TTL_MS && !_inflight) {
+                        // Blob is stale — kick off background rebuild, respond immediately
+                        console.log(`[treasury-index] Blob stale (${Math.round(blobAge/60000)}m old) — SWR background rebuild`);
+                        _inflight = buildSnapshot(req)
+                            .then(async snapshot => {
+                                _memSnapshot = snapshot;
+                                _memAt = Date.now();
+                                await saveBlobSnapshot(snapshot);
+                                return snapshot;
+                            })
+                            .finally(() => { _inflight = null; });
+                        // Respond with stale-but-valid blob right away
+                        return res.status(200).json({ ...blobSnap, source: 'blob-stale' });
+                    }
+
+                    return res.status(200).json({ ...blobSnap, source: 'blob' });
                 }
-
-                return res.status(200).json({ ...blobSnap, source: 'blob' });
             }
         }
 
@@ -264,7 +270,13 @@ export default async function handler(req, res) {
                 .then(async snapshot => {
                     _memSnapshot = snapshot;
                     _memAt = Date.now();
-                    await saveBlobSnapshot(snapshot);
+                    // Only persist blob if Chia data actually loaded
+                    const chiaOk = Array.isArray(snapshot.chiaData?.tokens) && snapshot.chiaData.tokens.length > 0;
+                    if (chiaOk) {
+                        await saveBlobSnapshot(snapshot);
+                    } else {
+                        console.warn('[treasury-index] Skipping blob save — chiaData empty (chia-cat-prices may have timed out)');
+                    }
                     return snapshot;
                 })
                 .finally(() => {
