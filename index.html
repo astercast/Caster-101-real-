@@ -3859,6 +3859,16 @@
             return marketIndexPromise;
         }
 
+        function isMarketSnapshotUsable(snapshot) {
+            if (!snapshot || !Array.isArray(snapshot.base) || !Array.isArray(snapshot.chia)) return false;
+
+            const basePriced = snapshot.base.filter(t => parseFloat(t.price || 0) > 0).length;
+            const chiaPriced = snapshot.chia.filter(t => parseFloat(t.price || 0) > 0).length;
+            const chiaWithMcap = snapshot.chia.filter(t => (t.assetId === 'Native') || parseFloat(t.marketCap || 0) > 0).length;
+
+            return basePriced >= 4 && chiaPriced >= 4 && chiaWithMcap >= 4;
+        }
+
         async function fetchTreasuryIndexSnapshot(force = false) {
             const ttl = 2 * 60 * 1000;
             if (!force && treasuryIndexSnapshot && (Date.now() - treasuryIndexLoadedAt) < ttl) return treasuryIndexSnapshot;
@@ -4020,7 +4030,11 @@
         async function fetchChiaData(baseData = []) {
             console.log('--- CHIA PRICES: Browser-direct (Dexie tickers + Spacescan supply) ---');
 
-            const fastSnapshot = await fetchMarketIndexSnapshot();
+            let fastSnapshot = await fetchMarketIndexSnapshot();
+            if (fastSnapshot && !isMarketSnapshotUsable(fastSnapshot)) {
+                console.warn('[market-index] Snapshot quality low for Chia, forcing refresh...');
+                fastSnapshot = await fetchMarketIndexSnapshot(true);
+            }
             if (fastSnapshot?.chia?.length) {
                 console.log(`[market-index] Using snapshot for Chia (${fastSnapshot.source || 'snapshot'})`);
                 const enriched = [];
@@ -4043,7 +4057,10 @@
                         mcapStatus: marketCap > 0 ? 'ok' : (price > 0 ? 'no_supply' : 'no_price')
                     });
                 }
-                return enriched;
+                const priced = enriched.filter(t => parseFloat(t.price || 0) > 0).length;
+                const withMcap = enriched.filter(t => (t.assetId === 'Native') || parseFloat(t.marketCap || 0) > 0).length;
+                if (priced >= 4 && withMcap >= 4) return enriched;
+                console.warn(`[market-index] Chia snapshot still weak after enrichment (priced=${priced}, mcap=${withMcap}), falling back to live fetch`);
             }
 
             const chiaTargets = trackedTokens.filter(t => t.chain === 'Chia');
@@ -4244,10 +4261,19 @@
         async function fetchBaseData() {
             console.log('--- BASE PRICES: DexScreener batch + GeckoTerminal fallback ---');
 
-            const fastSnapshot = await fetchMarketIndexSnapshot();
+            let fastSnapshot = await fetchMarketIndexSnapshot();
+            if (fastSnapshot && !isMarketSnapshotUsable(fastSnapshot)) {
+                console.warn('[market-index] Snapshot quality low for Base, forcing refresh...');
+                fastSnapshot = await fetchMarketIndexSnapshot(true);
+            }
             if (fastSnapshot?.base?.length) {
-                console.log(`[market-index] Using snapshot for Base (${fastSnapshot.source || 'snapshot'})`);
-                return fastSnapshot.base.map(t => ({ ...t }));
+                const baseRows = fastSnapshot.base.map(t => ({ ...t }));
+                const priced = baseRows.filter(t => parseFloat(t.price || 0) > 0).length;
+                if (priced >= 4) {
+                    console.log(`[market-index] Using snapshot for Base (${fastSnapshot.source || 'snapshot'})`);
+                    return baseRows;
+                }
+                console.warn(`[market-index] Base snapshot weak (priced=${priced}), falling back to live fetch`);
             }
 
             const baseTargets     = trackedTokens.filter(t => t.chain === 'Base');
@@ -6394,13 +6420,22 @@ async function loadComprehensiveTreasury(force = false) {
     try {
         const treasurySnapshot = await fetchTreasuryIndexSnapshot(force);
         if (treasurySnapshot?.baseData && treasurySnapshot?.chiaData) {
-            console.log(`[treasury-index] Using snapshot (${treasurySnapshot.source || 'snapshot'})`);
-            _treasuryCache.baseData = treasurySnapshot.baseData;
-            _treasuryCache.chiaData = treasurySnapshot.chiaData;
-            _treasuryCache.nftData = treasurySnapshot.nftData || { collections: [], totalNFTs: 0, totalCollections: 0, totalValue: 0, totalXch: 0 };
-            _treasuryCache.timestamp = Date.now();
-            updateTreasuryDisplay(_treasuryCache.baseData, _treasuryCache.chiaData, _treasuryCache.nftData);
-            return;
+            const baseTokens = Array.isArray(treasurySnapshot.baseData.tokens) ? treasurySnapshot.baseData.tokens.length : 0;
+            const chiaTokens = Array.isArray(treasurySnapshot.chiaData.tokens) ? treasurySnapshot.chiaData.tokens.length : 0;
+            const baseTotal = parseFloat(treasurySnapshot.baseData.total || 0);
+            const hasUsableSnapshot = baseTokens > 0 && baseTotal > 0 && chiaTokens > 0;
+
+            if (hasUsableSnapshot) {
+                console.log(`[treasury-index] Using snapshot (${treasurySnapshot.source || 'snapshot'})`);
+                _treasuryCache.baseData = treasurySnapshot.baseData;
+                _treasuryCache.chiaData = treasurySnapshot.chiaData;
+                _treasuryCache.nftData = treasurySnapshot.nftData || { collections: [], totalNFTs: 0, totalCollections: 0, totalValue: 0, totalXch: 0 };
+                _treasuryCache.timestamp = Date.now();
+                updateTreasuryDisplay(_treasuryCache.baseData, _treasuryCache.chiaData, _treasuryCache.nftData);
+                return;
+            }
+
+            console.warn(`[treasury-index] Snapshot incomplete (baseTokens=${baseTokens}, baseTotal=${baseTotal}, chiaTokens=${chiaTokens}); falling back to live loader`);
         }
     } catch (e) {
         console.warn('[treasury-index] Snapshot unavailable, falling back to live loader:', e.message);

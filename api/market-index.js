@@ -94,23 +94,47 @@ async function saveBlobSnapshot(snapshot) {
 async function fetchBestBaseToken(contract) {
     try {
         const response = await safeFetch(`https://api.dexscreener.com/latest/dex/tokens/${contract.toLowerCase()}`, 12000);
-        if (!response.ok) return { price: 0, change24h: 0, marketCap: 0 };
-        const data = await response.json();
-        const pairs = Array.isArray(data?.pairs) ? data.pairs : [];
-        const valid = pairs.filter(p => {
-            if ((p.chainId || '').toLowerCase() !== 'base') return false;
-            const quote = (p.quoteToken?.symbol || '').toUpperCase();
-            return quote === 'WETH' || quote === 'USDC' || quote === 'ETH' || quote === 'USDT';
-        });
-        const best = valid.sort((a, b) => parseFloat(b.volume?.h24 || 0) - parseFloat(a.volume?.h24 || 0))[0];
-        if (!best) return { price: 0, change24h: 0, marketCap: 0 };
-        return {
-            price: parseFloat(best.priceUsd || 0),
-            change24h: parseFloat(best.priceChange?.h24 || 0),
-            marketCap: parseFloat(best.marketCap || best.fdv || 0)
-        };
-    } catch {
-        return { price: 0, change24h: 0, marketCap: 0 };
+        if (response.ok) {
+            const data = await response.json();
+            const pairs = Array.isArray(data?.pairs) ? data.pairs : [];
+            const valid = pairs.filter(p => {
+                if ((p.chainId || '').toLowerCase() !== 'base') return false;
+                const quote = (p.quoteToken?.symbol || '').toUpperCase();
+                return quote === 'WETH' || quote === 'USDC' || quote === 'ETH' || quote === 'USDT';
+            });
+            const best = valid.sort((a, b) => parseFloat(b.volume?.h24 || 0) - parseFloat(a.volume?.h24 || 0))[0];
+            if (best) {
+                const price = parseFloat(best.priceUsd || 0);
+                const marketCap = parseFloat(best.marketCap || best.fdv || 0);
+                if (price > 0) {
+                    return {
+                        price,
+                        change24h: parseFloat(best.priceChange?.h24 || 0),
+                        marketCap
+                    };
+                }
+            }
+        }
+    } catch {}
+
+    // GeckoTerminal fallback
+    try {
+        const gt = await safeFetch(`https://api.geckoterminal.com/api/v2/networks/base/tokens/${contract.toLowerCase()}`, 12000);
+        if (!gt.ok) return { price: 0, change24h: 0, marketCap: 0 };
+        const data = await gt.json();
+        const attr = data?.data?.attributes || {};
+        const price = parseFloat(attr.price_usd || 0);
+        const marketCap = parseFloat(attr.market_cap_usd || attr.fdv_usd || 0);
+        if (price > 0) {
+            return {
+                price,
+                change24h: 0,
+                marketCap
+            };
+        }
+    } catch {}
+
+    return { price: 0, change24h: 0, marketCap: 0 };
     }
 }
 
