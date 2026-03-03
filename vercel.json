@@ -13,7 +13,13 @@
     "api/chia-address-proxy.js": {
       "maxDuration": 45
     },
+    "api/treasury-index.js": {
+      "maxDuration": 60
+    },
     "api/market-index.js": {
+      "maxDuration": 30
+    },
+    "api/game-index.js": {
       "maxDuration": 30
     },
     "api/merkl-pools.js": {
