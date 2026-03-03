@@ -2888,7 +2888,6 @@
                             </div>
                             <div class="holdings-list" id="chia-holdings-list" style="padding: 16px; max-height: 450px; overflow-y: auto; will-change: scroll-position; transform: translateZ(0); contain: layout style paint;">
                                 <div style="text-align: center; padding: 60px 20px; color: rgba(255, 255, 255, 0.5);">
-                                    <div style="font-size: 24px; margin-bottom: 8px;">⏳</div>
                                     <div>Loading Chia holdings...</div>
                                     <div id="chia-cache-status" style="font-size: 11px; margin-top: 8px; opacity: 0.5;"></div>
                                 </div>
@@ -6704,7 +6703,6 @@ async function loadComprehensiveTreasury(force = false) {
         // ── Show loading placeholder ───────────────────────────────────────────────
         const chiaList = document.getElementById('chia-holdings-list');
         if (chiaList) chiaList.innerHTML = `<div style="text-align:center;padding:40px 20px;color:rgba(255,255,255,0.4);font-size:12px;">
-            <div style="font-size:24px;margin-bottom:8px;">⏳</div>
             <div>Loading treasury snapshot…</div>
             <div id="chia-cache-status" style="font-size:11px;margin-top:8px;opacity:0.5;">Loading Spacescan data...</div>
         </div>`;
