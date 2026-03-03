@@ -1,7 +1,7 @@
 const HEADERS = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Content-Type': 'application/json'
 };
 
@@ -222,6 +222,31 @@ export default async function handler(req, res) {
     Object.entries(HEADERS).forEach(([k, v]) => res.setHeader(k, v));
     res.setHeader('Cache-Control', 's-maxage=120, stale-while-revalidate=1800');
     if (req.method === 'OPTIONS') return res.status(200).end();
+
+    // ── POST: browser pushes a client-built snapshot (has real Spacescan CAT data) ──
+    if (req.method === 'POST') {
+        try {
+            const body = req.body || {};
+            const chiaOk = Array.isArray(body.chiaData?.tokens) && body.chiaData.tokens.some(t => t.type !== 'native');
+            if (!body.baseData || !chiaOk) {
+                return res.status(400).json({ error: 'Invalid snapshot: missing baseData or chiaData CATs' });
+            }
+            const snapshot = {
+                version: 1,
+                savedAt: Date.now(),
+                baseData: body.baseData,
+                chiaData: body.chiaData,
+                nftData: body.nftData || { collections: [], totalNFTs: 0, totalCollections: 0, totalValue: 0, totalXch: 0 }
+            };
+            _memSnapshot = snapshot;
+            _memAt = Date.now();
+            await saveBlobSnapshot(snapshot);
+            console.log(`[treasury-index] Browser snapshot saved: ${snapshot.chiaData.tokens.length} chia tokens, $${(snapshot.baseData.total||0).toFixed(2)} base`);
+            return res.status(200).json({ ok: true, savedAt: snapshot.savedAt });
+        } catch (e) {
+            return res.status(500).json({ error: 'Failed to save snapshot', detail: String(e?.message || e) });
+        }
+    }
 
     try {
         const force = req.query?.refresh === '1';

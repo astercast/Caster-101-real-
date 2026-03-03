@@ -6894,6 +6894,28 @@ async function loadComprehensiveTreasury(force = false) {
             updateTreasuryDisplay(baseData, chiaData, nftData);
             console.log('✅ Treasury display updated');
 
+            // ── Background: push browser-built snapshot to Blob for fast next load ──
+            // Vercel IPs are blocked by Spacescan token-balance, so browser builds the
+            // authoritative snapshot and POSTs it to treasury-index for Blob storage.
+            if (chiaData.tokens.some(t => t.type !== 'native')) {
+                (async () => {
+                    try {
+                        const snap = {
+                            baseData,
+                            chiaData,
+                            nftData: { collections: mergedNFTCols, totalNFTs: mergedNFTCount, totalCollections: mergedNFTCols.length, totalValue: 0, totalXch: 0 }
+                        };
+                        const r = await fetch('/api/treasury-index', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(snap)
+                        });
+                        if (r.ok) console.log('💾 Treasury snapshot pushed to Blob (fast load next visit)');
+                        else console.warn('⚠️ Treasury Blob push failed:', r.status);
+                    } catch (e) { console.warn('⚠️ Treasury Blob push error:', e.message); }
+                })();
+            }
+
             // ── Background: MintGarden enrichment for NFT collection names ────────────
             if (mergedNFTCount > 0) {
                 const allColIds = Object.keys(colMap);
