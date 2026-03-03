@@ -6301,7 +6301,7 @@ async function loadComprehensiveTreasury(force = false) {
         const idxResp = await fetch(idxUrl, { cache: 'no-store' });
         if (idxResp.ok) {
             const idx = await idxResp.json();
-            if (idx && idx.baseData && idx.chiaData && Array.isArray(idx.chiaData.tokens) && idx.chiaData.tokens.length > 0) {
+            if (idx && idx.baseData && idx.chiaData && Array.isArray(idx.chiaData.tokens) && idx.chiaData.tokens.some(t => t.type !== 'native')) {
                 const src = idx.source || 'unknown';
                 console.log(`⚡ Treasury index hit (source=${src}, ${idx.chiaData.tokens.length} chia tokens, $${(idx.baseData.total||0).toFixed(2)} base)`);
 

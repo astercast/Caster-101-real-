@@ -235,7 +235,7 @@ export default async function handler(req, res) {
         if (!force) {
             const blobSnap = await loadBlobSnapshot();
             if (blobSnap?.savedAt && blobSnap.baseData && blobSnap.chiaData) {
-                const chiaOk = Array.isArray(blobSnap.chiaData.tokens) && blobSnap.chiaData.tokens.length > 0;
+                const chiaOk = Array.isArray(blobSnap.chiaData.tokens) && blobSnap.chiaData.tokens.some(t => t.type !== 'native');
                 if (!chiaOk) {
                     // Blob was saved with empty Chia data (chia-cat-prices timed out) — discard it and rebuild
                     console.warn('[treasury-index] Blob has empty chiaData — discarding, rebuilding fresh');
@@ -270,8 +270,8 @@ export default async function handler(req, res) {
                 .then(async snapshot => {
                     _memSnapshot = snapshot;
                     _memAt = Date.now();
-                    // Only persist blob if Chia data actually loaded
-                    const chiaOk = Array.isArray(snapshot.chiaData?.tokens) && snapshot.chiaData.tokens.length > 0;
+                    // Only persist blob if Chia data actually loaded (needs at least one CAT/LP beyond XCH)
+                    const chiaOk = Array.isArray(snapshot.chiaData?.tokens) && snapshot.chiaData.tokens.some(t => t.type !== 'native');
                     if (chiaOk) {
                         await saveBlobSnapshot(snapshot);
                     } else {
