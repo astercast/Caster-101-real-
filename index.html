@@ -1570,14 +1570,17 @@
             }
             .tc-price-inline {
                 display: inline !important;
-                font-size: 11px !important;
+                font-size: 9px !important;
                 font-family: 'Space Grotesk', sans-serif !important;
                 font-weight: 600 !important;
                 color: white !important;
                 letter-spacing: -0.01em !important;
             }
+            .tc-price {
+                font-size: 11px !important;
+            }
             .tc-change {
-                font-size: clamp(9px, 2.5vw, 11px) !important;
+                font-size: clamp(8px, 2vw, 10px) !important;
                 font-weight: 700 !important;
                 font-family: 'Space Grotesk', sans-serif !important;
                 letter-spacing: -0.02em !important;
@@ -1587,8 +1590,8 @@
                 margin-top: 4px !important;
                 padding-top: 4px !important;
             }
-            .tc-mcap-label { font-size: 8px !important; }
-            .tc-mcap-value { font-size: 10px !important; }
+            .tc-mcap-label { font-size: 7px !important; }
+            .tc-mcap-value { font-size: 9px !important; }
 
             /* Merkl Magic Box */
             #merkl-section {
@@ -3378,6 +3381,10 @@
                                 <p style="font-size:13px; line-height:1.65; color:rgba(255,255,255,0.72); font-family:'Space Grotesk',sans-serif; margin:0;">Fostered <span style="color:#fbbf24; font-weight:600;">cross-project growth</span> via collaborations with Tang Gang Green Army, VorobaXCH, MonkeyZoo, PizzaOnChia, and more, attracting a variety of support and donations to treasury.</p>
                             </div>
                             <div style="display:flex; gap:10px; align-items:flex-start;">
+                                <span style="color:#fbbf24; font-size:14px; flex-shrink:0; margin-top:2px;">☀️</span>
+                                <p style="font-size:13px; line-height:1.65; color:rgba(255,255,255,0.72); font-family:'Space Grotesk',sans-serif; margin:0;">The <span style="color:#fbbf24; font-weight:600;">First Summer of Love</span> — a vibrant, community-driven meme campaign in summer 2025 — rallied the Chia ecosystem around the <span style="color:#fbbf24; font-weight:600;">$LOVE</span> token through airdrops, giveaways, and high-energy engagement. Together, the community burned over <span style="color:#fbbf24; font-weight:600;">333 XCH worth of tokens and LP</span> to permanently set the CAT in stone on the Chia blockchain.</p>
+                            </div>
+                            <div style="display:flex; gap:10px; align-items:flex-start;">
                                 <span style="color:#fbbf24; font-size:14px; flex-shrink:0; margin-top:2px;">🌉</span>
                                 <p style="font-size:13px; line-height:1.65; color:rgba(255,255,255,0.72); font-family:'Space Grotesk',sans-serif; margin:0;">aWizard bridged Bytecash ($BYC) from Chia to Base as <span style="color:#fbbf24; font-weight:600;">Wizard Bucks</span> before Circuit DAO's official bridge existed.</p>
                             </div>
@@ -4255,6 +4262,27 @@
                 if (baseList) baseList.innerHTML = loadingHtml;
                 if (chiaList) chiaList.innerHTML = loadingHtml;
             }
+
+            // ── FAST PATH: market-index Blob cache (usually < 300ms) ──────────────
+            try {
+                const idxResp = await fetch('/api/market-index', { cache: 'no-store' });
+                if (idxResp.ok) {
+                    const idx = await idxResp.json();
+                    if (idx && Array.isArray(idx.base) && Array.isArray(idx.chia) && idx.base.length > 0) {
+                        console.log(`⚡ Market index hit (source=${idx.source || '?'}, ${idx.base.length} base + ${idx.chia.length} chia tokens)`);
+                        tokens = [...idx.base, ...idx.chia];
+                        refreshData();
+                        marketLastUpdatedAt = idx.savedAt || Date.now();
+                        updateMarketStatus();
+                        fetchMerklPools();
+                        return;
+                    }
+                }
+                console.warn('⚠️ market-index fast path returned no usable data, falling back to direct fetch');
+            } catch (e) {
+                console.warn('⚠️ market-index fast path failed:', e.message, '— falling back to direct fetch');
+            }
+            // ── END FAST PATH ──────────────────────────────────────────────────────
 
             console.log('🔄 Starting data fetch (Base + Chia in parallel)...');
             

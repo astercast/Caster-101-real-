@@ -6,7 +6,8 @@ const HEADERS = {
 };
 
 const INDEX_KEY = 'caster101-index/market.json';
-const MEM_TTL_MS = 60 * 1000;
+const MEM_TTL_MS = 60 * 1000;         // in-memory hot cache: 1 min
+const BLOB_TTL_MS = 10 * 60 * 1000;   // blob SWR threshold: 10 min — older → background rebuild
 
 let _memSnapshot = null;
 let _memAt = 0;
@@ -208,6 +209,14 @@ export default async function handler(req, res) {
             if (blobSnap?.savedAt) {
                 _memSnapshot = blobSnap;
                 _memAt = Date.now();
+                const blobAge = Date.now() - blobSnap.savedAt;
+                if (blobAge > BLOB_TTL_MS && !_inflight) {
+                    console.log(`[market-index] Blob stale (${Math.round(blobAge/60000)}m old) — SWR background rebuild`);
+                    _inflight = buildSnapshot(req)
+                        .then(async snap => { _memSnapshot = snap; _memAt = Date.now(); await saveBlobSnapshot(snap); return snap; })
+                        .finally(() => { _inflight = null; });
+                    return res.status(200).json({ ...blobSnap, source: 'blob-stale' });
+                }
                 return res.status(200).json({ ...blobSnap, source: 'blob' });
             }
         }
