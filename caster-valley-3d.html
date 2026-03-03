@@ -1682,13 +1682,12 @@
                         new THREE.MeshLambertMaterial({ 
                             color: [0x6d9450, 0x7ba05b, 0x8fb570][Math.floor(r() * 3)],
                             transparent: true,
-                            opacity: 0.4,
-                            depthWrite: false
+                            opacity: 0.4
                         })
                     );
                     grassPatch.position.set(
                         x,
-                        0.01 + i * 0.0001, // Vary y position to prevent z-fighting
+                        0.04 + i * 0.0001, // Clearly above ground to prevent z-fighting
                         z
                     );
                     grassPatch.rotation.x = -Math.PI / 2;
@@ -1720,9 +1719,10 @@
                     const z = pos.z;
                     
                     const plot = new THREE.Mesh(new THREE.BoxGeometry(2, 0.3, 2), new THREE.MeshLambertMaterial({ color: 0x6d5633 }));
-                    plot.position.set(x, 0.15, z);
+                    plot.position.set(x, 0.20, z); // Raised so bottom face (y=0.05) clears the ground plane at y=0
                     plot.castShadow = true;
                     plot.receiveShadow = true;
+                    plot.frustumCulled = false;
                     this.scene.add(plot);
                     this.areaObjects.push(plot);
                     
@@ -3096,11 +3096,10 @@
                         new THREE.MeshLambertMaterial({
                             color: [0xe6cfa0, 0xe0c090, 0xd8b98a][Math.floor(r() * 3)],
                             transparent: true,
-                            opacity: 0.35,
-                            depthWrite: false
+                            opacity: 0.35
                         })
                     );
-                    dune.position.set(pos.x, 0.085 + i * 0.00004, pos.z);
+                    dune.position.set(pos.x, 0.09 + i * 0.00004, pos.z);
                     dune.rotation.x = -Math.PI / 2;
                     dune.rotation.z = r() * Math.PI;
                     dune.scale.set(1.8, 1, 0.6);
@@ -3111,10 +3110,10 @@
                 // Wet sand ring near the inner water edge
                 const wetSand = new THREE.Mesh(
                     new THREE.RingGeometry(13.2, 16.2, 64),
-                    new THREE.MeshLambertMaterial({ color: 0xd7c6a3, transparent: true, opacity: 0.45, depthWrite: false })
+                    new THREE.MeshLambertMaterial({ color: 0xd7c6a3, transparent: true, opacity: 0.45 })
                 );
                 wetSand.rotation.x = -Math.PI / 2;
-                wetSand.position.y = 0.082;
+                wetSand.position.y = 0.09;
                 this.scene.add(wetSand);
                 this.areaObjects.push(wetSand);
                 
@@ -3128,9 +3127,9 @@
                         const z = Math.sin(baseAngle) * distance + (r() - 0.5) * width;
                         const patch = new THREE.Mesh(
                             new THREE.CircleGeometry(1 + r() * 0.8, 8),
-                            new THREE.MeshLambertMaterial({ color: 0xf4a460, transparent: true, opacity: 0.7, depthWrite: false })
+                            new THREE.MeshLambertMaterial({ color: 0xf4a460, transparent: true, opacity: 0.7 })
                         );
-                        patch.position.set(x, 0.09, z);
+                        patch.position.set(x, 0.10, z);
                         patch.rotation.x = -Math.PI / 2;
                         this.scene.add(patch);
                         this.areaObjects.push(patch);
@@ -3265,9 +3264,9 @@
                     const z = Math.sin(angle) * distance;
                     const pool = new THREE.Mesh(
                         new THREE.CircleGeometry(0.8 + r() * 0.8, 12),
-                        new THREE.MeshLambertMaterial({ color: 0x6bb4d8, transparent: true, opacity: 0.35, depthWrite: false })
+                        new THREE.MeshLambertMaterial({ color: 0x6bb4d8, transparent: true, opacity: 0.35 })
                     );
-                    pool.position.set(x, 0.082, z);
+                    pool.position.set(x, 0.09, z);
                     pool.rotation.x = -Math.PI / 2;
                     this.scene.add(pool);
                     this.areaObjects.push(pool);
@@ -3506,13 +3505,12 @@
                         new THREE.MeshBasicMaterial({ 
                             color: dustColors[Math.floor(r() * dustColors.length)],
                             transparent: true,
-                            opacity: 0.15,
-                            depthWrite: false
+                            opacity: 0.15
                         })
                     );
                     dust.position.set(
                         (r() - 0.5) * 40,
-                        0.02,
+                        0.04,
                         (r() - 0.5) * 40
                     );
                     dust.rotation.x = -Math.PI / 2;
@@ -3528,13 +3526,12 @@
                         new THREE.MeshBasicMaterial({ 
                             color: 0xffffff,
                             transparent: true,
-                            opacity: 0.6,
-                            depthWrite: false
+                            opacity: 0.6
                         })
                     );
                     stardust.position.set(
                         (r() - 0.5) * 30,
-                        0.02,
+                        0.04,
                         (r() - 0.5) * 30
                     );
                     stardust.rotation.x = -Math.PI / 2;
@@ -4275,8 +4272,10 @@
                 // Disable frustum culling on ALL children now that tier geometry is fully built
                 plantGroup.traverse(child => { child.frustumCulled = false; });
 
-                plantGroup.position.set(plot.x, 0.6, plot.z);
-                plantGroup.scale.set(1.0, 1.0, 1.0); // Start clearly visible
+                plantGroup.position.set(plot.x, 0.65, plot.z); // Slightly higher to sit above raised plots
+                plantGroup.scale.set(1.0, 1.0, 1.0);
+                plantGroup.visible = true; // Explicitly ensure visibility
+                plantGroup.renderOrder = 2; // Render after ground and transparent patches
                 plantGroup.castShadow = true;
                 this.scene.add(plantGroup);
                 this.areaObjects.push(plantGroup);
@@ -5216,20 +5215,24 @@
                             }
                             if (progress >= 1) {
                                 plot.plantMesh.rotation.y += 0.05; // Faster rotation when ready!
-                                // Stronger glow when fully grown - update ALL children
-                                const glow = Math.sin(Date.now() / 200) * 0.5 + 1.0; // 0.5-1.5 range - VERY bright!
-                                plot.plantMesh.children.forEach(child => {
-                                    if (child.material && child.material.color) {
-                                        child.material.emissive = child.material.color.clone();
-                                        child.material.emissiveIntensity = glow;
+                                // Stronger glow when fully grown - update ALL descendants
+                                const glow = Math.sin(Date.now() / 200) * 0.5 + 1.0;
+                                plot.plantMesh.traverse(child => {
+                                    if (child.isMesh && child.material) {
+                                        if (child.material.emissive !== undefined) {
+                                            child.material.emissive.set(child.material.color);
+                                            child.material.emissiveIntensity = glow;
+                                        }
                                     }
                                 });
                             } else {
                                 // Even small plants have a subtle glow
-                                plot.plantMesh.children.forEach(child => {
-                                    if (child.material && child.material.color) {
-                                        child.material.emissive = child.material.color.clone();
-                                        child.material.emissiveIntensity = 0.2 + progress * 0.3;
+                                plot.plantMesh.traverse(child => {
+                                    if (child.isMesh && child.material) {
+                                        if (child.material.emissive !== undefined) {
+                                            child.material.emissive.set(child.material.color);
+                                            child.material.emissiveIntensity = 0.2 + progress * 0.3;
+                                        }
                                     }
                                 });
                             }
