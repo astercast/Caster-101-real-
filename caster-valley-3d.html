@@ -78,6 +78,7 @@
             cursor: pointer; transition: all 0.2s ease; padding: 4px; box-shadow: 0 4px 0 var(--brown-dark), inset 0 2px 0 rgba(255, 255, 255, 0.3);
         }
         .tool-item:active, .seed-item:active, .area-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--brown-dark); }
+        .seed-item.active { border-color: var(--gold) !important; box-shadow: 0 0 12px rgba(255,215,0,0.75), 0 4px 0 var(--brown-dark) !important; background: linear-gradient(135deg, #ffe878 0%, var(--orange) 100%) !important; }
         .tool-icon, .seed-icon { font-size: 24px; margin-bottom: 2px; filter: drop-shadow(2px 2px 0 rgba(0,0,0,0.3)); }
         .tool-label, .seed-label {
             font-family: 'Press Start 2P', cursive; font-size: 6px; text-align: center; line-height: 1.2; text-transform: uppercase;
@@ -1409,11 +1410,17 @@
                 this.mouse = new THREE.Vector2();
                 
                 window.addEventListener('resize', () => {
-                    this.camera.aspect = canvas.clientWidth / canvas.clientHeight;
-                    this.camera.updateProjectionMatrix();
-                    this.renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+                    requestAnimationFrame(() => {
+                        if (!this.camera || !this.renderer) return;
+                        const w = canvas.clientWidth;
+                        const h = canvas.clientHeight;
+                        if (!w || !h) return;
+                        this.camera.aspect = w / h;
+                        this.camera.updateProjectionMatrix();
+                        this.renderer.setSize(w, h);
+                    });
                 });
-                document.addEventListener('fullscreenchange', () => this.handleFullscreenChange());
+                // fullscreenchange handled by listeners added in init()
                 
                 // Camera pan event listeners
                 this.setupCameraControls();
@@ -3897,6 +3904,12 @@
                                 if (plotHits.length > 0 || plantHits.length > 0) {
                                     this.harvestPlant(plot);
                                 }
+                            } else if (!plot.seed && this.selectedSeed && this.seeds[this.selectedSeed] > 0) {
+                                // Click on empty plot plants the active seed
+                                const plotHits = this.raycaster.intersectObject(plot.mesh);
+                                if (plotHits.length > 0) {
+                                    this.plantSeed(plot, this.selectedSeed);
+                                }
                             }
                         });
                     }
@@ -3997,9 +4010,6 @@
                 
                 plantGroup.userData = { tier, swayPhase: Math.random() * Math.PI * 2 };
                 plantGroup.frustumCulled = false;
-                plantGroup.traverse(child => {
-                    child.frustumCulled = false;
-                });
                 
                 if (tier === 1) {
                     // Tier 1: Blooming flower with colorful petals
@@ -4262,6 +4272,9 @@
                     }
                 }
                 
+                // Disable frustum culling on ALL children now that tier geometry is fully built
+                plantGroup.traverse(child => { child.frustumCulled = false; });
+
                 plantGroup.position.set(plot.x, 0.6, plot.z);
                 plantGroup.scale.set(1.0, 1.0, 1.0); // Start clearly visible
                 plantGroup.castShadow = true;
@@ -5016,10 +5029,15 @@
                     if (this.seeds[t] > 0) {
                         const s = SEED_TIERS[t - 1];
                         const item = document.createElement('div');
-                        item.className = 'seed-item';
+                        item.className = 'seed-item' + (parseInt(t) === this.selectedSeed ? ' active' : '');
                         item.style.position = 'relative';
                         item.style.transform = `scale(${scale})`;
                         item.innerHTML = `<div class="seed-icon">${s.icon}</div><div class="seed-label">T${t}</div><div class="seed-count">${this.seeds[t]}</div>`;
+                        item.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            this.selectedSeed = parseInt(t);
+                            this.renderToolbar();
+                        });
                         const startDrag = (e) => {
                             e.preventDefault();
                             e.stopPropagation();
@@ -5601,25 +5619,31 @@
                     document.body.style.height = '';
                 }
 
-                // Update camera and renderer for proper scaling
-                const width = isFullscreen ? window.innerWidth : canvas.clientWidth;
-                const height = isFullscreen ? window.innerHeight : canvas.clientHeight;
-                this.camera.aspect = width / height;
-                this.camera.updateProjectionMatrix();
-                this.renderer.setSize(width, height);
-                
-                // Scale UI elements for fullscreen
-                if (isFullscreen) {
-                    document.querySelectorAll('.hud, #toolbar, .left-tabs, .recenter-btn, .side-tab').forEach(el => {
-                        el.style.transform = 'scale(1.1)';
-                        el.style.transformOrigin = 'top left';
-                    });
-                } else {
-                    document.querySelectorAll('.hud, #toolbar, .left-tabs, .recenter-btn, .side-tab').forEach(el => {
-                        el.style.transform = '';
-                        el.style.transformOrigin = '';
-                    });
-                }
+                // Defer resize to after browser reflow so clientWidth/Height are correct
+                requestAnimationFrame(() => {
+                    if (!this.camera || !this.renderer) return;
+                    const w = isFullscreen ? window.innerWidth : canvas.clientWidth;
+                    const h = isFullscreen ? window.innerHeight : canvas.clientHeight;
+                    if (!w || !h) return;
+                    this.camera.aspect = w / h;
+                    this.camera.updateProjectionMatrix();
+                    this.renderer.setSize(w, h);
+                    // Preserve camera orientation after resize
+                    this.camera.lookAt(this.cameraTarget.x, this.cameraTarget.y, this.cameraTarget.z);
+
+                    // Scale UI elements for fullscreen
+                    if (isFullscreen) {
+                        document.querySelectorAll('.hud, #toolbar, .left-tabs, .recenter-btn, .side-tab').forEach(el => {
+                            el.style.transform = 'scale(1.1)';
+                            el.style.transformOrigin = 'top left';
+                        });
+                    } else {
+                        document.querySelectorAll('.hud, #toolbar, .left-tabs, .recenter-btn, .side-tab').forEach(el => {
+                            el.style.transform = '';
+                            el.style.transformOrigin = '';
+                        });
+                    }
+                });
             },
 
             openModal(type) {
