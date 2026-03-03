@@ -6487,14 +6487,16 @@ async function loadComprehensiveTreasury(force = false) {
                                 shouldRefresh = true;
                             }
 
+                            // Always return cached instantly — fresh or stale.
+                            // The caller's background-refresh block will fetch live data
+                            // and re-render silently once Spacescan responds.
+                            window._chiaLastFromCache = true;
                             if (!shouldRefresh) {
                                 console.log('✅ Snapshot is fresh (<3h), using it');
-                                window._chiaLastFromCache = true;
-                                return cached;
                             } else {
-                                console.log('⌛ Snapshot is old (>3h), refreshing from Spacescan');
-                                // Continue to fetch fresh data; fall back to cached if fetch fails
+                                console.log('⚡ Snapshot is stale (>3h) — showing immediately, background refresh will follow');
                             }
+                            return cached;
                         }
                     }
                 } catch(e) { 
