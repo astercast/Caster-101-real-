@@ -6,7 +6,8 @@ const HEADERS = {
 };
 
 const INDEX_KEY = 'caster101-index/treasury.json';
-const MEM_TTL_MS = 2 * 60 * 1000;
+const MEM_TTL_MS = 2 * 60 * 1000;       // in-memory hot cache: 2 min
+const BLOB_TTL_MS = 30 * 60 * 1000;     // blob SWR threshold: 30 min — older → background rebuild
 
 const BASE_WALLET_1 = '0x8d8cb6D19E32115823Cf0008701A84fB07F43467';
 const BASE_WALLET_2 = '0xEEDC069F861880eC1B5f41c9bC7a747DC1cE32b9';
@@ -219,25 +220,45 @@ async function buildSnapshot(req) {
 
 export default async function handler(req, res) {
     Object.entries(HEADERS).forEach(([k, v]) => res.setHeader(k, v));
-    res.setHeader('Cache-Control', 's-maxage=120, stale-while-revalidate=300');
+    res.setHeader('Cache-Control', 's-maxage=120, stale-while-revalidate=1800');
     if (req.method === 'OPTIONS') return res.status(200).end();
 
     try {
         const force = req.query?.refresh === '1';
 
+        // 1. In-memory hot cache (2 min)
         if (!force && _memSnapshot && (Date.now() - _memAt < MEM_TTL_MS)) {
             return res.status(200).json({ ..._memSnapshot, source: 'memory' });
         }
 
+        // 2. Blob snapshot — stale-while-revalidate (serve immediately, rebuild in background when > 30 min old)
         if (!force) {
             const blobSnap = await loadBlobSnapshot();
             if (blobSnap?.savedAt && blobSnap.baseData && blobSnap.chiaData) {
                 _memSnapshot = blobSnap;
                 _memAt = Date.now();
+                const blobAge = Date.now() - blobSnap.savedAt;
+
+                if (blobAge > BLOB_TTL_MS && !_inflight) {
+                    // Blob is stale — kick off background rebuild, respond immediately
+                    console.log(`[treasury-index] Blob stale (${Math.round(blobAge/60000)}m old) — SWR background rebuild`);
+                    _inflight = buildSnapshot(req)
+                        .then(async snapshot => {
+                            _memSnapshot = snapshot;
+                            _memAt = Date.now();
+                            await saveBlobSnapshot(snapshot);
+                            return snapshot;
+                        })
+                        .finally(() => { _inflight = null; });
+                    // Respond with stale-but-valid blob right away
+                    return res.status(200).json({ ...blobSnap, source: 'blob-stale' });
+                }
+
                 return res.status(200).json({ ...blobSnap, source: 'blob' });
             }
         }
 
+        // 3. No usable blob — build fresh (blocks until done)
         if (!_inflight || force) {
             _inflight = buildSnapshot(req)
                 .then(async snapshot => {

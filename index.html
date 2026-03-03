@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -6256,6 +6256,70 @@ async function loadComprehensiveTreasury(force = false) {
         return;
     }
     _treasuryLastLoad = now;
+
+    // ── FAST PATH: try /api/treasury-index (Blob-backed, usually < 300ms) ─────
+    // Show brief loading state while the fast-path fetch resolves
+    const _gtEl  = document.getElementById('portfolio-grand-total');
+    const _btEl  = document.getElementById('base-network-total');
+    const _ctEl  = document.getElementById('chia-network-total');
+    const _csEl  = document.getElementById('chia-cache-status');
+    if (_gtEl)  _gtEl.textContent  = 'Loading…';
+    if (_btEl)  _btEl.textContent  = 'Loading…';
+    if (_ctEl)  _ctEl.textContent  = 'Loading…';
+    if (_csEl)  _csEl.textContent  = force ? 'Refreshing from APIs…' : 'Checking treasury snapshot…';
+
+    try {
+        const idxUrl = force ? '/api/treasury-index?refresh=1' : '/api/treasury-index';
+        const idxResp = await fetch(idxUrl, { cache: 'no-store' });
+        if (idxResp.ok) {
+            const idx = await idxResp.json();
+            if (idx && idx.baseData && idx.chiaData && Array.isArray(idx.chiaData.tokens)) {
+                const src = idx.source || 'unknown';
+                console.log(`⚡ Treasury index hit (source=${src}, ${idx.chiaData.tokens.length} chia tokens, $${(idx.baseData.total||0).toFixed(2)} base)`);
+
+                // normalise nftData in case server omits it
+                const nftData = idx.nftData || { collections: [], totalNFTs: 0, totalCollections: 0, totalValue: 0, totalXch: 0 };
+
+                // Cache locally so tab-switch is instant
+                _treasuryCache.baseData  = idx.baseData;
+                _treasuryCache.chiaData  = idx.chiaData;
+                _treasuryCache.nftData   = nftData;
+                _treasuryCache.timestamp = now;
+
+                // Set globals used by NFT gallery
+                window._chiaNFTData  = nftData;
+                window._chiaXchPrice = idx.chiaData.xchPrice || 4;
+
+                // Render immediately
+                updateTreasuryDisplay(idx.baseData, idx.chiaData, nftData);
+                updateNFTGallery(nftData);
+
+                // Update Chia timestamp badge
+                if (idx.savedAt) {
+                    const age = Date.now() - idx.savedAt;
+                    const el = document.getElementById('chia-last-updated');
+                    if (el) {
+                        const sec = Math.floor(age / 1000);
+                        const label = sec < 60 ? sec + 's ago'
+                            : sec < 3600 ? Math.floor(sec/60) + 'm ago'
+                            : Math.floor(sec/3600) + 'h ago';
+                        el.textContent = src === 'fresh' ? 'Just updated' : `Updated ${label}`;
+                    }
+                    const statusEl = document.getElementById('chia-cache-status');
+                    if (statusEl) statusEl.textContent = src === 'fresh' ? 'Live data' : src === 'blob-stale' ? 'Snapshot (updating in background…)' : `Snapshot (${src})`;
+                }
+
+                // If the server returned a fresh-computed result it already hit all
+                // external APIs. No need for Spacescan fallback — we're done.
+                return;
+            }
+        }
+        console.warn('⚠️ treasury-index returned no usable data, falling back to direct calls');
+    } catch (e) {
+        console.warn('⚠️ treasury-index fast path failed:', e.message, '— falling back to direct calls');
+    }
+    // ── END FAST PATH ──────────────────────────────────────────────────────────
+
     const BASE_WALLET_1 = '0x8d8cb6D19E32115823Cf0008701A84fB07F43467';
     const BASE_WALLET_2 = '0xEEDC069F861880eC1B5f41c9bC7a747DC1cE32b9';
     const CHIA_WALLET_1 = 'xch10na8nqys9afs0fl74vvd6xl3akgu77p8mvjsp2ywy7rhq2s0jqys3nf7dl';
