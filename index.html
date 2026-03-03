@@ -3829,6 +3829,32 @@
         let tokens = []; // Will be populated with live data
         let displayedTokens = [];
         let currentSort = 'marketCap';
+        let marketIndexSnapshot = null;
+        let marketIndexLoadedAt = 0;
+        let marketIndexPromise = null;
+
+        async function fetchMarketIndexSnapshot(force = false) {
+            const ttl = 60 * 1000;
+            if (!force && marketIndexSnapshot && (Date.now() - marketIndexLoadedAt) < ttl) return marketIndexSnapshot;
+            if (marketIndexPromise && !force) return marketIndexPromise;
+
+            marketIndexPromise = fetch(`/api/market-index${force ? '?refresh=1' : ''}`)
+                .then(r => r.ok ? r.json() : null)
+                .then(data => {
+                    if (data && Array.isArray(data.base) && Array.isArray(data.chia)) {
+                        marketIndexSnapshot = data;
+                        marketIndexLoadedAt = Date.now();
+                        return data;
+                    }
+                    return null;
+                })
+                .catch(() => null)
+                .finally(() => {
+                    marketIndexPromise = null;
+                });
+
+            return marketIndexPromise;
+        }
 
         // ══════════════════════════════════════════════════════════════════════════
         // GLOBAL SPACESCAN RATE LIMIT COORDINATOR
@@ -3967,6 +3993,12 @@
 
         async function fetchChiaData(baseData = []) {
             console.log('--- CHIA PRICES: Browser-direct (Dexie tickers + Spacescan supply) ---');
+
+            const fastSnapshot = await fetchMarketIndexSnapshot();
+            if (fastSnapshot?.chia?.length) {
+                console.log(`[market-index] Using snapshot for Chia (${fastSnapshot.source || 'snapshot'})`);
+                return fastSnapshot.chia.map(t => ({ ...t }));
+            }
 
             const chiaTargets = trackedTokens.filter(t => t.chain === 'Chia');
             const catTargets  = chiaTargets.filter(t => t.assetId !== 'Native');
@@ -4165,6 +4197,12 @@
 
         async function fetchBaseData() {
             console.log('--- BASE PRICES: DexScreener batch + GeckoTerminal fallback ---');
+
+            const fastSnapshot = await fetchMarketIndexSnapshot();
+            if (fastSnapshot?.base?.length) {
+                console.log(`[market-index] Using snapshot for Base (${fastSnapshot.source || 'snapshot'})`);
+                return fastSnapshot.base.map(t => ({ ...t }));
+            }
 
             const baseTargets     = trackedTokens.filter(t => t.chain === 'Base');
             const withContract    = baseTargets.filter(t => t.contract);

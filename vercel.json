@@ -13,6 +13,9 @@
     "api/chia-address-proxy.js": {
       "maxDuration": 45
     },
+    "api/market-index.js": {
+      "maxDuration": 30
+    },
     "api/merkl-pools.js": {
       "maxDuration": 15
     },
