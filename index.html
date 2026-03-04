@@ -6950,12 +6950,52 @@ async function loadComprehensiveTreasury(force = false) {
                         }
                     }
 
-                    // Phase 2: still-unnamed non-LP tokens → Spacescan cat/info
+                    // Phase 2: still-unnamed non-LP tokens — try three sources in parallel
                     const stillUnnamed = mergedChiaTokens.filter(
                         t => (t.name || '').startsWith('Token ') && t.assetId && t.assetId !== 'XCH_NATIVE');
                     if (stillUnnamed.length > 0) {
-                        console.log(`🔍 cat/info lookup for ${stillUnnamed.length} unnamed CAT(s)...`);
-                        const catResults = await Promise.allSettled(stillUnnamed.map(async tok => {
+                        console.log(`🔍 Multi-source name lookup for ${stillUnnamed.length} unnamed CAT(s)...`);
+
+                        // Source A: TailDatabase — authoritative CAT registry
+                        const tailResults = await Promise.allSettled(stillUnnamed.map(async tok => {
+                            const ctrl = new AbortController();
+                            const timer = setTimeout(() => ctrl.abort(), 7000);
+                            try {
+                                const r = await fetch(`https://api.taildatabase.com/tail/${tok.assetId}`, {
+                                    headers: { 'Accept': 'application/json' }, signal: ctrl.signal });
+                                clearTimeout(timer);
+                                if (!r.ok) return null;
+                                const d = await r.json();
+                                const name = (d.name || '').trim();
+                                const symbol = (d.code || d.symbol || '').trim();
+                                return name ? { assetId: tok.assetId, name, symbol } : null;
+                            } catch(e) { clearTimeout(timer); return null; }
+                        }));
+
+                        // Source B: Dexie tickers — has most traded CATs
+                        const dexieTickerMap = {};
+                        try {
+                            const ctrl = new AbortController();
+                            setTimeout(() => ctrl.abort(), 8000);
+                            const r = await fetch('https://dexie.space/v2/prices/tickers', { signal: ctrl.signal });
+                            if (r.ok) {
+                                const d = await r.json();
+                                for (const tick of (d.tickers || [])) {
+                                    const bid = (tick.base_id || '').toLowerCase();
+                                    const name = (tick.base_name || tick.base_currency || '').trim();
+                                    const symbol = (tick.base_currency || '').trim();
+                                    if (bid && name) dexieTickerMap[bid] = { name, symbol };
+                                }
+                                console.log(`   Dexie tickers: ${Object.keys(dexieTickerMap).length} CATs`);
+                            }
+                        } catch(e) { console.warn('   Dexie ticker fetch failed:', e.message); }
+
+                        // Source C: Spacescan cat/info — fallback
+                        const stillStillUnnamed = stillUnnamed.filter(tok => {
+                            const res = tailResults[stillUnnamed.indexOf(tok)];
+                            return !(res?.status === 'fulfilled' && res?.value);
+                        });
+                        const catResults = await Promise.allSettled(stillStillUnnamed.map(async tok => {
                             const ctrl = new AbortController();
                             const timer = setTimeout(() => ctrl.abort(), 7000);
                             try {
@@ -6969,11 +7009,45 @@ async function loadComprehensiveTreasury(force = false) {
                                 return name ? { assetId: tok.assetId, name, symbol } : null;
                             } catch(e) { clearTimeout(timer); return null; }
                         }));
-                        for (const res of catResults) {
-                            if (res.status !== 'fulfilled' || !res.value) continue;
-                            const { assetId, name, symbol } = res.value;
-                            const tok = mergedChiaTokens.find(t => t.assetId === assetId);
-                            if (tok) { tok.name = name; if (symbol) tok.symbol = symbol; enriched++; }
+
+                        // Apply results: TailDatabase wins > Dexie > Spacescan
+                        for (let i = 0; i < stillUnnamed.length; i++) {
+                            const tok = mergedChiaTokens.find(t => t.assetId === stillUnnamed[i].assetId);
+                            if (!tok) continue;
+                            const aid = (tok.assetId || '').toLowerCase();
+                            // TailDatabase
+                            const tailRes = tailResults[i];
+                            if (tailRes?.status === 'fulfilled' && tailRes?.value) {
+                                tok.name = tailRes.value.name;
+                                if (tailRes.value.symbol) tok.symbol = tailRes.value.symbol;
+                                enriched++;
+                                console.log(`✅ TailDB: ${aid.slice(0,8)}… → ${tok.name}`);
+                                continue;
+                            }
+                            // Dexie
+                            if (dexieTickerMap[aid]) {
+                                tok.name = dexieTickerMap[aid].name;
+                                if (dexieTickerMap[aid].symbol) tok.symbol = dexieTickerMap[aid].symbol;
+                                enriched++;
+                                console.log(`✅ Dexie: ${aid.slice(0,8)}… → ${tok.name}`);
+                                continue;
+                            }
+                            // Spacescan cat/info
+                            const ssIdx = stillStillUnnamed.findIndex(t => t.assetId === stillUnnamed[i].assetId);
+                            if (ssIdx >= 0) {
+                                const ssRes = catResults[ssIdx];
+                                if (ssRes?.status === 'fulfilled' && ssRes?.value) {
+                                    tok.name = ssRes.value.name;
+                                    if (ssRes.value.symbol) tok.symbol = ssRes.value.symbol;
+                                    enriched++;
+                                    console.log(`✅ Spacescan: ${aid.slice(0,8)}… → ${tok.name}`);
+                                    continue;
+                                }
+                            }
+                            // Still unresolved — use short assetId as readable placeholder
+                            tok.name = `CAT ${aid.slice(0,6).toUpperCase()}…`;
+                            tok.symbol = aid.slice(0,6).toUpperCase();
+                            console.log(`⚠️ Unresolved: ${aid.slice(0,8)}… — labelled ${tok.name}`);
                         }
                     }
 
@@ -7080,7 +7154,8 @@ function updateTreasuryDisplay(baseData, chiaData, nftData) {
     }
     
     const baseTotal = baseData?.total || 0;
-    const chiaTotal = chiaData?.total || 0;
+    // Always sum token values directly so unnamed-but-valued tokens are never left out
+    const chiaTotal = (chiaData?.tokens || []).reduce((s, t) => s + (t.value || 0), 0);
     const grandTotal = baseTotal + chiaTotal;
 
     // Ensure consistent formatting across mobile and desktop
@@ -7236,23 +7311,16 @@ function updateHoldingsColumn(chain, tokensRaw) {
     const isUnknownChia = (t) => chain === 'chia' && ((t.name || '').startsWith('Token '));
 
     if (chain === 'chia') {
-        const knownTokens = tokens.filter(t => !isUnknownChia(t));
-        const unknownTokens = tokens.filter(t => isUnknownChia(t));
-        const displayTotal = tokens.reduce((s, t) => s + (t.value || 0), 0); // include all
-
+        const displayTotal = tokens.reduce((s, t) => s + (t.value || 0), 0);
         document.getElementById(totalId).textContent = `$${displayTotal.toLocaleString(undefined, {minimumFractionDigits:2,maximumFractionDigits:2})}`;
         document.getElementById(countId).textContent = `${tokens.length} tokens`;
-
-        const knownHigh = knownTokens.filter(t => (t.value || 0) >= 1);
-        const knownLow  = knownTokens.filter(t => (t.value || 0) < 1);
-        const unknownSorted = [...unknownTokens].sort((a, b) => (b.value || 0) - (a.value || 0));
 
         if (tokens.length === 0) {
             document.getElementById(listId).innerHTML = `<div style="text-align:center;padding:60px 20px;color:rgba(255,255,255,0.4);">No tokens found</div>`;
             return;
         }
-
-        const html = [...knownHigh, ...unknownSorted, ...knownLow].map(buildTokenCard).join('');
+        // Sort entirely by value desc — unknown/unnamed tokens sort alongside known ones
+        const html = tokens.map(buildTokenCard).join('');
         document.getElementById(listId).innerHTML = html;
         return;
     }
