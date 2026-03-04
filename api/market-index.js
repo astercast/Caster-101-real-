@@ -1,7 +1,7 @@
 const HEADERS = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Content-Type': 'application/json'
 };
 
@@ -196,6 +196,28 @@ export default async function handler(req, res) {
     Object.entries(HEADERS).forEach(([k, v]) => res.setHeader(k, v));
     res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
     if (req.method === 'OPTIONS') return res.status(200).end();
+
+    // ── POST: browser pushes its fresh snapshot so next visitor gets it instantly ──
+    if (req.method === 'POST') {
+        try {
+            const body = req.body || {};
+            const base = body.base || [];
+            const chia = body.chia || [];
+            // Require at least one priced chia CAT (not XCH-only)
+            const hasPricedChia = chia.some(t => t.assetId !== 'Native' && t.price > 0);
+            if (!hasPricedChia || base.length === 0) {
+                return res.status(400).json({ ok: false, reason: 'insufficient data' });
+            }
+            const snapshot = { base, chia, savedAt: Date.now() };
+            _memSnapshot = snapshot;
+            _memAt = Date.now();
+            await saveBlobSnapshot(snapshot);
+            console.log(`[market-index] Browser snapshot saved: ${base.length} base + ${chia.length} chia`);
+            return res.status(200).json({ ok: true });
+        } catch (e) {
+            return res.status(500).json({ ok: false, error: e.message });
+        }
+    }
 
     try {
         const force = req.query?.refresh === '1';

@@ -4255,7 +4255,10 @@
                 const idxResp = await fetch('/api/market-index', { cache: 'no-store' });
                 if (idxResp.ok) {
                     const idx = await idxResp.json();
-                    if (idx && Array.isArray(idx.base) && Array.isArray(idx.chia) && idx.base.length > 0) {
+                    if (idx && Array.isArray(idx.base) && Array.isArray(idx.chia)
+                        && idx.base.length > 0
+                        && idx.chia.length > 0
+                        && idx.chia.some(t => t.price > 0)) {
                         console.log(`⚡ Market index hit (source=${idx.source || '?'}, ${idx.base.length} base + ${idx.chia.length} chia tokens)`);
                         tokens = [...idx.base, ...idx.chia];
                         refreshData();
@@ -4308,7 +4311,19 @@
             refreshData();
             marketLastUpdatedAt = Date.now();
             updateMarketStatus();
-            
+
+            // ── Push browser snapshot to Blob so the next visitor gets fast-path ──
+            const hasPricedChia = chiaData.some(t => t.assetId !== 'Native' && t.price > 0);
+            if (hasPricedChia && baseData.length > 0) {
+                fetch('/api/market-index', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ base: baseData, chia: chiaData })
+                })
+                .then(r => r.ok ? console.log('💾 Market snapshot pushed to Blob') : console.warn('⚠️ Market snapshot POST failed', r.status))
+                .catch(e => console.warn('⚠️ Market snapshot POST error:', e.message));
+            }
+
             // Fetch Merkl pools after initial data load
             fetchMerklPools();
         }
