@@ -6419,6 +6419,7 @@ async function loadComprehensiveTreasury(force = false) {
 
         let mergedChiaTokens = [], mergedChiaTotal = 0, mergedNFTCols = [], mergedNFTCount = 0;
         let chiaXchPrice = window._chiaXchPrice || 2.80;
+        let tibetLpMap = {}; // LP token assetId → { name, pairName, catAssetId }
         let chiaTreasuryCacheAge = 0; // Track cache age for display
         let isRefreshingChiaTreasury = false; // Prevent multiple simultaneous refreshes
 
@@ -6527,6 +6528,7 @@ async function loadComprehensiveTreasury(force = false) {
                 window._chiaXchPrice = xchPrice;
 
                 const tibetMap = {};
+                const lpTokenMap = {}; // keyed by liquidity_asset_id = the LP token you actually hold
                 for (const pair of tibetArr) {
                     const aid = (pair.asset_id || '').toLowerCase();
                     if (!aid) continue;
@@ -6538,7 +6540,20 @@ async function loadComprehensiveTreasury(force = false) {
                         short_name: pair.short_name || '',
                         name: pair.name || ''
                     };
+                    // Also index by LP token assetId (liquidity_asset_id)
+                    const lpAid = (pair.liquidity_asset_id || '').toLowerCase();
+                    if (lpAid) {
+                        const shortName = pair.short_name || '';
+                        const pairName = shortName.replace(/^TIBET-/i, '').replace(/-XCH$/i, '/XCH');
+                        lpTokenMap[lpAid] = {
+                            catAssetId: aid,
+                            short_name: shortName,
+                            pairName: pairName || shortName,
+                            name: pair.name || `TibetSwap LP ${pairName || shortName}`
+                        };
+                    }
                 }
+                tibetLpMap = lpTokenMap; // expose to renderChiaTreasury scope
 
                 const fetchSpacescanWithFallback = async (endpoint, wallet, timeout) => {
                     // Direct browser calls using rate-limited queue
@@ -6665,22 +6680,24 @@ async function loadComprehensiveTreasury(force = false) {
                         tokens: tokens.map(t => {
                             const aid = (t.asset_id || '').toLowerCase();
                             const tibetEntry = tibetMap[aid] || null;
-                            // Enhanced name resolution: use name → symbol → readable fallback
+                            const lpEntry = lpTokenMap[aid] || null; // hit when this token IS an LP token
+                            // Name resolution: LP map → Spacescan name → symbol → readable fallback
                             let name = (t.name || t.symbol || '').trim();
+                            if (!name && lpEntry) name = lpEntry.name;
                             if (!name) name = `Token ${(t.asset_id || '').slice(0,6).toUpperCase()}`;
-                            
-                            // Ensure symbol has a fallback (never empty)
-                            const symbol = (t.symbol || name.slice(0,8) || (t.asset_id || '').slice(0,8) || 'CAT');
-                            
-                            const isLP = name.toLowerCase().includes('tibet') || name.toLowerCase().includes(' lp ') || (tibetEntry?.short_name || '').toLowerCase().startsWith('tibet-');
+
+                            // Symbol fallback
+                            const symbol = (t.symbol || (lpEntry ? lpEntry.pairName || 'LP' : null) || name.slice(0,8) || (t.asset_id || '').slice(0,8) || 'CAT');
+
+                            // LP detection: by liquidity_asset_id map OR name keywords
+                            const isLP = !!lpEntry || name.toLowerCase().includes('tibet') || name.toLowerCase().includes(' lp ') || (tibetEntry?.short_name || '').toLowerCase().startsWith('tibet-');
                             const balance = t.balance;
                             const price = t.price;
                             const rawVal = t.total_value > 0 ? t.total_value : (balance * price);
-                            // LP tokens: use actual value from Spacescan (no doubling)
                             const value = rawVal;
-                            // LP pair name: "TibetSwap LP LOVE-XCH" → "LOVE/XCH"
-                            let pairName = '';
-                            if (isLP) {
+                            // LP pair name: try lpEntry first, then parse from name string
+                            let pairName = lpEntry?.pairName || '';
+                            if (isLP && !pairName) {
                                 const m = name.match(/LP\s+(.+?)(?:\s*$)/i);
                                 if (m) pairName = m[1].replace(/-/g, '/');
                                 if (!pairName && tibetEntry?.short_name) {
@@ -6885,10 +6902,10 @@ async function loadComprehensiveTreasury(force = false) {
 
             // Render everything
             mergedChiaTokens = Array.from(tMap.values());
-            // Filter out unknown tokens (name starts with "Token ") from total calculation
+            // Count named vs unnamed for logging; total includes ALL tokens
             const namedTokens = mergedChiaTokens.filter(t => !t.name.startsWith('Token '));
             const unknownTokens = mergedChiaTokens.filter(t => t.name.startsWith('Token '));
-            mergedChiaTotal = namedTokens.reduce((s, t) => s + (t.value || 0), 0);
+            mergedChiaTotal = mergedChiaTokens.reduce((s, t) => s + (t.value || 0), 0);
             console.log(`✅ Chia treasury loaded: ${namedTokens.length} named tokens, $${mergedChiaTotal.toFixed(2)}, ${unknownTokens.length} unknown tokens, ${mergedNFTCount} NFTs`);
 
             const cacheAgeEl = document.getElementById('chia-cache-age');
@@ -6909,18 +6926,38 @@ async function loadComprehensiveTreasury(force = false) {
             updateTreasuryDisplay(baseData, chiaData, nftData);
             console.log('✅ Treasury display updated');
 
-            // ── Background: resolve real names for unnamed Chia tokens ────────────
-            // When Spacescan token-balance returns a token with no name, we fall back
-            // to "Token XXXXXX". Here we use cat/info (works from browser IPs) to
-            // look up the real name, then re-render so they count toward the total.
-            const unnamedToks = mergedChiaTokens.filter(t => (t.name || '').startsWith('Token ') && t.assetId && t.assetId !== 'XCH_NATIVE');
-            if (unnamedToks.length > 0) {
-                console.log(`🔍 Looking up real names for ${unnamedToks.length} unnamed Chia token(s)...`);
-                (async () => {
-                    try {
-                        const resolved = await Promise.allSettled(unnamedToks.map(async (tok) => {
+            // ── Background: enrich unnamed tokens, re-render, THEN push to Blob ──
+            // Phase 1 (no API): identify TibetSwap LP tokens via liquidity_asset_id map
+            // Phase 2 (API):   remaining unnamed tokens → Spacescan cat/info
+            // Phase 3:         re-render with full names + full total
+            // Phase 4:         POST enriched snapshot to Blob (fast load next visit)
+            (async () => {
+                try {
+                    let enriched = 0;
+                    const unnamedToks = mergedChiaTokens.filter(
+                        t => (t.name || '').startsWith('Token ') && t.assetId && t.assetId !== 'XCH_NATIVE');
+
+                    // Phase 1: TibetSwap LP tokens — matched by liquidity_asset_id, no API call
+                    for (const tok of unnamedToks) {
+                        const lpEntry = tibetLpMap[(tok.assetId || '').toLowerCase()];
+                        if (lpEntry) {
+                            tok.name   = lpEntry.name;
+                            tok.symbol = lpEntry.pairName || 'LP';
+                            tok.type   = 'lp';
+                            if (lpEntry.pairName) tok.pairName = lpEntry.pairName;
+                            enriched++;
+                            console.log(`✅ LP token resolved: ${(tok.assetId||'').slice(0,8)}… → ${tok.name}`);
+                        }
+                    }
+
+                    // Phase 2: still-unnamed non-LP tokens → Spacescan cat/info
+                    const stillUnnamed = mergedChiaTokens.filter(
+                        t => (t.name || '').startsWith('Token ') && t.assetId && t.assetId !== 'XCH_NATIVE');
+                    if (stillUnnamed.length > 0) {
+                        console.log(`🔍 cat/info lookup for ${stillUnnamed.length} unnamed CAT(s)...`);
+                        const catResults = await Promise.allSettled(stillUnnamed.map(async tok => {
                             const ctrl = new AbortController();
-                            const timer = setTimeout(() => ctrl.abort(), 6000);
+                            const timer = setTimeout(() => ctrl.abort(), 7000);
                             try {
                                 const r = await fetch(`https://api.spacescan.io/cat/info/${tok.assetId}`, { signal: ctrl.signal });
                                 clearTimeout(timer);
@@ -6932,47 +6969,45 @@ async function loadComprehensiveTreasury(force = false) {
                                 return name ? { assetId: tok.assetId, name, symbol } : null;
                             } catch(e) { clearTimeout(timer); return null; }
                         }));
-                        let enriched = 0;
-                        for (const res of resolved) {
+                        for (const res of catResults) {
                             if (res.status !== 'fulfilled' || !res.value) continue;
                             const { assetId, name, symbol } = res.value;
                             const tok = mergedChiaTokens.find(t => t.assetId === assetId);
                             if (tok) { tok.name = name; if (symbol) tok.symbol = symbol; enriched++; }
                         }
-                        if (enriched > 0) {
-                            console.log(`✅ Resolved ${enriched} unnamed Chia token(s) — re-rendering with them included`);
-                            mergedChiaTotal = mergedChiaTokens.reduce((s, t) => s + (t.value || 0), 0);
-                            const enrichedChiaData = { tokens: mergedChiaTokens, total: mergedChiaTotal, xchPrice: chiaXchPrice };
-                            _treasuryCache.chiaData = enrichedChiaData;
-                            updateTreasuryDisplay(baseData, enrichedChiaData, nftData);
-                        } else {
-                            console.log(`ℹ️ Could not resolve names for ${unnamedToks.length} token(s) — Spacescan may not have them`);
-                        }
-                    } catch (e) { console.warn('⚠️ Token name enrichment error:', e.message); }
-                })();
-            }
+                    }
 
-            // ── Background: push browser-built snapshot to Blob for fast next load ──
-            // Vercel IPs are blocked by Spacescan token-balance, so browser builds the
-            // authoritative snapshot and POSTs it to treasury-index for Blob storage.
-            if (chiaData.tokens.some(t => t.type !== 'native')) {
-                (async () => {
-                    try {
-                        const snap = {
-                            baseData,
-                            chiaData,
-                            nftData: { collections: mergedNFTCols, totalNFTs: mergedNFTCount, totalCollections: mergedNFTCols.length, totalValue: 0, totalXch: 0 }
-                        };
-                        const r = await fetch('/api/treasury-index', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(snap)
-                        });
-                        if (r.ok) console.log('💾 Treasury snapshot pushed to Blob (fast load next visit)');
-                        else console.warn('⚠️ Treasury Blob push failed:', r.status);
-                    } catch (e) { console.warn('⚠️ Treasury Blob push error:', e.message); }
-                })();
-            }
+                    // Phase 3: compute total from ALL tokens (named + any still-unnamed)
+                    mergedChiaTotal = mergedChiaTokens.reduce((s, t) => s + (t.value || 0), 0);
+                    const finalChiaData = { tokens: mergedChiaTokens, total: mergedChiaTotal, xchPrice: chiaXchPrice };
+                    _treasuryCache.chiaData = finalChiaData;
+                    if (enriched > 0) {
+                        console.log(`✅ Resolved ${enriched} unnamed token(s) — re-rendering with full total`);
+                        updateTreasuryDisplay(baseData, finalChiaData, nftData);
+                    } else if (unnamedToks.length > 0) {
+                        console.log(`ℹ️ ${unnamedToks.length} token(s) unresolvable — included in total anyway`);
+                        updateTreasuryDisplay(baseData, finalChiaData, nftData);
+                    }
+
+                    // Phase 4: push enriched snapshot to Blob so next visit is instant
+                    if (finalChiaData.tokens.some(t => t.type !== 'native')) {
+                        try {
+                            const snap = {
+                                baseData,
+                                chiaData: finalChiaData,
+                                nftData: { collections: mergedNFTCols, totalNFTs: mergedNFTCount, totalCollections: mergedNFTCols.length, totalValue: 0, totalXch: 0 }
+                            };
+                            const r = await fetch('/api/treasury-index', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(snap)
+                            });
+                            if (r.ok) console.log('💾 Treasury snapshot pushed to Blob (fast load next visit)');
+                            else console.warn('⚠️ Treasury Blob push failed:', r.status);
+                        } catch (e) { console.warn('⚠️ Treasury Blob push error:', e.message); }
+                    }
+                } catch (e) { console.warn('⚠️ Token enrichment/blob error:', e.message); }
+            })();
 
             // ── Background: MintGarden enrichment for NFT collection names ────────────
             if (mergedNFTCount > 0) {
@@ -7203,10 +7238,10 @@ function updateHoldingsColumn(chain, tokensRaw) {
     if (chain === 'chia') {
         const knownTokens = tokens.filter(t => !isUnknownChia(t));
         const unknownTokens = tokens.filter(t => isUnknownChia(t));
-        const displayTotal = knownTokens.reduce((s, t) => s + (t.value || 0), 0);
+        const displayTotal = tokens.reduce((s, t) => s + (t.value || 0), 0); // include all
 
         document.getElementById(totalId).textContent = `$${displayTotal.toLocaleString(undefined, {minimumFractionDigits:2,maximumFractionDigits:2})}`;
-        document.getElementById(countId).textContent = `${knownTokens.length} tokens`;
+        document.getElementById(countId).textContent = `${tokens.length} tokens`;
 
         const knownHigh = knownTokens.filter(t => (t.value || 0) >= 1);
         const knownLow  = knownTokens.filter(t => (t.value || 0) < 1);
