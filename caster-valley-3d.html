@@ -5038,6 +5038,12 @@
                             this.renderToolbar();
                         });
                         const startDrag = (e) => {
+                            // Always select this seed immediately — critical for touch where
+                            // e.preventDefault() below cancels the 'click' event on iOS/Android
+                            if (this.selectedSeed !== parseInt(t)) {
+                                this.selectedSeed = parseInt(t);
+                                this.renderToolbar();
+                            }
                             e.preventDefault();
                             e.stopPropagation();
                             this.draggedSeed = parseInt(t);

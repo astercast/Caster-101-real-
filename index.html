@@ -4047,37 +4047,53 @@
                 tokenPrices[t.assetId] = { price, change, src };
             }
 
-            // ── Phase 3: Fetch circulating supply from Spacescan (browser-direct) ──
-            // Spacescan allows browser calls but rate-limits aggressively.
-            // Fetch supplies sequentially with gaps. Use cache to avoid redundant calls.
-            console.log('[supply] Fetching circulating supplies from Spacescan (browser-direct)...');
-            const supplyResults = {}; // assetId → circSupply
+            // ── Phase 3: Fetch ALL circulating supplies in PARALLEL (browser-direct, no queue) ──
+            // cat/info is lightweight and works from browsers — no rate-limit queue needed
+            console.log('[supply] Fetching circulating supplies in parallel (browser-direct)...');
+            const supplyResults = {};
 
-            for (let i = 0; i < catTargets.length; i++) {
-                const t = catTargets[i];
+            await Promise.all(catTargets.map(async t => {
                 const tp = tokenPrices[t.assetId];
+                // Skip if no price — mcap will be 0 anyway
+                if (!tp || tp.price === 0) { supplyResults[t.assetId] = 0; return; }
 
-                // Skip supply fetch if no price (mcap will be 0 anyway)
-                if (!tp || tp.price === 0) {
-                    supplyResults[t.assetId] = 0;
-                    continue;
-                }
-
-                // Try cache first (avoids Spacescan call entirely)
+                // In-memory cache check
                 const cached = supplyCache[t.assetId];
                 if (cached && (Date.now() - cached.ts) < SUPPLY_CACHE_TTL) {
                     const cs = cached.supply || cached.total || 0;
                     if (cs > 0) {
                         supplyResults[t.assetId] = cs;
                         console.log(`  [cache] ${t.displayName||t.name}: supply=${cs.toLocaleString()}`);
-                        continue;
+                        return;
                     }
                 }
 
-                // Browser-direct Spacescan call via the global rate-limited queue
-                const supply = await window.getSupplyForChiaToken(t.assetId);
-                supplyResults[t.assetId] = supply;
-            }
+                // Direct fetch — no queue needed for cat/info
+                try {
+                    const ctrl = new AbortController();
+                    const timer = setTimeout(() => ctrl.abort(), 10000);
+                    const r = await fetch(`https://api.spacescan.io/cat/info/${t.assetId}`, { signal: ctrl.signal });
+                    clearTimeout(timer);
+                    if (r.ok) {
+                        const data = await r.json();
+                        const d = data?.data || {};
+                        const circ = parseFloat(d.circulating_supply || 0);
+                        const total = parseFloat(d.total_supply || 0);
+                        const supply = circ > 0 ? circ : total;
+                        supplyResults[t.assetId] = supply;
+                        if (supply > 0) {
+                            supplyCache[t.assetId] = { supply: circ, total, ts: Date.now() };
+                            saveSupplyCache();
+                            console.log(`  [live] ${t.displayName||t.name}: circ=${circ.toLocaleString()}`);
+                        }
+                    } else {
+                        supplyResults[t.assetId] = 0;
+                    }
+                } catch(e) {
+                    supplyResults[t.assetId] = 0;
+                    console.warn(`  [supply] ${t.displayName||t.name} failed: ${e.message}`);
+                }
+            }));
 
             // ── Phase 4: Assemble final results — mcap = circulating_supply × price ──
             for (const t of catTargets) {
@@ -7682,7 +7698,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     cursor: pointer;
                     text-decoration: underline;
                     user-select: none;
-                " onclick="if(window._hideWtvForever) window._hideWtvForever();" title="Hide WTV for this session">Don't show this anymore</span>
+                    touch-action: manipulation;
+                    -webkit-tap-highlight-color: rgba(255,255,255,0.1);
+                    padding: 6px 4px;
+                " id="wtv-dont-show-btn" title="Hide WTV for this session">Don't show this anymore</span>
                 <button id="close-miniplayer" style="
                 background: linear-gradient(135deg, rgba(220, 38, 38, 0.3), rgba(153, 27, 27, 0.2));
                 border: 1px solid rgba(220, 38, 38, 0.5);
@@ -7690,10 +7709,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 color: #fca5a5;
                 font-size: 12px;
                 cursor: pointer;
-                padding: 4px 8px;
+                padding: 6px 10px;
                 font-weight: 900;
                 transition: all 0.2s;
                 box-shadow: 0 2px 6px rgba(220, 38, 38, 0.25);
+                touch-action: manipulation;
+                -webkit-tap-highlight-color: rgba(220,38,38,0.2);
             " onmouseover="this.style.background='linear-gradient(135deg, rgba(220,38,38,0.5), rgba(153,27,27,0.4))'; this.style.transform='scale(1.08)'; this.style.boxShadow='0 4px 12px rgba(220,38,38,0.4)';" onmouseout="this.style.background='linear-gradient(135deg, rgba(220,38,38,0.3), rgba(153,27,27,0.2))'; this.style.transform=''; this.style.boxShadow='0 2px 6px rgba(220,38,38,0.25)';"
                 title="Close WTV">
                 ✕
@@ -8437,14 +8458,27 @@ document.addEventListener('DOMContentLoaded', () => {
             const closeBtn = document.getElementById('close-miniplayer');
             if (closeBtn) {
                 const origClose = closeBtn.onclick;
-                closeBtn.addEventListener('click', (e) => {
+                const doClose = (e) => {
                     if (isMobile()) {
                         e.stopPropagation();
                         e.preventDefault();
                         window._wtvCloseDrawer();
                         return false;
                     }
-                });
+                };
+                closeBtn.addEventListener('click', doClose);
+                closeBtn.addEventListener('touchend', doClose, { passive: false });
+            }
+            // Wire up "Don't show this anymore" via JS (works on iOS too)
+            const dontShowBtn = document.getElementById('wtv-dont-show-btn');
+            if (dontShowBtn) {
+                const doHide = (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    if (window._hideWtvForever) window._hideWtvForever();
+                };
+                dontShowBtn.addEventListener('click', doHide);
+                dontShowBtn.addEventListener('touchend', doHide, { passive: false });
             }
 
             // Override show/hide for mobile awareness
