@@ -6561,11 +6561,19 @@ async function loadComprehensiveTreasury(force = false) {
                     if (lpAid) {
                         const shortName = pair.short_name || '';
                         const pairName = shortName.replace(/^TIBET-/i, '').replace(/-XCH$/i, '/XCH');
+                        // xch_reserve is in mojos (divide by 1e12), liquidity is total LP supply
+                        // token_reserve appears to use 1e3 decimals based on code above
+                        const poolXch = parseFloat(pair.xch_reserve || 0) / 1e12;
+                        const poolTotalLiq = parseFloat(pair.liquidity || 0);
+                        const poolTotalUsd = poolXch * 2 * xchPrice; // AMM: both sides equal
                         lpTokenMap[lpAid] = {
                             catAssetId: aid,
                             short_name: shortName,
                             pairName: pairName || shortName,
-                            name: pair.name || `TibetSwap LP ${pairName || shortName}`
+                            name: pair.name || `TibetSwap LP ${pairName || shortName}`,
+                            poolXch,
+                            poolTotalLiq,
+                            poolTotalUsd
                         };
                     }
                 }
@@ -6709,8 +6717,18 @@ async function loadComprehensiveTreasury(force = false) {
                             const isLP = !!lpEntry || name.toLowerCase().includes('tibet') || name.toLowerCase().includes(' lp ') || (tibetEntry?.short_name || '').toLowerCase().startsWith('tibet-');
                             const balance = t.balance;
                             const price = t.price;
-                            const rawVal = t.total_value > 0 ? t.total_value : (balance * price);
-                            const value = rawVal;
+
+                            // LP value: derive from pool reserves (accurate) instead of
+                            // Spacescan total_value (often 0) or balance*price (price=0 for LP)
+                            let value = 0;
+                            if (isLP && lpEntry && lpEntry.poolTotalLiq > 0) {
+                                const userShare = balance / lpEntry.poolTotalLiq;
+                                value = userShare * lpEntry.poolXch * 2 * xchPrice;
+                                console.log(`  [LP] ${lpEntry.pairName}: bal=${balance.toLocaleString()} share=${(userShare*100).toFixed(4)}% value=$${value.toFixed(2)}`);
+                            } else {
+                                const rawVal = t.total_value > 0 ? t.total_value : (balance * price);
+                                value = rawVal;
+                            }
                             // LP pair name: try lpEntry first, then parse from name string
                             let pairName = lpEntry?.pairName || '';
                             if (isLP && !pairName) {
@@ -6726,6 +6744,11 @@ async function loadComprehensiveTreasury(force = false) {
                                 type: isLP ? 'lp' : 'cat', image: ''
                             };
                             if (pairName) tok.pairName = pairName;
+                            // Attach pool stats for buildTokenCard display
+                            if (isLP && lpEntry && lpEntry.poolTotalLiq > 0) {
+                                tok.userSharePct = (balance / lpEntry.poolTotalLiq) * 100;
+                                tok.totalLiqUsd  = lpEntry.poolTotalUsd;
+                            }
                             return tok;
                         })
                     });
@@ -6961,8 +6984,17 @@ async function loadComprehensiveTreasury(force = false) {
                             tok.symbol = lpEntry.pairName || 'LP';
                             tok.type   = 'lp';
                             if (lpEntry.pairName) tok.pairName = lpEntry.pairName;
+                            // Recompute value from pool reserves (more accurate than Spacescan total_value)
+                            if (lpEntry.poolTotalLiq > 0 && tok.balance > 0) {
+                                const userShare = tok.balance / lpEntry.poolTotalLiq;
+                                tok.value       = userShare * lpEntry.poolXch * 2 * chiaXchPrice;
+                                tok.userSharePct = userShare * 100;
+                                tok.totalLiqUsd  = lpEntry.poolTotalUsd;
+                                console.log(`✅ LP resolved: ${lpEntry.pairName} share=${(userShare*100).toFixed(4)}% value=$${tok.value.toFixed(2)}`);
+                            } else {
+                                console.log(`✅ LP token resolved: ${(tok.assetId||'').slice(0,8)}… → ${tok.name}`);
+                            }
                             enriched++;
-                            console.log(`✅ LP token resolved: ${(tok.assetId||'').slice(0,8)}… → ${tok.name}`);
                         }
                     }
 
