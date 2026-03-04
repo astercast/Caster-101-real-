@@ -6909,6 +6909,49 @@ async function loadComprehensiveTreasury(force = false) {
             updateTreasuryDisplay(baseData, chiaData, nftData);
             console.log('✅ Treasury display updated');
 
+            // ── Background: resolve real names for unnamed Chia tokens ────────────
+            // When Spacescan token-balance returns a token with no name, we fall back
+            // to "Token XXXXXX". Here we use cat/info (works from browser IPs) to
+            // look up the real name, then re-render so they count toward the total.
+            const unnamedToks = mergedChiaTokens.filter(t => (t.name || '').startsWith('Token ') && t.assetId && t.assetId !== 'XCH_NATIVE');
+            if (unnamedToks.length > 0) {
+                console.log(`🔍 Looking up real names for ${unnamedToks.length} unnamed Chia token(s)...`);
+                (async () => {
+                    try {
+                        const resolved = await Promise.allSettled(unnamedToks.map(async (tok) => {
+                            const ctrl = new AbortController();
+                            const timer = setTimeout(() => ctrl.abort(), 6000);
+                            try {
+                                const r = await fetch(`https://api.spacescan.io/cat/info/${tok.assetId}`, { signal: ctrl.signal });
+                                clearTimeout(timer);
+                                if (!r.ok) return null;
+                                const d = await r.json();
+                                const info = d?.data || {};
+                                const name = (info.name || info.asset_name || '').trim();
+                                const symbol = (info.symbol || info.code || info.short_name || '').trim();
+                                return name ? { assetId: tok.assetId, name, symbol } : null;
+                            } catch(e) { clearTimeout(timer); return null; }
+                        }));
+                        let enriched = 0;
+                        for (const res of resolved) {
+                            if (res.status !== 'fulfilled' || !res.value) continue;
+                            const { assetId, name, symbol } = res.value;
+                            const tok = mergedChiaTokens.find(t => t.assetId === assetId);
+                            if (tok) { tok.name = name; if (symbol) tok.symbol = symbol; enriched++; }
+                        }
+                        if (enriched > 0) {
+                            console.log(`✅ Resolved ${enriched} unnamed Chia token(s) — re-rendering with them included`);
+                            mergedChiaTotal = mergedChiaTokens.reduce((s, t) => s + (t.value || 0), 0);
+                            const enrichedChiaData = { tokens: mergedChiaTokens, total: mergedChiaTotal, xchPrice: chiaXchPrice };
+                            _treasuryCache.chiaData = enrichedChiaData;
+                            updateTreasuryDisplay(baseData, enrichedChiaData, nftData);
+                        } else {
+                            console.log(`ℹ️ Could not resolve names for ${unnamedToks.length} token(s) — Spacescan may not have them`);
+                        }
+                    } catch (e) { console.warn('⚠️ Token name enrichment error:', e.message); }
+                })();
+            }
+
             // ── Background: push browser-built snapshot to Blob for fast next load ──
             // Vercel IPs are blocked by Spacescan token-balance, so browser builds the
             // authoritative snapshot and POSTs it to treasury-index for Blob storage.
