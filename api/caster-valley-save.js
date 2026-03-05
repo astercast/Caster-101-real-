@@ -1,6 +1,6 @@
 // Cloud save for Caster Valley (Upstash Redis REST API)
-const KV_URL = process.env.UPSTASH_REDIS_REST_URL;
-const KV_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
+const KV_URL = process.env.KV_REST_API_URL;
+const KV_TOKEN = process.env.KV_REST_API_TOKEN;
 
 const json = (res, status, body) => {
     res.status(status).json(body);
