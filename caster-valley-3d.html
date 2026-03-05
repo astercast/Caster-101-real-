@@ -293,9 +293,10 @@
         }
         .close-modal:hover { transform: translateY(-2px); box-shadow: 0 6px 0 var(--brown-dark); }
         .close-modal:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--brown-dark); }
+        /* Skills modal: let only the inner tree scroll, not the modal itself */
+        #skills-modal .modal { overflow-y: hidden; }
         .skill-tree-scroll { 
-            max-height: calc(100vh - 200px); 
-            height: 700px;
+            max-height: calc(85vh - 120px); 
             overflow-y: auto; 
             overflow-x: hidden;
             padding: 12px; 

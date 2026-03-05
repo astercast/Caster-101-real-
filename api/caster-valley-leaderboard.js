@@ -2,8 +2,8 @@
 // Stores one entry per device: { deviceId, name, level, totalEssenceEarned, updatedAt }
 // Single KV key cv:leaderboard = JSON object keyed by deviceId
 
-const KV_URL = process.env.KV_REST_API_URL;
-const KV_TOKEN = process.env.KV_REST_API_TOKEN;
+const KV_URL = process.env.UPSTASH_REDIS_REST_URL;
+const KV_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
 const LB_KEY = 'cv:leaderboard';
 
 async function kvFetch(path, options = {}) {
