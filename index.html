@@ -3604,8 +3604,8 @@
                 newContent.classList.add("active");
             }
             
-            // Update URL hash so refresh restores the same page
-            window.location.hash = tabName;
+            // Update URL to clean path (e.g. /treasury) without reload
+            if (tabName !== 'secretgame') history.pushState(null, '', '/' + tabName);
             if (tabName === "treasury") {
                 // Try to restore from cache first - show it IMMEDIATELY
                 if (_treasuryCache.baseData && _treasuryCache.chiaData && _treasuryCache.nftData) {
@@ -6029,8 +6029,16 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
             // ── Hash-based routing: restore the active tab from URL ──────────
             (function() {
                 const validTabs = ['market', 'portfolio', 'treasury', 'howto', 'book', 'valley', 'secretgame'];
+                const path = window.location.pathname.replace('/', '').split('?')[0];
                 const hash = window.location.hash.replace('#', '');
-                const activeTab = (hash && validTabs.includes(hash)) ? hash : 'market';
+                const session = sessionStorage.getItem('_initTab');
+                sessionStorage.removeItem('_initTab');
+                const activeTab = (validTabs.includes(path) ? path : null)
+                    || (validTabs.includes(hash) ? hash : null)
+                    || (validTabs.includes(session) ? session : null)
+                    || 'market';
+                // Normalise URL to clean path
+                if (activeTab !== 'secretgame') history.replaceState(null, '', '/' + activeTab);
                 
                 const btn = document.querySelector(`.tab[onclick*="'${activeTab}'"]`);
                 if (btn) {
