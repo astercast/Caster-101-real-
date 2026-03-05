@@ -1489,6 +1489,8 @@
                 
                 // Touch events for mobile
                 canvas.addEventListener('touchstart', (e) => {
+                    // If a seed drag is in progress, don't start a camera drag
+                    if (this.isDragging) return;
                     if (e.touches.length === 1) {
                         this.isDraggingCamera = true;
                         if (this.panVelocity) {
@@ -5017,12 +5019,26 @@
                     }
                     this.draggedSeed = null;
                     this.isDragging = false;
+                    // Re-render toolbar now that drag is fully over
+                    this.renderToolbar();
+                };
+
+                const handleCancel = () => {
+                    if (this.ghostElement) {
+                        this.ghostElement.remove();
+                        this.ghostElement = null;
+                    }
+                    this.draggedSeed = null;
+                    this.isDragging = false;
                 };
                 
                 document.addEventListener('mousemove', handleDrag, { passive: false });
                 document.addEventListener('touchmove', handleDrag, { passive: false });
                 document.addEventListener('mouseup', handleDrop);
                 document.addEventListener('touchend', handleDrop);
+                document.addEventListener('touchcancel', handleCancel);
+                // Clean up ghost if page is hidden (OS interruption)
+                document.addEventListener('visibilitychange', () => { if (document.hidden) handleCancel(); });
             },
             
             renderToolbar() {
@@ -5056,14 +5072,22 @@
                             this.renderToolbar();
                         });
                         const startDrag = (e) => {
-                            // Always select this seed immediately — critical for touch where
-                            // e.preventDefault() below cancels the 'click' event on iOS/Android
+                            // Select seed immediately — but do NOT call renderToolbar() here,
+                            // because that destroys the DOM element that owns this touch,
+                            // causing the browser to drop touch tracking and ghost to get stuck.
                             if (this.selectedSeed !== parseInt(t)) {
                                 this.selectedSeed = parseInt(t);
-                                this.renderToolbar();
+                                // Just swap the active class, leave DOM intact
+                                document.querySelectorAll('.seed-item').forEach(el => el.classList.remove('active'));
+                                item.classList.add('active');
                             }
                             e.preventDefault();
                             e.stopPropagation();
+                            // Clean up any previous orphaned ghost
+                            if (this.ghostElement) {
+                                this.ghostElement.remove();
+                                this.ghostElement = null;
+                            }
                             this.draggedSeed = parseInt(t);
                             this.isDragging = true;
                             this.ghostElement = document.createElement('div');
