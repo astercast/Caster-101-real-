@@ -1,5 +1,13 @@
 {
   "version": 2,
+  "rewrites": [
+    { "source": "/market", "destination": "/market.html" },
+    { "source": "/bag", "destination": "/bag.html" },
+    { "source": "/treasury", "destination": "/treasury.html" },
+    { "source": "/howto", "destination": "/howto.html" },
+    { "source": "/book", "destination": "/book.html" },
+    { "source": "/valley", "destination": "/caster-valley-3d.html" }
+  ],
   "functions": {
     "api/chia-cat-prices.js": {
       "maxDuration": 60
