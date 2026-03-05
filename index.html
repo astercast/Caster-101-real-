@@ -993,10 +993,17 @@
 
         .quick-links {
             display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
             margin-bottom: 16px;
+        }
+
+        .quick-links-row {
+            display: flex;
+            gap: 5px;
             justify-content: center;
+            flex-wrap: nowrap;
         }
 
         .quick-link-btn {
@@ -1026,6 +1033,9 @@
 
         /* Mobile: Desktop quick links */
         @media (max-width: 768px) {
+            .quick-links-row {
+                flex-wrap: wrap;
+            }
             .quick-link-btn {
                 font-size: 13px;
                 padding: 10px 14px;
@@ -1437,16 +1447,13 @@
 
             /* Quick Links — compact pill row */
             .quick-links {
-                flex-wrap: wrap !important;
                 gap: 6px !important;
-                justify-content: center !important;
-                overflow-x: hidden !important;
-                -webkit-overflow-scrolling: touch;
-                scrollbar-width: none;
-                padding-bottom: 2px !important;
-                touch-action: pan-y !important;
             }
-            .quick-links::-webkit-scrollbar { display: none; }
+            .quick-links-row {
+                flex-wrap: wrap !important;
+                justify-content: center !important;
+                gap: 6px !important;
+            }
 
             .quick-link-btn {
                 font-family: 'Inter', sans-serif !important;
@@ -2436,23 +2443,25 @@
 
         <div id="market" class="content">
             <div class="quick-links">
-                <a href="https://dexie.space" target="_blank" class="quick-link-btn" title="Trade here">🦢 dexie.space</a>
-                <a href="https://mintgarden.io" target="_blank" class="quick-link-btn" title="Chia NFT marketplace and minting">🍃 mintgarden.io</a>
-                <a href="https://dex.9mm.pro" target="_blank" class="quick-link-btn" title="The bread and butter (base warped tokens)">🔫 dex.9mm.pro</a>
-                <a href="https://circuitdao.com" target="_blank" class="quick-link-btn" title="Stablecoin magic">💲 circuitdao.com</a>
-                <a href="https://wojak.ink" target="_blank" class="quick-link-btn" title="Crazy">🎨 wojak.ink</a>
-                <a href="https://crate.ink" target="_blank" class="quick-link-btn" title="Web3 minting experience on Chia">📦 crate.ink</a>
-                <a href="https://thisweekinchia.com/" target="_blank" class="quick-link-btn" title="Chia news">📰 thisweekinchia.com</a>
-                <a href="https://www.spacescan.io" target="_blank" class="quick-link-btn" title="Chia blockchain explorer">🔭 spacescan.io</a>
-                <a href="https://xch.trade" target="_blank" class="quick-link-btn" title="Chia DEX">💱 xch.trade</a>
-                <a href="https://warp.awizard.dev" target="_blank" class="quick-link-btn warp-btn" title="Warp your bag">
-                    <span style="font-size: 14px;">⚡</span>
-                    <div style="display: flex; flex-direction: column; line-height: 1;">
+                <div class="quick-links-row">
+                    <a href="https://dexie.space" target="_blank" class="quick-link-btn" title="Trade here">🦢 dexie.space</a>
+                    <a href="https://mintgarden.io" target="_blank" class="quick-link-btn" title="Chia NFT marketplace and minting">🍃 mintgarden.io</a>
+                    <a href="https://dex.9mm.pro" target="_blank" class="quick-link-btn" title="The bread and butter (base warped tokens)">🔫 dex.9mm.pro</a>
+                    <a href="https://circuitdao.com" target="_blank" class="quick-link-btn" title="Stablecoin magic">💲 circuitdao.com</a>
+                    <a href="https://wojak.ink" target="_blank" class="quick-link-btn" title="Crazy">🎨 wojak.ink</a>
+                    <a href="https://crate.ink" target="_blank" class="quick-link-btn" title="Web3 minting experience on Chia">📦 crate.ink</a>
+                    <a href="https://thisweekinchia.com/" target="_blank" class="quick-link-btn" title="Chia news">📰 thisweekinchia.com</a>
+                    <a href="https://www.spacescan.io" target="_blank" class="quick-link-btn" title="Chia blockchain explorer">🔭 spacescan.io</a>
+                    <a href="https://xch.trade" target="_blank" class="quick-link-btn" title="Chia DEX">💱 xch.trade</a>
+                    <a href="https://tangtalk.io" target="_blank" class="quick-link-btn" title="Chia community">🍊 tangtalk.io</a>
+                </div>
+                <div class="quick-links-row">
+                    <a href="https://warp.awizard.dev" target="_blank" class="quick-link-btn warp-btn" title="Warp your bag">
+                        <span style="font-size: 14px;">⚡</span>
                         <span>warp.awizard.dev</span>
-                    </div>
-
-                </a>
-                <a href="https://discord.gg/awizard" target="_blank" class="quick-link-btn" style="border: none; color: #5865F2; box-shadow: 0 0 12px rgba(88, 101, 242, 0.4);" title="Chat and verify your wallet">💬 discord.gg/awizard</a>
+                    </a>
+                    <a href="https://discord.gg/awizard" target="_blank" class="quick-link-btn" style="border: none; color: #5865F2; box-shadow: 0 0 12px rgba(88, 101, 242, 0.4);" title="Chat and verify your wallet">💬 discord.gg/awizard</a>
+                </div>
             </div>
 
             <div class="search-bar">
