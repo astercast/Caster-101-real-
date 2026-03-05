@@ -6,22 +6,21 @@ const KV_URL = process.env.KV_REST_API_URL;
 const KV_TOKEN = process.env.KV_REST_API_TOKEN;
 const LB_KEY = 'cv:leaderboard';
 
-async function kvFetch(path, options = {}) {
+// Upstash Redis REST: POST to root with ["COMMAND", ...args] body
+async function kvCmd(...args) {
     if (!KV_URL || !KV_TOKEN) throw new Error('KV not configured');
-    const url = KV_URL.replace(/\/$/, '') + path;
-    const resp = await fetch(url, {
-        ...options,
-        headers: {
-            Authorization: `Bearer ${KV_TOKEN}`,
-            'Content-Type': 'application/json',
-            ...(options.headers || {})
-        }
+    const resp = await fetch(KV_URL.replace(/\/$/, ''), {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${KV_TOKEN}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(args)
     });
     if (!resp.ok) {
         const text = await resp.text().catch(() => '');
         throw new Error(`KV ${resp.status}: ${text}`);
     }
-    return resp.json();
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error);
+    return data.result;
 }
 
 module.exports = async function handler(req, res) {
@@ -36,8 +35,8 @@ module.exports = async function handler(req, res) {
         if (req.method === 'GET') {
             let lb = {};
             try {
-                const data = await kvFetch(`/get/${encodeURIComponent(LB_KEY)}`);
-                lb = data?.result ? JSON.parse(data.result) : {};
+                const raw = await kvCmd('GET', LB_KEY);
+                lb = raw ? JSON.parse(raw) : {};
             } catch (_) {}
 
             const entries = Object.values(lb)
@@ -55,8 +54,8 @@ module.exports = async function handler(req, res) {
             // Read current leaderboard
             let lb = {};
             try {
-                const data = await kvFetch(`/get/${encodeURIComponent(LB_KEY)}`);
-                lb = data?.result ? JSON.parse(data.result) : {};
+                const raw = await kvCmd('GET', LB_KEY);
+                lb = raw ? JSON.parse(raw) : {};
             } catch (_) {}
 
             // Upsert this player's entry
@@ -73,10 +72,7 @@ module.exports = async function handler(req, res) {
                 updatedAt: Date.now()
             };
 
-            await kvFetch(`/set/${encodeURIComponent(LB_KEY)}`, {
-                method: 'POST',
-                body: JSON.stringify({ value: JSON.stringify(lb) })
-            });
+            await kvCmd('SET', LB_KEY, JSON.stringify(lb));
 
             return json(200, { ok: true });
         }

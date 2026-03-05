@@ -2,26 +2,23 @@
 const KV_URL = process.env.KV_REST_API_URL;
 const KV_TOKEN = process.env.KV_REST_API_TOKEN;
 
-const json = (res, status, body) => {
-    res.status(status).json(body);
-};
+const json = (res, status, body) => { res.status(status).json(body); };
 
-async function kvFetch(path, options = {}) {
-    if (!KV_URL || !KV_TOKEN) {
-        throw new Error('KV not configured');
-    }
-    const url = KV_URL.replace(/\/$/, '') + path;
-    const headers = {
-        Authorization: `Bearer ${KV_TOKEN}`,
-        'Content-Type': 'application/json',
-        ...(options.headers || {})
-    };
-    const resp = await fetch(url, { ...options, headers });
+// Upstash Redis REST: POST to root with ["COMMAND", ...args] body
+async function kvCmd(...args) {
+    if (!KV_URL || !KV_TOKEN) throw new Error('KV not configured');
+    const resp = await fetch(KV_URL.replace(/\/$/, ''), {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${KV_TOKEN}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(args)
+    });
     if (!resp.ok) {
         const text = await resp.text().catch(() => '');
         throw new Error(`KV error ${resp.status}: ${text}`);
     }
-    return resp.json();
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error);
+    return data.result;
 }
 
 module.exports = async function handler(req, res) {
@@ -35,8 +32,8 @@ module.exports = async function handler(req, res) {
         const key = `cv:save:${deviceId}`;
 
         if (req.method === 'GET') {
-            const data = await kvFetch(`/get/${encodeURIComponent(key)}`);
-            const saved = data?.result ? JSON.parse(data.result) : null;
+            const raw = await kvCmd('GET', key);
+            const saved = raw ? JSON.parse(raw) : null;
             return json(res, 200, { ok: true, save: saved });
         }
 
@@ -46,11 +43,7 @@ module.exports = async function handler(req, res) {
                 return json(res, 400, { ok: false, error: 'Missing save payload' });
             }
             if (!body.save.savedAt) body.save.savedAt = Date.now();
-            const payload = JSON.stringify(body.save);
-            await kvFetch(`/set/${encodeURIComponent(key)}`, {
-                method: 'POST',
-                body: JSON.stringify({ value: payload })
-            });
+            await kvCmd('SET', key, JSON.stringify(body.save));
             return json(res, 200, { ok: true });
         }
 
