@@ -833,6 +833,7 @@
             </div>
         </div>
         <button id="sound-toggle-btn" class="sound-toggle-btn" onclick="game.toggleSound()" title="Toggle Sound">🔊</button>
+        <audio id="bg-music" src="/theojt-peaceful-fantasy-music-160729.mp3" loop preload="auto" style="display:none"></audio>
         <div class="version-text" style="position: fixed; top: 5px; right: 10px; font-family: 'Press Start 2P'; font-size: 8px; color: rgba(255,255,255,0.4); text-shadow: 1px 1px 0 rgba(0,0,0,0.5); z-index: 100;">castervalleyupdate1.0</div>
         <div id="game-world"><canvas id="game-canvas"></canvas></div>
         <div id="toolbar"></div>
@@ -5817,30 +5818,18 @@
             },
 
             startBgMusic() {
-                if (!this.soundEnabled || this._bgNodes) return;
-                try {
-                    if (!this.audioCtx) this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                    const ctx = this.audioCtx;
-                    if (ctx.state === 'suspended') ctx.resume();
-                    this._bgNodes = [];
-                    const master = ctx.createGain(); master.gain.value = 0.055;
-                    const filt = ctx.createBiquadFilter(); filt.type = 'lowpass'; filt.frequency.value = 680;
-                    filt.connect(master); master.connect(ctx.destination); this._bgMaster = master;
-                    [[110,0],[165,6],[220,-4],[330,10]].forEach(([freq,det]) => {
-                        const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = freq; o.detune.value = det;
-                        o.connect(filt); o.start(); this._bgNodes.push(o);
-                    });
-                    const lfo = ctx.createOscillator(), lfoG = ctx.createGain();
-                    lfo.frequency.value = 0.18; lfoG.gain.value = 0.012;
-                    lfo.connect(lfoG); lfoG.connect(master.gain); lfo.start();
-                    this._bgNodes.push(lfo);
-                } catch(e) {}
+                if (!this.soundEnabled) return;
+                const el = document.getElementById('bg-music');
+                if (!el) return;
+                el.volume = 0.20;
+                el.play().catch(() => {});
             },
 
             stopBgMusic() {
-                if (!this._bgNodes) return;
-                try { this._bgNodes.forEach(n => { try { n.stop(); } catch(_) {} }); if (this._bgMaster) this._bgMaster.disconnect(); } catch(e) {}
-                this._bgNodes = null; this._bgMaster = null;
+                const el = document.getElementById('bg-music');
+                if (!el) return;
+                el.pause();
+                el.currentTime = 0;
             },
 
             toggleFullscreen() {
