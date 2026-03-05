@@ -5715,13 +5715,21 @@
                         src.connect(filt); filt.connect(masterGain);
                         src.start(now); src.stop(now + 0.14);
                     } else if (type === 'battle') {
+                        // "oof/ugh" grunt — low vocal thud that drops fast
                         const osc = ctx.createOscillator();
-                        osc.type = 'sawtooth';
-                        osc.frequency.setValueAtTime(300, now);
-                        osc.frequency.exponentialRampToValueAtTime(80, now + 0.22);
-                        masterGain.gain.setValueAtTime(0.28, now);
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(160, now);
+                        osc.frequency.exponentialRampToValueAtTime(90, now + 0.08);
+                        osc.frequency.exponentialRampToValueAtTime(70, now + 0.18);
+                        // slight overdrive via waveshaper for grunt texture
+                        const shaper = ctx.createWaveShaper();
+                        const curve = new Float32Array(256);
+                        for (let i = 0; i < 256; i++) { const x = (i * 2) / 256 - 1; curve[i] = (Math.PI + 80) * x / (Math.PI + 80 * Math.abs(x)); }
+                        shaper.curve = curve;
+                        masterGain.gain.setValueAtTime(0.18, now);
+                        masterGain.gain.setValueAtTime(0.18, now + 0.04);
                         masterGain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
-                        osc.connect(masterGain); osc.start(now); osc.stop(now + 0.22);
+                        osc.connect(shaper); shaper.connect(masterGain); osc.start(now); osc.stop(now + 0.22);
                     } else if (type === 'fish') {
                         const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.18), ctx.sampleRate);
                         const d = buf.getChannelData(0);
