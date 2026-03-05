@@ -1104,7 +1104,7 @@
             areaObjects: [], // Track all area-specific objects for cleanup
             selectedSeed: null, draggedSeed: null, ghostElement: null, isDragging: false,
             playerName: '', farmPlotSnapshot: [],
-            soundEnabled: true, audioCtx: null,
+            soundEnabled: true, audioCtx: null, _bgNodes: null, _bgMaster: null,
             scene: null, camera: null, renderer: null, raycaster: null, mouse: null, wizard: null,
             wizardTarget: { x: -6, z: 0 }, wizardMoving: false,
             stats: { totalHarvests: 0, totalRocksMined: 0, totalTrollsKilled: 0, fishCaught: 0, totalEssenceEarned: 0, deathCount: 0, playtime: 0, saturnsBurst: 0, fishFedToDragon: 0 },
@@ -3918,6 +3918,9 @@
                 const canvas = document.getElementById('game-canvas');
                 canvas.addEventListener('click', (e) => this.onCanvasClick(e));
                 canvas.addEventListener('touchend', (e) => this.onCanvasClick(e));
+                const startMusic = () => { this.startBgMusic(); document.removeEventListener('click', startMusic); document.removeEventListener('touchend', startMusic); };
+                document.addEventListener('click', startMusic);
+                document.addEventListener('touchend', startMusic);
             },
 
             onCanvasClick(e) {
@@ -4033,7 +4036,7 @@
                 if (this.fishInventory <= 0) return;
                 this.fishInventory--;
                 this.stats.fishFedToDragon++;
-                
+                this.playSound('dragon');
                 const gain = Math.floor((300 + Math.random() * 200) * (1 + this.essenceMult));
                 this.essence += gain;
                 this.stats.totalEssenceEarned += gain;
@@ -4412,6 +4415,7 @@
                 if (hpPercent > 0.5) rock.hpBarFill.material.color.setHex(0x22c55e);
                 else if (hpPercent > 0.25) rock.hpBarFill.material.color.setHex(0xeab308);
                 else rock.hpBarFill.material.color.setHex(0xef4444);
+                this.playSound('minehit');
                 if (rock.hp === 0) {
                     const baseReward = 30 + Math.random() * 20;
                     const levelBonus = this.level * 5;
@@ -4461,6 +4465,7 @@
                 else troll.hpBarFill.material.color.setHex(0xfbbf24);
                 troll.body.material.color.setHex(0xff0000);
                 setTimeout(() => troll.body.material.color.setHex(0x7bed7b), 150);
+                this.playSound('trollhit');
                 if (troll.hp === 0) {
                     const baseReward = 150 + Math.random() * 100;
                     const levelBonus = this.level * 20;
@@ -4530,6 +4535,7 @@
                     const diffMult = this.getDifficultyMultiplier();
                     let trollDmg = Math.floor((10 + Math.random() * 15) * diffMult);
                     this.hp = Math.max(0, this.hp - trollDmg);
+                    this.playSound('damage');
                     this.updateUI();
                     if (this.hp === 0) this.die();
                     troll.attackCooldown = 1500;
@@ -4647,6 +4653,7 @@
                     this.maxHP += 15;
                     this.hp = this.maxHP;
                     this.showToast(`🎉 Level ${this.level}!`);
+                    this.playSound('levelup');
                     this.checkAchievements();
                 }
                 this.updateUI();
@@ -4697,6 +4704,7 @@
                         return;
                     }
                 }
+                this.playSound('areaswitch');
                 this.currentArea = area;
                 this.createWorld();
                 if (this.wizard) {
@@ -4796,6 +4804,7 @@
             },
 
             showAchievementNotification(ach) {
+                this.playSound('achievement');
                 const notif = document.createElement('div');
                 notif.className = 'achievement-notification';
                 notif.innerHTML = `
@@ -5685,14 +5694,29 @@
                     const now = ctx.currentTime;
                     const masterGain = ctx.createGain();
                     masterGain.connect(ctx.destination);
+                    // helpers
+                    const noiseHit = (dur, freq, q, vol, ft, t) => {
+                        const len = Math.floor(ctx.sampleRate * dur);
+                        const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+                        const d = buf.getChannelData(0);
+                        for (let i = 0; i < len; i++) d[i] = (Math.random()*2-1)*(1-i/len*0.7);
+                        const src = ctx.createBufferSource(); src.buffer = buf;
+                        const filt = ctx.createBiquadFilter(); filt.type = ft||'bandpass'; filt.frequency.value = freq; filt.Q.value = q;
+                        const g = ctx.createGain(); g.gain.setValueAtTime(vol, now+(t||0)); g.gain.exponentialRampToValueAtTime(0.0001, now+(t||0)+dur);
+                        src.connect(filt); filt.connect(g); g.connect(ctx.destination);
+                        src.start(now+(t||0)); src.stop(now+(t||0)+dur+0.01);
+                    };
+                    const noteHit = (freq, vol, dur, wave, t) => {
+                        const o = ctx.createOscillator(), g = ctx.createGain();
+                        o.type = wave||'sine'; o.frequency.value = freq;
+                        g.gain.setValueAtTime(vol, now+(t||0)); g.gain.exponentialRampToValueAtTime(0.0001, now+(t||0)+dur);
+                        o.connect(g); g.connect(ctx.destination); o.start(now+(t||0)); o.stop(now+(t||0)+dur+0.01);
+                    };
                     if (type === 'plant') {
-                        const osc = ctx.createOscillator();
-                        osc.type = 'sine';
-                        osc.frequency.setValueAtTime(200, now);
-                        osc.frequency.exponentialRampToValueAtTime(60, now + 0.13);
-                        masterGain.gain.setValueAtTime(0.22, now);
-                        masterGain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
-                        osc.connect(masterGain); osc.start(now); osc.stop(now + 0.15);
+                        // Earthy soil thud + low plop
+                        noiseHit(0.13, 180, 3, 0.20, 'lowpass');
+                        noiseHit(0.08, 90, 2, 0.12, 'lowpass', 0.03);
+                        noteHit(110, 0.10, 0.12, 'sine');
                     } else if (type === 'harvest') {
                         [880, 1100, 1320].forEach((freq, i) => {
                             const o = ctx.createOscillator(), g = ctx.createGain();
@@ -5702,18 +5726,15 @@
                             o.connect(g); g.connect(ctx.destination);
                             o.start(now + i * 0.045); o.stop(now + i * 0.045 + 0.22);
                         });
+                    } else if (type === 'minehit') {
+                        // Per-click: loud metallic clang + rock thud
+                        noiseHit(0.10, 2400, 14, 0.28, 'bandpass');
+                        noiseHit(0.09, 280, 3, 0.24, 'lowpass', 0.01);
                     } else if (type === 'mine') {
-                        const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.14), ctx.sampleRate);
-                        const d = buf.getChannelData(0);
-                        for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-                        const src = ctx.createBufferSource();
-                        src.buffer = buf;
-                        const filt = ctx.createBiquadFilter();
-                        filt.type = 'bandpass'; filt.frequency.value = 900; filt.Q.value = 8;
-                        masterGain.gain.setValueAtTime(0.35, now);
-                        masterGain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
-                        src.connect(filt); filt.connect(masterGain);
-                        src.start(now); src.stop(now + 0.14);
+                        // Rock destroy: big crumble boom
+                        noiseHit(0.18, 1800, 10, 0.32, 'bandpass');
+                        noiseHit(0.16, 140, 2, 0.30, 'lowpass', 0.02);
+                        noteHit(100, 0.18, 0.22, 'sine');
                     } else if (type === 'battle') {
                         // "oof/ugh" grunt — low vocal thud that drops fast
                         const osc = ctx.createOscillator();
@@ -5751,12 +5772,33 @@
                             o.connect(g); g.connect(ctx.destination);
                             o.start(now + i * 0.07); o.stop(now + i * 0.07 + 0.18);
                         });
+                    } else if (type === 'trollhit') {
+                        noiseHit(0.10, 1000, 5, 0.20, 'bandpass');
+                        noteHit(180, 0.16, 0.09, 'sawtooth', 0.02);
+                    } else if (type === 'dragon') {
+                        noteHit(75, 0.20, 0.30, 'sine');
+                        noteHit(58, 0.14, 0.28, 'sawtooth', 0.04);
+                        noiseHit(0.22, 700, 1.5, 0.16, 'lowpass', 0.05);
+                    } else if (type === 'damage') {
+                        noteHit(300, 0.22, 0.08, 'sine');
+                        const o2 = ctx.createOscillator(), g2 = ctx.createGain();
+                        o2.type = 'sawtooth'; o2.frequency.setValueAtTime(230, now+0.04); o2.frequency.exponentialRampToValueAtTime(70, now+0.16);
+                        g2.gain.setValueAtTime(0.18, now+0.04); g2.gain.exponentialRampToValueAtTime(0.0001, now+0.16);
+                        o2.connect(g2); g2.connect(ctx.destination); o2.start(now+0.04); o2.stop(now+0.17);
+                    } else if (type === 'levelup') {
+                        [523,659,784,1047].forEach((f,i) => noteHit(f, 0.18, 0.20, 'triangle', i*0.07));
+                        noteHit(1047, 0.20, 0.35, 'sine', 0.32);
+                    } else if (type === 'achievement') {
+                        [523,659,784,880,1047].forEach((f,i) => noteHit(f, 0.17, 0.20, 'triangle', i*0.06));
+                        noteHit(1047, 0.20, 0.40, 'sine', 0.34);
+                    } else if (type === 'areaswitch') {
+                        noiseHit(0.22, 800, 2.5, 0.16, 'bandpass');
+                        const oa = ctx.createOscillator(), ga = ctx.createGain();
+                        oa.type = 'sine'; oa.frequency.setValueAtTime(180, now); oa.frequency.exponentialRampToValueAtTime(600, now+0.2);
+                        ga.gain.setValueAtTime(0.14, now); ga.gain.exponentialRampToValueAtTime(0.0001, now+0.22);
+                        oa.connect(ga); ga.connect(ctx.destination); oa.start(now); oa.stop(now+0.23);
                     } else if (type === 'click') {
-                        const osc = ctx.createOscillator();
-                        osc.type = 'sine'; osc.frequency.value = 620;
-                        masterGain.gain.setValueAtTime(0.12, now);
-                        masterGain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
-                        osc.connect(masterGain); osc.start(now); osc.stop(now + 0.05);
+                        noteHit(680, 0.12, 0.05, 'sine');
                     }
                 } catch(e) {}
             },
@@ -5765,8 +5807,40 @@
                 this.soundEnabled = !this.soundEnabled;
                 const btn = document.getElementById('sound-toggle-btn');
                 if (btn) btn.textContent = this.soundEnabled ? '🔊' : '🔇';
-                if (!this.soundEnabled && this.audioCtx) this.audioCtx.suspend();
-                else if (this.soundEnabled && this.audioCtx) this.audioCtx.resume();
+                if (!this.soundEnabled) {
+                    if (this.audioCtx) this.audioCtx.suspend();
+                    this.stopBgMusic();
+                } else {
+                    if (this.audioCtx) this.audioCtx.resume();
+                    this.startBgMusic();
+                }
+            },
+
+            startBgMusic() {
+                if (!this.soundEnabled || this._bgNodes) return;
+                try {
+                    if (!this.audioCtx) this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    const ctx = this.audioCtx;
+                    if (ctx.state === 'suspended') ctx.resume();
+                    this._bgNodes = [];
+                    const master = ctx.createGain(); master.gain.value = 0.055;
+                    const filt = ctx.createBiquadFilter(); filt.type = 'lowpass'; filt.frequency.value = 680;
+                    filt.connect(master); master.connect(ctx.destination); this._bgMaster = master;
+                    [[110,0],[165,6],[220,-4],[330,10]].forEach(([freq,det]) => {
+                        const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = freq; o.detune.value = det;
+                        o.connect(filt); o.start(); this._bgNodes.push(o);
+                    });
+                    const lfo = ctx.createOscillator(), lfoG = ctx.createGain();
+                    lfo.frequency.value = 0.18; lfoG.gain.value = 0.012;
+                    lfo.connect(lfoG); lfoG.connect(master.gain); lfo.start();
+                    this._bgNodes.push(lfo);
+                } catch(e) {}
+            },
+
+            stopBgMusic() {
+                if (!this._bgNodes) return;
+                try { this._bgNodes.forEach(n => { try { n.stop(); } catch(_) {} }); if (this._bgMaster) this._bgMaster.disconnect(); } catch(e) {}
+                this._bgNodes = null; this._bgMaster = null;
             },
 
             toggleFullscreen() {
@@ -5919,11 +5993,12 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ deviceId: this.deviceId, name, level: this.level, totalEssenceEarned: Math.floor(this.stats.totalEssenceEarned) })
                     });
-                    if (!resp.ok) throw new Error();
+                    const data = await resp.json().catch(() => ({}));
+                    if (!resp.ok) throw new Error(data.error || 'HTTP ' + resp.status);
                     this.showToast('🏅 Added to leaderboard!');
                     this.renderLeaderboard();
                 } catch(e) {
-                    this.showToast('❌ Failed to save');
+                    this.showToast('❌ ' + (e.message || 'Save failed'));
                 }
             },
 
