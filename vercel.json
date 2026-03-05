@@ -41,6 +41,9 @@
     },
     "api/caster-valley-save.js": {
       "maxDuration": 15
+    },
+    "api/caster-valley-leaderboard.js": {
+      "maxDuration": 15
     }
   }
 }

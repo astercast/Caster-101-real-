@@ -376,6 +376,18 @@
             box-shadow: 0 2px 0 var(--brown-dark), 0 3px 8px rgba(0,0,0,0.3);
         }
 
+        /* Sound Toggle */
+        .sound-toggle-btn {
+            position: fixed; top: 6px; left: 8px; z-index: 999;
+            width: 26px; height: 26px; border-radius: 5px;
+            background: rgba(60,40,20,0.72); border: 2px solid rgba(255,220,130,0.45);
+            color: #fff; font-size: 13px; cursor: pointer; display: flex;
+            align-items: center; justify-content: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.45); transition: background 0.2s;
+            line-height: 1; padding: 0;
+        }
+        .sound-toggle-btn:hover { background: rgba(80,55,25,0.90); }
+
         /* Mobile & Tablet Responsive Styles */
         @media (max-width: 768px), (orientation: portrait) {
             .left-tabs {
@@ -814,10 +826,12 @@
                     <button class="menu-btn" onclick="game.openModal('tutorial')">❓</button>
                     <button class="menu-btn" onclick="game.openModal('achievements')">🏆</button>
                     <button class="menu-btn" onclick="game.openModal('stats')">📊</button>
+                    <button class="menu-btn" onclick="game.openModal('leaderboard')" title="Leaderboard">🏅</button>
                     <button class="menu-btn" onclick="game.toggleFullscreen()">⛶</button>
                 </div>
             </div>
         </div>
+        <button id="sound-toggle-btn" class="sound-toggle-btn" onclick="game.toggleSound()" title="Toggle Sound">🔊</button>
         <div class="version-text" style="position: fixed; top: 5px; right: 10px; font-family: 'Press Start 2P'; font-size: 8px; color: rgba(255,255,255,0.4); text-shadow: 1px 1px 0 rgba(0,0,0,0.5); z-index: 100;">castervalleyupdate1.0</div>
         <div id="game-world"><canvas id="game-canvas"></canvas></div>
         <div id="toolbar"></div>
@@ -939,6 +953,21 @@
                 <button class="close-modal" onclick="game.closeModal('stats')">✕</button>
                 <div class="modal-header">📊 Statistics</div>
                 <div id="stats-grid" class="stats-grid"></div>
+            </div>
+        </div>
+
+        <div class="modal-overlay" id="leaderboard-modal" onclick="game.handleModalClick(event, 'leaderboard')">
+            <div class="modal" onclick="event.stopPropagation()">
+                <button class="close-modal" onclick="game.closeModal('leaderboard')">✕</button>
+                <div class="modal-header">🏅 Global Leaderboard</div>
+                <div style="margin-bottom:14px;text-align:center;">
+                    <div style="font-size:8px;font-family:'Press Start 2P';color:var(--brown-med);margin-bottom:8px;">YOUR NAME ON THE LEADERBOARD</div>
+                    <div style="display:flex;gap:6px;justify-content:center;align-items:center;flex-wrap:wrap;">
+                        <input type="text" id="leaderboard-name-input" maxlength="20" placeholder="Enter name..." style="font-family:'Press Start 2P';font-size:8px;padding:6px 8px;border-radius:6px;border:2px solid var(--brown-dark);background:rgba(255,255,255,0.85);color:var(--brown-dark);width:140px;">
+                        <button onclick="game.submitLeaderboard()" style="font-family:'Press Start 2P';font-size:7px;padding:8px 12px;background:var(--gold);border:2px solid var(--brown-dark);border-radius:6px;cursor:pointer;color:var(--brown-dark);">SAVE</button>
+                    </div>
+                </div>
+                <div id="leaderboard-content" style="max-height:50vh;overflow-y:auto;"></div>
             </div>
         </div>
     </div>
@@ -1073,6 +1102,8 @@
             farmPlots: [], mineRocks: [], forestTrolls: [], fishingFish: [], astralSaturns: [], dragon: null, farmTractor: null,
             areaObjects: [], // Track all area-specific objects for cleanup
             selectedSeed: null, draggedSeed: null, ghostElement: null, isDragging: false,
+            playerName: '', farmPlotSnapshot: [],
+            soundEnabled: true, audioCtx: null,
             scene: null, camera: null, renderer: null, raycaster: null, mouse: null, wizard: null,
             wizardTarget: { x: -6, z: 0 }, wizardMoving: false,
             stats: { totalHarvests: 0, totalRocksMined: 0, totalTrollsKilled: 0, fishCaught: 0, totalEssenceEarned: 0, deathCount: 0, playtime: 0, saturnsBurst: 0, fishFedToDragon: 0 },
@@ -1151,7 +1182,9 @@
                         extraPlots: this.extraPlots, fishLuck: this.fishLuck, currentArea: this.currentArea, isDayTime: this.isDayTime,
                         purchasedSkills: this.purchasedSkills, seeds: this.seeds, unlockedAreas: this.unlockedAreas,
                         stats: this.stats, completedAchievements: this.completedAchievements, fishInventory: this.fishInventory,
-                        shownFirstFishNotif: this.shownFirstFishNotif, version: SAVE_VERSION, savedAt: Date.now()
+                        shownFirstFishNotif: this.shownFirstFishNotif, version: SAVE_VERSION, savedAt: Date.now(),
+                        farmPlotSnapshot: this.farmPlots.map(p => ({ x: p.x, z: p.z, seed: p.seed, growthTime: p.growthTime, growthNeeded: p.growthNeeded })),
+                        playerName: this.playerName || ''
                     };
                     
                     const saveJson = JSON.stringify(saveData);
@@ -1168,6 +1201,16 @@
                     
                     // Queue cloud sync with backoff to prevent API spam
                     this.queueCloudSave(saveData);
+
+                    // Auto-push leaderboard if player has set a name (at most once per 5 min)
+                    if (this.playerName && (!this._lastLbPush || Date.now() - this._lastLbPush > 300000)) {
+                        this._lastLbPush = Date.now();
+                        fetch('/api/caster-valley-leaderboard', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ deviceId: this.deviceId, name: this.playerName, level: this.level, totalEssenceEarned: Math.floor(this.stats.totalEssenceEarned) })
+                        }).catch(() => {});
+                    }
                     
                     // Log save size for debugging
                     if (Math.random() < 0.1) { // 10% of saves
@@ -1232,6 +1275,8 @@
                 this.completedAchievements = d.completedAchievements || [];
                 this.fishInventory = d.fishInventory || 0;
                 this.shownFirstFishNotif = d.shownFirstFishNotif || false;
+                this.farmPlotSnapshot = d.farmPlotSnapshot || [];
+                this.playerName = d.playerName || '';
             },
 
             getOrCreateDeviceId() {
@@ -1621,6 +1666,13 @@
             },
 
             clearAreaObjects() {
+                // Snapshot farm plot states before clearing (so they survive area switches)
+                if (this.farmPlots && this.farmPlots.length > 0) {
+                    this.farmPlotSnapshot = this.farmPlots.map(p => ({
+                        x: p.x, z: p.z, seed: p.seed,
+                        growthTime: p.growthTime, growthNeeded: p.growthNeeded
+                    }));
+                }
                 // Remove all area-specific objects
                 this.areaObjects.forEach(obj => {
                     if (obj.parent) this.scene.remove(obj);
@@ -1747,6 +1799,14 @@
                     this.areaObjects.push(plot);
                     
                     this.farmPlots.push({ mesh: plot, x, z, seed: null, growthTime: 0, growthNeeded: 15000, plantMesh: null });
+                }
+
+                // Restore any previously planted seeds (area switch or save reload)
+                if (this.farmPlotSnapshot && this.farmPlotSnapshot.length > 0) {
+                    this.farmPlots.forEach(plot => {
+                        const saved = this.farmPlotSnapshot.find(s => Math.abs(s.x - plot.x) < 0.1 && Math.abs(s.z - plot.z) < 0.1);
+                        if (saved && saved.seed) this.plantSeed(plot, saved.seed, saved.growthTime);
+                    });
                 }
                 
                 // Red barn with roof (moved further out)
@@ -3992,12 +4052,21 @@
                 this.updateUI();
             },
 
-            plantSeed(plot, tier) {
-                if (!this.seeds[tier] || this.seeds[tier] <= 0 || plot.seed) return;
-                this.moveWizardTo(plot.x, plot.z);
-                plot.seed = tier;
-                plot.growthTime = 0;
-                this.seeds[tier]--;
+            plantSeed(plot, tier, restoreGrowthTime = null) {
+                if (restoreGrowthTime === null) {
+                    // Normal planting
+                    if (!this.seeds[tier] || this.seeds[tier] <= 0 || plot.seed) return;
+                    this.moveWizardTo(plot.x, plot.z);
+                    plot.seed = tier;
+                    plot.growthTime = 0;
+                    this.seeds[tier]--;
+                    this.playSound('plant');
+                } else {
+                    // Restore from snapshot — no seed consumed, preserve growth progress
+                    if (plot.seed) return;
+                    plot.seed = tier;
+                    plot.growthTime = restoreGrowthTime;
+                }
                 
                 // Create unique plant for each tier
                 const plantGroup = new THREE.Group();
@@ -4300,8 +4369,10 @@
                 this.scene.add(plantGroup);
                 this.areaObjects.push(plantGroup);
                 plot.plantMesh = plantGroup;
-                this.renderToolbar();
-                this.renderStore();
+                if (restoreGrowthTime === null) {
+                    this.renderToolbar();
+                    this.renderStore();
+                }
             },
 
             harvestPlant(plot) {
@@ -4311,6 +4382,7 @@
                 this.essence += gain;
                 this.stats.totalEssenceEarned += gain;
                 this.stats.totalHarvests++;
+                this.playSound('harvest');
                 this.xp += tier * 6;
                 this.checkLevel();
                 this.seeds[tier] = (this.seeds[tier] || 0) + 1;
@@ -4346,6 +4418,7 @@
                     this.essence += gain;
                     this.stats.totalEssenceEarned += gain;
                     this.stats.totalRocksMined++;
+                    this.playSound('mine');
                     this.xp += 8;
                     this.checkLevel();
                     this.checkAchievements();
@@ -4394,6 +4467,7 @@
                     this.essence += gain;
                     this.stats.totalEssenceEarned += gain;
                     this.stats.totalTrollsKilled++;
+                    this.playSound('battle');
                     this.xp += 40;
                     this.checkLevel();
                     const randTier = Math.min(10, Math.max(2, Math.floor(this.level / 2) + Math.floor(Math.random() * 4)));
@@ -4504,6 +4578,7 @@
                     this.essence += gain;
                     this.stats.totalEssenceEarned += gain;
                     this.stats.fishCaught++;
+                    this.playSound('fish');
                     this.xp += 60;
                     this.checkLevel();
                     
@@ -4805,6 +4880,7 @@
                 this.stats.totalEssenceEarned += sellPrice;
                 this.xp += 25;
                 this.checkLevel();
+                this.playSound('sell');
                 this.showToast(`💰 Sold phish for ${sellPrice} SP!`);
                 this.renderStore();
                 this.updateUI();
@@ -5599,6 +5675,91 @@
                 this.renderer.render(this.scene, this.camera);
             },
 
+            playSound(type) {
+                if (!this.soundEnabled) return;
+                try {
+                    if (!this.audioCtx) this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    const ctx = this.audioCtx;
+                    if (ctx.state === 'suspended') ctx.resume();
+                    const now = ctx.currentTime;
+                    const masterGain = ctx.createGain();
+                    masterGain.connect(ctx.destination);
+                    if (type === 'plant') {
+                        const osc = ctx.createOscillator();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(200, now);
+                        osc.frequency.exponentialRampToValueAtTime(60, now + 0.13);
+                        masterGain.gain.setValueAtTime(0.22, now);
+                        masterGain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+                        osc.connect(masterGain); osc.start(now); osc.stop(now + 0.15);
+                    } else if (type === 'harvest') {
+                        [880, 1100, 1320].forEach((freq, i) => {
+                            const o = ctx.createOscillator(), g = ctx.createGain();
+                            o.type = 'triangle'; o.frequency.value = freq;
+                            g.gain.setValueAtTime(0.18, now + i * 0.045);
+                            g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.045 + 0.22);
+                            o.connect(g); g.connect(ctx.destination);
+                            o.start(now + i * 0.045); o.stop(now + i * 0.045 + 0.22);
+                        });
+                    } else if (type === 'mine') {
+                        const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.14), ctx.sampleRate);
+                        const d = buf.getChannelData(0);
+                        for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+                        const src = ctx.createBufferSource();
+                        src.buffer = buf;
+                        const filt = ctx.createBiquadFilter();
+                        filt.type = 'bandpass'; filt.frequency.value = 900; filt.Q.value = 8;
+                        masterGain.gain.setValueAtTime(0.35, now);
+                        masterGain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+                        src.connect(filt); filt.connect(masterGain);
+                        src.start(now); src.stop(now + 0.14);
+                    } else if (type === 'battle') {
+                        const osc = ctx.createOscillator();
+                        osc.type = 'sawtooth';
+                        osc.frequency.setValueAtTime(300, now);
+                        osc.frequency.exponentialRampToValueAtTime(80, now + 0.22);
+                        masterGain.gain.setValueAtTime(0.28, now);
+                        masterGain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+                        osc.connect(masterGain); osc.start(now); osc.stop(now + 0.22);
+                    } else if (type === 'fish') {
+                        const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.18), ctx.sampleRate);
+                        const d = buf.getChannelData(0);
+                        for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+                        const src = ctx.createBufferSource();
+                        src.buffer = buf;
+                        const filt = ctx.createBiquadFilter();
+                        filt.type = 'lowpass'; filt.frequency.value = 650;
+                        masterGain.gain.setValueAtTime(0.28, now);
+                        masterGain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+                        src.connect(filt); filt.connect(masterGain);
+                        src.start(now); src.stop(now + 0.18);
+                    } else if (type === 'sell') {
+                        [1200, 1600].forEach((freq, i) => {
+                            const o = ctx.createOscillator(), g = ctx.createGain();
+                            o.type = 'sine'; o.frequency.value = freq;
+                            g.gain.setValueAtTime(0.22, now + i * 0.07);
+                            g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.07 + 0.18);
+                            o.connect(g); g.connect(ctx.destination);
+                            o.start(now + i * 0.07); o.stop(now + i * 0.07 + 0.18);
+                        });
+                    } else if (type === 'click') {
+                        const osc = ctx.createOscillator();
+                        osc.type = 'sine'; osc.frequency.value = 620;
+                        masterGain.gain.setValueAtTime(0.12, now);
+                        masterGain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+                        osc.connect(masterGain); osc.start(now); osc.stop(now + 0.05);
+                    }
+                } catch(e) {}
+            },
+
+            toggleSound() {
+                this.soundEnabled = !this.soundEnabled;
+                const btn = document.getElementById('sound-toggle-btn');
+                if (btn) btn.textContent = this.soundEnabled ? '🔊' : '🔇';
+                if (!this.soundEnabled && this.audioCtx) this.audioCtx.suspend();
+                else if (this.soundEnabled && this.audioCtx) this.audioCtx.resume();
+            },
+
             toggleFullscreen() {
                 const container = document.getElementById('game-container');
                 if (!container) return;
@@ -5679,8 +5840,14 @@
                     this.camera.aspect = w / h;
                     this.camera.updateProjectionMatrix();
                     this.renderer.setSize(w, h);
-                    // Preserve camera orientation after resize
+                    // Snap camera to clean position + angle — prevents drift/wrong angle on fullscreen toggle
+                    this.camera.position.set(
+                        this.cameraTarget.x + this.cameraOffset.x,
+                        this.cameraTarget.y + this.cameraOffset.y,
+                        this.cameraTarget.z + this.cameraOffset.z
+                    );
                     this.camera.lookAt(this.cameraTarget.x, this.cameraTarget.y, this.cameraTarget.z);
+                    this.panVelocity = { x: 0, z: 0 };
 
                     // Scale UI elements for fullscreen
                     if (isFullscreen) {
@@ -5697,11 +5864,66 @@
                 });
             },
 
+            async renderLeaderboard() {
+                const el = document.getElementById('leaderboard-content');
+                el.innerHTML = '<div style="text-align:center;padding:20px;font-size:8px;color:var(--brown-med);font-family:\'Press Start 2P\'">LOADING...</div>';
+                const nameInput = document.getElementById('leaderboard-name-input');
+                if (nameInput && this.playerName) nameInput.value = this.playerName;
+                try {
+                    const resp = await fetch('/api/caster-valley-leaderboard');
+                    if (!resp.ok) throw new Error('Network error');
+                    const data = await resp.json();
+                    const entries = data.entries || [];
+                    if (entries.length === 0) {
+                        el.innerHTML = '<div style="text-align:center;padding:20px;font-size:8px;color:var(--brown-med);font-family:\'Press Start 2P\'">NO ENTRIES YET.<br><br>BE THE FIRST!</div>';
+                        return;
+                    }
+                    const table = document.createElement('table');
+                    table.style.cssText = 'width:100%;border-collapse:collapse;font-family:"Press Start 2P";font-size:7px;';
+                    table.innerHTML = '<thead><tr style="border-bottom:2px solid var(--brown-dark);"><th style="padding:6px 4px;text-align:left;color:var(--brown-dark);">#</th><th style="padding:6px 4px;text-align:left;color:var(--brown-dark);">NAME</th><th style="padding:6px 4px;text-align:right;color:var(--brown-dark);">LVL</th><th style="padding:6px 4px;text-align:right;color:var(--gold);">TOTAL SP ⚡</th></tr></thead>';
+                    const tbody = document.createElement('tbody');
+                    entries.forEach((entry, i) => {
+                        const isMe = entry.deviceId === this.deviceId;
+                        const tr = document.createElement('tr');
+                        tr.style.cssText = `border-bottom:1px solid rgba(0,0,0,0.1);background:${isMe ? 'rgba(255,215,0,0.25)' : i % 2 === 0 ? 'rgba(255,255,255,0.15)' : 'transparent'};`;
+                        const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
+                        tr.innerHTML = `<td style="padding:6px 4px;">${medal}</td><td style="padding:6px 4px;color:${isMe ? 'var(--gold)' : 'var(--brown-dark)'}">${(entry.name || '???').substring(0, 16)}${isMe ? ' 👈' : ''}</td><td style="padding:6px 4px;text-align:right;color:var(--brown-med);">${entry.level}</td><td style="padding:6px 4px;text-align:right;color:var(--gold);">${Math.floor(entry.totalEssenceEarned).toLocaleString()}</td>`;
+                        tbody.appendChild(tr);
+                    });
+                    table.appendChild(tbody);
+                    el.innerHTML = '';
+                    el.appendChild(table);
+                } catch(e) {
+                    el.innerHTML = '<div style="text-align:center;padding:20px;font-size:8px;color:#c9562c;font-family:\'Press Start 2P\'">FAILED TO LOAD</div>';
+                }
+            },
+
+            async submitLeaderboard() {
+                const input = document.getElementById('leaderboard-name-input');
+                const name = (input?.value || '').trim();
+                if (!name || name.length < 2) { this.showToast('Enter a name (min 2 chars)!'); return; }
+                this.playerName = name;
+                this.saveGame();
+                try {
+                    const resp = await fetch('/api/caster-valley-leaderboard', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ deviceId: this.deviceId, name, level: this.level, totalEssenceEarned: Math.floor(this.stats.totalEssenceEarned) })
+                    });
+                    if (!resp.ok) throw new Error();
+                    this.showToast('🏅 Added to leaderboard!');
+                    this.renderLeaderboard();
+                } catch(e) {
+                    this.showToast('❌ Failed to save');
+                }
+            },
+
             openModal(type) {
                 document.getElementById(`${type}-modal`).classList.add('active');
                 if (type === 'skills') this.renderSkills();
                 else if (type === 'achievements') this.renderAchievements();
                 else if (type === 'stats') this.renderStats();
+                else if (type === 'leaderboard') this.renderLeaderboard();
             },
 
             closeModal(type) {
