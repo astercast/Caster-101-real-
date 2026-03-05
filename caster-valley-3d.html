@@ -350,7 +350,7 @@
         .achievement-card.done { background: linear-gradient(135deg, #ffd700, #f4a261); box-shadow: 0 0 20px rgba(255,215,0,0.6); }
         .achievement-card.locked { opacity: 0.5; }
         .toast {
-            font-family: 'Press Start 2P', cursive; position: fixed; top: 60px; left: 50%; transform: translateX(-50%);
+            font-family: 'Press Start 2P', cursive; position: fixed; top: 160px; left: 50%; transform: translateX(-50%);
             background: linear-gradient(135deg, var(--brown-light), var(--brown-med)); color: var(--cream); padding: 6px 10px; border-radius: 6px; font-size: 6px;
             box-shadow: 0 4px 0 var(--brown-dark); animation: toast-slide-down 0.4s ease, toast-slide-up 0.4s ease 2.6s forwards; z-index: 3000;
             border: 2px solid var(--brown-dark); text-shadow: 1px 1px 0 var(--brown-dark); line-height: 1.3; max-width: 220px;
@@ -1380,6 +1380,7 @@
             },
 
             showWeatherNotification() {
+                this.playSound('weather');
                 const messages = {
                     clear: '☁️ Clear Weather\nNormal farming speed',
                     rain: '🌧️ Rain!\n+25% plant growth speed',
@@ -3917,8 +3918,9 @@
 
             setupEventListeners() {
                 const canvas = document.getElementById('game-canvas');
-                canvas.addEventListener('click', (e) => this.onCanvasClick(e));
-                canvas.addEventListener('touchend', (e) => this.onCanvasClick(e));
+                canvas.addEventListener('click', (e) => { this.startBgMusic(); this.onCanvasClick(e); });
+                canvas.addEventListener('touchend', (e) => { this.startBgMusic(); this.onCanvasClick(e); });
+                // Also start on any click outside canvas (menu buttons etc)
                 const startMusic = () => { this.startBgMusic(); document.removeEventListener('click', startMusic); document.removeEventListener('touchend', startMusic); };
                 document.addEventListener('click', startMusic);
                 document.addEventListener('touchend', startMusic);
@@ -3955,6 +3957,7 @@
                                 const tier = rat.stolenSeedTier || 1;
                                 this.seeds[tier] = (this.seeds[tier] || 0) + 1;
                                 
+                                this.playSound('rat');
                                 this.showToast(`🐀 Caught the rat! +${gain} SP + Tier ${tier} seed returned!`);
                                 
                                 // Remove rat
@@ -4576,6 +4579,7 @@
                     if (Math.random() > catchChance) {
                         // Fish escaped!
                         fish.caught = false; // Allow it to swim away
+                        this.playSound('fishescaped');
                         this.showToast(`${fish.icon} The phish escaped!`);
                         return;
                     }
@@ -4623,6 +4627,7 @@
                 this.essence += gain;
                 this.stats.totalEssenceEarned += gain;
                 this.stats.saturnsBurst++;
+                this.playSound('saturn');
                 this.xp += 50;
                 this.checkLevel();
                 saturn.planet.visible = false;
@@ -4642,6 +4647,7 @@
                 this.essence -= lost;
                 this.hp = this.maxHP;
                 this.stats.deathCount++;
+                this.playSound('die');
                 this.showToast(`💀 Lost ${lost} SP!`);
                 this.updateUI();
             },
@@ -4773,6 +4779,7 @@
                     return;
                 }
                 this.essence -= sk.cost;
+                this.playSound('skillbuy');
                 this.purchasedSkills.push(id);
                 if (sk.stat === 'all') {
                     this.plantSpeed += 1; this.essenceMult += 1;
@@ -4877,6 +4884,7 @@
                 this.stats.totalEssenceEarned += sellPrice;
                 this.xp += tier * 2;
                 this.checkLevel();
+                this.playSound('sellseed');
                 this.showToast(`💰 Sold T${tier} seed for ${sellPrice} SP!`);
                 this.renderToolbar();
                 this.renderStore();
@@ -5737,21 +5745,10 @@
                         noiseHit(0.16, 140, 2, 0.30, 'lowpass', 0.02);
                         noteHit(100, 0.18, 0.22, 'sine');
                     } else if (type === 'battle') {
-                        // "oof/ugh" grunt — low vocal thud that drops fast
-                        const osc = ctx.createOscillator();
-                        osc.type = 'sine';
-                        osc.frequency.setValueAtTime(160, now);
-                        osc.frequency.exponentialRampToValueAtTime(90, now + 0.08);
-                        osc.frequency.exponentialRampToValueAtTime(70, now + 0.18);
-                        // slight overdrive via waveshaper for grunt texture
-                        const shaper = ctx.createWaveShaper();
-                        const curve = new Float32Array(256);
-                        for (let i = 0; i < 256; i++) { const x = (i * 2) / 256 - 1; curve[i] = (Math.PI + 80) * x / (Math.PI + 80 * Math.abs(x)); }
-                        shaper.curve = curve;
-                        masterGain.gain.setValueAtTime(0.18, now);
-                        masterGain.gain.setValueAtTime(0.18, now + 0.04);
-                        masterGain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
-                        osc.connect(shaper); shaper.connect(masterGain); osc.start(now); osc.stop(now + 0.22);
+                        // Troll defeated: soft wheeze/sigh — gentle fade out
+                        noteHit(120, 0.13, 0.28, 'sine');
+                        noteHit(95, 0.10, 0.32, 'sine', 0.06);
+                        noiseHit(0.20, 250, 3, 0.09, 'lowpass', 0.04);
                     } else if (type === 'fish') {
                         const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.18), ctx.sampleRate);
                         const d = buf.getChannelData(0);
@@ -5774,12 +5771,14 @@
                             o.start(now + i * 0.07); o.stop(now + i * 0.07 + 0.18);
                         });
                     } else if (type === 'trollhit') {
-                        noiseHit(0.10, 1000, 5, 0.20, 'bandpass');
-                        noteHit(180, 0.16, 0.09, 'sawtooth', 0.02);
+                        // Soft thwack — muffled cloth-like hit
+                        noiseHit(0.08, 400, 4, 0.13, 'lowpass');
+                        noteHit(140, 0.10, 0.07, 'sine', 0.01);
                     } else if (type === 'dragon') {
-                        noteHit(75, 0.20, 0.30, 'sine');
-                        noteHit(58, 0.14, 0.28, 'sawtooth', 0.04);
-                        noiseHit(0.22, 700, 1.5, 0.16, 'lowpass', 0.05);
+                        // Gentle purr/rumble — content eating sound
+                        noteHit(90, 0.14, 0.35, 'sine');
+                        noteHit(135, 0.10, 0.30, 'sine', 0.06);
+                        noiseHit(0.20, 300, 2, 0.10, 'lowpass', 0.08);
                     } else if (type === 'damage') {
                         noteHit(300, 0.22, 0.08, 'sine');
                         const o2 = ctx.createOscillator(), g2 = ctx.createGain();
@@ -5798,6 +5797,42 @@
                         oa.type = 'sine'; oa.frequency.setValueAtTime(180, now); oa.frequency.exponentialRampToValueAtTime(600, now+0.2);
                         ga.gain.setValueAtTime(0.14, now); ga.gain.exponentialRampToValueAtTime(0.0001, now+0.22);
                         oa.connect(ga); ga.connect(ctx.destination); oa.start(now); oa.stop(now+0.23);
+                    } else if (type === 'rat') {
+                        // Squeaky catch
+                        noteHit(900, 0.14, 0.06, 'square');
+                        noteHit(1200, 0.10, 0.05, 'square', 0.06);
+                    } else if (type === 'fishescaped') {
+                        // Descending splosh — got away!
+                        const o = ctx.createOscillator(), g = ctx.createGain();
+                        o.type = 'sine'; o.frequency.setValueAtTime(600, now); o.frequency.exponentialRampToValueAtTime(200, now + 0.18);
+                        g.gain.setValueAtTime(0.15, now); g.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+                        o.connect(g); g.connect(ctx.destination); o.start(now); o.stop(now + 0.19);
+                        noiseHit(0.14, 500, 2, 0.12, 'lowpass', 0.02);
+                    } else if (type === 'die') {
+                        // Sad descending tone
+                        [330, 262, 196, 165].forEach((f, i) => noteHit(f, 0.18, 0.22, 'triangle', i * 0.10));
+                    } else if (type === 'skillbuy') {
+                        // Magical power-up shimmer
+                        [660, 880, 1100, 1320, 1760].forEach((f, i) => noteHit(f, 0.16, 0.18, 'triangle', i * 0.04));
+                    } else if (type === 'saturn') {
+                        // Pop + sparkle burst
+                        noiseHit(0.07, 3000, 20, 0.22, 'bandpass');
+                        [1047, 1319, 1568].forEach((f, i) => noteHit(f, 0.14, 0.18, 'sine', 0.05 + i * 0.04));
+                    } else if (type === 'sellseed') {
+                        // Earthy rustle + soft clink
+                        noiseHit(0.12, 800, 3, 0.14, 'bandpass');
+                        noteHit(520, 0.12, 0.10, 'triangle');
+                        noteHit(620, 0.09, 0.09, 'triangle', 0.07);
+                    } else if (type === 'weather') {
+                        // Wind gust sweep
+                        noiseHit(0.30, 600, 1.5, 0.13, 'bandpass');
+                        noiseHit(0.25, 300, 1, 0.10, 'lowpass', 0.05);
+                    } else if (type === 'modalopen') {
+                        noteHit(440, 0.10, 0.07, 'sine');
+                        noteHit(550, 0.08, 0.07, 'sine', 0.06);
+                    } else if (type === 'modalclose') {
+                        noteHit(550, 0.08, 0.06, 'sine');
+                        noteHit(440, 0.07, 0.07, 'sine', 0.05);
                     } else if (type === 'click') {
                         noteHit(680, 0.12, 0.05, 'sine');
                     }
@@ -5987,11 +6022,17 @@
                     this.showToast('🏅 Added to leaderboard!');
                     this.renderLeaderboard();
                 } catch(e) {
-                    this.showToast('❌ ' + (e.message || 'Save failed'));
+                    const msg = e.message || '';
+                    if (msg.includes('KV not configured') || msg.includes('KV')) {
+                        this.showToast('⚠️ Leaderboard not set up yet');
+                    } else {
+                        this.showToast('❌ ' + (msg || 'Save failed'));
+                    }
                 }
             },
 
             openModal(type) {
+                this.playSound('modalopen');
                 document.getElementById(`${type}-modal`).classList.add('active');
                 if (type === 'skills') this.renderSkills();
                 else if (type === 'achievements') this.renderAchievements();
@@ -6000,6 +6041,7 @@
             },
 
             closeModal(type) {
+                this.playSound('modalclose');
                 document.getElementById(`${type}-modal`).classList.remove('active');
             },
 
