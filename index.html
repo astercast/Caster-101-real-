@@ -103,30 +103,6 @@
             z-index: 1;
         }
 
-        /* Film grain / noise texture — breaks up flat gradients, feels handcrafted not AI */
-        body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            opacity: 0.035;
-            pointer-events: none;
-            z-index: 3;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
-            background-repeat: repeat;
-            background-size: 300px 300px;
-        }
-
-        /* Animated conic-gradient spinning border for the header */
-        @property --header-angle {
-            syntax: '<angle>';
-            initial-value: 0deg;
-            inherits: false;
-        }
-
-        @keyframes header-border-spin {
-            to { --header-angle: 360deg; }
-        }
-
         @keyframes gentleFloat {
 
             0%,
@@ -303,30 +279,43 @@
             transform: scale(0.98);
         }
 
+        .header {
+            background: linear-gradient(to right, rgba(220, 38, 38, 0.65), rgba(251, 191, 36, 0.65), rgba(220, 38, 38, 0.65));
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 2px solid rgba(251, 191, 36, 0.7);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+            box-shadow: 0 8px 32px rgba(220, 38, 38, 0.4),
+                        0 0 0 1px rgba(251, 191, 36, 0.3),
+                        0 0 40px rgba(251, 191, 36, 0.2),
+                        inset 0 1px 0 rgba(251, 191, 36, 0.15);
+            position: relative;
+            z-index: 12;
+        }
+
         /* Ensure all text in header stays above images */
         .header * {
             position: relative;
             z-index: 16;
         }
 
-        .header {
-            background-image: linear-gradient(to right, rgba(220, 38, 38, 0.65), rgba(251, 191, 36, 0.65), rgba(220, 38, 38, 0.65)),
-                              conic-gradient(from var(--header-angle), #dc2626 0%, #fbbf24 25%, #fffacd 50%, #fbbf24 75%, #dc2626 100%);
-            background-origin: padding-box, border-box;
-            background-clip: padding-box, border-box;
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 2px solid transparent;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 24px;
-            box-shadow: 0 8px 32px rgba(220, 38, 38, 0.4),
-                        0 0 0 2px rgba(251, 191, 36, 0.55),
-                        0 0 40px rgba(251, 191, 36, 0.2),
-                        inset 0 1px 0 rgba(251, 191, 36, 0.15);
+        .title {
+            font-size: 42px;
+            font-weight: 900;
+            text-align: center;
+            letter-spacing: 12px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            padding: 8px;
+            background: none;
+            border: none;
+            border-radius: 8px;
+            text-shadow: none;
+            line-height: 1.2;
             position: relative;
-            z-index: 12;
-            animation: header-border-spin 5s linear infinite;
+            z-index: 20;
         }
 
         /* Mobile: Keep desktop font sizes */
@@ -358,18 +347,7 @@
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.75);
             position: relative;
             z-index: 20;
-            -webkit-mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
-            mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
-        }
-
-        .marquee-glow-line {
-            height: 2px;
-            background: linear-gradient(to right, transparent, rgba(220, 38, 38, 0.7), rgba(251, 191, 36, 0.9), rgba(220, 38, 38, 0.7), transparent);
-            border-radius: 2px;
-            margin: 2px 0 0 0;
-            opacity: 0.75;
-            position: relative;
-            z-index: 20;
+            /* Marquee above bouncing images */
         }
 
         @media (max-width: 768px) {
@@ -404,22 +382,12 @@
         }
 
         .stat-badge {
-            background: rgba(0, 0, 0, 0.6);
-            padding: 5px 12px;
-            border: 1px solid rgba(251, 191, 36, 0.25);
-            border-radius: 20px;
+            background: rgba(0, 0, 0, 0.78);
+            padding: 6px 12px;
+            border: none;
             font-size: 10px;
-            font-weight: 700;
-            font-family: 'Inter', sans-serif;
-            letter-spacing: 0.4px;
-            display: inline-flex;
-            align-items: center;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-
-        .stat-badge:hover {
-            border-color: rgba(251, 191, 36, 0.5);
-            box-shadow: 0 0 10px rgba(251, 191, 36, 0.15);
+            font-weight: bold;
+            border: none;
         }
 
         .refresh-btn {
@@ -550,24 +518,6 @@
 
         .content.active {
             display: block;
-                .content {
-                    display: none;
-                }
-
-                .content.active {
-                    display: block;
-                }
-
-                /* Desktop: smooth tab content entrance */
-                @media (min-width: 769px) {
-                    @keyframes tabContentIn {
-                        from { opacity: 0; transform: translateY(8px); }
-                        to   { opacity: 1; transform: translateY(0); }
-                    }
-                    .content.active {
-                        animation: tabContentIn 0.28s cubic-bezier(0.4, 0, 0.2, 1) both;
-                    }
-                }
         }
 
         .filter-section {
@@ -881,12 +831,12 @@
                 top: 50%;
                 left: 50%;
                 transform: translate(-50%, -50%);
-                background: linear-gradient(135deg, rgba(251, 191, 36, 0.18), rgba(251, 191, 36, 0.08));
+                background: linear-gradient(135deg, rgba(251, 191, 36, 0.25), rgba(251, 191, 36, 0.12));
                 color: #fbbf24;
-                padding: 4px 10px;
-                border-radius: 6px;
-                border: 1px solid rgba(251, 191, 36, 0.35);
-                font-size: 10px;
+                padding: 8px 18px;
+                border-radius: 8px;
+                border: 1px solid rgba(251, 191, 36, 0.4);
+                font-size: 11px;
                 font-weight: 700;
                 letter-spacing: 1px;
                 pointer-events: none;
@@ -895,25 +845,6 @@
                 z-index: 20;
                 backdrop-filter: blur(4px);
                 white-space: nowrap;
-            }
-
-            /* Color-coded hover glow — green for gaining tokens, red for losing */
-            .token-card[data-trend="up"]:hover {
-                border-color: rgba(74, 222, 128, 0.65) !important;
-                box-shadow: 0 12px 28px rgba(74, 222, 128, 0.18),
-                            0 6px 16px rgba(0, 0, 0, 0.5),
-                            inset 0 1px 0 rgba(255, 255, 255, 0.12),
-                            0 0 0 1px rgba(74, 222, 128, 0.35),
-                            0 0 20px rgba(74, 222, 128, 0.15) !important;
-            }
-
-            .token-card[data-trend="down"]:hover {
-                border-color: rgba(239, 68, 68, 0.65) !important;
-                box-shadow: 0 12px 28px rgba(239, 68, 68, 0.18),
-                            0 6px 16px rgba(0, 0, 0, 0.5),
-                            inset 0 1px 0 rgba(255, 255, 255, 0.12),
-                            0 0 0 1px rgba(239, 68, 68, 0.35),
-                            0 0 20px rgba(239, 68, 68, 0.15) !important;
             }
 
             @keyframes fadeInCenter {
@@ -929,52 +860,18 @@
             gap: 12px;
         }
 
-        @keyframes rune-sweep {
-            0%   { left: -100%; opacity: 0; }
-            5%   { opacity: 1; }
-            50%  { left: 100%; opacity: 1; }
-            55%  { opacity: 0; }
-            100% { left: 100%; opacity: 0; }
+        .token-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0;
         }
 
-        .column-header {
-            padding: 12px;
-            font-weight: 900;
-            font-size: 16px;
-            text-align: center;
-            border: 2px solid rgba(74, 222, 128, 0.5);
-            border-radius: 8px;
-            margin-bottom: 12px;
-            font-family: 'Inter', sans-serif;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3),
-                        0 0 0 1px rgba(74, 222, 128, 0.3),
-                        0 0 20px rgba(74, 222, 128, 0.2);
-            position: relative;
-            overflow: hidden;
-        }
-        .column-header.chia {
-            background: linear-gradient(90deg, transparent, rgba(132, 204, 22, 0.3), transparent);
-            color: #84cc16;
-            text-shadow: 0 0 10px #84cc16;
-        }
-
-        .column-header::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: -100%;
-            width: 100%;
-            height: 2px;
-            animation: rune-sweep 4s ease-in-out infinite;
-        }
-
-        .column-header.base::after {
-            background: linear-gradient(90deg, transparent, #3b82f6, #93c5fd, #3b82f6, transparent);
-        }
-
-        .column-header.chia::after {
-            background: linear-gradient(90deg, transparent, #84cc16, #bef264, #84cc16, transparent);
-            animation-delay: 2s;
+        .token-info {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 10px;
         }
 
         .token-symbol {
@@ -1148,23 +1045,7 @@
         .quick-link-btn:hover {
             transform: translateY(-2px);
             border-color: rgba(251, 191, 36, 1);
-            background: rgba(251, 191, 36, 0.12);
-            box-shadow: 0 4px 14px rgba(251, 191, 36, 0.3), 0 0 20px rgba(251, 191, 36, 0.1);
-        }
-
-        .quick-link-btn:active {
-            transform: translateY(1px) scale(0.97);
-            border-color: rgba(251, 191, 36, 0.9);
-            box-shadow: 0 1px 4px rgba(251, 191, 36, 0.2);
-            transition: all 0.08s;
-        }
-
-        .section-divider {
-            height: 1px;
-            background: linear-gradient(to right, transparent, rgba(220, 38, 38, 0.5), rgba(251, 191, 36, 0.6), rgba(220, 38, 38, 0.5), transparent);
-            margin: 18px 0;
-            border: none;
-            opacity: 0.8;
+            background: rgba(251, 191, 36, 0.1);
         }
 
         /* Mobile: Desktop quick links */
@@ -2528,9 +2409,9 @@
                 </div>
             </div>
             <div class="stats">
-                <div class="stat-badge" style="color: #fbbf24;">👀 Visitors: <span
-                    id="visitorCount">0</span></div>
-                <div class="stat-badge" style="color: #dc2626;">🔥 Online: 42069</div>
+                <div class="stat-badge" style="border: none; color: #fbbf24;">👀 Visitors: <span
+                        id="visitorCount">0</span></div>
+                <div class="stat-badge" style="border: none; color: #dc2626;">🔥 Online: 42069</div>
                 <a href="https://www.chia.net" target="_blank" class="stat-badge" style="
                     color: #fbbf24;
                     text-decoration: none;
@@ -2635,10 +2516,9 @@
                                 font-size: 22px;
                                 box-shadow: 0 4px 12px rgba(74,222,128,0.35);
                             ">🌱</div>
+                            <div>
+                                <div style="font-size: 18px; font-weight: 900; color: white; font-family: 'Cinzel', serif; letter-spacing: 1px;">XCH</div>
                             </div>
-                        </div>
-                        <div class="marquee-glow-line"></div>
-                        <div class="stats">
                         </div>
                         <div style="text-align: right;">
                             <div id="xch-price" style="font-size: 22px; font-weight: 900; color: #4ade80; font-family: 'Cinzel', serif;">$0.00</div>
@@ -2669,11 +2549,10 @@
                                 font-size: 22px;
                                 box-shadow: 0 4px 12px rgba(0,82,255,0.4);
                             ">⛓️</div>
+                            <div>
+                                <div style="font-size: 18px; font-weight: 900; color: white; font-family: 'Cinzel', serif; letter-spacing: 1px;">wXCH</div>
+                                <div style="font-size: 11px; color: rgba(255,255,255,0.5); font-family: 'Cinzel', serif; text-transform: uppercase; letter-spacing: 0.5px;">Wrapped XCH</div>
                             </div>
-
-                            <div class="section-divider"></div>
-                            <div class="search-bar">
-                                <span class="search-icon">🔮</span>
                         </div>
                         <div style="text-align: right;">
                             <div id="wxch-price" style="font-size: 22px; font-weight: 900; color: #4f87ff; font-family: 'Cinzel', serif;">$0.00</div>
@@ -2683,7 +2562,6 @@
                 </div>
             </div>
 
-            <div class="section-divider"></div>
             <div class="filter-section" style="position: relative;">
                 <button class="filter-btn active" onclick="sortTokens('name', this)">📝 Name</button>
                 <button class="filter-btn" onclick="sortTokens('marketCap', this)">💰 Market Cap</button>
@@ -5511,8 +5389,8 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
             const mcap = token.marketCap || 0;
             const mcapStr = mcap > 1e6 ? '$'+(mcap/1e6).toFixed(1)+'M' : mcap > 1e3 ? '$'+(mcap/1e3).toFixed(0)+'K' : mcap > 0 ? '$'+mcap.toFixed(0) : '—';
 
-                return `
-                <div class="token-card" data-trend="${arbColor === '#4ade80' ? 'up' : (arbColor === '#ef4444' ? 'down' : 'neutral')}" onclick="openTokenLink('${token.chain}', '${token.assetId || token.contract}', '${token.symbol}')">
+            return `
+                <div class="token-card" onclick="openTokenLink('${token.chain}', '${token.assetId || token.contract}', '${token.symbol}')">
                     <div class="tc-top">
                         <div class="tc-left">
                             <span class="tc-emoji">${emoji}</span>
@@ -5703,19 +5581,19 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                 const mcapStr = mcap > 1e6 ? '$'+(mcap/1e6).toFixed(1)+'M' : mcap > 1e3 ? '$'+(mcap/1e3).toFixed(0)+'K' : mcap > 0 ? '$'+mcap.toFixed(0) : '—';
 
                 return `
-                    <div class="token-card" data-trend="${change >= 0 ? 'up' : 'down'}" onclick="openTokenLink('${token.chain}', '${token.assetId || token.contract}', '${token.symbol}')">
-                        <div class="tc-top">
-                            <div class="tc-left">
-                                <span class="tc-emoji">${emoji}</span>
-                                <span class="tc-name">${token.displayName || token.name}</span>
-                            </div>
-                            <div class="tc-right">
-                                <span class="tc-price">$${priceStr}</span>
-                            </div>
+                <div class="token-card" onclick="openTokenLink('${token.chain}', '${token.assetId || token.contract}', '${token.symbol}')">
+                    <div class="tc-top">
+                        <div class="tc-left">
+                            <span class="tc-emoji">${emoji}</span>
+                            <span class="tc-name">${token.displayName || token.name}</span>
                         </div>
-                        <div class="tc-mid">
-                            <span class="tc-price-inline">$${priceStr}</span>
-                            <span class="tc-change" style="color:${changeColor};">${changeIcon} ${Math.abs(change).toFixed(1)}%</span>
+                        <div class="tc-right">
+                            <span class="tc-price">$${priceStr}</span>
+                        </div>
+                    </div>
+                    <div class="tc-mid">
+                        <span class="tc-price-inline">$${priceStr}</span>
+                        <span class="tc-change" style="color:${changeColor};">${changeIcon} ${Math.abs(change).toFixed(1)}%</span>
                     </div>
                     <div class="tc-footer">
                         <span class="tc-mcap-label">Market Cap</span>
@@ -5766,7 +5644,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                 ) : '0.00';
 
                 return `
-                <div class="token-card" data-trend="${change >= 0 ? 'up' : 'down'}" onclick="openTokenLink('${token.chain}', '${token.assetId || token.contract}', '${token.symbol}')">
+                <div class="token-card" onclick="openTokenLink('${token.chain}', '${token.assetId || token.contract}', '${token.symbol}')">
                     <div class="tc-top">
                         <div class="tc-left">
                             <span class="tc-emoji">${emoji}</span>
@@ -7113,15 +6991,15 @@ async function loadComprehensiveTreasury(force = false) {
                 // Try to reset queue if stuck
                 spacescanQueue.reset();
                 console.error('❌ No cached data available and fetch failed');
-                return `
-                    <div class="token-card" data-trend="${arbColor === '#4ade80' ? 'up' : (arbColor === '#ef4444' ? 'down' : 'neutral')}" onclick="openTokenLink('${token.chain}', '${token.assetId || token.contract}', '${token.symbol}')">
-                        <div class="tc-top">
-                            <div class="tc-left">
-                                <span class="tc-emoji">${emoji}</span>
-                                <span class="tc-name">${token.displayName || token.name}</span>
-                            </div>
-                            <div class="tc-right">
-                                <span class="tc-price">$${token.price ? (
+                return [];
+            }
+        }
+
+        // ── Helper: build token list from token-balance response ──────────────────
+        const buildChiaTokens = (raw, tibetMap, lpSet, pairMap) =>
+            (raw?.data || []).filter(t => parseFloat(t.balance||0) > 0).map(t => {
+                const aid  = (t.asset_id||'').toLowerCase();
+                // Enhanced name resolution: Spacescan → TibetSwap → symbol → readable fallback
                 let name = (t.name||t.symbol||'').trim();
                 if (!name && tibetMap[aid]) name = tibetMap[aid].name || tibetMap[aid].short_name || '';
                 if (!name) name = t.symbol || '';
