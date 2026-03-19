@@ -136,7 +136,6 @@ async function fetchBestBaseToken(contract) {
     } catch {}
 
     return { price: 0, change24h: 0, marketCap: 0 };
-    }
 }
 
 async function buildSnapshot(req) {

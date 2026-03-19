@@ -3731,9 +3731,33 @@
         let marketIndexSnapshot = null;
         let marketIndexLoadedAt = 0;
         let marketIndexPromise = null;
+        const MARKET_SNAPSHOT_LOCAL_KEY = 'caster101_market_snapshot_v1';
         let treasuryIndexSnapshot = null;
         let treasuryIndexLoadedAt = 0;
         let treasuryIndexPromise = null;
+
+        function saveMarketSnapshotLocal(snapshot) {
+            try {
+                if (!isMarketSnapshotUsable(snapshot)) return;
+                localStorage.setItem(MARKET_SNAPSHOT_LOCAL_KEY, JSON.stringify({
+                    savedAt: snapshot.savedAt || Date.now(),
+                    base: snapshot.base,
+                    chia: snapshot.chia
+                }));
+            } catch {}
+        }
+
+        function loadMarketSnapshotLocal() {
+            try {
+                const raw = localStorage.getItem(MARKET_SNAPSHOT_LOCAL_KEY);
+                if (!raw) return null;
+                const parsed = JSON.parse(raw);
+                if (!isMarketSnapshotUsable(parsed)) return null;
+                return parsed;
+            } catch {
+                return null;
+            }
+        }
 
         async function fetchMarketIndexSnapshot(force = false) {
             const ttl = 60 * 1000;
@@ -4278,20 +4302,27 @@
                 if (chiaList) chiaList.innerHTML = loadingHtml;
             }
 
+            const localSnap = loadMarketSnapshotLocal();
+            if (localSnap) {
+                tokens = [...localSnap.base, ...localSnap.chia];
+                refreshData();
+                marketLastUpdatedAt = localSnap.savedAt || Date.now();
+                updateMarketStatus();
+                console.log(`⚡ Instant market render from local snapshot (${localSnap.base.length} base + ${localSnap.chia.length} chia)`);
+            }
+
             // ── FAST PATH: market-index Blob cache (usually < 300ms) ──────────────
             try {
                 const idxResp = await fetch('/api/market-index', { cache: 'no-store' });
                 if (idxResp.ok) {
                     const idx = await idxResp.json();
-                    if (idx && Array.isArray(idx.base) && Array.isArray(idx.chia)
-                        && idx.base.length > 0
-                        && idx.chia.length > 0
-                        && idx.chia.some(t => t.price > 0)) {
+                    if (isMarketSnapshotUsable(idx)) {
                         console.log(`⚡ Market index hit (source=${idx.source || '?'}, ${idx.base.length} base + ${idx.chia.length} chia tokens)`);
                         tokens = [...idx.base, ...idx.chia];
                         refreshData();
                         marketLastUpdatedAt = idx.savedAt || Date.now();
                         updateMarketStatus();
+                        saveMarketSnapshotLocal(idx);
                         fetchMerklPools();
                         return;
                     }
@@ -4339,6 +4370,7 @@
             refreshData();
             marketLastUpdatedAt = Date.now();
             updateMarketStatus();
+            saveMarketSnapshotLocal({ base: baseData, chia: chiaData, savedAt: marketLastUpdatedAt });
 
             // ── Push browser snapshot to Blob so the next visitor gets fast-path ──
             const hasPricedChia = chiaData.some(t => t.assetId !== 'Native' && t.price > 0);
