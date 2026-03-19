@@ -1146,6 +1146,281 @@
             opacity: 0.8;
         }
 
+        /* ── Bag Tracker dedicated CSS ── */
+        @keyframes bagGlow {
+            0%, 100% { text-shadow: 0 0 20px rgba(251,191,36,0.8), 0 0 40px rgba(251,191,36,0.3); }
+            50%       { text-shadow: 0 0 50px rgba(251,191,36,1),   0 0 90px rgba(251,191,36,0.5); }
+        }
+
+        .bag-header {
+            text-align: center;
+            margin-bottom: 32px;
+            position: relative;
+        }
+        .bag-header::after {
+            content: '';
+            display: block;
+            height: 1px;
+            background: linear-gradient(to right, transparent, rgba(251,191,36,0.5), rgba(220,38,38,0.4), rgba(251,191,36,0.5), transparent);
+            margin: 14px auto 0;
+            width: 60%;
+        }
+        .bag-title {
+            font-family: 'Cinzel Decorative', 'MedievalSharp', fantasy;
+            font-size: 36px;
+            color: #ffd700;
+            animation: bagGlow 4s ease-in-out infinite;
+            margin-bottom: 8px;
+        }
+        .bag-subtitle {
+            color: rgba(255,255,255,0.5);
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .bag-input-card {
+            background: linear-gradient(135deg, rgba(20,20,30,0.92), rgba(10,10,20,0.97));
+            border: 1px solid rgba(251,191,36,0.32);
+            border-radius: 18px;
+            padding: 24px;
+            margin-bottom: 28px;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(251,191,36,0.07);
+            transition: border-color 0.3s, box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        .bag-input-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(251,191,36,0.55), transparent);
+        }
+        .bag-input-card:focus-within {
+            border-color: rgba(251,191,36,0.65);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(251,191,36,0.2), 0 0 28px rgba(251,191,36,0.1);
+        }
+
+        #walletAddress {
+            width: 100%;
+            padding: 14px 14px 14px 44px;
+            background: rgba(0,0,0,0.45);
+            border: 1px solid rgba(251,191,36,0.25);
+            border-radius: 12px;
+            color: white;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        #walletAddress:focus {
+            border-color: rgba(251,191,36,0.7);
+            box-shadow: 0 0 14px rgba(251,191,36,0.15);
+        }
+
+        #track-btn {
+            padding: 14px 28px;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            border: none;
+            border-radius: 12px;
+            color: #000;
+            font-size: 15px;
+            font-weight: 900;
+            cursor: pointer;
+            white-space: nowrap;
+            font-family: 'Space Grotesk', sans-serif;
+            letter-spacing: 0.03em;
+            box-shadow: 0 4px 16px rgba(251,191,36,0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        #track-btn::after {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.28), transparent);
+            transition: left 0.45s;
+            pointer-events: none;
+        }
+        #track-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(251,191,36,0.6); }
+        #track-btn:hover::after { left: 100%; }
+        #track-btn:active { transform: translateY(1px) scale(0.97); transition: all 0.08s; }
+
+        .bag-quick-btn {
+            padding: 6px 14px;
+            background: rgba(251,191,36,0.1);
+            border: 1px solid rgba(251,191,36,0.3);
+            border-radius: 10px;
+            color: #fbbf24;
+            font-size: 11px;
+            cursor: pointer;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .bag-quick-btn:hover { background: rgba(251,191,36,0.2); border-color: rgba(251,191,36,0.6); }
+
+        .bag-stat-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+        .bag-stat-card {
+            border-radius: 16px;
+            padding: 18px;
+            text-align: center;
+            backdrop-filter: blur(8px);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .bag-stat-card:hover { transform: translateY(-2px); }
+        .bag-stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+        }
+        .bag-stat-card.s-total  { background: linear-gradient(135deg,rgba(30,90,180,0.22),rgba(60,140,220,0.14)); border: 1px solid rgba(30,100,180,0.38); }
+        .bag-stat-card.s-total::before  { background: linear-gradient(90deg, transparent, rgba(96,165,250,0.7), transparent); }
+        .bag-stat-card.s-pos    { background: linear-gradient(135deg,rgba(0,82,255,0.16),rgba(0,82,255,0.08)); border: 1px solid rgba(0,82,255,0.42); }
+        .bag-stat-card.s-pos::before    { background: linear-gradient(90deg, transparent, rgba(60,100,255,0.75), transparent); }
+        .bag-stat-card.s-lp     { background: linear-gradient(135deg,rgba(99,179,237,0.16),rgba(99,179,237,0.08)); border: 1px solid rgba(99,179,237,0.4); }
+        .bag-stat-card.s-lp::before     { background: linear-gradient(90deg, transparent, rgba(99,179,237,0.72), transparent); }
+        .bag-stat-card.s-lpval  { background: linear-gradient(135deg,rgba(74,222,128,0.16),rgba(74,222,128,0.08)); border: 1px solid rgba(74,222,128,0.4); }
+        .bag-stat-card.s-lpval::before  { background: linear-gradient(90deg, transparent, rgba(74,222,128,0.72), transparent); }
+        .bag-stat-label {
+            font-size: 11px;
+            color: rgba(255,255,255,0.5);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+        }
+        .bag-stat-value {
+            font-size: 28px;
+            font-weight: 900;
+            font-family: 'Space Grotesk', sans-serif;
+            letter-spacing: -0.02em;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .bag-alloc-wrap {
+            background: rgba(0,0,0,0.42);
+            border: 1px solid rgba(255,255,255,0.09);
+            border-radius: 14px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        .bag-alloc-wrap::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(251,191,36,0.35), transparent);
+        }
+        .bag-alloc-label {
+            font-size: 11px;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+        }
+        #bag-alloc-bar { display: flex; height: 12px; border-radius: 8px; overflow: hidden; }
+        #bag-alloc-legend { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 10px; }
+
+        .bag-section-head {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .bag-section-accent {
+            width: 3px;
+            height: 24px;
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+        .bag-section-title {
+            font-size: 16px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        .bag-section-meta {
+            font-size: 12px;
+            color: rgba(255,255,255,0.4);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .lp-card {
+            background: linear-gradient(135deg, rgba(20,30,50,0.92), rgba(10,15,30,0.97));
+            border: 1px solid rgba(99,179,237,0.28);
+            border-radius: 16px;
+            padding: 20px;
+            transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+        }
+        .lp-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(99,179,237,0.65), transparent);
+        }
+        .lp-card:hover {
+            border-color: rgba(99,179,237,0.65);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 32px rgba(99,179,237,0.2), 0 0 0 1px rgba(99,179,237,0.25);
+        }
+
+        .bag-token-row {
+            background: linear-gradient(135deg, rgba(20,20,30,0.88), rgba(10,10,20,0.93));
+            border: 1px solid rgba(251,191,36,0.2);
+            border-radius: 14px;
+            padding: 16px 20px;
+            transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        .bag-token-row.native-row { border-color: rgba(99,102,241,0.28); cursor: default; }
+        .bag-token-row:hover { border-color: rgba(251,191,36,0.55); transform: translateY(-2px); box-shadow: 0 8px 22px rgba(251,191,36,0.15); }
+        .bag-token-row.native-row:hover { border-color: rgba(99,102,241,0.62); box-shadow: 0 8px 22px rgba(99,102,241,0.15); transform: translateY(-2px); }
+        .bag-token-bar {
+            margin-top: 10px;
+            height: 3px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .bag-token-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.7s cubic-bezier(0.4,0,0.2,1);
+        }
+
+        @media (max-width: 768px) {
+            .bag-stat-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+            .bag-stat-value { font-size: 22px; }
+            .bag-title { font-size: 26px; }
+        }
+
         /* Mobile: Desktop quick links */
         @media (max-width: 768px) {
             .quick-links-row {
@@ -2802,34 +3077,27 @@
             <div style="max-width: 1000px; margin: 0 auto; padding: 20px;">
 
                 <!-- Header -->
-                <div style="text-align: center; margin-bottom: 32px;">
-                    <h1 style="font-family:'Cinzel Decorative','MedievalSharp',fantasy; font-size:36px; color:#ffd700; text-shadow:0 0 20px rgba(251,191,36,0.8); margin-bottom:8px;">💰 Track Ur Bag</h1>
-                    <p style="color:rgba(255,255,255,0.5); font-size:14px;">Enter any Base wallet address to see full holdings + LP positions</p>
+                <div class="bag-header">
+                    <h1 class="bag-title">💰 Track Ur Bag</h1>
+                    <p class="bag-subtitle">Enter any Base wallet address to see full holdings + LP positions</p>
                 </div>
 
                 <!-- Address Input -->
-                <div style="background:linear-gradient(135deg,rgba(20,20,30,0.9),rgba(10,10,20,0.95)); border:2px solid rgba(251,191,36,0.4); border-radius:16px; padding:24px; margin-bottom:28px; backdrop-filter:blur(10px);">
+                <div class="bag-input-card">
                     <div class="wallet-input-row" style="display:flex; gap:12px; align-items:center;">
                         <div style="flex:1; position:relative;">
                             <span style="position:absolute; left:14px; top:50%; transform:translateY(-50%); font-size:18px; pointer-events:none;">🔍</span>
                             <input type="text" id="walletAddress" placeholder="0x... Base wallet address"
-                                style="width:100%; padding:14px 14px 14px 44px; background:rgba(0,0,0,0.4); border:2px solid rgba(251,191,36,0.3); border-radius:12px; color:white; font-size:14px; font-family:'Inter',sans-serif; box-sizing:border-box; transition:border-color 0.2s; outline:none;"
-                                onfocus="this.style.borderColor='rgba(251,191,36,0.7)'" onblur="this.style.borderColor='rgba(251,191,36,0.3)'"
                                 onkeydown="if(event.key==='Enter') trackAddress()">
                         </div>
-                        <button onclick="trackAddress()" id="track-btn" style="padding:14px 28px; background:linear-gradient(135deg,#fbbf24,#f59e0b); border:none; border-radius:12px; color:#000; font-size:15px; font-weight:900; cursor:pointer; white-space:nowrap; transition:all 0.2s; font-family:'Inter',sans-serif; box-shadow:0 4px 16px rgba(251,191,36,0.4);"
-                            onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 24px rgba(251,191,36,0.6)'"
-                            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 16px rgba(251,191,36,0.4)'">
-                            ✨ SCAN BAG
-                        </button>
+                        <button onclick="trackAddress()" id="track-btn">✨ SCAN BAG</button>
                     </div>
                     <div id="trackedAddressDisplay" style="margin-top:10px;"></div>
 
                     <!-- Quick presets -->
-                    <div style="margin-top:14px; display:flex; gap:8px; flex-wrap:wrap;">
-                        <span style="font-size:11px; color:rgba(255,255,255,0.4); align-self:center;">Quick load:</span>
-                        <button onclick="document.getElementById('walletAddress').value='0xEEDC069F861880eC1B5f41c9bC7a747DC1cE32b9'; trackAddress();"
-                            style="padding:5px 12px; background:rgba(251,191,36,0.12); border:1px solid rgba(251,191,36,0.3); border-radius:8px; color:#fbbf24; font-size:11px; cursor:pointer; font-weight:700;">
+                    <div style="margin-top:14px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                        <span style="font-size:11px; color:rgba(255,255,255,0.4);">Quick load:</span>
+                        <button class="bag-quick-btn" onclick="document.getElementById('walletAddress').value='0xEEDC069F861880eC1B5f41c9bC7a747DC1cE32b9'; trackAddress();">
                             🧙 0xEEDC...32b9
                         </button>
                     </div>
@@ -2837,30 +3105,30 @@
 
                 <!-- Summary Cards (hidden until loaded) -->
                 <div id="bag-summary" style="display:none; margin-bottom:24px;">
-                    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; margin-bottom:20px;">
-                        <div style="background:linear-gradient(135deg,rgba(30,90,180,0.2),rgba(60,140,220,0.15)); border:2px solid rgba(30,100,180,0.3); border-radius:14px; padding:18px; text-align:center;">
-                            <div style="font-size:11px; color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Total Value</div>
-                            <div id="bag-total-value" style="font-size:28px; font-weight:900; color:#fbbf24; font-family:'Anton','Impact',sans-serif;">$0</div>
+                    <div class="bag-stat-grid">
+                        <div class="bag-stat-card s-total">
+                            <div class="bag-stat-label">Total Value</div>
+                            <div id="bag-total-value" class="bag-stat-value" style="color:#fbbf24;">$0</div>
                         </div>
-                        <div style="background:linear-gradient(135deg,rgba(0,82,255,0.15),rgba(0,82,255,0.08)); border:2px solid rgba(0,82,255,0.4); border-radius:14px; padding:18px; text-align:center;">
-                            <div style="font-size:11px; color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Positions</div>
-                            <div id="bag-position-count" style="font-size:28px; font-weight:900; color:#60a5fa; font-family:'Anton','Impact',sans-serif;">0</div>
+                        <div class="bag-stat-card s-pos">
+                            <div class="bag-stat-label">Positions</div>
+                            <div id="bag-position-count" class="bag-stat-value" style="color:#60a5fa;">0</div>
                         </div>
-                        <div style="background:linear-gradient(135deg,rgba(99,179,237,0.15),rgba(99,179,237,0.08)); border:2px solid rgba(99,179,237,0.4); border-radius:14px; padding:18px; text-align:center;">
-                            <div style="font-size:11px; color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">LP Positions</div>
-                            <div id="bag-lp-count" style="font-size:28px; font-weight:900; color:#63b3ed; font-family:'Anton','Impact',sans-serif;">0</div>
+                        <div class="bag-stat-card s-lp">
+                            <div class="bag-stat-label">LP Positions</div>
+                            <div id="bag-lp-count" class="bag-stat-value" style="color:#63b3ed;">0</div>
                         </div>
-                        <div style="background:linear-gradient(135deg,rgba(74,222,128,0.15),rgba(74,222,128,0.08)); border:2px solid rgba(74,222,128,0.4); border-radius:14px; padding:18px; text-align:center;">
-                            <div style="font-size:11px; color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">LP Value</div>
-                            <div id="bag-lp-value" style="font-size:28px; font-weight:900; color:#4ade80; font-family:'Anton','Impact',sans-serif;">$0</div>
+                        <div class="bag-stat-card s-lpval">
+                            <div class="bag-stat-label">LP Value</div>
+                            <div id="bag-lp-value" class="bag-stat-value" style="color:#4ade80;">$0</div>
                         </div>
                     </div>
 
                     <!-- Allocation bar -->
-                    <div style="background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:14px; margin-bottom:20px;">
-                        <div style="font-size:11px; color:rgba(255,255,255,0.5); margin-bottom:8px; text-transform:uppercase; letter-spacing:1px;">Portfolio Allocation</div>
-                        <div id="bag-alloc-bar" style="display:flex; height:10px; border-radius:6px; overflow:hidden; gap:2px;"></div>
-                        <div id="bag-alloc-legend" style="display:flex; gap:12px; flex-wrap:wrap; margin-top:8px;"></div>
+                    <div class="bag-alloc-wrap">
+                        <div class="bag-alloc-label">💼 Portfolio Allocation</div>
+                        <div id="bag-alloc-bar"></div>
+                        <div id="bag-alloc-legend"></div>
                     </div>
                 </div>
 
@@ -6137,10 +6405,10 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
             // LP Positions section (most important - show first)
             if (lpTokens.length > 0) {
                 html += `<div style="margin-bottom:12px;">
-                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
-                        <div style="width:3px;height:24px;background:linear-gradient(180deg,#63b3ed,#3b82f6);border-radius:2px;"></div>
-                        <span style="font-size:16px;font-weight:900;color:#63b3ed;text-transform:uppercase;letter-spacing:1px;">🔄 LP Positions</span>
-                        <span style="font-size:12px;color:rgba(255,255,255,0.4);">${lpTokens.length} pools · ${fmtUsd(lpValue)}</span>
+                    <div class="bag-section-head" style="margin-bottom:14px;">
+                        <div class="bag-section-accent" style="background:linear-gradient(180deg,#63b3ed,#3b82f6);"></div>
+                        <span class="bag-section-title" style="color:#63b3ed;">🔄 LP Positions</span>
+                        <span class="bag-section-meta">${lpTokens.length} pools · ${fmtUsd(lpValue)}</span>
                     </div>
                     <div style="display:grid;gap:12px;">`;
                 for (const tok of lpTokens) {
@@ -6148,15 +6416,8 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                     const pct = total > 0 ? ((val/total)*100).toFixed(1) : '0';
                     const share = tok.userSharePct ? parseFloat(tok.userSharePct) : 0;
                     const poolLiq = tok.totalLiqUsd || 0;
-                    html += `<div style="
-                        background:linear-gradient(135deg,rgba(20,30,50,0.9),rgba(10,15,30,0.95));
-                        border:2px solid rgba(99,179,237,0.35);
-                        border-radius:14px;padding:18px;
-                        transition:all 0.25s;cursor:pointer;position:relative;overflow:hidden;"
-                        onmouseover="this.style.borderColor='rgba(99,179,237,0.7)';this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(99,179,237,0.2)';"
-                        onmouseout="this.style.borderColor='rgba(99,179,237,0.35)';this.style.transform='translateY(0)';this.style.boxShadow='none';"
+                    html += `<div class="lp-card"
                         onclick="window.open('https://dex.9mm.pro',\'_blank\')">
-                        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(99,179,237,0.5),transparent);"></div>
                         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
                             <div style="display:flex;align-items:center;gap:12px;">
                                 <div style="width:44px;height:44px;background:linear-gradient(135deg,#3b82f6,#1d4ed8);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">🔄</div>
@@ -6184,11 +6445,11 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
             // Regular tokens section
             if (regularTokens.filter(t => (t.value||0) >= 0.01).length > 0) {
                 const showTokens = regularTokens.filter(t => (t.value||0) >= 0.01);
-                html += `<div style="margin-bottom:12px;">
-                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;${lpTokens.length>0?'margin-top:28px;':''}">
-                        <div style="width:3px;height:24px;background:linear-gradient(180deg,#fbbf24,#f59e0b);border-radius:2px;"></div>
-                        <span style="font-size:16px;font-weight:900;color:#fbbf24;text-transform:uppercase;letter-spacing:1px;">💎 Tokens</span>
-                        <span style="font-size:12px;color:rgba(255,255,255,0.4);">${showTokens.length} assets</span>
+                html += `<div style="margin-bottom:12px;${lpTokens.length>0?'margin-top:28px;':''}">
+                    <div class="bag-section-head" style="margin-bottom:14px;">
+                        <div class="bag-section-accent" style="background:linear-gradient(180deg,#fbbf24,#f59e0b);"></div>
+                        <span class="bag-section-title" style="color:#fbbf24;">💎 Tokens</span>
+                        <span class="bag-section-meta">${showTokens.length} assets</span>
                     </div>
                     <div style="display:grid;gap:10px;">`;
                 for (const tok of showTokens) {
@@ -6200,12 +6461,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                     const borderHov = isNative ? 'rgba(99,102,241,0.7)' : 'rgba(251,191,36,0.6)';
                     const valCol = isNative ? '#818cf8' : '#fbbf24';
                     const priceStr = tok.price > 0 ? (tok.price < 0.001 ? '$'+tok.price.toFixed(8) : '$'+tok.price.toLocaleString(undefined,{maximumSignificantDigits:5})) : '—';
-                    html += `<div style="
-                        background:linear-gradient(135deg,rgba(20,20,30,0.85),rgba(10,10,20,0.9));
-                        border:2px solid ${borderCol};border-radius:12px;padding:14px 18px;
-                        transition:all 0.2s;cursor:${isNative?'default':'pointer'};"
-                        onmouseover="this.style.borderColor='${borderHov}';this.style.transform='translateY(-1px)';"
-                        onmouseout="this.style.borderColor='${borderCol}';this.style.transform='translateY(0)';"
+                    html += `<div class="bag-token-row${isNative?' native-row':''}"
                         onclick="${!isNative&&tok.contract?'window.open(\'https://dex.9mm.pro/swap?outputCurrency='+tok.contract+'\',\'_blank\')':''}">
                         <div style="display:flex;justify-content:space-between;align-items:center;">
                             <div style="display:flex;align-items:center;gap:12px;">
@@ -6220,8 +6476,8 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                                 <div style="font-size:11px;color:rgba(255,255,255,0.35);">${pct}% of bag</div>
                             </div>
                         </div>
-                        <div style="margin-top:10px;height:3px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;">
-                            <div style="height:100%;width:${Math.min(parseFloat(pct)*2,100)}%;background:${gradient};border-radius:2px;transition:width 0.6s;"></div>
+                        <div class="bag-token-bar">
+                            <div class="bag-token-bar-fill" style="width:${Math.min(parseFloat(pct)*2,100)}%;background:${gradient};"></div>
                         </div>
                     </div>`;
                 }
