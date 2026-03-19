@@ -290,8 +290,15 @@ export default async function handler(req, res) {
                 if (blobAge > BLOB_TTL_MS && !_inflight) {
                     // Blob is stale — kick off background rebuild, respond immediately
                     console.log(`[treasury-index] Blob stale (${Math.round(blobAge/60000)}m old) — SWR background rebuild`);
+                    const oldNftData = blobSnap.nftData;
                     _inflight = buildSnapshot(req)
                         .then(async snapshot => {
+                            // Server cannot fetch NFTs (Spacescan blocks Vercel IPs for wallet endpoints).
+                            // Preserve NFT data from the previous blob so browser-pushed NFTs aren't lost.
+                            if ((!snapshot.nftData || snapshot.nftData.totalNFTs === 0) && oldNftData?.totalNFTs > 0) {
+                                snapshot.nftData = oldNftData;
+                                console.log(`[treasury-index] Preserved ${oldNftData.totalNFTs} NFTs from prior blob`);
+                            }
                             _memSnapshot = snapshot;
                             _memAt = Date.now();
                             await saveBlobSnapshot(snapshot);

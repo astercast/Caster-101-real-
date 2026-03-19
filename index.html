@@ -4915,7 +4915,7 @@
             }
 
             nftsLoading = true;
-            gallery.innerHTML = '<div style="text-align:center;padding:60px;color:rgba(255,255,255,0.5);grid-column:1/-1;">🔄 Loading NFT collections (browser-direct)...</div>';
+            gallery.innerHTML = '<div style="text-align:center;padding:60px;color:rgba(255,255,255,0.5);grid-column:1/-1;">🔄 Loading NFT collections...</div>';
 
             const NFT_WALLETS = [
                 'xch10na8nqys9afs0fl74vvd6xl3akgu77p8mvjsp2ywy7rhq2s0jqys3nf7dl',
@@ -4924,36 +4924,28 @@
             ];
 
             try {
-                // Use Lambda proxy (CORS blocked in browser)
-                const nftResponses = await Promise.all(
-                    NFT_WALLETS.map(async (addr) => {
-                        try {
-                            const ctrl = new AbortController();
-                            setTimeout(() => ctrl.abort(), 10000);
-                            const resp = await fetch('/api/chia-address-proxy', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ endpoint: 'nft-balance', address: addr }),
-                                signal: ctrl.signal
-                            });
-                            return resp.ok ? await resp.json() : null;
-                        } catch (e) {
-                            console.warn(`Failed to load NFTs for ${addr.slice(-20)}:`, e.message);
-                            return null;
-                        }
-                    })
-                );
+                // Browser-direct via spacescanFetch (2s rate-limited queue).
+                // Vercel IPs are blocked by Spacescan for wallet endpoints — must be browser.
+                const allNFTs = [];
+                for (const addr of NFT_WALLETS) {
+                    try {
+                        const data = await spacescanFetch(`https://api.spacescan.io/address/nft-balance/${addr}`, 15000, 1);
+                        if (data?.balance) allNFTs.push(...data.balance);
+                        console.log(`📦 NFTs for ${addr.slice(-20)}: ${data?.balance?.length ?? 0}`);
+                    } catch(e) { console.warn(`NFT fetch failed for ${addr.slice(-20)}:`, e.message); }
+                }
 
                 const xchPrice = window._chiaXchPrice || 4;
-                const allNFTs = nftResponses.flatMap(d => d?.balance || []);
-                console.log('📦 NFTs loaded via Lambda proxy:', allNFTs.length);
+                console.log('📦 Total NFTs loaded (browser-direct):', allNFTs.length);
 
                 const colMap = {};
                 for (const nft of allNFTs) {
-                    const cid = nft.collection_id; if (!cid) continue;
+                    const cid = nft.collection_id || 'uncategorized';
                     if (!colMap[cid]) {
                         const rawName2 = (nft.name || '').trim();
-                        const colName = rawName2.replace(/\s+#\d+[\w\s]*$/, '').trim() || rawName2 || cid.slice(0,16) + '…';
+                        const colName = cid === 'uncategorized'
+                            ? 'Uncategorized NFTs'
+                            : (rawName2.replace(/\s+#\d+[\w\s]*$/, '').trim() || rawName2 || cid.slice(0,16) + '…');
                         colMap[cid] = { colId: cid, id: cid, name: colName, image: nft.preview_url || '', count: 0, floor_xch: 0 };
                     }
                     colMap[cid].count++;
@@ -6462,7 +6454,19 @@ async function loadComprehensiveTreasury(force = false) {
 
                 // Render immediately
                 updateTreasuryDisplay(idx.baseData, idx.chiaData, nftData);
-                updateNFTGallery(nftData);
+
+                // Server-built blobs never have NFTs (Spacescan blocks Vercel IPs for wallet endpoints).
+                // If the blob has real NFT collections, render them immediately.
+                // If empty, fire loadNFTs() which uses browser-direct Spacescan — it actually works.
+                if (nftData.collections && nftData.collections.length > 0) {
+                    window._chiaNFTData  = nftData;
+                    window._chiaXchPrice = idx.chiaData.xchPrice || 4;
+                    updateNFTGallery(nftData);
+                } else {
+                    console.log('⚡ Blob has no NFTs (server cannot reach Spacescan wallet endpoints) — loading via browser-direct...');
+                    // Don't set window._chiaNFTData to empty — loadNFTs() will populate it
+                    loadNFTs();
+                }
 
                 // Update Chia timestamp badge
                 if (idx.savedAt) {
