@@ -65,19 +65,19 @@
 
         /* Custom Scrollbar */
         ::-webkit-scrollbar {
-            width: 14px;
-            height: 14px;
+            width: 10px;
+            height: 10px;
         }
 
         ::-webkit-scrollbar-track {
             background: rgba(0, 0, 0, 0.75);
-            border: none;
+            border-radius: 5px;
         }
 
         ::-webkit-scrollbar-thumb {
             background: linear-gradient(135deg, #fbbf24, #dc2626);
-            border: none;
-            border: none;
+            border-radius: 5px;
+            border: 2px solid rgba(0, 0, 0, 0.6);
         }
 
         ::-webkit-scrollbar-thumb:hover {
@@ -91,6 +91,16 @@
             min-height: 100vh;
             overflow-x: hidden;
             position: relative;
+        }
+
+        /* Cinematic vignette — darkens edges so center content pops */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(ellipse 80% 70% at 50% 50%, transparent 40%, rgba(0,0,0,0.5) 100%);
+            pointer-events: none;
+            z-index: 1;
         }
 
         @keyframes gentleFloat {
@@ -159,9 +169,10 @@
             inset: 0;
             pointer-events: none;
             opacity: 0.3;
-            filter: blur(1px) brightness(0.7);
+            filter: brightness(0.65);
             z-index: 0;
             contain: layout paint;
+            transform: translateZ(0); /* single GPU composite layer for all bg images */
         }
 
         @media (max-width: 768px) {
@@ -270,13 +281,16 @@
 
         .header {
             background: linear-gradient(to right, rgba(220, 38, 38, 0.65), rgba(251, 191, 36, 0.65), rgba(220, 38, 38, 0.65));
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border: 2px solid rgba(251, 191, 36, 0.7);
             border-radius: 12px;
             padding: 20px;
             margin-bottom: 24px;
             box-shadow: 0 8px 32px rgba(220, 38, 38, 0.4),
                         0 0 0 1px rgba(251, 191, 36, 0.3),
-                        0 0 40px rgba(251, 191, 36, 0.2);
+                        0 0 40px rgba(251, 191, 36, 0.2),
+                        inset 0 1px 0 rgba(251, 191, 36, 0.15);
             position: relative;
             z-index: 12;
         }
@@ -391,8 +405,11 @@
             gap: 6px;
             margin-bottom: 20px;
             background: linear-gradient(to right, #dc2626, #fbbf24, #dc2626);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             padding: 4px;
             border: none;
+            border-radius: 14px;
         }
 
         .tab {
@@ -634,8 +651,8 @@
 
         .token-card {
             background: linear-gradient(135deg, rgba(20, 20, 30, 0.9), rgba(10, 10, 20, 0.95));
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             border: 1px solid rgba(251, 191, 36, 0.25);
             border-radius: 14px;
             padding: 14px 18px;
@@ -5036,7 +5053,7 @@
 
         // Image compression function for performance optimization
         function compressImage(img) {
-            if (!img.naturalWidth || img.naturalWidth <= 400) return; // Skip small images
+            if (!img.naturalWidth || img.naturalWidth <= 200) return; // Skip small images
             
             try {
                 const canvas = document.createElement('canvas');
@@ -5080,6 +5097,7 @@
         // BOUNCING SCREENSAVER-STYLE BACKGROUND
         const bouncingImages = [];
         let bgPaused = false;
+        let bgRafId = null;
         let lastFrameTime = 0;
         const isMobileDevice = window.innerWidth <= 768;
         const targetFps = isMobileDevice ? 12 : 30; // 12fps on mobile saves ~40% CPU vs 20fps
@@ -5133,7 +5151,7 @@
             ];
 
             // Create fewer images for better performance while keeping the vibe
-            const totalImages = prefersReducedMotion ? 5 : (isMobile ? 5 : 35); // 5 on mobile — fewer GPU layers
+            const totalImages = prefersReducedMotion ? 4 : (isMobile ? 5 : 20); // fewer GPU layers for better performance
             const minSize = isMobile ? 55 : 90;
             const maxSize = isMobile ? 100 : 170;
             const speedScale = prefersReducedMotion ? 0.15 : (isMobile ? 0.18 : 0.32); // Slower on mobile
@@ -5163,13 +5181,12 @@
                     width: ${size}px;
                     height: ${size}px;
                     object-fit: contain;
-                    filter: ${mobileOptimized ? 'none' : 'drop-shadow(0 0 4px rgba(255, 0, 0, 0.15))'};
+                    filter: none;
                     pointer-events: none;
-                    opacity: ${mobileOptimized ? '0.45' : '0.7'};
+                    opacity: 0.7;
                     z-index: ${zIndex};
                     image-rendering: auto;
                     transform: translate3d(0,0,0);
-                    ${mobileOptimized ? '' : 'will-change: transform;'}
                 `;
                 img.classList.add(compressionClass);
                 
@@ -5178,7 +5195,7 @@
                 // Add compression after load
                 img.onload = () => {
                     // Skip expensive canvas compress on mobile — not worth the CPU cost
-                    if (!isMobile && isLargeImage && img.naturalWidth > 400) {
+                    if (!isMobile && isLargeImage && img.naturalWidth > 200) {
                         requestIdleCallback(() => compressImage(img));
                     }
                 };
@@ -5208,10 +5225,8 @@
         }
         
         function animateBouncingImages() {
-            if (bgPaused) {
-                requestAnimationFrame(animateBouncingImages);
-                return;
-            }
+            bgRafId = null;
+            if (bgPaused) return; // stop RAF entirely when page is hidden
 
             const now = performance.now();
             if (now - lastFrameTime < frameInterval) {
@@ -5270,7 +5285,7 @@
                 img.element.style.transform = `translate3d(${img.x}px, ${img.y}px, 0)`;
             });
             
-            requestAnimationFrame(animateBouncingImages);
+            bgRafId = requestAnimationFrame(animateBouncingImages);
         }
         
         // Handle window resize
@@ -5285,7 +5300,10 @@
 
         document.addEventListener('visibilitychange', () => {
             bgPaused = document.hidden;
-            if (!bgPaused) lastFrameTime = 0;
+            if (!bgPaused) {
+                lastFrameTime = 0;
+                if (!bgRafId) bgRafId = requestAnimationFrame(animateBouncingImages);
+            }
         });
         async function updateVisitorCount() {
             const visitorEl = document.getElementById('visitorCount');
