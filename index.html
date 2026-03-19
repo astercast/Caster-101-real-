@@ -6920,6 +6920,16 @@ async function loadComprehensiveTreasury(force = false) {
                     }
                 } catch(mergeErr) { console.warn('Cache merge warning:', mergeErr.message); }
 
+                // Sync walletCacheUpdate nfts AFTER merge — critical so per-wallet cache
+                // keeps real NFTs even when Spacescan returned empty (rate-limited).
+                // Without this, walletCacheUpdate was set BEFORE the merge, so
+                // awiz_chia_wallets_v3 always ended up with nfts:[] when Spacescan was empty.
+                for (const result of results) {
+                    if (walletCacheUpdate[result.wallet]) {
+                        walletCacheUpdate[result.wallet].value.nfts = [...(result.nfts || [])];
+                    }
+                }
+
                 // Cache the fresh data (both full and per-wallet) with extended TTL
                 try { 
                     const cacheData = { ts: Date.now(), data: results };
@@ -7006,10 +7016,14 @@ async function loadComprehensiveTreasury(force = false) {
         const buildNFTCols = (allNFTs) => {
             const colMap = {};
             for (const nft of allNFTs) {
-                const cid = nft.collection_id; if (!cid) continue;
+                // Use 'uncategorized' so NFTs without a collection_id still appear
+                const cid = nft.collection_id || 'uncategorized';
                 if (!colMap[cid]) {
                     const raw = (nft.name||'').trim();
-                    colMap[cid] = { colId:cid, id:cid, name: raw.replace(/\s+#\d+[\w\s]*$/,'').trim()||raw||'…', image:nft.preview_url||'', count:0, floor_xch:0 };
+                    const colName = cid === 'uncategorized'
+                        ? 'Uncategorized NFTs'
+                        : (raw.replace(/\s+#\d+[\w\s]*$/,'').trim() || raw || 'Unknown Collection');
+                    colMap[cid] = { colId:cid, id:cid, name: colName, image:nft.preview_url||'', count:0, floor_xch:0 };
                 }
                 colMap[cid].count++;
                 if (!colMap[cid].image && nft.preview_url) colMap[cid].image = nft.preview_url;
@@ -7059,7 +7073,10 @@ async function loadComprehensiveTreasury(force = false) {
 
             for (let i = 0; i < wallets.length; i++) {
                 const w = wallets[i];
-                console.log(`✅ W${i}: ${w.xchBal.toFixed(4)} XCH, ${w.nfts.length} NFTs, ${w.tokens.length} tokens`);
+                // Guard against old cache entries that may not have nfts/tokens fields
+                if (!Array.isArray(w.nfts))   w.nfts   = [];
+                if (!Array.isArray(w.tokens)) w.tokens = [];
+                console.log(`✅ W${i}: ${(w.xchBal||0).toFixed(4)} XCH, ${w.nfts.length} NFTs, ${w.tokens.length} tokens`);
 
                 // Add XCH balance
                 if (w.xchBal > 0) {
