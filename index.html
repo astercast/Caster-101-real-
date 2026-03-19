@@ -6432,7 +6432,15 @@ async function loadComprehensiveTreasury(force = false) {
 
     try {
         const idxUrl = force ? '/api/treasury-index?refresh=1' : '/api/treasury-index';
-        const idxResp = await fetch(idxUrl, { cache: 'no-store' });
+        // 15s timeout — prevents waiting 60s when chia-cat-prices is blocking on Spacescan
+        const idxCtrl = new AbortController();
+        const idxTimer = setTimeout(() => idxCtrl.abort(), 15000);
+        let idxResp;
+        try {
+            idxResp = await fetch(idxUrl, { cache: 'no-store', signal: idxCtrl.signal });
+        } finally {
+            clearTimeout(idxTimer);
+        }
         if (idxResp.ok) {
             const idx = await idxResp.json();
             if (idx && idx.baseData && idx.chiaData && Array.isArray(idx.chiaData.tokens) && idx.chiaData.tokens.some(t => t.type !== 'native')) {
@@ -6745,7 +6753,8 @@ async function loadComprehensiveTreasury(force = false) {
                     // Tokens
                     try {
                         const tokData = await fetchSpacescanWithFallback('token-balance', wallet, 20000);
-                        if (tokData?.data) {
+                        // Guard: empty array [] is truthy in JS but means rate-limited / no data — use cache instead
+                        if (Array.isArray(tokData?.data) && tokData.data.length > 0) {
                             tokens = tokData.data
                                 .filter(t => parseFloat(t.balance || 0) > 0)
                                 .map(t => {
@@ -6776,13 +6785,18 @@ async function loadComprehensiveTreasury(force = false) {
                                         total_value: totalValue
                                     };
                                 });
-                        } else if (walletCache?.tokens) {
-                            console.log(`  ⚠️ Using cached tokens for ${wallet.slice(-8)}`);
+                            if (tokens.length === 0 && walletCache?.tokens?.length > 0) {
+                                // All balances rounded to 0 — preserve cache rather than showing nothing
+                                console.log(`  ⚠️ Token balances all zero for ${wallet.slice(-8)}, keeping cached tokens`);
+                                tokens = walletCache.tokens;
+                            }
+                        } else if (walletCache?.tokens?.length > 0) {
+                            console.log(`  ⚠️ Spacescan returned empty/null tokens for ${wallet.slice(-8)}, using cache`);
                             tokens = walletCache.tokens;
                         }
                     } catch(e) {
                         console.warn(`Token fetch error for ${wallet.slice(-8)}:`, e.message);
-                        if (walletCache?.tokens) {
+                        if (walletCache?.tokens?.length > 0) {
                             console.log(`  💾 Using cached tokens for ${wallet.slice(-8)}`);
                             tokens = walletCache.tokens;
                         }
@@ -6795,13 +6809,13 @@ async function loadComprehensiveTreasury(force = false) {
                                 nft_id: n.nft_id || '', name: n.name || '',
                                 collection_id: n.collection_id || '', preview_url: n.preview_url || ''
                             }));
-                        } else if (walletCache?.nfts) {
+                        } else if (walletCache?.nfts?.length > 0) {
                             console.log(`  ⚠️ Using cached NFTs for ${wallet.slice(-8)}`);
                             nfts = walletCache.nfts;
                         }
                     } catch(e) {
                         console.warn(`NFT fetch error for ${wallet.slice(-8)}:`, e.message);
-                        if (walletCache?.nfts) {
+                        if (walletCache?.nfts?.length > 0) {
                             console.log(`  💾 Using cached NFTs for ${wallet.slice(-8)}`);
                             nfts = walletCache.nfts;
                         }
@@ -6809,10 +6823,15 @@ async function loadComprehensiveTreasury(force = false) {
 
                     console.log(`  ✅ ${wallet.slice(-8)}: ${xchBal.toFixed(4)} XCH, ${nfts.length} NFTs, ${tokens.length} tokens`);
 
-                    // Store per-wallet cache
+                    // Store per-wallet cache — only overwrite tokens if we actually got fresh data
+                    // (prevents Spacescan rate-limit empty responses from corrupting the cache)
+                    const prevWalletCache = walletCacheMap.get(wallet);
                     walletCacheUpdate[wallet] = {
-                        ts: Date.now(),
-                        value: { tokens: tokens.map(t => ({ ...t })), nfts: [...nfts] }
+                        ts: tokens.length > 0 ? Date.now() : (prevWalletCache?.ts || Date.now()),
+                        value: {
+                            tokens: tokens.length > 0 ? tokens.map(t => ({ ...t })) : (prevWalletCache?.tokens || []),
+                            nfts: [...nfts]
+                        }
                     };
 
                     results.push({
