@@ -6801,16 +6801,16 @@ async function loadComprehensiveTreasury(force = false) {
                             tokens = walletCache.tokens;
                         }
                     }
-                    // NFTs
+                    // NFTs — guard against empty-array responses (same pattern as tokens)
                     try {
                         const nftData = await fetchSpacescanWithFallback('nft-balance', wallet, 15000);
-                        if (nftData?.balance) {
+                        if (Array.isArray(nftData?.balance) && nftData.balance.length > 0) {
                             nfts = nftData.balance.map(n => ({
                                 nft_id: n.nft_id || '', name: n.name || '',
                                 collection_id: n.collection_id || '', preview_url: n.preview_url || ''
                             }));
                         } else if (walletCache?.nfts?.length > 0) {
-                            console.log(`  ⚠️ Using cached NFTs for ${wallet.slice(-8)}`);
+                            console.log(`  ⚠️ Spacescan returned empty/null NFTs for ${wallet.slice(-8)}, using cache (${walletCache.nfts.length} NFTs)`);
                             nfts = walletCache.nfts;
                         }
                     } catch(e) {
@@ -6840,16 +6840,19 @@ async function loadComprehensiveTreasury(force = false) {
                             const aid = (t.asset_id || '').toLowerCase();
                             const tibetEntry = tibetMap[aid] || null;
                             const lpEntry = lpTokenMap[aid] || null; // hit when this token IS an LP token
-                            // Name resolution: LP map → Spacescan name → symbol → readable fallback
+
+                            // LP detection first (needed before name resolution)
+                            const isLP = !!lpEntry || (t.name||'').toLowerCase().includes('tibet') || (t.name||'').toLowerCase().includes(' lp ') || (tibetEntry?.short_name || '').toLowerCase().startsWith('tibet-');
+
+                            // Name resolution: LP map always wins over generic placeholder names
                             let name = (t.name || t.symbol || '').trim();
-                            if (!name && lpEntry) name = lpEntry.name;
+                            if (lpEntry && (!name || name.startsWith('Token ') || name.startsWith('CAT '))) name = lpEntry.name || name;
                             if (!name) name = `Token ${(t.asset_id || '').slice(0,6).toUpperCase()}`;
 
-                            // Symbol fallback
-                            const symbol = (t.symbol || (lpEntry ? lpEntry.pairName || 'LP' : null) || name.slice(0,8) || (t.asset_id || '').slice(0,8) || 'CAT');
-
-                            // LP detection: by liquidity_asset_id map OR name keywords
-                            const isLP = !!lpEntry || name.toLowerCase().includes('tibet') || name.toLowerCase().includes(' lp ') || (tibetEntry?.short_name || '').toLowerCase().startsWith('tibet-');
+                            // Symbol: for LP tokens prefer the trading pair name
+                            const symbol = isLP
+                                ? (lpEntry?.pairName || t.symbol || name.slice(0,8) || 'LP')
+                                : (t.symbol || name.slice(0,8) || (t.asset_id || '').slice(0,8) || 'CAT');
                             const balance = t.balance;
                             const price = t.price;
 
@@ -6888,6 +6891,34 @@ async function loadComprehensiveTreasury(force = false) {
                         })
                     });
                 }
+
+                // ── Merge with existing cache to prevent rate-limit responses from wiping good data ──
+                // If a wallet returned fewer tokens or zero NFTs vs what was cached, preserve the old data
+                try {
+                    const existingRaw = localStorage.getItem(CACHE_KEY);
+                    if (existingRaw) {
+                        const existingParsed = JSON.parse(existingRaw);
+                        const existingWallets = existingParsed?.data || [];
+                        for (let ri = 0; ri < results.length; ri++) {
+                            const prev = existingWallets.find(w => w.wallet === results[ri].wallet);
+                            if (!prev) continue;
+                            // Tokens: merge if live returned fewer than cached
+                            if (Array.isArray(prev.tokens) && prev.tokens.length > results[ri].tokens.length) {
+                                const liveIds = new Set(results[ri].tokens.map(t => t.assetId));
+                                const missing = prev.tokens.filter(t => !liveIds.has(t.assetId));
+                                if (missing.length > 0) {
+                                    results[ri].tokens = [...results[ri].tokens, ...missing];
+                                    console.log(`  💾 Merged ${missing.length} cached token(s) for ${results[ri].wallet.slice(-8)}`);
+                                }
+                            }
+                            // NFTs: preserve cached NFTs if live returned none
+                            if (Array.isArray(prev.nfts) && prev.nfts.length > 0 && results[ri].nfts.length === 0) {
+                                results[ri].nfts = prev.nfts;
+                                console.log(`  💾 Preserved ${prev.nfts.length} cached NFT(s) for ${results[ri].wallet.slice(-8)}`);
+                            }
+                        }
+                    }
+                } catch(mergeErr) { console.warn('Cache merge warning:', mergeErr.message); }
 
                 // Cache the fresh data (both full and per-wallet) with extended TTL
                 try { 
@@ -7262,6 +7293,23 @@ async function loadComprehensiveTreasury(force = false) {
                             if (r.ok) console.log('💾 Treasury snapshot pushed to Blob (fast load next visit)');
                             else console.warn('⚠️ Treasury Blob push failed:', r.status);
                         } catch (e) { console.warn('⚠️ Treasury Blob push error:', e.message); }
+                    }
+
+                    // Phase 5: persist enriched names back to localStorage so the NEXT
+                    // local-cache render already has proper names (not 'Token XXXX')
+                    if (enriched > 0) {
+                        try {
+                            const aidToEnriched = new Map(mergedChiaTokens.map(t => [t.assetId, t]));
+                            const updatedWallets = wallets.map(w => ({
+                                ...w,
+                                tokens: w.tokens.map(tok => {
+                                    const e = aidToEnriched.get(tok.assetId);
+                                    return e ? { ...tok, name: e.name, symbol: e.symbol, type: e.type, pairName: e.pairName } : tok;
+                                })
+                            }));
+                            localStorage.setItem('awiz_chia_treasury_v3', JSON.stringify({ ts: Date.now(), data: updatedWallets }));
+                            console.log(`💾 Enriched names saved to localStorage (${enriched} resolved)`);
+                        } catch(e) { console.warn('⚠️ Could not persist enriched names:', e.message); }
                     }
                 } catch (e) { console.warn('⚠️ Token enrichment/blob error:', e.message); }
             })();
