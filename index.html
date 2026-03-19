@@ -4199,7 +4199,7 @@
                     for (const p of pairs) {
                         if (p.chainId && p.chainId !== 'base') continue;
                         const quote = (p.quoteToken?.symbol || '').toUpperCase();
-                        if (!['WETH','USDC','ETH','USDT'].includes(quote)) continue;
+                        if (!['WETH','USDC','ETH','USDT','WXCH','XCH'].includes(quote)) continue;
                         const ca = (p.baseToken?.address || '').toLowerCase();
                         const price = parseFloat(p.priceUsd || 0);
                         const vol = parseFloat(p.volume?.h24 || 0);
@@ -4225,7 +4225,7 @@
                         if (r.ok) {
                             const d = await r.json();
                             const pairs = d.pairs || [];
-                            const valid = pairs.filter(p => p.chainId === 'base' && ['WETH','USDC','ETH','USDT'].includes((p.quoteToken?.symbol||'').toUpperCase()));
+                            const valid = pairs.filter(p => p.chainId === 'base' && ['WETH','USDC','ETH','USDT','WXCH','XCH'].includes((p.quoteToken?.symbol||'').toUpperCase()));
                             const best = valid.sort((a,b) => parseFloat(b.volume?.h24||0) - parseFloat(a.volume?.h24||0))[0];
                             if (best) {
                                 dexData[t.contract.toLowerCase()] = {
@@ -4255,8 +4255,31 @@
                         if (gtR.ok) {
                             const gtD = await gtR.json();
                             const attr = gtD?.data?.attributes || {};
-                            const gtP = parseFloat(attr.price_usd || 0);
-                            const gtMcap = parseFloat(attr.market_cap_usd || attr.fdv_usd || 0);
+                            let gtP = parseFloat(attr.price_usd || 0);
+                            let gtMcap = parseFloat(attr.market_cap_usd || attr.fdv_usd || 0);
+                            const gtSupply = parseFloat(attr.normalized_total_supply || 0);
+
+                            if (gtP === 0) {
+                                try {
+                                    const poolsR = await fetch(
+                                        `https://api.geckoterminal.com/api/v2/networks/base/tokens/${t.contract.toLowerCase()}/pools`
+                                    );
+                                    if (poolsR.ok) {
+                                        const poolsD = await poolsR.json();
+                                        const pools = Array.isArray(poolsD?.data) ? poolsD.data : [];
+                                        const bestPool = pools
+                                            .map(p => p?.attributes || {})
+                                            .sort((a, b) => parseFloat(b.reserve_in_usd || 0) - parseFloat(a.reserve_in_usd || 0))[0];
+                                        if (bestPool) {
+                                            gtP = parseFloat(bestPool.base_token_price_usd || 0);
+                                        }
+                                    }
+                                } catch {}
+                            }
+
+                            if (gtMcap === 0 && gtSupply > 0 && gtP > 0) {
+                                gtMcap = gtSupply * gtP;
+                            }
                             const ca = t.contract.toLowerCase();
                             const existing = dexData[ca];
                             if (!existing || existing.price === 0) {

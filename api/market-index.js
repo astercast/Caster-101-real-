@@ -101,7 +101,7 @@ async function fetchBestBaseToken(contract) {
             const valid = pairs.filter(p => {
                 if ((p.chainId || '').toLowerCase() !== 'base') return false;
                 const quote = (p.quoteToken?.symbol || '').toUpperCase();
-                return quote === 'WETH' || quote === 'USDC' || quote === 'ETH' || quote === 'USDT';
+                return quote === 'WETH' || quote === 'USDC' || quote === 'ETH' || quote === 'USDT' || quote === 'WXCH' || quote === 'XCH';
             });
             const best = valid.sort((a, b) => parseFloat(b.volume?.h24 || 0) - parseFloat(a.volume?.h24 || 0))[0];
             if (best) {
@@ -124,8 +124,27 @@ async function fetchBestBaseToken(contract) {
         if (!gt.ok) return { price: 0, change24h: 0, marketCap: 0 };
         const data = await gt.json();
         const attr = data?.data?.attributes || {};
-        const price = parseFloat(attr.price_usd || 0);
-        const marketCap = parseFloat(attr.market_cap_usd || attr.fdv_usd || 0);
+        let price = parseFloat(attr.price_usd || 0);
+        let marketCap = parseFloat(attr.market_cap_usd || attr.fdv_usd || 0);
+        const normalizedSupply = parseFloat(attr.normalized_total_supply || 0);
+
+        if (price === 0) {
+            const poolsRes = await safeFetch(`https://api.geckoterminal.com/api/v2/networks/base/tokens/${contract.toLowerCase()}/pools`, 12000);
+            if (poolsRes.ok) {
+                const poolsData = await poolsRes.json();
+                const pools = Array.isArray(poolsData?.data) ? poolsData.data : [];
+                const bestPool = pools
+                    .map(p => p?.attributes || {})
+                    .sort((a, b) => parseFloat(b.reserve_in_usd || 0) - parseFloat(a.reserve_in_usd || 0))[0];
+                if (bestPool) {
+                    price = parseFloat(bestPool.base_token_price_usd || 0);
+                }
+            }
+        }
+
+        if (marketCap === 0 && normalizedSupply > 0 && price > 0) {
+            marketCap = normalizedSupply * price;
+        }
         if (price > 0) {
             return {
                 price,
