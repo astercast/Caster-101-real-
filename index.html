@@ -3950,7 +3950,7 @@
         }
 
 
-        async function fetchChiaData(baseData = []) {
+        async function fetchChiaData(baseData = [], fallbackMcapMap = {}) {
             console.log('--- CHIA PRICES: Browser-direct (Dexie tickers + Spacescan supply) ---');
 
             const chiaTargets = trackedTokens.filter(t => t.chain === 'Chia');
@@ -4044,6 +4044,7 @@
             const batchPrices  = catPriceData.prices  || {};
             const batchChanges = catPriceData.changes || {};
             const batchSources = catPriceData.sources || {};
+            const batchMcaps   = catPriceData.mcaps   || {};
 
             // ── Phase 2: Assign best price for each token ──
             // Priority: Spacescan (from serverless) > Dexie tickers > TibetSwap
@@ -4139,12 +4140,25 @@
                 let src      = tp.src;
 
                 const supply = supplyResults[t.assetId] || 0;
+                const batchMcap = parseFloat(batchMcaps[t.assetId] || 0);
+                const fallback = fallbackMcapMap[t.assetId] || null;
                 let mcap = 0;
                 let mcapStatus = 'ok'; // 'ok' | 'no_supply' | 'no_price'
 
                 if (supply > 0 && price > 0) {
                     mcap = supply * price;
                     src += '+supply';
+                } else if (price > 0 && batchMcap > 0) {
+                    mcap = batchMcap;
+                    src += '+batchMcap';
+                } else if (price > 0 && fallback && fallback.marketCap > 0) {
+                    const priorPrice = parseFloat(fallback.price || 0);
+                    if (priorPrice > 0) {
+                        mcap = fallback.marketCap * (price / priorPrice);
+                    } else {
+                        mcap = fallback.marketCap;
+                    }
+                    src += '+cachedMcap';
                 } else if (price > 0 && supply === 0) {
                     mcapStatus = 'no_supply'; // Has price but supply fetch failed (rate limit)
                 } else {
@@ -4293,6 +4307,28 @@
             el.textContent = ageText === 'Not loaded yet' ? ageText : `Updated ${ageText}`;
         }
 
+        function buildChiaMcapFallbackMap(...sources) {
+            const out = {};
+            const ingest = (rows) => {
+                if (!Array.isArray(rows)) return;
+                for (const t of rows) {
+                    if (!t || t.chain !== 'Chia') continue;
+                    if (!t.assetId || t.assetId === 'Native') continue;
+                    const marketCap = parseFloat(t.marketCap || 0);
+                    const price = parseFloat(t.price || 0);
+                    if (marketCap > 0 && price > 0) {
+                        out[t.assetId] = { marketCap, price };
+                    }
+                }
+            };
+
+            for (const src of sources) {
+                if (Array.isArray(src)) ingest(src);
+                else if (src && Array.isArray(src.chia)) ingest(src.chia);
+            }
+            return out;
+        }
+
         async function updateData() {
             const loadingHtml = '<div class="loading" style="padding: 20px;">⚡ Fetching Live Data...</div>';
             if (tokens.length === 0) {
@@ -4334,12 +4370,17 @@
             // ── END FAST PATH ──────────────────────────────────────────────────────
 
             console.log('🔄 Starting data fetch (Base + Chia in parallel)...');
+            const chiaMcapFallbackMap = buildChiaMcapFallbackMap(
+                marketIndexSnapshot,
+                localSnap,
+                tokens
+            );
             
             // Fetch Base and Chia in PARALLEL — Base hits DexScreener/GeckoTerminal,
             // Chia hits Spacescan directly (sequential calls with 300ms gaps, no Lambda needed)
             const [baseData, chiaData] = await Promise.all([
                 fetchBaseData(),
-                fetchChiaData([]),
+                fetchChiaData([], chiaMcapFallbackMap),
             ]);
             
             console.log('\n📊 FETCH COMPLETE');
