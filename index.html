@@ -103,6 +103,19 @@
             z-index: 1;
         }
 
+        /* Film grain / noise texture — breaks up flat gradients, feels handcrafted not AI */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            opacity: 0.035;
+            pointer-events: none;
+            z-index: 3;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
+            background-repeat: repeat;
+            background-size: 300px 300px;
+        }
+
         @keyframes gentleFloat {
 
             0%,
@@ -382,12 +395,22 @@
         }
 
         .stat-badge {
-            background: rgba(0, 0, 0, 0.78);
-            padding: 6px 12px;
-            border: none;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 5px 12px;
+            border: 1px solid rgba(251, 191, 36, 0.25);
+            border-radius: 20px;
             font-size: 10px;
-            font-weight: bold;
-            border: none;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 0.4px;
+            display: inline-flex;
+            align-items: center;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .stat-badge:hover {
+            border-color: rgba(251, 191, 36, 0.5);
+            box-shadow: 0 0 10px rgba(251, 191, 36, 0.15);
         }
 
         .refresh-btn {
@@ -520,6 +543,17 @@
             display: block;
         }
 
+        /* Desktop: smooth tab content entrance */
+        @media (min-width: 769px) {
+            @keyframes tabContentIn {
+                from { opacity: 0; transform: translateY(8px); }
+                to   { opacity: 1; transform: translateY(0); }
+            }
+            .content.active {
+                animation: tabContentIn 0.28s cubic-bezier(0.4, 0, 0.2, 1) both;
+            }
+        }
+
         .filter-section {
             display: flex;
             gap: 8px;
@@ -616,6 +650,14 @@
             box-shadow: 0 0 15px rgba(132, 204, 22, 0.2);
         }
 
+        @keyframes rune-sweep {
+            0%   { left: -100%; opacity: 0; }
+            5%   { opacity: 1; }
+            50%  { left: 100%; opacity: 1; }
+            55%  { opacity: 0; }
+            100% { left: 100%; opacity: 0; }
+        }
+
         .column-header {
             padding: 12px;
             font-weight: 900;
@@ -628,6 +670,8 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3),
                         0 0 0 1px rgba(74, 222, 128, 0.3),
                         0 0 20px rgba(74, 222, 128, 0.2);
+            position: relative;
+            overflow: hidden;
         }
 
         /* Mobile: Keep desktop header styling */
@@ -647,6 +691,25 @@
             background: linear-gradient(90deg, transparent, rgba(132, 204, 22, 0.3), transparent);
             color: #84cc16;
             text-shadow: 0 0 10px #84cc16;
+        }
+
+        .column-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: -100%;
+            width: 100%;
+            height: 2px;
+            animation: rune-sweep 4s ease-in-out infinite;
+        }
+
+        .column-header.base::after {
+            background: linear-gradient(90deg, transparent, #3b82f6, #93c5fd, #3b82f6, transparent);
+        }
+
+        .column-header.chia::after {
+            background: linear-gradient(90deg, transparent, #84cc16, #bef264, #84cc16, transparent);
+            animation-delay: 2s;
         }
 
         .token-card {
@@ -831,12 +894,12 @@
                 top: 50%;
                 left: 50%;
                 transform: translate(-50%, -50%);
-                background: linear-gradient(135deg, rgba(251, 191, 36, 0.25), rgba(251, 191, 36, 0.12));
+                background: linear-gradient(135deg, rgba(251, 191, 36, 0.18), rgba(251, 191, 36, 0.08));
                 color: #fbbf24;
-                padding: 8px 18px;
-                border-radius: 8px;
-                border: 1px solid rgba(251, 191, 36, 0.4);
-                font-size: 11px;
+                padding: 4px 10px;
+                border-radius: 6px;
+                border: 1px solid rgba(251, 191, 36, 0.35);
+                font-size: 10px;
                 font-weight: 700;
                 letter-spacing: 1px;
                 pointer-events: none;
@@ -845,6 +908,25 @@
                 z-index: 20;
                 backdrop-filter: blur(4px);
                 white-space: nowrap;
+            }
+
+            /* Color-coded hover glow — green for up-trending, red for down */
+            .token-card[data-trend="up"]:hover {
+                border-color: rgba(74, 222, 128, 0.65) !important;
+                box-shadow: 0 12px 28px rgba(74, 222, 128, 0.18),
+                            0 6px 16px rgba(0, 0, 0, 0.5),
+                            inset 0 1px 0 rgba(255, 255, 255, 0.12),
+                            0 0 0 1px rgba(74, 222, 128, 0.35),
+                            0 0 20px rgba(74, 222, 128, 0.15) !important;
+            }
+
+            .token-card[data-trend="down"]:hover {
+                border-color: rgba(239, 68, 68, 0.65) !important;
+                box-shadow: 0 12px 28px rgba(239, 68, 68, 0.18),
+                            0 6px 16px rgba(0, 0, 0, 0.5),
+                            inset 0 1px 0 rgba(255, 255, 255, 0.12),
+                            0 0 0 1px rgba(239, 68, 68, 0.35),
+                            0 0 20px rgba(239, 68, 68, 0.15) !important;
             }
 
             @keyframes fadeInCenter {
@@ -1045,7 +1127,23 @@
         .quick-link-btn:hover {
             transform: translateY(-2px);
             border-color: rgba(251, 191, 36, 1);
-            background: rgba(251, 191, 36, 0.1);
+            background: rgba(251, 191, 36, 0.12);
+            box-shadow: 0 4px 14px rgba(251, 191, 36, 0.3), 0 0 20px rgba(251, 191, 36, 0.1);
+        }
+
+        .quick-link-btn:active {
+            transform: translateY(1px) scale(0.97);
+            border-color: rgba(251, 191, 36, 0.9);
+            box-shadow: 0 1px 4px rgba(251, 191, 36, 0.2);
+            transition: all 0.08s;
+        }
+
+        .section-divider {
+            height: 1px;
+            background: linear-gradient(to right, transparent, rgba(220, 38, 38, 0.5), rgba(251, 191, 36, 0.6), rgba(220, 38, 38, 0.5), transparent);
+            margin: 18px 0;
+            border: none;
+            opacity: 0.8;
         }
 
         /* Mobile: Desktop quick links */
@@ -2409,9 +2507,9 @@
                 </div>
             </div>
             <div class="stats">
-                <div class="stat-badge" style="border: none; color: #fbbf24;">👀 Visitors: <span
+                <div class="stat-badge" style="color: #fbbf24;">👀 Visitors: <span
                         id="visitorCount">0</span></div>
-                <div class="stat-badge" style="border: none; color: #dc2626;">🔥 Online: 42069</div>
+                <div class="stat-badge" style="color: #dc2626;">🔥 Online: 42069</div>
                 <a href="https://www.chia.net" target="_blank" class="stat-badge" style="
                     color: #fbbf24;
                     text-decoration: none;
@@ -2481,6 +2579,7 @@
                 </div>
             </div>
 
+            <div class="section-divider"></div>
             <div class="search-bar">
                 <span class="search-icon">🔮</span>
                 <input type="text" class="search-input" placeholder="search chia or base asset" id="searchInput"
@@ -2562,6 +2661,7 @@
                 </div>
             </div>
 
+            <div class="section-divider"></div>
             <div class="filter-section" style="position: relative;">
                 <button class="filter-btn active" onclick="sortTokens('name', this)">📝 Name</button>
                 <button class="filter-btn" onclick="sortTokens('marketCap', this)">💰 Market Cap</button>
@@ -5390,7 +5490,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
             const mcapStr = mcap > 1e6 ? '$'+(mcap/1e6).toFixed(1)+'M' : mcap > 1e3 ? '$'+(mcap/1e3).toFixed(0)+'K' : mcap > 0 ? '$'+mcap.toFixed(0) : '—';
 
             return `
-                <div class="token-card" onclick="openTokenLink('${token.chain}', '${token.assetId || token.contract}', '${token.symbol}')">
+                <div class="token-card" data-trend="${change >= 0 ? 'up' : 'down'}" onclick="openTokenLink('${token.chain}', '${token.assetId || token.contract}', '${token.symbol}')">
                     <div class="tc-top">
                         <div class="tc-left">
                             <span class="tc-emoji">${emoji}</span>
@@ -5460,7 +5560,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                 marketCapColor = 'rgba(255,255,255,0.3)';
             }
             return `
-                <div class="token-card" onclick="openTokenLink('${token.chain}', '${token.assetId || token.contract}', '${token.symbol}')">
+                <div class="token-card" data-trend="${arbColor === '#4ade80' ? 'up' : (arbColor === '#ef4444' ? 'down' : 'neutral')}" onclick="openTokenLink('${token.chain}', '${token.assetId || token.contract}', '${token.symbol}')">
                     <div class="tc-top">
                         <div class="tc-left">
                             <span class="tc-emoji">${emoji}</span>
@@ -5581,7 +5681,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                 const mcapStr = mcap > 1e6 ? '$'+(mcap/1e6).toFixed(1)+'M' : mcap > 1e3 ? '$'+(mcap/1e3).toFixed(0)+'K' : mcap > 0 ? '$'+mcap.toFixed(0) : '—';
 
                 return `
-                <div class="token-card" onclick="openTokenLink('${token.chain}', '${token.assetId || token.contract}', '${token.symbol}')">
+                <div class="token-card" data-trend="${change >= 0 ? 'up' : 'down'}" onclick="openTokenLink('${token.chain}', '${token.assetId || token.contract}', '${token.symbol}')">
                     <div class="tc-top">
                         <div class="tc-left">
                             <span class="tc-emoji">${emoji}</span>
@@ -5644,7 +5744,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                 ) : '0.00';
 
                 return `
-                <div class="token-card" onclick="openTokenLink('${token.chain}', '${token.assetId || token.contract}', '${token.symbol}')">
+                <div class="token-card" data-trend="${arbColor === '#4ade80' ? 'up' : (arbColor === '#ef4444' ? 'down' : 'neutral')}" onclick="openTokenLink('${token.chain}', '${token.assetId || token.contract}', '${token.symbol}')">
                     <div class="tc-top">
                         <div class="tc-left">
                             <span class="tc-emoji">${emoji}</span>
@@ -5871,7 +5971,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                         }));
 
                         const createCard = (token) => `
-                            <div class="token-card" onclick="openTokenLink('${token.chain}', '${token.contract}', '${token.symbol}')">
+                            <div class="token-card" data-trend="${token.change24h >= 0 ? 'up' : 'down'}" onclick="openTokenLink('${token.chain}', '${token.contract}', '${token.symbol}')">
                                 <div class="tc-top">
                                     <div class="tc-left">
                                         <span class="tc-emoji">${token.symbol.substring(0, 2)}</span>
