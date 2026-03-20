@@ -3880,8 +3880,10 @@
                 newContent.classList.add("active");
             }
             
-            // Update URL to clean path (e.g. /treasury) without reload
-            if (tabName !== 'secretgame') history.pushState(null, '', '/' + tabName);
+            // Update URL to clean path — map internal IDs to public URL slugs
+            const _tabUrlMap = { portfolio: 'bag' };
+            const _urlSlug = _tabUrlMap[tabName] || tabName;
+            if (tabName !== 'secretgame') history.pushState(null, '', '/' + _urlSlug);
             if (tabName === "portfolio") {
                 if (window._sageXchAddresses && typeof loadAndRenderChiaPortfolio === 'function') {
                     setTimeout(function() { loadAndRenderChiaPortfolio(window._sageXchAddresses); }, 50);
@@ -5432,11 +5434,11 @@
             bgRespawnIdx = 0;
 
             const totalImages = prefersReducedMotion ? 5
-                : _lowEnd   ? 15
-                : _midRange ? 35
-                : 60; // full screensaver chaos on high-end
-            const minSize = isMobile ? 50 : 65;
-            const maxSize = isMobile ? 130 : 230;
+                : _lowEnd   ? 22
+                : _midRange ? 55
+                : 90; // full screensaver chaos on high-end
+            const minSize = isMobile ? 80 : 105;
+            const maxSize = isMobile ? 200 : 300;
             // Pixels-per-step at dt=1/30s, step=2: velocity*2 = px/frame
             // 0.8 → ~1.6px/frame, 1.5 → ~3px/frame  (good screensaver feel)
             const speedScale = prefersReducedMotion ? 0.15
@@ -6426,8 +6428,10 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                     || (validTabs.includes(hash) ? hash : null)
                     || (validTabs.includes(session) ? session : null)
                     || 'market';
-                // Normalise URL to clean path
-                if (activeTab !== 'secretgame') history.replaceState(null, '', '/' + activeTab);
+                // Normalise URL to clean path — map internal IDs to public URL slugs
+                const _initUrlMap = { portfolio: 'bag' };
+                const _initSlug = _initUrlMap[activeTab] || activeTab;
+                if (activeTab !== 'secretgame') history.replaceState(null, '', '/' + _initSlug);
                 
                 const btn = document.querySelector(`.tab[onclick*="'${activeTab}'"]`);
                 if (btn) {
