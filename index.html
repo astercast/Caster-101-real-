@@ -5387,7 +5387,7 @@
         
         function initBackground() {
             const collage = document.getElementById('bgCollage');
-            collage.innerHTML = ''; // Clear existing
+            collage.innerHTML = '';
             bouncingImages.length = 0;
 
             updateViewport();
@@ -5395,113 +5395,102 @@
             const isMobile = viewportW <= 768;
 
             const images = [
-                // Wizard series - highest priority for frequent display
+                // Wizard series
                 'images/wizard1.png', 'images/wizard2.png', 'images/wizard3.png',
                 'images/wizard4.png', 'images/wizard5.png', 'images/wizard6.png',
-                // Featured art pieces 
+                // Featured art
                 'images/1768724161355_image.png', 'images/1768770350230_image.png',
                 'images/1768770712319_image.png', 'images/1768771847908_image.png',
                 'images/1768772304325_image.png', 'images/Untitled_Artwork_Original.png',
-                // Uploaded image collections
+                // Uploaded collections (all of them)
+                'images/uploaded_image_1_1768636844588.png',
                 'images/uploaded_image_2_1768636844588.png', 'images/uploaded_image_3_1768636844588.png',
-                'images/uploaded_image_4_1768636844588.jpg', 'images/uploaded_image_1_1768638579775.png', 
+                'images/uploaded_image_4_1768636844588.jpg', 'images/uploaded_image_1_1768638579775.png',
                 'images/uploaded_image_2_1768638579775.png', 'images/uploaded_image_3_1768638579775.png',
                 'images/uploaded_image_4_1768638579775.jpg', 'images/uploaded_image_1_1768638691015.png',
                 'images/uploaded_image_2_1768638691015.png', 'images/uploaded_image_3_1768638691015.png',
                 'images/uploaded_image_4_1768638691015.jpg', 'images/uploaded_image_1_1768638712026.jpg',
                 'images/uploaded_image_2_1768638712026.jpg', 'images/uploaded_image_3_1768638712026.png',
                 'images/uploaded_image_4_1768638712026.jpg',
-                // Photography collection
+                // Photography
                 'images/IMG_0199.jpeg', 'images/IMG_0205.jpeg', 'images/IMG_2987.jpeg',
                 'images/IMG_5288.jpeg', 'images/IMG_5410.jpeg', 'images/IMG_7496.jpeg',
                 'images/IMG_7578.jpeg', 'images/IMG_7828.jpeg', 'images/IMG_7865.jpeg',
                 'images/IMG_7866.jpeg', 'images/IMG_8048.jpeg', 'images/IMG_8330.jpeg',
                 'images/IMG_8371.jpeg', 'images/IMG_9197.jpeg', 'images/image0.jpeg',
-                // Themed content
+                // Themed
                 'images/plant_your_seed.png', 'images/hodl-diamond.png',
                 'images/Screenshot_2026-01-17_232436-removebg-preview.png',
-                // Additional images from folder
                 'images/discord-commands.png', 'images/soft-staking-diagram.png',
                 'images/favicon.webp'
             ];
 
-            // Tiered image counts: lively on high-end, stable on low-end
-            const totalImages = prefersReducedMotion ? 4
-                : _lowEnd  ? 8
-                : _midRange ? 18
-                : 32; // high-end desktop gets full lively background
-            const minSize = isMobile ? 55 : 80;
-            const maxSize = isMobile ? 110 : 200;
-            const speedScale = prefersReducedMotion ? 0.1
-                : _lowEnd  ? 0.14
-                : _midRange ? 0.22
-                : 0.32;
-            
+            // Shuffle so distribution isn't always same order
+            for (let i = images.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [images[i], images[j]] = [images[j], images[i]];
+            }
+
+            const totalImages = prefersReducedMotion ? 5
+                : _lowEnd   ? 15
+                : _midRange ? 35
+                : 60; // full screensaver chaos on high-end
+            const minSize = isMobile ? 50 : 65;
+            const maxSize = isMobile ? 130 : 230;
+            // Pixels-per-step at dt=1/30s, step=2: velocity*2 = px/frame
+            // 0.8 → ~1.6px/frame, 1.5 → ~3px/frame  (good screensaver feel)
+            const speedScale = prefersReducedMotion ? 0.15
+                : _lowEnd   ? 0.5
+                : _midRange ? 0.9
+                : 1.5;
+            const maxRotSpeed = prefersReducedMotion ? 0
+                : _lowEnd   ? 0.2
+                : _midRange ? 0.5
+                : 1.0; // degrees per step
+
             for (let i = 0; i < totalImages; i++) {
                 const src = images[i % images.length];
                 const size = Math.random() * (maxSize - minSize) + minSize;
-                
-                // Random z-index: keep all images behind main content
-                const zIndex = 0; // All background images at z-index 0, behind content
-                
-                // Create image element with lazy loading and compression
+                const opacity = 0.38 + Math.random() * 0.42; // 0.38–0.80, varied depth
+
                 const img = document.createElement('img');
                 img.className = 'bg-image';
-                img.dataset.src = src; // Store src in data attribute for lazy loading
-                img.loading = 'lazy'; // Native lazy loading
+                img.loading = i < 6 ? 'eager' : 'lazy';
                 img.decoding = 'async';
-                if (i < 4) img.fetchPriority = 'high';
-                
-                // Add compression hints and optimize rendering
-                const isLargeImage = src.includes('IMG_') || src.includes('1768') || src.includes('uploaded_');
-                const compressionClass = isLargeImage ? 'compressed-bg' : 'optimized-bg';
-                
-                // Simplified styles for mobile performance
-                const mobileOptimized = viewportW <= 768;
                 img.style.cssText = `
-                    width: ${size}px;
-                    height: ${size}px;
-                    object-fit: contain;
-                    filter: none;
-                    pointer-events: none;
-                    opacity: 0.7;
-                    z-index: ${zIndex};
-                    image-rendering: auto;
-                    transform: translate3d(0,0,0);
+                    width:${size}px;height:${size}px;
+                    object-fit:contain;pointer-events:none;
+                    opacity:${opacity};z-index:0;
+                    will-change:transform;transform:translate3d(0,0,0) rotate(0deg);
                 `;
-                img.classList.add(compressionClass);
-                
-                // Progressive loading with direct src setting
-                img.src = src; // Set src directly
-                // No canvas recompression — browser decodes async and it causes jank
-                
+                img.src = src;
                 collage.appendChild(img);
-                
-                // Physics properties
+
+                const angle = Math.random() * 360;
+                const rotSpeed = (Math.random() - 0.5) * 2 * maxRotSpeed;
                 const imageData = {
                     element: img,
-                    x: Math.random() * (viewportW - size),
-                    y: Math.random() * (viewportH - size),
-                    vx: (Math.random() - 0.5) * speedScale,
-                    vy: (Math.random() - 0.5) * speedScale,
+                    x: Math.random() * Math.max(0, viewportW - size),
+                    y: Math.random() * Math.max(0, viewportH - size),
+                    vx: (Math.random() - 0.5) * 2 * speedScale * (0.6 + Math.random() * 0.8),
+                    vy: (Math.random() - 0.5) * 2 * speedScale * (0.6 + Math.random() * 0.8),
+                    rot: angle,
+                    rotSpeed: rotSpeed,
                     size: size,
-                    zIndex: zIndex,
-                    lifetime: Math.random() * 25000 + 15000, // 15-40 seconds before respawn
+                    lifetime: Math.random() * 20000 + 12000,
                     born: Date.now(),
                     visible: true
                 };
-                img.style.transform = `translate3d(${imageData.x}px, ${imageData.y}px, 0)`;
-                
+                img.style.transform = `translate3d(${imageData.x}px,${imageData.y}px,0) rotate(${angle}deg)`;
                 bouncingImages.push(imageData);
             }
-            
-            // Start animation loop
+
             animateBouncingImages();
         }
         
         function animateBouncingImages() {
             bgRafId = null;
-            if (bgPaused) return; // stop RAF entirely when page is hidden
+            if (bgPaused) return;
 
             const now = performance.now();
             if (now - lastFrameTime < frameInterval) {
@@ -5512,53 +5501,48 @@
             const step = dt * 60;
             lastFrameTime = now;
             const nowTs = Date.now();
-            
+
             bouncingImages.forEach(img => {
-                // Check if image should respawn
+                // Respawn cycle
                 if (nowTs - img.born > img.lifetime) {
-                    // Disappear for a moment
                     if (img.visible) {
-                        img.element.style.transition = 'opacity 0.8s ease';
+                        img.element.style.transition = 'opacity 0.7s ease';
                         img.element.style.opacity = '0';
-                        img.element.classList.add('is-hidden');
                         img.visible = false;
-                        img.respawnTime = nowTs + Math.random() * 3000 + 1000; // 1-4 seconds
+                        img.respawnTime = nowTs + Math.random() * 2000 + 500;
                     } else if (nowTs > img.respawnTime) {
-                        // Respawn at new random position
-                        img.x = Math.random() * (viewportW - img.size);
-                        img.y = Math.random() * (viewportH - img.size);
-                        const spd = _lowEnd ? 0.14 : (_midRange ? 0.22 : 0.32);
-                        img.vx = (Math.random() - 0.5) * spd;
-                        img.vy = (Math.random() - 0.5) * spd;
+                        img.x = Math.random() * Math.max(0, viewportW - img.size);
+                        img.y = Math.random() * Math.max(0, viewportH - img.size);
+                        const spd = _lowEnd ? 0.5 : (_midRange ? 0.9 : 1.5);
+                        img.vx = (Math.random() - 0.5) * 2 * spd * (0.6 + Math.random() * 0.8);
+                        img.vy = (Math.random() - 0.5) * 2 * spd * (0.6 + Math.random() * 0.8);
                         img.born = nowTs;
                         img.visible = true;
-                        img.element.style.transition = 'opacity 0.6s ease';
-                        img.element.style.opacity = '0.7';
-                        img.element.classList.remove('is-hidden');
+                        const newOpacity = 0.38 + Math.random() * 0.42;
+                        img.element.style.transition = 'opacity 0.5s ease';
+                        img.element.style.opacity = String(newOpacity);
                     }
                 }
-                
+
                 if (!img.visible) return;
-                
-                // Update position
+
                 img.x += img.vx * step;
                 img.y += img.vy * step;
-                
-                // Bounce off edges (like DVD screensaver!)
+                img.rot = (img.rot + img.rotSpeed * step) % 360;
+
+                // Bounce off edges
                 if (img.x <= 0 || img.x + img.size >= viewportW) {
                     img.vx *= -1;
                     img.x = Math.max(0, Math.min(viewportW - img.size, img.x));
                 }
-                
                 if (img.y <= 0 || img.y + img.size >= viewportH) {
                     img.vy *= -1;
                     img.y = Math.max(0, Math.min(viewportH - img.size, img.y));
                 }
-                
-                // Apply position
-                img.element.style.transform = `translate3d(${img.x}px, ${img.y}px, 0)`;
+
+                img.element.style.transform = `translate3d(${img.x}px,${img.y}px,0) rotate(${img.rot}deg)`;
             });
-            
+
             bgRafId = requestAnimationFrame(animateBouncingImages);
         }
         
