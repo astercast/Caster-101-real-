@@ -5436,8 +5436,8 @@
                 : _lowEnd   ? 22
                 : _midRange ? 55
                 : 90; // full screensaver chaos on high-end
-            const minSize = isMobile ? 80 : 105;
-            const maxSize = isMobile ? 200 : 300;
+            const minSize = isMobile ? 70 : 90;
+            const maxSize = isMobile ? 140 : 180;
             // Pixels-per-step at dt=1/30s, step=2: velocity*2 = px/frame
             // 0.8 → ~1.6px/frame, 1.5 → ~3px/frame  (good screensaver feel)
             const speedScale = prefersReducedMotion ? 0.15
