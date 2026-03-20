@@ -5466,9 +5466,9 @@
                 img.src = src;
                 collage.appendChild(img);
 
-                const angle = Math.random() * 360;
                 // ~25% of images rotate slowly; the rest stay flat but move faster
                 const doesRotate = Math.random() < 0.25;
+                const angle = doesRotate ? Math.random() * 360 : 0;
                 const rotSpeed = doesRotate ? (Math.random() - 0.5) * 2 * maxRotSpeed : 0;
                 const speedMult = doesRotate
                     ? (0.6 + Math.random() * 0.8)           // normal speed range
@@ -5522,7 +5522,7 @@
                         const doesRotate = Math.random() < 0.25;
                         const maxRS = _lowEnd ? 0.2 : (_midRange ? 0.5 : 1.0);
                         img.rotSpeed = doesRotate ? (Math.random() - 0.5) * 2 * maxRS : 0;
-                        img.rot = Math.random() * 360;
+                        img.rot = doesRotate ? Math.random() * 360 : 0;
                         const spd = _lowEnd ? 0.5 : (_midRange ? 0.9 : 1.5);
                         const rMult = doesRotate ? (0.6 + Math.random() * 0.8) : (1.2 + Math.random() * 0.8);
                         img.vx = (Math.random() - 0.5) * 2 * spd * rMult;
