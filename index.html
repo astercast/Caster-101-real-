@@ -9409,28 +9409,29 @@ document.addEventListener('DOMContentLoaded', () => {
     <!-- SAGE WALLET CONNECT — CHIP-0002                            -->
     <!-- Load WalletConnect SignClient via ESM CDN (no build step)  -->
     <!-- ═══════════════════════════════════════════════════════════ -->
-    <script type="module">
-        async function loadWalletConnect() {
-            // WalletConnect v2 is ESM-only — no UMD bundle exists.
-            // Try jsDelivr ESM CDN first (esm.run), then esm.sh bundle as fallback.
-            const cdns = [
-                'https://esm.run/@walletconnect/sign-client@2',
-                'https://esm.sh/@walletconnect/sign-client@2?bundle',
-            ];
-            for (const cdn of cdns) {
-                try {
-                    const m = await import(cdn);
-                    const SC = (m && m.SignClient) || (m && m.default && m.default.SignClient) || (m && m.default);
-                    if (SC && typeof SC.init === 'function') {
-                        window._WCSignClient = SC;
-                        console.log('[Sage] SDK loaded from', cdn);
-                        break;
-                    }
-                } catch(e) { console.warn('[Sage] CDN failed:', cdn, e.message || e); }
-            }
-            window.dispatchEvent(new CustomEvent('sage-wc-sdk-ready'));
-        }
-        loadWalletConnect();
+    <script>
+        // Self-hosted WalletConnect v2 SignClient bundle (535KB, no CDN dependency)
+        (function() {
+            const s = document.createElement('script');
+            s.src = '/wc-sign-client.js';
+            s.onload = function() {
+                // IIFE sets window.WCLib; SignClient is the named export
+                const lib = window.WCLib || {};
+                const SC = lib.SignClient || (lib.default && lib.default.SignClient);
+                if (SC && typeof SC.init === 'function') {
+                    window._WCSignClient = SC;
+                    console.log('[Sage] SDK loaded from self-hosted bundle ✓');
+                } else {
+                    console.warn('[Sage] Bundle loaded but SignClient not found', Object.keys(lib));
+                }
+                window.dispatchEvent(new CustomEvent('sage-wc-sdk-ready'));
+            };
+            s.onerror = function() {
+                console.warn('[Sage] Self-hosted bundle failed to load');
+                window.dispatchEvent(new CustomEvent('sage-wc-sdk-ready'));
+            };
+            document.head.appendChild(s);
+        })();
     </script>
 
     <script>
@@ -9474,7 +9475,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function sageConnect() {
         if (_sageSession) { showSageMenu(); return; }
-        // If SDK didn't load at page start, try once more via ESM before showing error
+        // If SDK didn't load at page start, try once more via self-hosted bundle
         if (!_sageWCClient) {
             if (SAGE_WC_PROJECT_ID === 'REPLACE_WITH_YOUR_WC_PROJECT_ID') {
                 alert('A free WalletConnect Project ID is required.\nGet one at: https://cloud.walletconnect.com\nThen paste it into the SAGE_WC_PROJECT_ID variable in index.html.');
@@ -9482,17 +9483,18 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             updateSageBtn('connecting');
             if (!window._WCSignClient) {
-                const cdns = [
-                    'https://esm.run/@walletconnect/sign-client@2',
-                    'https://esm.sh/@walletconnect/sign-client@2?bundle',
-                ];
-                for (const cdn of cdns) {
-                    try {
-                        const m = await import(cdn);
-                        const SC = (m && m.SignClient) || (m && m.default && m.default.SignClient) || (m && m.default);
-                        if (SC && typeof SC.init === 'function') { window._WCSignClient = SC; break; }
-                    } catch(e) { console.warn('[Sage] Retry CDN failed:', cdn); }
-                }
+                await new Promise((res, rej) => {
+                    const s = document.createElement('script');
+                    s.src = '/wc-sign-client.js';
+                    s.onload = function() {
+                        const lib = window.WCLib || {};
+                        const SC = lib.SignClient || (lib.default && lib.default.SignClient);
+                        if (SC && typeof SC.init === 'function') window._WCSignClient = SC;
+                        res();
+                    };
+                    s.onerror = res;
+                    document.head.appendChild(s);
+                });
             }
             if (window._WCSignClient) await initSageWC();
             if (!_sageWCClient) {
