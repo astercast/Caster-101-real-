@@ -9613,7 +9613,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // TibetSwap pairs (session-cached, 5 min TTL) — paginated internally
             const tibetPromise = (function() {
                 const now = Date.now();
-                if (window._sagePortfolioTibetMap && window._sagePortfolioTibetTs && (now - window._sagePortfolioTibetTs) < 300000)
+                // v2: require tokenName field in cache (invalidates old cache that lacked it)
+                const hasTokenNames = window._sagePortfolioTibetMap && Object.values(window._sagePortfolioTibetMap).some(function(e) { return e.tokenName !== undefined; });
+                if (hasTokenNames && window._sagePortfolioTibetTs && (now - window._sagePortfolioTibetTs) < 300000)
                     return Promise.resolve(window._sagePortfolioTibetMap);
                 return (async function() {
                     let allPairs = [], tPage = 1;
@@ -9633,7 +9635,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         const aid = (p.asset_id || '').toLowerCase();
                         if (!aid) continue;
                         const xr = parseFloat(p.xch_reserve || 0) / 1e12, cr = parseFloat(p.asset_reserve || 0) / 1e3;
-                        map[aid] = { priceUsd: cr > 0 ? (xr / cr) * xp : 0, shortName: p.short_name || '' };
+                        const cleanShort = (p.short_name || '').replace(/^TIBET-/i, '').replace(/-XCH$/i, '');
+                        const tokenName = (p.name && !/^TIBET/i.test(p.name)) ? p.name : cleanShort;
+                        map[aid] = { priceUsd: cr > 0 ? (xr / cr) * xp : 0, shortName: p.short_name || '', tokenName: tokenName };
                         const la = (p.liquidity_asset_id || '').toLowerCase();
                         if (la) {
                             const pn = (p.short_name || '').replace(/^TIBET-/i, '').replace(/-XCH$/i, '/XCH');
@@ -9695,9 +9699,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     let val = parseFloat(t.total_value || 0) || bal * pr;
                     if (isLP && tb && tb.poolLiq > 0) val = (bal / tb.poolLiq) * tb.poolXch * 2 * xchPrice;
                     const rawSym = (t.symbol || '').trim(), rawName = (t.name || '').trim();
-                    const tibetName = (tb && !tb.isLP && tb.shortName) ? tb.shortName.replace(/^TIBET-/i, '') : '';
-                    const sym = (!isHexStr(rawSym) && rawSym) || tibetName || (!isHexStr(rawName) && rawName) || aid.slice(0, 6).toUpperCase();
-                    const name = (!isHexStr(rawName) && rawName) || (!isHexStr(rawSym) && rawSym) || tibetName || sym;
+                    // TibetSwap is the most reliable name source for CATs that have pairs
+                    const tibetName = (tb && !tb.isLP && tb.tokenName) ? tb.tokenName
+                        : (tb && !tb.isLP && tb.shortName) ? tb.shortName.replace(/^TIBET-/i, '').replace(/-XCH$/i, '') : '';
+                    // Priority: TibetSwap clean name → spacescan sym → spacescan name → hex truncation
+                    const sym = tibetName || (!isHexStr(rawSym) && rawSym) || (!isHexStr(rawName) && rawName) || aid.slice(0, 6).toUpperCase();
+                    const name = tibetName || (!isHexStr(rawName) && rawName) || (!isHexStr(rawSym) && rawSym) || sym;
                     if (tokenMap[aid]) {
                         tokenMap[aid].balance += bal;
                         tokenMap[aid].value += val;
