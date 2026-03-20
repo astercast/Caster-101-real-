@@ -4020,8 +4020,12 @@
             
             // Update URL to clean path (e.g. /treasury) without reload
             if (tabName !== 'secretgame') history.pushState(null, '', '/' + tabName);
+            if (tabName === "portfolio") {
+                if (window._sageXchAddress && typeof loadAndRenderChiaPortfolio === 'function') {
+                    setTimeout(function() { loadAndRenderChiaPortfolio(window._sageXchAddress); }, 50);
+                }
+            }
             if (tabName === "treasury") {
-                // Try to restore from cache first - show it IMMEDIATELY
                 if (_treasuryCache.baseData && _treasuryCache.chiaData && _treasuryCache.nftData) {
                     console.log('💾 Restoring treasury from cache (' + new Date(_treasuryCache.timestamp).toLocaleTimeString() + ')');
                     updateTreasuryDisplay(_treasuryCache.baseData, _treasuryCache.chiaData, _treasuryCache.nftData);
