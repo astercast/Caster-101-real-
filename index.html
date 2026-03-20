@@ -5498,7 +5498,12 @@
         let bgRafId = null;
         let lastFrameTime = 0;
         const isMobileDevice = window.innerWidth <= 768;
-        const targetFps = isMobileDevice ? 12 : 30; // 12fps on mobile saves ~40% CPU vs 20fps
+        // Tiered performance: detect low-end devices via hardware concurrency + memory
+        const _cores = navigator.hardwareConcurrency || 4;
+        const _mem   = navigator.deviceMemory || 4; // GB, undefined on Firefox (defaults 4)
+        const _lowEnd  = isMobileDevice || _cores <= 2 || _mem <= 2;
+        const _midRange = !_lowEnd && (_cores <= 4 || _mem <= 4);
+        const targetFps = _lowEnd ? 10 : (_midRange ? 20 : 30);
         const frameInterval = 1000 / targetFps;
         let viewportW = window.innerWidth;
         let viewportH = window.innerHeight;
@@ -5548,11 +5553,17 @@
                 'images/favicon.webp'
             ];
 
-            // Create fewer images for better performance while keeping the vibe
-            const totalImages = prefersReducedMotion ? 4 : (isMobile ? 5 : 20); // fewer GPU layers for better performance
-            const minSize = isMobile ? 55 : 90;
-            const maxSize = isMobile ? 100 : 170;
-            const speedScale = prefersReducedMotion ? 0.15 : (isMobile ? 0.18 : 0.32); // Slower on mobile
+            // Tiered image counts: lively on high-end, stable on low-end
+            const totalImages = prefersReducedMotion ? 4
+                : _lowEnd  ? 8
+                : _midRange ? 18
+                : 32; // high-end desktop gets full lively background
+            const minSize = isMobile ? 55 : 80;
+            const maxSize = isMobile ? 110 : 200;
+            const speedScale = prefersReducedMotion ? 0.1
+                : _lowEnd  ? 0.14
+                : _midRange ? 0.22
+                : 0.32;
             
             for (let i = 0; i < totalImages; i++) {
                 const src = images[i % images.length];
@@ -5589,14 +5600,8 @@
                 img.classList.add(compressionClass);
                 
                 // Progressive loading with direct src setting
-                img.src = src; // Set src directly instead of lazy loading
-                // Add compression after load
-                img.onload = () => {
-                    // Skip expensive canvas compress on mobile — not worth the CPU cost
-                    if (!isMobile && isLargeImage && img.naturalWidth > 200) {
-                        requestIdleCallback(() => compressImage(img));
-                    }
-                };
+                img.src = src; // Set src directly
+                // No canvas recompression — browser decodes async and it causes jank
                 
                 collage.appendChild(img);
                 
@@ -5609,7 +5614,7 @@
                     vy: (Math.random() - 0.5) * speedScale,
                     size: size,
                     zIndex: zIndex,
-                    lifetime: Math.random() * 30000 + 20000, // 20-50 seconds before respawn
+                    lifetime: Math.random() * 25000 + 15000, // 15-40 seconds before respawn
                     born: Date.now(),
                     visible: true
                 };
@@ -5641,22 +5646,21 @@
                 if (nowTs - img.born > img.lifetime) {
                     // Disappear for a moment
                     if (img.visible) {
+                        img.element.style.transition = 'opacity 0.8s ease';
                         img.element.style.opacity = '0';
                         img.element.classList.add('is-hidden');
                         img.visible = false;
                         img.respawnTime = nowTs + Math.random() * 3000 + 1000; // 1-4 seconds
                     } else if (nowTs > img.respawnTime) {
-                        // Respawn at new random position with new z-index!
+                        // Respawn at new random position
                         img.x = Math.random() * (viewportW - img.size);
                         img.y = Math.random() * (viewportH - img.size);
-                        img.vx = (Math.random() - 0.5) * 0.32;
-                        img.vy = (Math.random() - 0.5) * 0.32;
-                        
-                        // Keep consistent z-index for performance
-                        // No dynamic z-index changes on mobile for better performance
-                        
+                        const spd = _lowEnd ? 0.14 : (_midRange ? 0.22 : 0.32);
+                        img.vx = (Math.random() - 0.5) * spd;
+                        img.vy = (Math.random() - 0.5) * spd;
                         img.born = nowTs;
                         img.visible = true;
+                        img.element.style.transition = 'opacity 0.6s ease';
                         img.element.style.opacity = '0.7';
                         img.element.classList.remove('is-hidden');
                     }
@@ -9407,12 +9411,27 @@ document.addEventListener('DOMContentLoaded', () => {
     <!-- ═══════════════════════════════════════════════════════════ -->
     <script type="module">
         async function loadWalletConnect() {
-            try {
-                const { SignClient } = await import('https://esm.sh/@walletconnect/sign-client@2?bundle');
-                window._WCSignClient = SignClient;
-            } catch(e) {
-                console.warn('[Sage] WalletConnect SDK load failed:', e.message);
-                window._WCSignClient = null;
+            const CDNS = [
+                'https://unpkg.com/@walletconnect/sign-client@2.17.0/dist/index.umd.js',
+                'https://cdn.jsdelivr.net/npm/@walletconnect/sign-client@2.17.0/dist/index.umd.js',
+            ];
+            for (const cdn of CDNS) {
+                try {
+                    await new Promise((res, rej) => {
+                        const s = document.createElement('script');
+                        s.src = cdn; s.onload = res; s.onerror = rej;
+                        document.head.appendChild(s);
+                    });
+                    // UMD bundle sets window.SignClient
+                    if (window.SignClient) { window._WCSignClient = window.SignClient; break; }
+                } catch(e) { console.warn('[Sage] CDN failed:', cdn, e.message || e); }
+            }
+            // ESM fallback
+            if (!window._WCSignClient) {
+                try {
+                    const m = await import('https://esm.sh/@walletconnect/sign-client@2?bundle');
+                    if (m && m.SignClient) window._WCSignClient = m.SignClient;
+                } catch(e) { console.warn('[Sage] ESM fallback failed:', e.message || e); }
             }
             window.dispatchEvent(new CustomEvent('sage-wc-sdk-ready'));
         }
@@ -9460,13 +9479,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function sageConnect() {
         if (_sageSession) { showSageMenu(); return; }
+        // If SDK didn't load at page start, try once more before showing error
         if (!_sageWCClient) {
             if (SAGE_WC_PROJECT_ID === 'REPLACE_WITH_YOUR_WC_PROJECT_ID') {
                 alert('A free WalletConnect Project ID is required.\nGet one at: https://cloud.walletconnect.com\nThen paste it into the SAGE_WC_PROJECT_ID variable in index.html.');
-            } else {
-                alert('WalletConnect SDK not loaded. Check your network connection.');
+                return;
             }
-            return;
+            updateSageBtn('connecting');
+            // Try loading SDK on demand
+            const CDNS = [
+                'https://unpkg.com/@walletconnect/sign-client@2.17.0/dist/index.umd.js',
+                'https://cdn.jsdelivr.net/npm/@walletconnect/sign-client@2.17.0/dist/index.umd.js',
+            ];
+            for (const cdn of CDNS) {
+                try {
+                    await new Promise((res, rej) => {
+                        if (window._WCSignClient) { res(); return; }
+                        const s = document.createElement('script');
+                        s.src = cdn; s.onload = res; s.onerror = rej;
+                        document.head.appendChild(s);
+                    });
+                    if (window.SignClient) { window._WCSignClient = window.SignClient; break; }
+                } catch(e) {}
+            }
+            if (window._WCSignClient) await initSageWC();
+            if (!_sageWCClient) {
+                updateSageBtn(false);
+                alert('WalletConnect SDK could not load.\nCheck your network connection and try again.');
+                return;
+            }
         }
         try {
             updateSageBtn('connecting');
