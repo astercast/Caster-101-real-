@@ -5429,11 +5429,11 @@
             bgRespawnIdx = 0;
 
             const totalImages = prefersReducedMotion ? 5
-                : _lowEnd   ? 8
-                : _midRange ? 55
-                : 90; // full screensaver chaos on high-end
-            const minSize = isMobile ? 60 : 90;
-            const maxSize = isMobile ? 110 : 160;
+                : _lowEnd   ? 10
+                : _midRange ? 80
+                : 130; // full screensaver chaos on high-end
+            const minSize = isMobile ? 65 : 100;
+            const maxSize = isMobile ? 120 : 200;
             // Slow, ambient drift — visible but not distracting
             const speedScale = prefersReducedMotion ? 0.08
                 : _lowEnd   ? 0.25
@@ -5444,7 +5444,7 @@
             for (let i = 0; i < totalImages; i++) {
                 const src = images[i % images.length];
                 const size = Math.random() * (maxSize - minSize) + minSize;
-                const opacity = 0.5 + Math.random() * 0.22; // 0.50–0.72, ambient depth
+                const opacity = 0.65 + Math.random() * 0.25; // 0.65–0.90
 
                 const img = document.createElement('img');
                 img.className = 'bg-image';
@@ -5534,7 +5534,7 @@
                         }
                         img.born = nowTs;
                         img.visible = true;
-                        const newOpacity = 0.5 + Math.random() * 0.22;
+                        const newOpacity = 0.65 + Math.random() * 0.25;
                         img.element.style.transition = 'opacity 0.5s ease';
                         img.element.style.opacity = String(newOpacity);
                     }
