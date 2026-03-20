@@ -5560,6 +5560,41 @@
                 img.element.style.transform = `translate3d(${img.x}px,${img.y}px,0) rotate(${img.rot}deg)`;
             });
 
+            // Image-vs-image AABB collision — elastic bump, no stacking
+            const visible = bouncingImages.filter(i => i.visible);
+            for (let a = 0; a < visible.length - 1; a++) {
+                const A = visible[a];
+                for (let b = a + 1; b < visible.length; b++) {
+                    const B = visible[b];
+                    const overlapX = (A.x + A.size) - B.x;
+                    if (overlapX <= 0) continue;
+                    const overlapX2 = (B.x + B.size) - A.x;
+                    if (overlapX2 <= 0) continue;
+                    const overlapY = (A.y + A.size) - B.y;
+                    if (overlapY <= 0) continue;
+                    const overlapY2 = (B.y + B.size) - A.y;
+                    if (overlapY2 <= 0) continue;
+                    // Resolve along the axis of least penetration
+                    const ox = Math.min(overlapX, overlapX2);
+                    const oy = Math.min(overlapY, overlapY2);
+                    if (ox < oy) {
+                        // Push apart on X
+                        const half = ox / 2;
+                        if (overlapX < overlapX2) { A.x -= half; B.x += half; }
+                        else                       { A.x += half; B.x -= half; }
+                        // Elastic velocity exchange on X
+                        const tmpVx = A.vx; A.vx = B.vx; B.vx = tmpVx;
+                    } else {
+                        // Push apart on Y
+                        const half = oy / 2;
+                        if (overlapY < overlapY2) { A.y -= half; B.y += half; }
+                        else                      { A.y += half; B.y -= half; }
+                        // Elastic velocity exchange on Y
+                        const tmpVy = A.vy; A.vy = B.vy; B.vy = tmpVy;
+                    }
+                }
+            }
+
             bgRafId = requestAnimationFrame(animateBouncingImages);
         }
         
