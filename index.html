@@ -9776,6 +9776,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const xchBal = results.reduce(function(s, r) { return s + r.xchBal; }, 0);
 
             // Aggregate tokens: merge by asset_id, sum balances+values
+            const isHexStr = function(s) { return /^[0-9a-f]{8,}$/i.test((s || '').trim()); };
             const tokenMap = {};
             for (const r of results) {
                 for (const t of r.rawTokens) {
@@ -9787,13 +9788,37 @@ document.addEventListener('DOMContentLoaded', () => {
                     const pr = parseFloat(t.price || 0) || (tb && !tb.isLP ? tb.priceUsd || 0 : 0);
                     let val = parseFloat(t.total_value || 0) || bal * pr;
                     if (isLP && tb && tb.poolLiq > 0) val = (bal / tb.poolLiq) * tb.poolXch * 2 * xchPrice;
-                    const sym = t.symbol || (tb && !tb.isLP ? (tb.shortName || '').replace(/^TIBET-/i, '') : '') || (t.name || '').slice(0, 8) || aid.slice(0, 6).toUpperCase();
+                    const rawSym = (t.symbol || '').trim(), rawName = (t.name || '').trim();
+                    const tibetName = (tb && !tb.isLP && tb.shortName) ? tb.shortName.replace(/^TIBET-/i, '') : '';
+                    const sym = (!isHexStr(rawSym) && rawSym) || tibetName || (!isHexStr(rawName) && rawName) || aid.slice(0, 6).toUpperCase();
+                    const name = (!isHexStr(rawName) && rawName) || (!isHexStr(rawSym) && rawSym) || tibetName || sym;
                     if (tokenMap[aid]) {
                         tokenMap[aid].balance += bal;
                         tokenMap[aid].value += val;
                         if (isLP && tb && tb.poolLiq > 0) tokenMap[aid].value = (tokenMap[aid].balance / tb.poolLiq) * tb.poolXch * 2 * xchPrice;
                     } else {
-                        tokenMap[aid] = { sym: sym, name: t.name || sym, assetId: t.asset_id || aid, balance: bal, price: pr, value: val, isLP: isLP, pairName: (tb && tb.pairName) ? tb.pairName : '' };
+                        tokenMap[aid] = { sym: sym, name: name, assetId: t.asset_id || aid, balance: bal, price: pr, value: val, isLP: isLP, pairName: (tb && tb.pairName) ? tb.pairName : '' };
+                    }
+                }
+            }
+            // TAIL database fallback for tokens still showing as hex IDs
+            const nameCache = window._catNameCache = window._catNameCache || {};
+            const unknownToks = Object.values(tokenMap).filter(function(t) { return !t.isLP && isHexStr(t.sym); });
+            if (unknownToks.length > 0) {
+                const toFetch = unknownToks.filter(function(t) { return !(t.assetId in nameCache); });
+                if (toFetch.length > 0) {
+                    const fetched = await Promise.all(toFetch.map(function(t) {
+                        return fetch('https://api.taildatabase.com/coin/' + t.assetId)
+                            .then(function(r) { return r.ok ? r.json() : null; })
+                            .catch(function() { return null; });
+                    }));
+                    toFetch.forEach(function(t, i) { nameCache[t.assetId] = fetched[i] || null; });
+                }
+                for (const t of unknownToks) {
+                    const c = nameCache[t.assetId];
+                    if (c) {
+                        if (c.name && !isHexStr(c.name)) { t.name = c.name; if (isHexStr(t.sym)) t.sym = c.code || c.ticker || c.name.slice(0,8); }
+                        if ((c.code || c.ticker) && !isHexStr(c.code || c.ticker)) t.sym = c.code || c.ticker;
                     }
                 }
             }
@@ -9831,13 +9856,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         function tokenRow(t) {
             var isLP = t.isLP;
+            var isHex = function(s) { return /^[0-9a-f]{8,}$/i.test((s||'').trim()); };
             var displayName = isLP
                 ? (t.pairName || t.name || t.sym)
-                : (/^[0-9a-f]{60,}$/i.test(t.name) ? t.sym : (t.name || t.sym));
+                : (!isHex(t.name) && t.name ? t.name : (!isHex(t.sym) && t.sym ? t.sym : t.assetId.slice(0,8) + '\u2026'));
             var sub = isLP
                 ? ('TibetSwap LP \u00b7 ' + fmtBal(t.balance))
                 : (fmtBal(t.balance) + (t.price > 0 ? ' \u00b7 $' + (t.price < 0.0001 ? t.price.toExponential(2) : t.price < 0.01 ? t.price.toFixed(6) : t.price.toFixed(4)) : ''));
-            var link = isLP ? 'https://app.tibetswap.io' : 'https://dexie.space/offers?assetId=' + t.assetId;
+            var link = isLP ? 'https://app.tibetswap.io' : 'https://www.spacescan.io/cat/' + t.assetId;
             var color = isLP ? '#63b3ed' : '#fbbf24';
             var iconBg = isLP ? 'linear-gradient(135deg,#1e3a5f,#2563eb)' : 'linear-gradient(135deg,#78350f,#d97706)';
             var iconInner = isLP ? '\ud83d\udd04' : '<span style="font-size:10px;font-weight:900;color:#fff;">' + t.sym.slice(0,3).toUpperCase() + '</span>';
