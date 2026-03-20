@@ -5460,13 +5460,18 @@
                 collage.appendChild(img);
 
                 const angle = Math.random() * 360;
-                const rotSpeed = (Math.random() - 0.5) * 2 * maxRotSpeed;
+                // ~25% of images rotate slowly; the rest stay flat but move faster
+                const doesRotate = Math.random() < 0.25;
+                const rotSpeed = doesRotate ? (Math.random() - 0.5) * 2 * maxRotSpeed : 0;
+                const speedMult = doesRotate
+                    ? (0.6 + Math.random() * 0.8)           // normal speed range
+                    : (1.2 + Math.random() * 0.8);          // 1.2–2.0× faster, no rotation
                 const imageData = {
                     element: img,
                     x: Math.random() * Math.max(0, viewportW - size),
                     y: Math.random() * Math.max(0, viewportH - size),
-                    vx: (Math.random() - 0.5) * 2 * speedScale * (0.6 + Math.random() * 0.8),
-                    vy: (Math.random() - 0.5) * 2 * speedScale * (0.6 + Math.random() * 0.8),
+                    vx: (Math.random() - 0.5) * 2 * speedScale * speedMult,
+                    vy: (Math.random() - 0.5) * 2 * speedScale * speedMult,
                     rot: angle,
                     rotSpeed: rotSpeed,
                     size: size,
@@ -5507,8 +5512,11 @@
                         img.x = Math.random() * Math.max(0, viewportW - img.size);
                         img.y = Math.random() * Math.max(0, viewportH - img.size);
                         const spd = _lowEnd ? 0.5 : (_midRange ? 0.9 : 1.5);
-                        img.vx = (Math.random() - 0.5) * 2 * spd * (0.6 + Math.random() * 0.8);
-                        img.vy = (Math.random() - 0.5) * 2 * spd * (0.6 + Math.random() * 0.8);
+                        const rMult = img.rotSpeed !== 0
+                            ? (0.6 + Math.random() * 0.8)
+                            : (1.2 + Math.random() * 0.8);
+                        img.vx = (Math.random() - 0.5) * 2 * spd * rMult;
+                        img.vy = (Math.random() - 0.5) * 2 * spd * rMult;
                         img.born = nowTs;
                         img.visible = true;
                         const newOpacity = 0.38 + Math.random() * 0.42;
