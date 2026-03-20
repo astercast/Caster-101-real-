@@ -9411,27 +9411,22 @@ document.addEventListener('DOMContentLoaded', () => {
     <!-- ═══════════════════════════════════════════════════════════ -->
     <script type="module">
         async function loadWalletConnect() {
-            const CDNS = [
-                'https://unpkg.com/@walletconnect/sign-client@2.17.0/dist/index.umd.js',
-                'https://cdn.jsdelivr.net/npm/@walletconnect/sign-client@2.17.0/dist/index.umd.js',
+            // WalletConnect v2 is ESM-only — no UMD bundle exists.
+            // Try jsDelivr ESM CDN first (esm.run), then esm.sh bundle as fallback.
+            const cdns = [
+                'https://esm.run/@walletconnect/sign-client@2',
+                'https://esm.sh/@walletconnect/sign-client@2?bundle',
             ];
-            for (const cdn of CDNS) {
+            for (const cdn of cdns) {
                 try {
-                    await new Promise((res, rej) => {
-                        const s = document.createElement('script');
-                        s.src = cdn; s.onload = res; s.onerror = rej;
-                        document.head.appendChild(s);
-                    });
-                    // UMD bundle sets window.SignClient
-                    if (window.SignClient) { window._WCSignClient = window.SignClient; break; }
+                    const m = await import(cdn);
+                    const SC = (m && m.SignClient) || (m && m.default && m.default.SignClient) || (m && m.default);
+                    if (SC && typeof SC.init === 'function') {
+                        window._WCSignClient = SC;
+                        console.log('[Sage] SDK loaded from', cdn);
+                        break;
+                    }
                 } catch(e) { console.warn('[Sage] CDN failed:', cdn, e.message || e); }
-            }
-            // ESM fallback
-            if (!window._WCSignClient) {
-                try {
-                    const m = await import('https://esm.sh/@walletconnect/sign-client@2?bundle');
-                    if (m && m.SignClient) window._WCSignClient = m.SignClient;
-                } catch(e) { console.warn('[Sage] ESM fallback failed:', e.message || e); }
             }
             window.dispatchEvent(new CustomEvent('sage-wc-sdk-ready'));
         }
@@ -9479,28 +9474,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function sageConnect() {
         if (_sageSession) { showSageMenu(); return; }
-        // If SDK didn't load at page start, try once more before showing error
+        // If SDK didn't load at page start, try once more via ESM before showing error
         if (!_sageWCClient) {
             if (SAGE_WC_PROJECT_ID === 'REPLACE_WITH_YOUR_WC_PROJECT_ID') {
                 alert('A free WalletConnect Project ID is required.\nGet one at: https://cloud.walletconnect.com\nThen paste it into the SAGE_WC_PROJECT_ID variable in index.html.');
                 return;
             }
             updateSageBtn('connecting');
-            // Try loading SDK on demand
-            const CDNS = [
-                'https://unpkg.com/@walletconnect/sign-client@2.17.0/dist/index.umd.js',
-                'https://cdn.jsdelivr.net/npm/@walletconnect/sign-client@2.17.0/dist/index.umd.js',
-            ];
-            for (const cdn of CDNS) {
-                try {
-                    await new Promise((res, rej) => {
-                        if (window._WCSignClient) { res(); return; }
-                        const s = document.createElement('script');
-                        s.src = cdn; s.onload = res; s.onerror = rej;
-                        document.head.appendChild(s);
-                    });
-                    if (window.SignClient) { window._WCSignClient = window.SignClient; break; }
-                } catch(e) {}
+            if (!window._WCSignClient) {
+                const cdns = [
+                    'https://esm.run/@walletconnect/sign-client@2',
+                    'https://esm.sh/@walletconnect/sign-client@2?bundle',
+                ];
+                for (const cdn of cdns) {
+                    try {
+                        const m = await import(cdn);
+                        const SC = (m && m.SignClient) || (m && m.default && m.default.SignClient) || (m && m.default);
+                        if (SC && typeof SC.init === 'function') { window._WCSignClient = SC; break; }
+                    } catch(e) { console.warn('[Sage] Retry CDN failed:', cdn); }
+                }
             }
             if (window._WCSignClient) await initSageWC();
             if (!_sageWCClient) {
