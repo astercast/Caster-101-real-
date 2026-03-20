@@ -5483,7 +5483,7 @@
                     rot: angle,
                     rotSpeed: rotSpeed,
                     size: size,
-                    lifetime: Math.random() * 20000 + 12000,
+                    lifetime: Math.random() * 45000 + 45000,
                     born: Date.now(),
                     visible: true
                 };
@@ -5515,7 +5515,7 @@
                         img.element.style.transition = 'opacity 0.7s ease';
                         img.element.style.opacity = '0';
                         img.visible = false;
-                        img.respawnTime = nowTs + Math.random() * 2000 + 500;
+                        img.respawnTime = nowTs + Math.random() * 12000 + 8000;
                     } else if (nowTs > img.respawnTime) {
                         img.x = Math.random() * Math.max(0, viewportW - img.size);
                         img.y = Math.random() * Math.max(0, viewportH - img.size);
