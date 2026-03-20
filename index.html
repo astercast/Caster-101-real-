@@ -5391,31 +5391,31 @@
             const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
             const isMobile = viewportW <= 768;
 
+            // All thumbs are 280px max / JPEG 75% — 4-22KB each, safe to load many at once
             const images = [
-                // Featured art
-                'images/Untitled_Artwork_Original.png',
-                // New G series
-                'images/GkS2-8oW4AA0jTv.jpg', 'images/Gllk9ozbkAAnkci.png',
-                'images/GmIBVcwbcAAvj1m.jpg', 'images/GmIwe7ibYAAP7LP.jpg',
-                'images/GplDbYtacAA6eMe.jpg', 'images/GqFrs7ZaYAAo3h-.jpg',
-                // Uploaded collections (all of them)
-                'images/uploaded_image_2_1768636844588.png', 'images/uploaded_image_3_1768636844588.png',
-                'images/uploaded_image_4_1768636844588.jpg', 'images/uploaded_image_1_1768638579775.png',
-                'images/uploaded_image_3_1768638579775.png',
-                'images/uploaded_image_4_1768638579775.jpg',
-                'images/uploaded_image_2_1768638691015.png', 'images/uploaded_image_3_1768638691015.png',
-                'images/uploaded_image_4_1768638691015.jpg', 'images/uploaded_image_1_1768638712026.jpg',
-                'images/uploaded_image_2_1768638712026.jpg', 'images/uploaded_image_3_1768638712026.png',
-                'images/uploaded_image_4_1768638712026.jpg',
-                // Photography
-                'images/IMG_0199.jpeg', 'images/IMG_0205.jpeg', 'images/IMG_2987.jpeg',
-                'images/IMG_5288.jpeg', 'images/IMG_5410.jpeg', 'images/IMG_7496.jpeg',
-                'images/IMG_7578.jpeg', 'images/IMG_7828.jpeg',
-                'images/IMG_7866.jpeg', 'images/IMG_8048.jpeg', 'images/IMG_8330.jpeg',
-                'images/IMG_8371.jpeg', 'images/IMG_9197.jpeg', 'images/image0.jpeg',
-                // Themed
-                'images/plant_your_seed.png', 'images/hodl-diamond.png',
-                'images/discord-commands.png'
+                'images/thumbs/Untitled_Artwork_Original.jpg',
+                'images/thumbs/GkS2-8oW4AA0jTv.jpg',
+                'images/thumbs/Gllk9ozbkAAnkci.jpg',
+                'images/thumbs/GmIBVcwbcAAvj1m.jpg',
+                'images/thumbs/GmIwe7ibYAAP7LP.jpg',
+                'images/thumbs/GplDbYtacAA6eMe.jpg',
+                'images/thumbs/GqFrs7ZaYAAo3h-.jpg',
+                'images/thumbs/uploaded_image_2_1768636844588.jpg',
+                'images/thumbs/uploaded_image_3_1768636844588.jpg',
+                'images/thumbs/uploaded_image_4_1768636844588.jpg',
+                'images/thumbs/uploaded_image_1_1768638579775.jpg',
+                'images/thumbs/uploaded_image_3_1768638579775.jpg',
+                'images/thumbs/uploaded_image_4_1768638579775.jpg',
+                'images/thumbs/uploaded_image_2_1768638691015.jpg',
+                'images/thumbs/uploaded_image_3_1768638691015.jpg',
+                'images/thumbs/uploaded_image_4_1768638691015.jpg',
+                'images/thumbs/uploaded_image_1_1768638712026.jpg',
+                'images/thumbs/uploaded_image_2_1768638712026.jpg',
+                'images/thumbs/uploaded_image_3_1768638712026.jpg',
+                'images/thumbs/uploaded_image_4_1768638712026.jpg',
+                'images/thumbs/plant_your_seed.jpg',
+                'images/thumbs/hodl-diamond.jpg',
+                'images/thumbs/image0.jpg',
             ];
 
             // Shuffle so distribution isn't always same order
