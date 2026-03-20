@@ -3162,6 +3162,9 @@
                 <div id="portfolioList"></div>
 
                 <!-- Chia Portfolio — appears when Sage wallet connected -->
+                <div id="chia-reload-btn" style="display:none;max-width:1000px;margin:16px auto 0;padding:0 0 4px;text-align:right;">
+                    <button onclick="if(window._sageXchAddresses)loadAndRenderChiaPortfolio(window._sageXchAddresses);" style="background:rgba(74,222,128,0.09);border:1px solid rgba(74,222,128,0.22);border-radius:16px;padding:5px 14px;font-size:11px;font-family:'Inter',sans-serif;font-weight:600;color:rgba(74,222,128,0.7);cursor:pointer;transition:all 0.15s;" onmouseover="this.style.background='rgba(74,222,128,0.16)'" onmouseout="this.style.background='rgba(74,222,128,0.09)'">&#8635; Reload Chia Portfolio</button>
+                </div>
                 <div id="chia-portfolio-section" style="display:none; max-width:1000px; margin:0 auto; padding:0 0 20px;"></div>
             </div>
         </div>
@@ -4021,8 +4024,8 @@
             // Update URL to clean path (e.g. /treasury) without reload
             if (tabName !== 'secretgame') history.pushState(null, '', '/' + tabName);
             if (tabName === "portfolio") {
-                if (window._sageXchAddress && typeof loadAndRenderChiaPortfolio === 'function') {
-                    setTimeout(function() { loadAndRenderChiaPortfolio(window._sageXchAddress); }, 50);
+                if (window._sageXchAddresses && typeof loadAndRenderChiaPortfolio === 'function') {
+                    setTimeout(function() { loadAndRenderChiaPortfolio(window._sageXchAddresses); }, 50);
                 }
             }
             if (tabName === "treasury") {
@@ -9443,7 +9446,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Get a FREE WalletConnect Project ID: https://cloud.walletconnect.com
     // ══════════════════════════════════════════════════════════════
     const SAGE_WC_PROJECT_ID = '1c5b2380dfe636b3f228a49c17d2abef';
-    let _sageWCClient = null, _sageSession = null, _sageXchAddress = null, _sagePairingUri = null;
+    let _sageWCClient = null, _sageSession = null, _sageXchAddress = null, _sageXchAddresses = null, _sagePairingUri = null;
 
     window.addEventListener('sage-wc-sdk-ready', async () => {
         if (window._WCSignClient) await initSageWC();
@@ -9539,34 +9542,56 @@ document.addEventListener('DOMContentLoaded', () => {
         if (_sageSession && _sageWCClient) {
             try { await _sageWCClient.disconnect({ topic: _sageSession.topic, reason: { code: 6000, message: 'User disconnected' } }); } catch(e) {}
         }
-        _sageSession = null; _sageXchAddress = null;
+        _sageSession = null; _sageXchAddress = null; _sageXchAddresses = null;
         updateSageBtn(false); hideSageChiaPortfolio();
     }
 
     async function onSageConnected(session, fresh) {
         _sageSession = session;
-        let xchAddress = null;
+        const chainId = (session.namespaces && session.namespaces.chia && session.namespaces.chia.chains && session.namespaces.chia.chains[0]) || 'chia:mainnet';
+        const allAddresses = [];
+        // Collect all addresses already included in namespace accounts
         for (const acc of (session.namespaces && session.namespaces.chia && session.namespaces.chia.accounts ? session.namespaces.chia.accounts : [])) {
             const addr = acc.split(':')[2] || '';
-            if (/^xch1|^txch1/.test(addr)) { xchAddress = addr; break; }
+            if (/^xch1|^txch1/.test(addr) && !allAddresses.includes(addr)) allAddresses.push(addr);
         }
-        if (!xchAddress && fresh && _sageWCClient) {
+        // Ask Sage for all public keys to get every wallet address
+        if (fresh && _sageWCClient) {
             try {
-                const chainId = (session.namespaces.chia.chains && session.namespaces.chia.chains[0]) || 'chia:mainnet';
+                const keys = await _sageWCClient.request({
+                    topic: session.topic, chainId,
+                    request: { method: 'chip0002_getPublicKeys', params: {} }
+                });
+                if (Array.isArray(keys)) {
+                    for (const k of keys) {
+                        const ph = typeof k === 'string' ? k : (k.puzzle_hash || k.fingerprint || '');
+                        if (/^[0-9a-f]{64}$/i.test(ph)) {
+                            const addr = puzzleHashToXchAddress(ph, 'xch');
+                            if (!allAddresses.includes(addr)) allAddresses.push(addr);
+                        }
+                    }
+                }
+            } catch(e) { console.warn('[Sage] getPublicKeys:', e && e.message ? e.message : e); }
+        }
+        // Fallback: derive one address from a coin
+        if (allAddresses.length === 0 && fresh && _sageWCClient) {
+            try {
                 const coins = await _sageWCClient.request({
                     topic: session.topic, chainId,
                     request: { method: 'chip0002_getAssetCoins', params: { type: null, assetId: null, includedLocked: false, limit: 1 } }
                 });
                 if (Array.isArray(coins) && coins[0] && coins[0].coin && coins[0].coin.puzzle_hash) {
-                    xchAddress = puzzleHashToXchAddress(coins[0].coin.puzzle_hash, 'xch');
+                    allAddresses.push(puzzleHashToXchAddress(coins[0].coin.puzzle_hash, 'xch'));
                 }
             } catch(e) { console.warn('[Sage] Could not derive XCH address:', e && e.message ? e.message : e); }
         }
-        _sageXchAddress = xchAddress;
-        updateSageBtn(true, xchAddress);
-        if (xchAddress) {
+        console.log('[Sage] Connected with', allAddresses.length, 'address(es)', allAddresses);
+        _sageXchAddresses = allAddresses.length > 0 ? allAddresses : null;
+        _sageXchAddress = allAddresses[0] || null;
+        updateSageBtn(true, _sageXchAddress);
+        if (_sageXchAddresses) {
             if (!document.getElementById('portfolio') || !document.getElementById('portfolio').classList.contains('active')) showTab('portfolio');
-            loadAndRenderChiaPortfolio(xchAddress);
+            loadAndRenderChiaPortfolio(_sageXchAddresses);
         }
     }
 
@@ -9603,7 +9628,7 @@ document.addEventListener('DOMContentLoaded', () => {
         popup.style.top = (rect.bottom + 8) + 'px';
         popup.style.right = (window.innerWidth - rect.right) + 'px';
         document.body.appendChild(popup);
-        document.getElementById('_smer') && document.getElementById('_smer').addEventListener('click', function() { popup.remove(); if (_sageXchAddress) loadAndRenderChiaPortfolio(_sageXchAddress); });
+        document.getElementById('_smer') && document.getElementById('_smer').addEventListener('click', function() { popup.remove(); if (_sageXchAddresses) loadAndRenderChiaPortfolio(_sageXchAddresses); });
         document.getElementById('_smdi') && document.getElementById('_smdi').addEventListener('click', function() { popup.remove(); sageDisconnect(); });
         setTimeout(function() {
             function dismiss(e) { if (!popup.contains(e.target) && e.target !== btn) { popup.remove(); document.removeEventListener('click', dismiss); } }
@@ -9672,12 +9697,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ── Chia portfolio — single-wallet fetch + render ────────────────
-    async function loadAndRenderChiaPortfolio(xchAddress) {
+    async function loadAndRenderChiaPortfolio(addresses) {
+        const addrList = Array.isArray(addresses) ? addresses : (addresses ? [addresses] : []);
+        if (!addrList.length) return;
         var section = document.getElementById('chia-portfolio-section');
         if (!section) return;
         if (!document.getElementById('portfolio') || !document.getElementById('portfolio').classList.contains('active')) showTab('portfolio');
         section.style.display = 'block';
-        section.innerHTML = '<div style="border-top:2px solid rgba(74,222,128,0.15);margin-top:28px;padding:40px 20px;text-align:center;"><div style="font-size:36px;margin-bottom:12px;animation:pulse 1.5s infinite;">\ud83c\udf31</div><div style="font-size:15px;color:#4ade80;font-weight:700;font-family:Inter,sans-serif;margin-bottom:6px;">Loading Chia Portfolio\u2026</div><div style="font-size:12px;color:rgba(255,255,255,0.35);font-family:Inter,sans-serif;">XCH \u00b7 CATs \u00b7 TibetSwap LP \u00b7 NFTs</div></div>';
+        var reloadBtn = document.getElementById('chia-reload-btn');
+        if (reloadBtn) reloadBtn.style.display = 'block';
+        section.innerHTML = '<div style="border-top:2px solid rgba(74,222,128,0.15);margin-top:28px;padding:40px 20px;text-align:center;"><div style="font-size:36px;margin-bottom:12px;animation:pulse 1.5s infinite;">\ud83c\udf31</div><div style="font-size:15px;color:#4ade80;font-weight:700;font-family:Inter,sans-serif;margin-bottom:6px;">Loading Chia Portfolio\u2026</div><div style="font-size:12px;color:rgba(255,255,255,0.35);font-family:Inter,sans-serif;">' + addrList.length + ' wallet' + (addrList.length > 1 ? 's' : '') + ' \u00b7 XCH \u00b7 CATs \u00b7 TibetSwap LP \u00b7 NFTs</div></div>';
         try {
             let xchPrice = window._chiaXchPrice || 0;
             if (!xchPrice) {
@@ -9687,7 +9716,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (!xchPrice) xchPrice = 3.0;
 
-            // TibetSwap pairs — paginate to get ALL pairs (not just first 200)
+            // TibetSwap pairs — paginate to get ALL pairs
             let tm = window._sagePortfolioTibetMap;
             if (!tm) {
                 let allPairs = [], tPage = 1;
@@ -9715,49 +9744,70 @@ document.addEventListener('DOMContentLoaded', () => {
                 window._sagePortfolioTibetMap = tm;
             }
 
-            const xchBal = await fetch('https://xchscan.com/api/account/balance?address=' + xchAddress, { cache: 'no-store' })
-                .then(function(r) { return r.ok ? r.json() : {}; })
-                .then(function(d) { return parseFloat((d && d.xch) ? d.xch : 0); })
-                .catch(function() { return 0; });
+            // Fetch all addresses in parallel then aggregate
+            const results = await Promise.all(addrList.map(async function(addr) {
+                let xchBal = 0;
+                try {
+                    xchBal = await fetch('https://xchscan.com/api/account/balance?address=' + addr, { cache: 'no-store' })
+                        .then(function(r) { return r.ok ? r.json() : {}; })
+                        .then(function(d) { return parseFloat((d && d.xch) ? d.xch : 0); })
+                        .catch(function() { return 0; });
+                } catch(e) {}
+                let rawTokens = [];
+                try {
+                    let sPage = 1;
+                    while (true) {
+                        const td = await fetch('https://api.spacescan.io/address/token-balance/' + addr + '?page=' + sPage + '&count=200', { cache: 'no-store' }).then(function(r) { return r.json(); }).catch(function() { return null; });
+                        if (!td || !Array.isArray(td.data) || !td.data.length) break;
+                        rawTokens = rawTokens.concat(td.data);
+                        if (td.data.length < 200) break;
+                        sPage++;
+                    }
+                } catch(e) {}
+                let nfts = [];
+                try {
+                    const nd = await fetch('https://api.spacescan.io/address/nft-balance/' + addr, { cache: 'no-store' }).then(function(r) { return r.json(); }).catch(function() { return null; });
+                    if (nd && Array.isArray(nd.balance)) nfts = nd.balance;
+                } catch(e) {}
+                return { xchBal: xchBal, rawTokens: rawTokens, nfts: nfts };
+            }));
 
-            // Spacescan token-balance — paginate to get ALL tokens
-            let rawTokens = [];
-            try {
-                let sPage = 1;
-                while (true) {
-                    const td = await fetch('https://api.spacescan.io/address/token-balance/' + xchAddress + '?page=' + sPage + '&count=200', { cache: 'no-store' }).then(function(r) { return r.json(); }).catch(function() { return null; });
-                    if (!td || !Array.isArray(td.data) || !td.data.length) break;
-                    rawTokens = rawTokens.concat(td.data);
-                    if (td.data.length < 200) break;
-                    sPage++;
+            // Aggregate XCH
+            const xchBal = results.reduce(function(s, r) { return s + r.xchBal; }, 0);
+
+            // Aggregate tokens: merge by asset_id, sum balances+values
+            const tokenMap = {};
+            for (const r of results) {
+                for (const t of r.rawTokens) {
+                    if (!(parseFloat(t.balance || 0) > 0)) continue;
+                    const aid = (t.asset_id || '').toLowerCase();
+                    const tb = tm[aid] || null;
+                    const isLP = !!(tb && tb.isLP) || (t.name || '').toLowerCase().includes('tibet');
+                    const bal = parseFloat(t.balance || 0);
+                    const pr = parseFloat(t.price || 0) || (tb && !tb.isLP ? tb.priceUsd || 0 : 0);
+                    let val = parseFloat(t.total_value || 0) || bal * pr;
+                    if (isLP && tb && tb.poolLiq > 0) val = (bal / tb.poolLiq) * tb.poolXch * 2 * xchPrice;
+                    const sym = t.symbol || (tb && !tb.isLP ? (tb.shortName || '').replace(/^TIBET-/i, '') : '') || (t.name || '').slice(0, 8) || aid.slice(0, 6).toUpperCase();
+                    if (tokenMap[aid]) {
+                        tokenMap[aid].balance += bal;
+                        tokenMap[aid].value += val;
+                        if (isLP && tb && tb.poolLiq > 0) tokenMap[aid].value = (tokenMap[aid].balance / tb.poolLiq) * tb.poolXch * 2 * xchPrice;
+                    } else {
+                        tokenMap[aid] = { sym: sym, name: t.name || sym, assetId: t.asset_id || aid, balance: bal, price: pr, value: val, isLP: isLP, pairName: (tb && tb.pairName) ? tb.pairName : '' };
+                    }
                 }
-            } catch(e) { console.warn('[ChiaPortfolio] tokens:', e.message); }
+            }
+            const tokens = Object.values(tokenMap);
+            const nfts = results.reduce(function(acc, r) { return acc.concat(r.nfts); }, []);
 
-            const tokens = rawTokens.filter(function(t) { return parseFloat(t.balance || 0) > 0; }).map(function(t) {
-                const aid = (t.asset_id || '').toLowerCase();
-                const tb = tm[aid] || null;
-                const isLP = !!(tb && tb.isLP) || (t.name || '').toLowerCase().includes('tibet');
-                const bal = parseFloat(t.balance || 0);
-                const pr = parseFloat(t.price || 0) || (tb && !tb.isLP ? tb.priceUsd || 0 : 0);
-                let val = parseFloat(t.total_value || 0) || bal * pr;
-                if (isLP && tb && tb.poolLiq > 0) val = (bal / tb.poolLiq) * tb.poolXch * 2 * xchPrice;
-                const sym = t.symbol || (tb && !tb.isLP ? (tb.shortName || '').replace(/^TIBET-/i, '') : '') || (t.name || '').slice(0, 8) || aid.slice(0, 6).toUpperCase();
-                return { sym: sym, name: t.name || sym, assetId: t.asset_id || aid, balance: bal, price: pr, value: val, isLP: isLP, pairName: (tb && tb.pairName) ? tb.pairName : '' };
-            });
-
-            let nfts = [];
-            try {
-                const nd = await fetch('https://api.spacescan.io/address/nft-balance/' + xchAddress, { cache: 'no-store' }).then(function(r) { return r.json(); }).catch(function() { return null; });
-                if (nd && Array.isArray(nd.balance)) nfts = nd.balance;
-            } catch(e) { console.warn('[ChiaPortfolio] nfts:', e.message); }
-
-            renderChiaPortfolioSection(xchAddress, xchBal, xchPrice, tokens, nfts, section);
+            renderChiaPortfolioSection(addrList, xchBal, xchPrice, tokens, nfts, section);
         } catch(err) {
             section.innerHTML = '<div style="border-top:2px solid rgba(74,222,128,0.15);margin-top:28px;padding:40px 20px;text-align:center;color:#ef4444;"><div style="font-size:32px;margin-bottom:12px;">\u26a0\ufe0f</div><div style="font-size:16px;font-weight:700;margin-bottom:8px;font-family:Inter,sans-serif;">Chia Portfolio Error</div><div style="font-size:12px;color:rgba(255,255,255,0.4);font-family:Inter,sans-serif;">' + err.message + '</div></div>';
         }
     }
 
-    function renderChiaPortfolioSection(address, xchBal, xchPrice, tokens, nfts, container) {
+    function renderChiaPortfolioSection(addressOrList, xchBal, xchPrice, tokens, nfts, container) {
+        const addrList = Array.isArray(addressOrList) ? addressOrList : [addressOrList];
         const xchV = xchBal * xchPrice;
         // Merge LPs + CATs, sort by value desc
         const all = tokens.slice().sort(function(a, b) { return (b.value || 0) - (a.value || 0); });
@@ -9774,7 +9824,9 @@ document.addEventListener('DOMContentLoaded', () => {
             colMap[k].count++;
         }
         const cols = Object.values(colMap).sort(function(a, b) { return b.count - a.count; });
-        const shortAddr = address.slice(0, 8) + '\u2026' + address.slice(-6);
+        const walletLabel = addrList.length > 1
+            ? addrList.length + ' wallets'
+            : (addrList[0].slice(0, 8) + '\u2026' + addrList[0].slice(-6));
         const uid = 'lcv' + Math.random().toString(36).slice(2, 7);
 
         function tokenRow(t) {
@@ -9810,7 +9862,7 @@ document.addEventListener('DOMContentLoaded', () => {
         h += '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">'
             + '<div style="display:flex;align-items:center;gap:9px;"><span style="font-size:18px;">\ud83c\udf31</span>'
             + '<div><div style="font-size:16px;font-weight:900;color:#4ade80;font-family:Inter,sans-serif;line-height:1.2;">Chia Portfolio</div>'
-            + '<div style="font-size:10px;color:rgba(255,255,255,0.25);font-family:monospace;">' + shortAddr + '</div></div></div>'
+            + '<div style="font-size:10px;color:rgba(255,255,255,0.25);font-family:monospace;">' + walletLabel + '</div></div></div>'
             + '<div style="font-size:22px;font-weight:900;color:#4ade80;font-family:Inter,sans-serif;">' + fmtUsd(total) + '</div></div>';
 
         // Stat pills
@@ -9884,6 +9936,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function hideSageChiaPortfolio() {
         var s = document.getElementById('chia-portfolio-section');
         if (s) { s.style.display = 'none'; s.innerHTML = ''; }
+        var b = document.getElementById('chia-reload-btn');
+        if (b) b.style.display = 'none';
     }
     </script>
 
