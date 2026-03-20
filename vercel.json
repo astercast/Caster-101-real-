@@ -3,6 +3,7 @@
   "rewrites": [
     { "source": "/market", "destination": "/market.html" },
     { "source": "/bag", "destination": "/bag.html" },
+    { "source": "/portfolio", "destination": "/bag.html" },
     { "source": "/treasury", "destination": "/treasury.html" },
     { "source": "/howto", "destination": "/howto.html" },
     { "source": "/book", "destination": "/book.html" },
