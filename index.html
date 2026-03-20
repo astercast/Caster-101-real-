@@ -41,6 +41,9 @@
     <link rel="preconnect" href="https://api.v2.tibetswap.io">
     <link rel="preconnect" href="https://xchscan.com">
     <link rel="preconnect" href="https://api.mintgarden.io">
+    <link rel="preconnect" href="https://api.qrserver.com">
+    <link rel="preconnect" href="https://relay.walletconnect.org">
+    <link rel="preconnect" href="https://esm.sh">
     <style>
         /* Fonts loaded via <link> above — no blocking @import */
         
@@ -2810,6 +2813,11 @@
                     transition: background 0.2s, border-color 0.2s;
                 " onmouseover="this.style.background='rgba(251,191,36,0.18)'" onmouseout="this.style.background='rgba(251,191,36,0.08)'">🏦 vault.chia.net</a>
             </div>
+            <!-- Sage Wallet Connect button -->
+            <button id="sage-connect-btn" onclick="sageConnect()"
+                style="position:absolute;top:14px;right:14px;background:rgba(0,0,0,0.45);border:1px solid rgba(74,222,128,0.35);border-radius:20px;padding:6px 14px;color:rgba(255,255,255,0.75);font-size:11px;font-family:'Inter',sans-serif;font-weight:600;cursor:pointer;letter-spacing:0.4px;transition:all 0.2s;backdrop-filter:blur(8px);z-index:30;white-space:nowrap;">
+                🌱 Connect Sage
+            </button>
         </div>
 
     <script>
@@ -2822,6 +2830,25 @@
         };
         
     </script>
+
+        <!-- Sage WalletConnect Pairing Modal -->
+        <div id="sage-wc-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:9998;align-items:center;justify-content:center;backdrop-filter:blur(6px);">
+            <div style="background:rgba(6,12,6,0.98);border:1px solid rgba(74,222,128,0.4);border-radius:18px;padding:28px 24px;max-width:320px;width:calc(100% - 40px);text-align:center;box-shadow:0 0 60px rgba(74,222,128,0.12),0 24px 64px rgba(0,0,0,0.65);">
+                <div style="font-size:20px;font-weight:900;color:#4ade80;margin-bottom:6px;font-family:'Inter',sans-serif;">🌱 Connect Sage Wallet</div>
+                <div style="font-size:12px;color:rgba(255,255,255,0.45);margin-bottom:20px;line-height:1.65;font-family:'Inter',sans-serif;">Open Sage → WalletConnect → Scan QR<br>or paste the URI into Sage manually</div>
+                <div id="sage-wc-qr-container" style="width:200px;height:200px;margin:0 auto 16px;background:#fff;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;">
+                    <span style="font-size:12px;color:#999;font-family:'Inter',sans-serif;">Generating QR…</span>
+                </div>
+                <div style="display:flex;gap:8px;margin-bottom:10px;">
+                    <input id="sage-wc-uri-input" type="text" readonly placeholder="wc:…"
+                        style="flex:1;min-width:0;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 10px;font-size:10px;color:rgba(255,255,255,0.55);font-family:monospace;outline:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                    <button onclick="copySageUri()" style="background:rgba(74,222,128,0.12);border:1px solid rgba(74,222,128,0.3);border-radius:8px;padding:8px 12px;color:#4ade80;font-size:11px;font-family:'Inter',sans-serif;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;">Copy</button>
+                </div>
+                <button onclick="tryOpenSage()" style="width:100%;background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.3);border-radius:10px;padding:10px;color:#4ade80;font-size:12px;font-family:'Inter',sans-serif;font-weight:700;cursor:pointer;margin-bottom:8px;transition:all 0.2s;" onmouseover="this.style.background='rgba(74,222,128,0.18)'" onmouseout="this.style.background='rgba(74,222,128,0.1)'">⬆ Open Sage App</button>
+                <button onclick="hideWCModal()" style="width:100%;background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:10px;color:rgba(255,255,255,0.4);font-size:12px;font-family:'Inter',sans-serif;cursor:pointer;">Cancel</button>
+            </div>
+        </div>
+
         <div class="tabs">
             <div class="tab" onclick="showTab('market')"><span class="tab-emoji">📈</span><span class="tab-label-full"> EMOJI MARKET </span><span class="tab-label-short">MARKET</span><span class="tab-emoji">📈</span></div>
             <div class="tab" onclick="showTab('portfolio')"><span class="tab-emoji">💰</span><span class="tab-label-full"> BAG </span><span class="tab-label-short">BAG</span><span class="tab-emoji">💰</span></div>
@@ -3134,6 +3161,9 @@
 
                 <!-- Positions List -->
                 <div id="portfolioList"></div>
+
+                <!-- Chia Portfolio — appears when Sage wallet connected -->
+                <div id="chia-portfolio-section" style="display:none; max-width:1000px; margin:0 auto; padding:0 0 20px;"></div>
             </div>
         </div>
 
@@ -9369,6 +9399,401 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         })();
+    </script>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- SAGE WALLET CONNECT — CHIP-0002                            -->
+    <!-- Load WalletConnect SignClient via ESM CDN (no build step)  -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <script type="module">
+        async function loadWalletConnect() {
+            try {
+                const { SignClient } = await import('https://esm.sh/@walletconnect/sign-client@2?bundle');
+                window._WCSignClient = SignClient;
+            } catch(e) {
+                console.warn('[Sage] WalletConnect SDK load failed:', e.message);
+                window._WCSignClient = null;
+            }
+            window.dispatchEvent(new CustomEvent('sage-wc-sdk-ready'));
+        }
+        loadWalletConnect();
+    </script>
+
+    <script>
+    // ══════════════════════════════════════════════════════════════
+    // SAGE WALLET CONNECT — CHIP-0002 dApp Integration
+    // Get a FREE WalletConnect Project ID: https://cloud.walletconnect.com
+    // ══════════════════════════════════════════════════════════════
+    const SAGE_WC_PROJECT_ID = 'REPLACE_WITH_YOUR_WC_PROJECT_ID';
+    let _sageWCClient = null, _sageSession = null, _sageXchAddress = null, _sagePairingUri = null;
+
+    window.addEventListener('sage-wc-sdk-ready', async () => {
+        if (window._WCSignClient) await initSageWC();
+        else console.warn('[Sage] WalletConnect SDK unavailable — connect button disabled');
+    });
+
+    async function initSageWC() {
+        try {
+            _sageWCClient = await window._WCSignClient.init({
+                projectId: SAGE_WC_PROJECT_ID,
+                relayUrl: 'wss://relay.walletconnect.org',
+                metadata: {
+                    name: 'Caster101',
+                    description: 'aWizard Community Hub — Track Your Chia Bag',
+                    url: window.location.origin,
+                    icons: [window.location.origin + '/images/favicon.webp'],
+                }
+            });
+            const now = Date.now() / 1000;
+            for (const s of _sageWCClient.session.getAll()) {
+                if (s.expiry <= now) _sageWCClient.session.delete(s.topic, { code: 6000, message: 'expired' }).catch(() => {});
+            }
+            const active = _sageWCClient.session.getAll().filter(s => s.expiry > now);
+            if (active.length > 0) await onSageConnected(active[0], false);
+            _sageWCClient.on('session_delete', () => {
+                _sageSession = null; _sageXchAddress = null;
+                updateSageBtn(false); hideSageChiaPortfolio();
+            });
+            console.log('[Sage] WalletConnect ready ✓');
+        } catch(e) { console.warn('[Sage] WC init error:', e && e.message ? e.message : e); }
+    }
+
+    async function sageConnect() {
+        if (_sageSession) { showSageMenu(); return; }
+        if (!_sageWCClient) {
+            if (SAGE_WC_PROJECT_ID === 'REPLACE_WITH_YOUR_WC_PROJECT_ID') {
+                alert('A free WalletConnect Project ID is required.\nGet one at: https://cloud.walletconnect.com\nThen paste it into the SAGE_WC_PROJECT_ID variable in index.html.');
+            } else {
+                alert('WalletConnect SDK not loaded. Check your network connection.');
+            }
+            return;
+        }
+        try {
+            updateSageBtn('connecting');
+            const { uri, approval } = await _sageWCClient.connect({
+                requiredNamespaces: {
+                    chia: {
+                        methods: ['chip0002_getPublicKeys', 'chip0002_getAssetCoins', 'chip0002_getAssetBalance'],
+                        chains: ['chia:mainnet', 'chia:testnet11'],
+                        events: [],
+                    }
+                }
+            });
+            if (uri) showWCModal(uri);
+            const session = await approval();
+            hideWCModal();
+            await onSageConnected(session, true);
+        } catch(e) {
+            hideWCModal(); updateSageBtn(false);
+            const msg = String(e && e.message ? e.message : e).toLowerCase();
+            if (!msg.includes('rejected') && !msg.includes('cancelled')) console.warn('[Sage] Connect error:', e && e.message ? e.message : e);
+        }
+    }
+
+    async function sageDisconnect() {
+        if (_sageSession && _sageWCClient) {
+            try { await _sageWCClient.disconnect({ topic: _sageSession.topic, reason: { code: 6000, message: 'User disconnected' } }); } catch(e) {}
+        }
+        _sageSession = null; _sageXchAddress = null;
+        updateSageBtn(false); hideSageChiaPortfolio();
+    }
+
+    async function onSageConnected(session, fresh) {
+        _sageSession = session;
+        let xchAddress = null;
+        for (const acc of (session.namespaces && session.namespaces.chia && session.namespaces.chia.accounts ? session.namespaces.chia.accounts : [])) {
+            const addr = acc.split(':')[2] || '';
+            if (/^xch1|^txch1/.test(addr)) { xchAddress = addr; break; }
+        }
+        if (!xchAddress && fresh && _sageWCClient) {
+            try {
+                const chainId = (session.namespaces.chia.chains && session.namespaces.chia.chains[0]) || 'chia:mainnet';
+                const coins = await _sageWCClient.request({
+                    topic: session.topic, chainId,
+                    request: { method: 'chip0002_getAssetCoins', params: { type: null, assetId: null, includedLocked: false, limit: 1 } }
+                });
+                if (Array.isArray(coins) && coins[0] && coins[0].coin && coins[0].coin.puzzle_hash) {
+                    xchAddress = puzzleHashToXchAddress(coins[0].coin.puzzle_hash, 'xch');
+                }
+            } catch(e) { console.warn('[Sage] Could not derive XCH address:', e && e.message ? e.message : e); }
+        }
+        _sageXchAddress = xchAddress;
+        updateSageBtn(true, xchAddress);
+        if (xchAddress) {
+            if (!document.getElementById('portfolio') || !document.getElementById('portfolio').classList.contains('active')) showTab('portfolio');
+            loadAndRenderChiaPortfolio(xchAddress);
+        }
+    }
+
+    function updateSageBtn(state, address) {
+        const btn = document.getElementById('sage-connect-btn');
+        if (!btn) return;
+        const base = "position:absolute;top:14px;right:14px;border-radius:20px;padding:6px 14px;font-size:11px;font-family:'Inter',sans-serif;font-weight:600;cursor:pointer;letter-spacing:0.4px;transition:all 0.2s;backdrop-filter:blur(8px);z-index:30;white-space:nowrap;border:1px solid;";
+        if (state === 'connecting') {
+            btn.style.cssText = base + 'background:rgba(0,0,0,0.45);border-color:rgba(74,222,128,0.3);color:rgba(255,255,255,0.45);';
+            btn.textContent = '\u23f3 Connecting\u2026'; btn.disabled = true;
+        } else if (state === true) {
+            const short = address ? address.slice(0,6) + '\u2026' + address.slice(-4) : 'Connected';
+            btn.style.cssText = base + 'background:rgba(0,25,0,0.6);border-color:rgba(74,222,128,0.65);color:#4ade80;box-shadow:0 0 14px rgba(74,222,128,0.2);';
+            btn.innerHTML = '\ud83c\udf3f ' + short + ' <span style="font-size:9px;opacity:0.5;">\u25bc</span>';
+            btn.disabled = false; btn.onclick = showSageMenu;
+        } else {
+            btn.style.cssText = base + 'background:rgba(0,0,0,0.45);border-color:rgba(74,222,128,0.35);color:rgba(255,255,255,0.75);';
+            btn.textContent = '\ud83c\udf31 Connect Sage'; btn.disabled = false; btn.onclick = sageConnect;
+        }
+    }
+
+    function showSageMenu() {
+        document.getElementById('sage-menu-popup') && document.getElementById('sage-menu-popup').remove();
+        const popup = document.createElement('div');
+        popup.id = 'sage-menu-popup';
+        const short = _sageXchAddress ? _sageXchAddress.slice(0,10) + '\u2026' + _sageXchAddress.slice(-6) : 'Connected';
+        popup.style.cssText = 'position:fixed;background:rgba(6,10,6,0.97);border:1px solid rgba(74,222,128,0.3);border-radius:10px;min-width:220px;overflow:hidden;z-index:9999;backdrop-filter:blur(14px);box-shadow:0 8px 32px rgba(0,0,0,0.6);';
+        popup.innerHTML =
+            '<div style="padding:8px 14px 6px;font-size:10px;color:rgba(255,255,255,0.35);font-family:Inter,sans-serif;border-bottom:1px solid rgba(255,255,255,0.06);">Connected \u00b7 <span style=color:#4ade80>' + short + '</span></div>' +
+            '<div id="_smer" style="padding:10px 14px;cursor:pointer;font-size:12px;color:white;font-family:Inter,sans-serif;" onmouseover="this.style.background=\'rgba(74,222,128,0.08)\'" onmouseout="this.style.background=\'transparent\'">\ud83d\udd04 Refresh Chia Portfolio</div>' +
+            '<div id="_smdi" style="padding:10px 14px;cursor:pointer;font-size:12px;color:#f87171;border-top:1px solid rgba(255,255,255,0.05);font-family:Inter,sans-serif;" onmouseover="this.style.background=\'rgba(248,113,113,0.07)\'" onmouseout="this.style.background=\'transparent\'">\u23cf Disconnect</div>';
+        const btn = document.getElementById('sage-connect-btn');
+        const rect = btn.getBoundingClientRect();
+        popup.style.top = (rect.bottom + 8) + 'px';
+        popup.style.right = (window.innerWidth - rect.right) + 'px';
+        document.body.appendChild(popup);
+        document.getElementById('_smer') && document.getElementById('_smer').addEventListener('click', function() { popup.remove(); if (_sageXchAddress) loadAndRenderChiaPortfolio(_sageXchAddress); });
+        document.getElementById('_smdi') && document.getElementById('_smdi').addEventListener('click', function() { popup.remove(); sageDisconnect(); });
+        setTimeout(function() {
+            function dismiss(e) { if (!popup.contains(e.target) && e.target !== btn) { popup.remove(); document.removeEventListener('click', dismiss); } }
+            document.addEventListener('click', dismiss);
+        }, 50);
+    }
+
+    function showWCModal(uri) {
+        _sagePairingUri = uri;
+        const modal = document.getElementById('sage-wc-modal');
+        if (!modal) return;
+        modal.style.display = 'flex';
+        const inp = document.getElementById('sage-wc-uri-input');
+        if (inp) inp.value = uri;
+        const qr = document.getElementById('sage-wc-qr-container');
+        if (qr) qr.innerHTML = '<img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&ecc=M&data=' + encodeURIComponent(uri) + '" alt="WC QR" style="width:200px;height:200px;border-radius:6px;" onerror="this.parentElement.innerHTML=\'<span style=font-size:11px;color:#888;padding:10px>QR unavailable<br>Copy URI below</span>\'">';
+    }
+
+    function hideWCModal() { var m = document.getElementById('sage-wc-modal'); if (m) m.style.display = 'none'; }
+
+    function copySageUri() {
+        var inp = document.getElementById('sage-wc-uri-input');
+        if (!inp || !inp.value) return;
+        navigator.clipboard.writeText(inp.value).then(function() {
+            var btn = inp.nextElementSibling;
+            if (btn) { var orig = btn.textContent; btn.textContent = '\u2713 Copied'; setTimeout(function() { btn.textContent = orig; }, 1600); }
+        }).catch(function() { inp.select(); document.execCommand('copy'); });
+    }
+
+    function tryOpenSage() { if (_sagePairingUri) window.open(_sagePairingUri, '_blank'); }
+
+    // ── bech32m: puzzle_hash hex → xch1... address ──────────────────
+    function puzzleHashToXchAddress(hash, prefix) {
+        prefix = prefix || 'xch';
+        var CS = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l';
+        var GEN = [0x3b6a57b2, 0x26508e6d, 0x1ea119fa, 0x3d4233dd, 0x2a1462b3];
+        var M = 0x2bc830a3;
+        function pm(d) {
+            var c = 1;
+            for (var i = 0; i < d.length; i++) {
+                var v = d[i], t = c >> 25;
+                c = ((c & 0x1ffffff) << 5) ^ v;
+                for (var j = 0; j < 5; j++) if ((t >> j) & 1) c ^= GEN[j];
+            }
+            return c;
+        }
+        function ex(h) {
+            var r = [];
+            for (var i = 0; i < h.length; i++) r.push(h.charCodeAt(i) >> 5);
+            r.push(0);
+            for (var i = 0; i < h.length; i++) r.push(h.charCodeAt(i) & 31);
+            return r;
+        }
+        var hex = hash.replace(/^0x/, '');
+        var bytes = [];
+        for (var i = 0; i < hex.length; i += 2) bytes.push(parseInt(hex.substr(i, 2), 16));
+        var acc = 0, bits = 0, w = [];
+        for (var i = 0; i < bytes.length; i++) {
+            acc = ((acc << 8) | bytes[i]) >>> 0; bits += 8;
+            while (bits >= 5) { bits -= 5; w.push((acc >> bits) & 31); }
+        }
+        if (bits > 0) w.push((acc << (5 - bits)) & 31);
+        var pv = pm(ex(prefix).concat(w).concat([0, 0, 0, 0, 0, 0])) ^ M;
+        var ck = [5, 4, 3, 2, 1, 0].map(function(i) { return (pv >> (5 * i)) & 31; });
+        return prefix + '1' + w.concat(ck).map(function(d) { return CS[d]; }).join('');
+    }
+
+    // ── Chia portfolio — single-wallet fetch + render ────────────────
+    async function loadAndRenderChiaPortfolio(xchAddress) {
+        var section = document.getElementById('chia-portfolio-section');
+        if (!section) return;
+        if (!document.getElementById('portfolio') || !document.getElementById('portfolio').classList.contains('active')) showTab('portfolio');
+        section.style.display = 'block';
+        section.innerHTML = '<div style="border-top:2px solid rgba(74,222,128,0.15);margin-top:28px;padding:40px 20px;text-align:center;"><div style="font-size:36px;margin-bottom:12px;animation:pulse 1.5s infinite;">\ud83c\udf31</div><div style="font-size:15px;color:#4ade80;font-weight:700;font-family:Inter,sans-serif;margin-bottom:6px;">Loading Chia Portfolio\u2026</div><div style="font-size:12px;color:rgba(255,255,255,0.35);font-family:Inter,sans-serif;">XCH \u00b7 CATs \u00b7 TibetSwap LP \u00b7 NFTs</div></div>';
+        try {
+            let xchPrice = window._chiaXchPrice || 0;
+            if (!xchPrice) {
+                const pd = await fetch('/api/coingecko-proxy?ids=chia&vs_currencies=usd').then(function(r) { return r.json(); }).catch(function() { return {}; });
+                xchPrice = (pd && pd.chia && pd.chia.usd) ? pd.chia.usd : 0;
+                if (xchPrice) window._chiaXchPrice = xchPrice;
+            }
+            if (!xchPrice) xchPrice = 3.0;
+
+            let tm = window._sagePortfolioTibetMap;
+            if (!tm) {
+                const raw = await fetch('https://api.v2.tibetswap.io/pairs?per_page=200').then(function(r) { return r.json(); }).catch(function() { return []; });
+                const pairs = Array.isArray(raw) ? raw : (raw.results || raw.pairs || []);
+                tm = {};
+                for (const p of pairs) {
+                    const aid = (p.asset_id || '').toLowerCase();
+                    if (!aid) continue;
+                    const xr = parseFloat(p.xch_reserve || 0) / 1e12, cr = parseFloat(p.asset_reserve || 0) / 1e3;
+                    tm[aid] = { priceUsd: cr > 0 ? (xr / cr) * xchPrice : 0, shortName: p.short_name || '' };
+                    const la = (p.liquidity_asset_id || '').toLowerCase();
+                    if (la) {
+                        const pn = (p.short_name || '').replace(/^TIBET-/i, '').replace(/-XCH$/i, '/XCH');
+                        tm[la] = { isLP: true, pairName: pn, poolXch: xr, poolLiq: parseFloat(p.liquidity || 0), poolUsd: xr * 2 * xchPrice };
+                    }
+                }
+                window._sagePortfolioTibetMap = tm;
+            }
+
+            const xchBal = await fetch('https://xchscan.com/api/account/balance?address=' + xchAddress, { cache: 'no-store' })
+                .then(function(r) { return r.ok ? r.json() : {}; })
+                .then(function(d) { return parseFloat((d && d.xch) ? d.xch : 0); })
+                .catch(function() { return 0; });
+
+            let tokens = [];
+            try {
+                const td = await fetch('https://api.spacescan.io/address/token-balance/' + xchAddress, { cache: 'no-store' }).then(function(r) { return r.json(); }).catch(function() { return null; });
+                if (td && Array.isArray(td.data)) {
+                    tokens = td.data.filter(function(t) { return parseFloat(t.balance || 0) > 0; }).map(function(t) {
+                        const aid = (t.asset_id || '').toLowerCase();
+                        const tb = tm[aid] || null;
+                        const isLP = (tb && tb.isLP) || (t.name || '').toLowerCase().includes('tibet');
+                        const bal = parseFloat(t.balance || 0), pr = parseFloat(t.price || 0) || (tb ? tb.priceUsd || 0 : 0);
+                        let val = parseFloat(t.total_value || 0) || bal * pr;
+                        if (isLP && tb && tb.poolLiq > 0) val = (bal / tb.poolLiq) * tb.poolXch * 2 * xchPrice;
+                        const sym = t.symbol || (tb ? (tb.shortName || '').replace(/^TIBET-/i, '') : '') || (t.name || '').slice(0, 8) || aid.slice(0, 6).toUpperCase();
+                        return { sym: sym, name: t.name || sym, assetId: t.asset_id || aid, balance: bal, price: pr, value: val, isLP: isLP, pairName: (tb && tb.pairName) ? tb.pairName : '' };
+                    });
+                }
+            } catch(e) { console.warn('[ChiaPortfolio] tokens:', e.message); }
+
+            let nfts = [];
+            try {
+                const nd = await fetch('https://api.spacescan.io/address/nft-balance/' + xchAddress, { cache: 'no-store' }).then(function(r) { return r.json(); }).catch(function() { return null; });
+                if (nd && Array.isArray(nd.balance)) nfts = nd.balance;
+            } catch(e) { console.warn('[ChiaPortfolio] nfts:', e.message); }
+
+            renderChiaPortfolioSection(xchAddress, xchBal, xchPrice, tokens, nfts, section);
+        } catch(err) {
+            section.innerHTML = '<div style="border-top:2px solid rgba(74,222,128,0.15);margin-top:28px;padding:40px 20px;text-align:center;color:#ef4444;"><div style="font-size:32px;margin-bottom:12px;">\u26a0\ufe0f</div><div style="font-size:16px;font-weight:700;margin-bottom:8px;font-family:Inter,sans-serif;">Chia Portfolio Error</div><div style="font-size:12px;color:rgba(255,255,255,0.4);font-family:Inter,sans-serif;">' + err.message + '</div></div>';
+        }
+    }
+
+    function renderChiaPortfolioSection(address, xchBal, xchPrice, tokens, nfts, container) {
+        const xchV = xchBal * xchPrice;
+        const cats = tokens.filter(function(t) { return !t.isLP; }).sort(function(a, b) { return (b.value || 0) - (a.value || 0); });
+        const lps  = tokens.filter(function(t) { return t.isLP;  }).sort(function(a, b) { return (b.value || 0) - (a.value || 0); });
+        const catV = cats.reduce(function(s, t) { return s + (t.value || 0); }, 0);
+        const lpV  = lps.reduce(function(s, t)  { return s + (t.value || 0); }, 0);
+        const total = xchV + catV + lpV;
+        const colMap = {};
+        for (const n of nfts) {
+            const k = n.collection_id || 'other';
+            if (!colMap[k]) colMap[k] = { name: n.name || k, count: 0, img: n.preview_url || '' };
+            colMap[k].count++;
+        }
+        const topCols = Object.values(colMap).sort(function(a, b) { return b.count - a.count; }).slice(0, 4);
+        const shortAddr = address.slice(0, 6) + '\u2026' + address.slice(-6);
+
+        let h = '<div style="border-top:2px solid rgba(74,222,128,0.2);margin-top:28px;padding-top:24px;">';
+
+        // Header row
+        h += '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px;">' +
+             '<div style="display:flex;align-items:center;gap:10px;"><span style="font-size:22px;">\ud83c\udf31</span>' +
+             '<div><div style="font-size:18px;font-weight:900;color:#4ade80;font-family:Inter,sans-serif;">Chia Portfolio</div>' +
+             '<div style="font-size:10px;color:rgba(255,255,255,0.3);font-family:monospace;">' + shortAddr + '</div></div></div>' +
+             '<div style="font-size:26px;font-weight:900;color:#4ade80;font-family:Inter,sans-serif;">' + fmtUsd(total) + '</div></div>';
+
+        // Stat cards
+        h += '<div class="bag-stat-grid" style="margin-bottom:20px;">' +
+             '<div class="bag-stat-card s-total"><div class="bag-stat-label">XCH Value</div><div class="bag-stat-value" style="color:#4ade80;">' + fmtUsd(xchV) + '</div><div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:2px;">' + (xchBal > 0 ? xchBal.toFixed(4) + ' XCH' : '\u2014') + '</div></div>' +
+             '<div class="bag-stat-card s-pos"><div class="bag-stat-label">CAT Tokens</div><div class="bag-stat-value" style="color:#fbbf24;">' + cats.length + '</div><div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:2px;">' + fmtUsd(catV) + '</div></div>' +
+             '<div class="bag-stat-card s-lp"><div class="bag-stat-label">LP Positions</div><div class="bag-stat-value" style="color:#63b3ed;">' + lps.length + '</div><div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:2px;">' + fmtUsd(lpV) + '</div></div>' +
+             '<div class="bag-stat-card" style="background:linear-gradient(135deg,rgba(168,85,247,0.16),rgba(168,85,247,0.08));border:1px solid rgba(168,85,247,0.38);"><div class="bag-stat-label">NFTs</div><div class="bag-stat-value" style="color:#a855f7;">' + nfts.length + '</div><div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:2px;">' + Object.keys(colMap).length + ' collections</div></div>' +
+             '</div>';
+
+        // XCH native row
+        if (xchBal > 0) {
+            h += '<div style="margin-bottom:16px;"><div class="bag-section-head" style="margin-bottom:10px;"><div class="bag-section-accent" style="background:linear-gradient(180deg,#4ade80,#16a34a);"></div><span class="bag-section-title" style="color:#4ade80;">\u26a1 XCH</span><span class="bag-section-meta">' + fmtBal(xchBal) + ' XCH \u00b7 ' + fmtUsd(xchV) + '</span></div>' +
+                 '<div class="bag-token-row native-row"><div style="display:flex;justify-content:space-between;align-items:center;">' +
+                 '<div style="display:flex;align-items:center;gap:12px;"><div style="width:40px;height:40px;background:linear-gradient(135deg,#16a34a,#4ade80);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">\ud83c\udf31</div>' +
+                 '<div><div style="font-size:15px;font-weight:800;color:white;">XCH</div><div style="font-size:11px;color:rgba(255,255,255,0.4);">' + xchBal.toFixed(4) + ' XCH \u00b7 ' + fmtUsd(xchPrice) + '/XCH</div></div></div>' +
+                 '<div style="font-size:18px;font-weight:800;color:#4ade80;">' + fmtUsd(xchV) + '</div></div></div></div>';
+        }
+
+        // TibetSwap LP positions
+        if (lps.length > 0) {
+            h += '<div style="margin-bottom:16px;"><div class="bag-section-head" style="margin-bottom:10px;"><div class="bag-section-accent" style="background:linear-gradient(180deg,#63b3ed,#3b82f6);"></div><span class="bag-section-title" style="color:#63b3ed;">\ud83d\udd01 TibetSwap LP</span><span class="bag-section-meta">' + lps.length + ' pools \u00b7 ' + fmtUsd(lpV) + '</span></div><div style="display:grid;gap:10px;">';
+            for (const t of lps) {
+                h += '<div class="bag-token-row" onclick="window.open(\'https://app.tibetswap.io\',\'_blank\')">' +
+                     '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+                     '<div style="display:flex;align-items:center;gap:12px;"><div style="width:40px;height:40px;background:linear-gradient(135deg,#1e40af,#63b3ed);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">\ud83d\udd01</div>' +
+                     '<div><div style="font-size:15px;font-weight:800;color:white;">' + (t.pairName || t.sym) + '</div><div style="font-size:11px;color:rgba(99,179,237,0.7);">TibetSwap \u00b7 ' + fmtBal(t.balance) + ' LP</div></div></div>' +
+                     '<div style="font-size:18px;font-weight:800;color:#63b3ed;">' + fmtUsd(t.value) + '</div></div></div>';
+            }
+            h += '</div></div>';
+        }
+
+        // CAT tokens
+        const showCats = cats.filter(function(t) { return t.value >= 0.01; });
+        if (showCats.length > 0) {
+            h += '<div style="margin-bottom:16px;"><div class="bag-section-head" style="margin-bottom:10px;"><div class="bag-section-accent" style="background:linear-gradient(180deg,#fbbf24,#f59e0b);"></div><span class="bag-section-title" style="color:#fbbf24;">\ud83c\udf43 CAT Tokens</span><span class="bag-section-meta">' + showCats.length + ' assets \u00b7 ' + fmtUsd(catV) + '</span></div><div style="display:grid;gap:8px;">';
+            for (const t of showCats) {
+                const pct = total > 0 ? ((t.value / total) * 100).toFixed(1) : '0';
+                const ps = t.price > 0 ? ('$' + (t.price < 0.001 ? t.price.toExponential(2) : t.price.toFixed(4))) : '\u2014';
+                h += '<div class="bag-token-row" onclick="window.open(\'https://dexie.space/offers?assetId=' + t.assetId + '\',\'_blank\')">' +
+                     '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+                     '<div style="display:flex;align-items:center;gap:12px;"><div style="width:40px;height:40px;background:linear-gradient(135deg,#92400e,#fbbf24);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:white;flex-shrink:0;">' + t.sym.slice(0,3).toUpperCase() + '</div>' +
+                     '<div><div style="font-size:15px;font-weight:800;color:white;">' + t.sym + '</div><div style="font-size:11px;color:rgba(255,255,255,0.4);">' + fmtBal(t.balance) + ' \u00b7 ' + ps + '</div></div></div>' +
+                     '<div style="text-align:right;"><div style="font-size:18px;font-weight:800;color:#fbbf24;">' + fmtUsd(t.value) + '</div><div style="font-size:10px;color:rgba(255,255,255,0.3);">' + pct + '% Chia bag</div></div></div>' +
+                     '<div class="bag-token-bar"><div class="bag-token-bar-fill" style="width:' + Math.min(parseFloat(pct)*2,100) + '%;background:linear-gradient(135deg,#92400e,#fbbf24);"></div></div></div>';
+            }
+            h += '</div></div>';
+        }
+
+        // NFT collections
+        if (nfts.length > 0) {
+            h += '<div style="margin-bottom:16px;"><div class="bag-section-head" style="margin-bottom:10px;"><div class="bag-section-accent" style="background:linear-gradient(180deg,#a855f7,#7c3aed);"></div><span class="bag-section-title" style="color:#a855f7;">\ud83d\uddbc\ufe0f NFT Collections</span><span class="bag-section-meta">' + nfts.length + ' NFTs \u00b7 ' + Object.keys(colMap).length + ' collections</span></div><div style="display:flex;gap:10px;flex-wrap:wrap;">';
+            for (const c of topCols) {
+                h += '<div style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.28);border-radius:10px;padding:10px 14px;min-width:110px;display:flex;flex-direction:column;align-items:center;gap:4px;">' +
+                     (c.img ? '<img src="' + c.img + '" style="width:44px;height:44px;object-fit:cover;border-radius:6px;margin-bottom:4px;" loading="lazy" onerror="this.style.display=\'none\'">' : '') +
+                     '<div style="font-size:11px;font-weight:700;color:white;text-align:center;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + c.name.replace(/\s+#\d+$/, '') + '</div>' +
+                     '<div style="font-size:18px;font-weight:900;color:#a855f7;">' + c.count + '</div></div>';
+            }
+            const rem = nfts.length - topCols.reduce(function(s,c) { return s + c.count; }, 0);
+            if (rem > 0) h += '<div style="background:rgba(168,85,247,0.06);border:1px solid rgba(168,85,247,0.18);border-radius:10px;padding:10px 14px;display:flex;align-items:center;justify-content:center;min-width:80px;"><div style="font-size:12px;color:rgba(255,255,255,0.35);">+' + rem + ' more</div></div>';
+            h += '</div><a href="https://mintgarden.io" target="_blank" rel="noopener" style="display:inline-block;margin-top:10px;font-size:11px;color:rgba(168,85,247,0.55);text-decoration:none;font-family:Inter,sans-serif;">View on MintGarden \u2192</a></div>';
+        }
+
+        // Empty state
+        if (!xchBal && cats.length === 0 && nfts.length === 0) {
+            h += '<div style="text-align:center;padding:40px 20px;color:rgba(255,255,255,0.3);"><div style="font-size:40px;margin-bottom:12px;">\ud83d\udceb</div><div style="font-size:15px;font-family:Inter,sans-serif;margin-bottom:6px;">No Chia holdings found</div><div style="font-size:12px;">This address has no XCH, CATs, or NFTs on-chain</div></div>';
+        }
+
+        h += '</div>';
+        container.innerHTML = h;
+    }
+
+    function hideSageChiaPortfolio() {
+        var s = document.getElementById('chia-portfolio-section');
+        if (s) { s.style.display = 'none'; s.innerHTML = ''; }
+    }
     </script>
 
 </body>
