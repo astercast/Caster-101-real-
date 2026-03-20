@@ -9595,69 +9595,88 @@ document.addEventListener('DOMContentLoaded', () => {
         if (reloadBtn) reloadBtn.style.display = 'block';
         section.innerHTML = '<div style="border-top:2px solid rgba(74,222,128,0.15);margin-top:28px;padding:40px 20px;text-align:center;"><div style="font-size:36px;margin-bottom:12px;animation:pulse 1.5s infinite;">\ud83c\udf31</div><div style="font-size:15px;color:#4ade80;font-weight:700;font-family:Inter,sans-serif;margin-bottom:6px;">Loading Chia Portfolio\u2026</div><div style="font-size:12px;color:rgba(255,255,255,0.35);font-family:Inter,sans-serif;">' + addrList.length + ' wallet' + (addrList.length > 1 ? 's' : '') + ' \u00b7 XCH \u00b7 CATs \u00b7 TibetSwap LP \u00b7 NFTs</div></div>';
         try {
-            let xchPrice = window._chiaXchPrice || 0;
-            if (!xchPrice) {
-                const pd = await fetch('/api/coingecko-proxy?ids=chia&vs_currencies=usd').then(function(r) { return r.json(); }).catch(function() { return {}; });
-                xchPrice = (pd && pd.chia && pd.chia.usd) ? pd.chia.usd : 0;
-                if (xchPrice) window._chiaXchPrice = xchPrice;
-            }
-            if (!xchPrice) xchPrice = 3.0;
+            // ── Kick off all independent fetches simultaneously ────────────
+            // XCH price (session-cached, 5 min TTL)
+            const xchPricePromise = (function() {
+                const now = Date.now();
+                if (window._chiaXchPrice && window._chiaXchPriceTs && (now - window._chiaXchPriceTs) < 300000)
+                    return Promise.resolve(window._chiaXchPrice);
+                return fetch('/api/coingecko-proxy?ids=chia&vs_currencies=usd')
+                    .then(function(r) { return r.json(); }).catch(function() { return {}; })
+                    .then(function(pd) {
+                        const p = (pd && pd.chia && pd.chia.usd) ? pd.chia.usd : 3.0;
+                        window._chiaXchPrice = p; window._chiaXchPriceTs = Date.now();
+                        return p;
+                    });
+            })();
 
-            // TibetSwap pairs — paginate to get ALL pairs
-            let tm = window._sagePortfolioTibetMap;
-            if (!tm) {
-                let allPairs = [], tPage = 1;
-                while (true) {
-                    const raw = await fetch('https://api.v2.tibetswap.io/pairs?per_page=100&page=' + tPage).then(function(r) { return r.json(); }).catch(function() { return null; });
-                    if (!raw) break;
-                    const batch = Array.isArray(raw) ? raw : (raw.results || raw.pairs || []);
-                    if (!batch.length) break;
-                    allPairs = allPairs.concat(batch);
-                    if (batch.length < 100) break;
-                    tPage++;
-                }
-                tm = {};
-                for (const p of allPairs) {
-                    const aid = (p.asset_id || '').toLowerCase();
-                    if (!aid) continue;
-                    const xr = parseFloat(p.xch_reserve || 0) / 1e12, cr = parseFloat(p.asset_reserve || 0) / 1e3;
-                    tm[aid] = { priceUsd: cr > 0 ? (xr / cr) * xchPrice : 0, shortName: p.short_name || '' };
-                    const la = (p.liquidity_asset_id || '').toLowerCase();
-                    if (la) {
-                        const pn = (p.short_name || '').replace(/^TIBET-/i, '').replace(/-XCH$/i, '/XCH');
-                        tm[la] = { isLP: true, pairName: pn, poolXch: xr, poolLiq: parseFloat(p.liquidity || 0), poolUsd: xr * 2 * xchPrice };
-                    }
-                }
-                window._sagePortfolioTibetMap = tm;
-            }
-
-            // Fetch all addresses in parallel then aggregate
-            const results = await Promise.all(addrList.map(async function(addr) {
-                let xchBal = 0;
-                try {
-                    xchBal = await fetch('https://xchscan.com/api/account/balance?address=' + addr, { cache: 'no-store' })
-                        .then(function(r) { return r.ok ? r.json() : {}; })
-                        .then(function(d) { return parseFloat((d && d.xch) ? d.xch : 0); })
-                        .catch(function() { return 0; });
-                } catch(e) {}
-                let rawTokens = [];
-                try {
-                    let sPage = 1;
+            // TibetSwap pairs (session-cached, 5 min TTL) — paginated internally
+            const tibetPromise = (function() {
+                const now = Date.now();
+                if (window._sagePortfolioTibetMap && window._sagePortfolioTibetTs && (now - window._sagePortfolioTibetTs) < 300000)
+                    return Promise.resolve(window._sagePortfolioTibetMap);
+                return (async function() {
+                    let allPairs = [], tPage = 1;
                     while (true) {
-                        const td = await fetch('https://api.spacescan.io/address/token-balance/' + addr + '?page=' + sPage + '&count=200', { cache: 'no-store' }).then(function(r) { return r.json(); }).catch(function() { return null; });
+                        const raw = await fetch('https://api.v2.tibetswap.io/pairs?per_page=100&page=' + tPage).then(function(r) { return r.json(); }).catch(function() { return null; });
+                        if (!raw) break;
+                        const batch = Array.isArray(raw) ? raw : (raw.results || raw.pairs || []);
+                        if (!batch.length) break;
+                        allPairs = allPairs.concat(batch);
+                        if (batch.length < 100) break;
+                        tPage++;
+                    }
+                    // We need xchPrice to compute LP pool USD; await it here (usually already resolved)
+                    const xp = await xchPricePromise;
+                    const map = {};
+                    for (const p of allPairs) {
+                        const aid = (p.asset_id || '').toLowerCase();
+                        if (!aid) continue;
+                        const xr = parseFloat(p.xch_reserve || 0) / 1e12, cr = parseFloat(p.asset_reserve || 0) / 1e3;
+                        map[aid] = { priceUsd: cr > 0 ? (xr / cr) * xp : 0, shortName: p.short_name || '' };
+                        const la = (p.liquidity_asset_id || '').toLowerCase();
+                        if (la) {
+                            const pn = (p.short_name || '').replace(/^TIBET-/i, '').replace(/-XCH$/i, '/XCH');
+                            map[la] = { isLP: true, pairName: pn, poolXch: xr, poolLiq: parseFloat(p.liquidity || 0), poolUsd: xr * 2 * xp };
+                        }
+                    }
+                    window._sagePortfolioTibetMap = map; window._sagePortfolioTibetTs = Date.now();
+                    return map;
+                })();
+            })();
+
+            // All wallet fetches in parallel — AND within each wallet, XCH + tokens + NFTs are parallel
+            const addressPromise = Promise.all(addrList.map(function(addr) {
+                const xchBalP = fetch('https://xchscan.com/api/account/balance?address=' + addr)
+                    .then(function(r) { return r.ok ? r.json() : {}; })
+                    .then(function(d) { return parseFloat((d && d.xch) ? d.xch : 0); })
+                    .catch(function() { return 0; });
+
+                const tokensP = (async function() {
+                    let rawTokens = [], sPage = 1;
+                    while (true) {
+                        const td = await fetch('https://api.spacescan.io/address/token-balance/' + addr + '?page=' + sPage + '&count=200')
+                            .then(function(r) { return r.json(); }).catch(function() { return null; });
                         if (!td || !Array.isArray(td.data) || !td.data.length) break;
                         rawTokens = rawTokens.concat(td.data);
                         if (td.data.length < 200) break;
                         sPage++;
                     }
-                } catch(e) {}
-                let nfts = [];
-                try {
-                    const nd = await fetch('https://api.spacescan.io/address/nft-balance/' + addr, { cache: 'no-store' }).then(function(r) { return r.json(); }).catch(function() { return null; });
-                    if (nd && Array.isArray(nd.balance)) nfts = nd.balance;
-                } catch(e) {}
-                return { xchBal: xchBal, rawTokens: rawTokens, nfts: nfts };
+                    return rawTokens;
+                })();
+
+                const nftsP = fetch('https://api.spacescan.io/address/nft-balance/' + addr)
+                    .then(function(r) { return r.json(); })
+                    .then(function(nd) { return (nd && Array.isArray(nd.balance)) ? nd.balance : []; })
+                    .catch(function() { return []; });
+
+                return Promise.all([xchBalP, tokensP, nftsP]).then(function(vals) {
+                    return { xchBal: vals[0], rawTokens: vals[1], nfts: vals[2] };
+                });
             }));
+
+            // Wait for everything
+            const [results, tm, xchPrice] = await Promise.all([addressPromise, tibetPromise, xchPricePromise]);
 
             // Aggregate XCH
             const xchBal = results.reduce(function(s, r) { return s + r.xchBal; }, 0);
