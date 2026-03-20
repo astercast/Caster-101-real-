@@ -9683,12 +9683,21 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (!xchPrice) xchPrice = 3.0;
 
+            // TibetSwap pairs — paginate to get ALL pairs (not just first 200)
             let tm = window._sagePortfolioTibetMap;
             if (!tm) {
-                const raw = await fetch('https://api.v2.tibetswap.io/pairs?per_page=200').then(function(r) { return r.json(); }).catch(function() { return []; });
-                const pairs = Array.isArray(raw) ? raw : (raw.results || raw.pairs || []);
+                let allPairs = [], tPage = 1;
+                while (true) {
+                    const raw = await fetch('https://api.v2.tibetswap.io/pairs?per_page=100&page=' + tPage).then(function(r) { return r.json(); }).catch(function() { return null; });
+                    if (!raw) break;
+                    const batch = Array.isArray(raw) ? raw : (raw.results || raw.pairs || []);
+                    if (!batch.length) break;
+                    allPairs = allPairs.concat(batch);
+                    if (batch.length < 100) break;
+                    tPage++;
+                }
                 tm = {};
-                for (const p of pairs) {
+                for (const p of allPairs) {
                     const aid = (p.asset_id || '').toLowerCase();
                     if (!aid) continue;
                     const xr = parseFloat(p.xch_reserve || 0) / 1e12, cr = parseFloat(p.asset_reserve || 0) / 1e3;
@@ -9707,22 +9716,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 .then(function(d) { return parseFloat((d && d.xch) ? d.xch : 0); })
                 .catch(function() { return 0; });
 
-            let tokens = [];
+            // Spacescan token-balance — paginate to get ALL tokens
+            let rawTokens = [];
             try {
-                const td = await fetch('https://api.spacescan.io/address/token-balance/' + xchAddress, { cache: 'no-store' }).then(function(r) { return r.json(); }).catch(function() { return null; });
-                if (td && Array.isArray(td.data)) {
-                    tokens = td.data.filter(function(t) { return parseFloat(t.balance || 0) > 0; }).map(function(t) {
-                        const aid = (t.asset_id || '').toLowerCase();
-                        const tb = tm[aid] || null;
-                        const isLP = (tb && tb.isLP) || (t.name || '').toLowerCase().includes('tibet');
-                        const bal = parseFloat(t.balance || 0), pr = parseFloat(t.price || 0) || (tb ? tb.priceUsd || 0 : 0);
-                        let val = parseFloat(t.total_value || 0) || bal * pr;
-                        if (isLP && tb && tb.poolLiq > 0) val = (bal / tb.poolLiq) * tb.poolXch * 2 * xchPrice;
-                        const sym = t.symbol || (tb ? (tb.shortName || '').replace(/^TIBET-/i, '') : '') || (t.name || '').slice(0, 8) || aid.slice(0, 6).toUpperCase();
-                        return { sym: sym, name: t.name || sym, assetId: t.asset_id || aid, balance: bal, price: pr, value: val, isLP: isLP, pairName: (tb && tb.pairName) ? tb.pairName : '' };
-                    });
+                let sPage = 1;
+                while (true) {
+                    const td = await fetch('https://api.spacescan.io/address/token-balance/' + xchAddress + '?page=' + sPage + '&count=200', { cache: 'no-store' }).then(function(r) { return r.json(); }).catch(function() { return null; });
+                    if (!td || !Array.isArray(td.data) || !td.data.length) break;
+                    rawTokens = rawTokens.concat(td.data);
+                    if (td.data.length < 200) break;
+                    sPage++;
                 }
             } catch(e) { console.warn('[ChiaPortfolio] tokens:', e.message); }
+
+            const tokens = rawTokens.filter(function(t) { return parseFloat(t.balance || 0) > 0; }).map(function(t) {
+                const aid = (t.asset_id || '').toLowerCase();
+                const tb = tm[aid] || null;
+                const isLP = !!(tb && tb.isLP) || (t.name || '').toLowerCase().includes('tibet');
+                const bal = parseFloat(t.balance || 0);
+                const pr = parseFloat(t.price || 0) || (tb && !tb.isLP ? tb.priceUsd || 0 : 0);
+                let val = parseFloat(t.total_value || 0) || bal * pr;
+                if (isLP && tb && tb.poolLiq > 0) val = (bal / tb.poolLiq) * tb.poolXch * 2 * xchPrice;
+                const sym = t.symbol || (tb && !tb.isLP ? (tb.shortName || '').replace(/^TIBET-/i, '') : '') || (t.name || '').slice(0, 8) || aid.slice(0, 6).toUpperCase();
+                return { sym: sym, name: t.name || sym, assetId: t.asset_id || aid, balance: bal, price: pr, value: val, isLP: isLP, pairName: (tb && tb.pairName) ? tb.pairName : '' };
+            });
 
             let nfts = [];
             try {
@@ -9738,93 +9755,122 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderChiaPortfolioSection(address, xchBal, xchPrice, tokens, nfts, container) {
         const xchV = xchBal * xchPrice;
-        const cats = tokens.filter(function(t) { return !t.isLP; }).sort(function(a, b) { return (b.value || 0) - (a.value || 0); });
-        const lps  = tokens.filter(function(t) { return t.isLP;  }).sort(function(a, b) { return (b.value || 0) - (a.value || 0); });
-        const catV = cats.reduce(function(s, t) { return s + (t.value || 0); }, 0);
-        const lpV  = lps.reduce(function(s, t)  { return s + (t.value || 0); }, 0);
-        const total = xchV + catV + lpV;
+        // Merge LPs + CATs, sort by value desc
+        const all = tokens.slice().sort(function(a, b) { return (b.value || 0) - (a.value || 0); });
+        const tokenTotal = all.reduce(function(s, t) { return s + (t.value || 0); }, 0);
+        const total = xchV + tokenTotal;
+        const highV = all.filter(function(t) { return (t.value || 0) >= 1; });
+        const lowV  = all.filter(function(t) { return (t.value || 0) > 0 && (t.value || 0) < 1; });
+        const lowTotal = lowV.reduce(function(s, t) { return s + (t.value || 0); }, 0);
+
         const colMap = {};
         for (const n of nfts) {
-            const k = n.collection_id || 'other';
-            if (!colMap[k]) colMap[k] = { name: n.name || k, count: 0, img: n.preview_url || '' };
+            const k = n.collection_id || n.collection_name || 'other';
+            if (!colMap[k]) colMap[k] = { name: (n.collection_name || n.name || 'Unknown').replace(/\s+#\d+$/, ''), count: 0 };
             colMap[k].count++;
         }
-        const topCols = Object.values(colMap).sort(function(a, b) { return b.count - a.count; }).slice(0, 4);
-        const shortAddr = address.slice(0, 6) + '\u2026' + address.slice(-6);
+        const cols = Object.values(colMap).sort(function(a, b) { return b.count - a.count; });
+        const shortAddr = address.slice(0, 8) + '\u2026' + address.slice(-6);
+        const uid = 'lcv' + Math.random().toString(36).slice(2, 7);
 
-        let h = '<div style="border-top:2px solid rgba(74,222,128,0.2);margin-top:28px;padding-top:24px;">';
+        function tokenRow(t) {
+            var isLP = t.isLP;
+            var displayName = isLP
+                ? (t.pairName || t.name || t.sym)
+                : (/^[0-9a-f]{60,}$/i.test(t.name) ? t.sym : (t.name || t.sym));
+            var sub = isLP
+                ? ('TibetSwap LP \u00b7 ' + fmtBal(t.balance))
+                : (fmtBal(t.balance) + (t.price > 0 ? ' \u00b7 $' + (t.price < 0.0001 ? t.price.toExponential(2) : t.price < 0.01 ? t.price.toFixed(6) : t.price.toFixed(4)) : ''));
+            var link = isLP ? 'https://app.tibetswap.io' : 'https://dexie.space/offers?assetId=' + t.assetId;
+            var color = isLP ? '#63b3ed' : '#fbbf24';
+            var iconBg = isLP ? 'linear-gradient(135deg,#1e3a5f,#2563eb)' : 'linear-gradient(135deg,#78350f,#d97706)';
+            var iconInner = isLP ? '\ud83d\udd04' : '<span style="font-size:10px;font-weight:900;color:#fff;">' + t.sym.slice(0,3).toUpperCase() + '</span>';
+            var lpBadge = isLP ? '<span style="font-size:8px;background:rgba(99,179,237,0.15);border:1px solid rgba(99,179,237,0.3);border-radius:3px;padding:1px 4px;color:#63b3ed;font-weight:700;flex-shrink:0;font-family:Inter,sans-serif;line-height:1.4;">LP</span>' : '';
+            return '<div onclick="window.open(\'' + link + '\',\'_blank\')" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:10px;cursor:pointer;transition:background 0.12s;" onmouseover="this.style.background=\'rgba(255,255,255,0.07)\'" onmouseout="this.style.background=\'rgba(255,255,255,0.04)\'">'
+                + '<div style="display:flex;align-items:center;gap:9px;min-width:0;">'
+                + '<div style="width:34px;height:34px;background:' + iconBg + ';border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">' + iconInner + '</div>'
+                + '<div style="min-width:0;">'
+                + '<div style="display:flex;align-items:center;gap:5px;margin-bottom:1px;">'
+                + '<span style="font-size:13px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px;">' + displayName + '</span>'
+                + lpBadge
+                + '</div>'
+                + '<div style="font-size:10px;color:rgba(255,255,255,0.3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:Inter,sans-serif;">' + sub + '</div>'
+                + '</div></div>'
+                + '<div style="font-size:14px;font-weight:800;color:' + color + ';white-space:nowrap;flex-shrink:0;">' + fmtUsd(t.value) + '</div>'
+                + '</div>';
+        }
 
-        // Header row
-        h += '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px;">' +
-             '<div style="display:flex;align-items:center;gap:10px;"><span style="font-size:22px;">\ud83c\udf31</span>' +
-             '<div><div style="font-size:18px;font-weight:900;color:#4ade80;font-family:Inter,sans-serif;">Chia Portfolio</div>' +
-             '<div style="font-size:10px;color:rgba(255,255,255,0.3);font-family:monospace;">' + shortAddr + '</div></div></div>' +
-             '<div style="font-size:26px;font-weight:900;color:#4ade80;font-family:Inter,sans-serif;">' + fmtUsd(total) + '</div></div>';
+        var h = '<div style="border-top:2px solid rgba(74,222,128,0.2);margin-top:28px;padding-top:18px;">';
 
-        // Stat cards
-        h += '<div class="bag-stat-grid" style="margin-bottom:20px;">' +
-             '<div class="bag-stat-card s-total"><div class="bag-stat-label">XCH Value</div><div class="bag-stat-value" style="color:#4ade80;">' + fmtUsd(xchV) + '</div><div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:2px;">' + (xchBal > 0 ? xchBal.toFixed(4) + ' XCH' : '\u2014') + '</div></div>' +
-             '<div class="bag-stat-card s-pos"><div class="bag-stat-label">CAT Tokens</div><div class="bag-stat-value" style="color:#fbbf24;">' + cats.length + '</div><div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:2px;">' + fmtUsd(catV) + '</div></div>' +
-             '<div class="bag-stat-card s-lp"><div class="bag-stat-label">LP Positions</div><div class="bag-stat-value" style="color:#63b3ed;">' + lps.length + '</div><div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:2px;">' + fmtUsd(lpV) + '</div></div>' +
-             '<div class="bag-stat-card" style="background:linear-gradient(135deg,rgba(168,85,247,0.16),rgba(168,85,247,0.08));border:1px solid rgba(168,85,247,0.38);"><div class="bag-stat-label">NFTs</div><div class="bag-stat-value" style="color:#a855f7;">' + nfts.length + '</div><div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:2px;">' + Object.keys(colMap).length + ' collections</div></div>' +
-             '</div>';
+        // Header
+        h += '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">'
+            + '<div style="display:flex;align-items:center;gap:9px;"><span style="font-size:18px;">\ud83c\udf31</span>'
+            + '<div><div style="font-size:16px;font-weight:900;color:#4ade80;font-family:Inter,sans-serif;line-height:1.2;">Chia Portfolio</div>'
+            + '<div style="font-size:10px;color:rgba(255,255,255,0.25);font-family:monospace;">' + shortAddr + '</div></div></div>'
+            + '<div style="font-size:22px;font-weight:900;color:#4ade80;font-family:Inter,sans-serif;">' + fmtUsd(total) + '</div></div>';
 
-        // XCH native row
+        // Stat pills
+        h += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;">';
+        var pills = [
+            { l: 'XCH', v: fmtUsd(xchV), c: '#4ade80' },
+            { l: 'Tokens', v: all.length + ' assets', c: '#fbbf24' },
+        ];
+        if (nfts.length) pills.push({ l: 'NFTs', v: nfts.length + '', c: '#a855f7' });
+        for (var pi = 0; pi < pills.length; pi++) {
+            h += '<div style="background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:5px 11px;">'
+                + '<div style="font-size:9px;color:rgba(255,255,255,0.3);font-family:Inter,sans-serif;font-weight:600;letter-spacing:0.4px;text-transform:uppercase;">' + pills[pi].l + '</div>'
+                + '<div style="font-size:12px;font-weight:800;color:' + pills[pi].c + ';font-family:Inter,sans-serif;">' + pills[pi].v + '</div>'
+                + '</div>';
+        }
+        h += '</div>';
+
+        // XCH row
         if (xchBal > 0) {
-            h += '<div style="margin-bottom:16px;"><div class="bag-section-head" style="margin-bottom:10px;"><div class="bag-section-accent" style="background:linear-gradient(180deg,#4ade80,#16a34a);"></div><span class="bag-section-title" style="color:#4ade80;">\u26a1 XCH</span><span class="bag-section-meta">' + fmtBal(xchBal) + ' XCH \u00b7 ' + fmtUsd(xchV) + '</span></div>' +
-                 '<div class="bag-token-row native-row"><div style="display:flex;justify-content:space-between;align-items:center;">' +
-                 '<div style="display:flex;align-items:center;gap:12px;"><div style="width:40px;height:40px;background:linear-gradient(135deg,#16a34a,#4ade80);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">\ud83c\udf31</div>' +
-                 '<div><div style="font-size:15px;font-weight:800;color:white;">XCH</div><div style="font-size:11px;color:rgba(255,255,255,0.4);">' + xchBal.toFixed(4) + ' XCH \u00b7 ' + fmtUsd(xchPrice) + '/XCH</div></div></div>' +
-                 '<div style="font-size:18px;font-weight:800;color:#4ade80;">' + fmtUsd(xchV) + '</div></div></div></div>';
+            h += '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;background:rgba(74,222,128,0.07);border:1px solid rgba(74,222,128,0.18);border-radius:10px;margin-bottom:5px;">'
+                + '<div style="display:flex;align-items:center;gap:9px;">'
+                + '<div style="width:34px;height:34px;background:linear-gradient(135deg,#14532d,#22c55e);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">\ud83c\udf31</div>'
+                + '<div><div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:1px;">XCH</div>'
+                + '<div style="font-size:10px;color:rgba(255,255,255,0.3);font-family:Inter,sans-serif;">' + fmtBal(xchBal) + ' \u00b7 $' + xchPrice.toFixed(2) + '/XCH</div></div></div>'
+                + '<div style="font-size:14px;font-weight:800;color:#4ade80;">' + fmtUsd(xchV) + '</div></div>';
         }
 
-        // TibetSwap LP positions
-        if (lps.length > 0) {
-            h += '<div style="margin-bottom:16px;"><div class="bag-section-head" style="margin-bottom:10px;"><div class="bag-section-accent" style="background:linear-gradient(180deg,#63b3ed,#3b82f6);"></div><span class="bag-section-title" style="color:#63b3ed;">\ud83d\udd01 TibetSwap LP</span><span class="bag-section-meta">' + lps.length + ' pools \u00b7 ' + fmtUsd(lpV) + '</span></div><div style="display:grid;gap:10px;">';
-            for (const t of lps) {
-                h += '<div class="bag-token-row" onclick="window.open(\'https://app.tibetswap.io\',\'_blank\')">' +
-                     '<div style="display:flex;justify-content:space-between;align-items:center;">' +
-                     '<div style="display:flex;align-items:center;gap:12px;"><div style="width:40px;height:40px;background:linear-gradient(135deg,#1e40af,#63b3ed);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">\ud83d\udd01</div>' +
-                     '<div><div style="font-size:15px;font-weight:800;color:white;">' + (t.pairName || t.sym) + '</div><div style="font-size:11px;color:rgba(99,179,237,0.7);">TibetSwap \u00b7 ' + fmtBal(t.balance) + ' LP</div></div></div>' +
-                     '<div style="font-size:18px;font-weight:800;color:#63b3ed;">' + fmtUsd(t.value) + '</div></div></div>';
-            }
-            h += '</div></div>';
+        // High value tokens (>= $1), LPs and CATs merged, sorted by value
+        if (highV.length > 0) {
+            h += '<div style="display:grid;gap:5px;margin-bottom:5px;">';
+            for (var i = 0; i < highV.length; i++) h += tokenRow(highV[i]);
+            h += '</div>';
         }
 
-        // CAT tokens
-        const showCats = cats.filter(function(t) { return t.value >= 0.01; });
-        if (showCats.length > 0) {
-            h += '<div style="margin-bottom:16px;"><div class="bag-section-head" style="margin-bottom:10px;"><div class="bag-section-accent" style="background:linear-gradient(180deg,#fbbf24,#f59e0b);"></div><span class="bag-section-title" style="color:#fbbf24;">\ud83c\udf43 CAT Tokens</span><span class="bag-section-meta">' + showCats.length + ' assets \u00b7 ' + fmtUsd(catV) + '</span></div><div style="display:grid;gap:8px;">';
-            for (const t of showCats) {
-                const pct = total > 0 ? ((t.value / total) * 100).toFixed(1) : '0';
-                const ps = t.price > 0 ? ('$' + (t.price < 0.001 ? t.price.toExponential(2) : t.price.toFixed(4))) : '\u2014';
-                h += '<div class="bag-token-row" onclick="window.open(\'https://dexie.space/offers?assetId=' + t.assetId + '\',\'_blank\')">' +
-                     '<div style="display:flex;justify-content:space-between;align-items:center;">' +
-                     '<div style="display:flex;align-items:center;gap:12px;"><div style="width:40px;height:40px;background:linear-gradient(135deg,#92400e,#fbbf24);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:white;flex-shrink:0;">' + t.sym.slice(0,3).toUpperCase() + '</div>' +
-                     '<div><div style="font-size:15px;font-weight:800;color:white;">' + t.sym + '</div><div style="font-size:11px;color:rgba(255,255,255,0.4);">' + fmtBal(t.balance) + ' \u00b7 ' + ps + '</div></div></div>' +
-                     '<div style="text-align:right;"><div style="font-size:18px;font-weight:800;color:#fbbf24;">' + fmtUsd(t.value) + '</div><div style="font-size:10px;color:rgba(255,255,255,0.3);">' + pct + '% Chia bag</div></div></div>' +
-                     '<div class="bag-token-bar"><div class="bag-token-bar-fill" style="width:' + Math.min(parseFloat(pct)*2,100) + '%;background:linear-gradient(135deg,#92400e,#fbbf24);"></div></div></div>';
-            }
+        // Low value dropdown (< $1)
+        if (lowV.length > 0) {
+            h += '<div style="margin-top:4px;">'
+                + '<div onclick="var c=document.getElementById(\'' + uid + '\');var open=c.style.display!==\'none\';c.style.display=open?\'none\':\'grid\';this.querySelector(\'.chv\').textContent=open?\'\u25b8\':\'\u25be\';" style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:9px;cursor:pointer;font-size:12px;color:rgba(255,255,255,0.4);font-family:Inter,sans-serif;user-select:none;">'
+                + '<span><span class="chv">\u25b8</span> Low value assets (' + lowV.length + ')</span>'
+                + '<span>' + fmtUsd(lowTotal) + '</span></div>'
+                + '<div id="' + uid + '" style="display:none;grid-template-columns:1fr;gap:5px;margin-top:4px;">';
+            for (var j = 0; j < lowV.length; j++) h += tokenRow(lowV[j]);
             h += '</div></div>';
         }
 
         // NFT collections
         if (nfts.length > 0) {
-            h += '<div style="margin-bottom:16px;"><div class="bag-section-head" style="margin-bottom:10px;"><div class="bag-section-accent" style="background:linear-gradient(180deg,#a855f7,#7c3aed);"></div><span class="bag-section-title" style="color:#a855f7;">\ud83d\uddbc\ufe0f NFT Collections</span><span class="bag-section-meta">' + nfts.length + ' NFTs \u00b7 ' + Object.keys(colMap).length + ' collections</span></div><div style="display:flex;gap:10px;flex-wrap:wrap;">';
-            for (const c of topCols) {
-                h += '<div style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.28);border-radius:10px;padding:10px 14px;min-width:110px;display:flex;flex-direction:column;align-items:center;gap:4px;">' +
-                     (c.img ? '<img src="' + c.img + '" style="width:44px;height:44px;object-fit:cover;border-radius:6px;margin-bottom:4px;" loading="lazy" onerror="this.style.display=\'none\'">' : '') +
-                     '<div style="font-size:11px;font-weight:700;color:white;text-align:center;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + c.name.replace(/\s+#\d+$/, '') + '</div>' +
-                     '<div style="font-size:18px;font-weight:900;color:#a855f7;">' + c.count + '</div></div>';
+            h += '<div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.06);">'
+                + '<div style="font-size:11px;font-weight:700;color:rgba(168,85,247,0.7);font-family:Inter,sans-serif;letter-spacing:0.5px;margin-bottom:8px;">\ud83d\uddbc\ufe0f NFT COLLECTIONS \u00b7 ' + nfts.length + '</div>'
+                + '<div style="display:flex;gap:7px;flex-wrap:wrap;">';
+            var showCols = cols.slice(0, 6);
+            for (var ci = 0; ci < showCols.length; ci++) {
+                var c = showCols[ci];
+                h += '<div style="background:rgba(168,85,247,0.07);border:1px solid rgba(168,85,247,0.2);border-radius:8px;padding:7px 11px;display:flex;align-items:center;gap:7px;">'
+                    + '<span style="font-size:16px;font-weight:900;color:#a855f7;">' + c.count + '</span>'
+                    + '<span style="font-size:10px;color:rgba(255,255,255,0.5);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:Inter,sans-serif;">' + c.name + '</span></div>';
             }
-            const rem = nfts.length - topCols.reduce(function(s,c) { return s + c.count; }, 0);
-            if (rem > 0) h += '<div style="background:rgba(168,85,247,0.06);border:1px solid rgba(168,85,247,0.18);border-radius:10px;padding:10px 14px;display:flex;align-items:center;justify-content:center;min-width:80px;"><div style="font-size:12px;color:rgba(255,255,255,0.35);">+' + rem + ' more</div></div>';
-            h += '</div><a href="https://mintgarden.io" target="_blank" rel="noopener" style="display:inline-block;margin-top:10px;font-size:11px;color:rgba(168,85,247,0.55);text-decoration:none;font-family:Inter,sans-serif;">View on MintGarden \u2192</a></div>';
+            var shownNFTs = showCols.reduce(function(s, c) { return s + c.count; }, 0);
+            if (nfts.length - shownNFTs > 0) h += '<div style="background:rgba(168,85,247,0.04);border:1px solid rgba(168,85,247,0.12);border-radius:8px;padding:7px 11px;font-size:10px;color:rgba(255,255,255,0.3);font-family:Inter,sans-serif;">+' + (nfts.length - shownNFTs) + ' more</div>';
+            h += '</div><a href="https://mintgarden.io" target="_blank" rel="noopener" style="display:inline-block;margin-top:8px;font-size:10px;color:rgba(168,85,247,0.4);text-decoration:none;font-family:Inter,sans-serif;">View on MintGarden \u2192</a></div>';
         }
 
-        // Empty state
-        if (!xchBal && cats.length === 0 && nfts.length === 0) {
-            h += '<div style="text-align:center;padding:40px 20px;color:rgba(255,255,255,0.3);"><div style="font-size:40px;margin-bottom:12px;">\ud83d\udceb</div><div style="font-size:15px;font-family:Inter,sans-serif;margin-bottom:6px;">No Chia holdings found</div><div style="font-size:12px;">This address has no XCH, CATs, or NFTs on-chain</div></div>';
+        if (!xchBal && all.length === 0 && nfts.length === 0) {
+            h += '<div style="text-align:center;padding:36px 20px;color:rgba(255,255,255,0.3);"><div style="font-size:32px;margin-bottom:10px;">\ud83d\udceb</div><div style="font-size:13px;font-family:Inter,sans-serif;">No Chia holdings found</div></div>';
         }
 
         h += '</div>';
