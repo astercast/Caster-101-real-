@@ -9509,7 +9509,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 requiredNamespaces: {
                     chia: {
                         methods: ['chip0002_getPublicKeys', 'chip0002_getAssetCoins', 'chip0002_getAssetBalance'],
-                        chains: ['chia:mainnet', 'chia:testnet11'],
+                        chains: ['chia:mainnet'],
+                        events: [],
+                    }
+                },
+                optionalNamespaces: {
+                    chia: {
+                        methods: ['chip0002_getPublicKeys', 'chip0002_getAssetCoins', 'chip0002_getAssetBalance'],
+                        chains: ['chia:testnet11'],
                         events: [],
                     }
                 }
