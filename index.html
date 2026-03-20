@@ -5372,7 +5372,7 @@
         const _mem   = navigator.deviceMemory || 4; // GB, undefined on Firefox (defaults 4)
         const _lowEnd  = isMobileDevice || _cores <= 2 || _mem <= 2;
         const _midRange = !_lowEnd && (_cores <= 4 || _mem <= 4);
-        const targetFps = _lowEnd ? 8 : (_midRange ? 20 : 30);
+        const targetFps = _lowEnd ? 8 : (_midRange ? 30 : 60);
         const frameInterval = 1000 / targetFps;
         let viewportW = window.innerWidth;
         let viewportH = window.innerHeight;
@@ -5434,11 +5434,11 @@
                 : 130; // full screensaver chaos on high-end
             const minSize = isMobile ? 65 : 100;
             const maxSize = isMobile ? 120 : 200;
-            // Slow, ambient drift — visible but not distracting
+            // Smooth, lively drift
             const speedScale = prefersReducedMotion ? 0.08
-                : _lowEnd   ? 0.25
-                : _midRange ? 0.45
-                : 0.7;
+                : _lowEnd   ? 0.4
+                : _midRange ? 1.1
+                : 1.8;
             const maxRotSpeed = 0; // no rotation
 
             for (let i = 0; i < totalImages; i++) {
@@ -5523,7 +5523,7 @@
                         const maxRS = 0;
                         img.rotSpeed = 0;
                         img.rot = 0;
-                        const spd = _lowEnd ? 0.25 : (_midRange ? 0.45 : 0.7);
+                        const spd = _lowEnd ? 0.4 : (_midRange ? 1.1 : 1.8);
                         const rMult = doesRotate ? (0.6 + Math.random() * 0.8) : (1.2 + Math.random() * 0.8);
                         img.vx = (Math.random() - 0.5) * 2 * spd * rMult;
                         img.vy = (Math.random() - 0.5) * 2 * spd * rMult;
