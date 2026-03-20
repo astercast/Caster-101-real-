@@ -1,8 +1,5 @@
 {
   "version": 2,
-  "redirects": [
-    { "source": "/portfolio", "destination": "/bag", "permanent": true }
-  ],
   "rewrites": [
     { "source": "/market", "destination": "/market.html" },
     { "source": "/bag", "destination": "/bag.html" },
