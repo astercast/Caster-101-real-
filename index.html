@@ -5392,17 +5392,14 @@
             const isMobile = viewportW <= 768;
 
             const images = [
-                // Wizard series
-                'images/wizard1.png', 'images/wizard2.png', 'images/wizard3.png',
-                'images/wizard4.png', 'images/wizard5.png', 'images/wizard6.png',
+                // Featured art (wizard1-6 are duplicates of these — only list once)
+                'images/1768724161355_image.png', 'images/1768770350230_image.png',
+                'images/1768770712319_image.png', 'images/1768771847908_image.png',
+                'images/1768772304325_image.png', 'images/Untitled_Artwork_Original.png',
                 // New G series
                 'images/GkS2-8oW4AA0jTv.jpg', 'images/Gllk9ozbkAAnkci.png',
                 'images/GmIBVcwbcAAvj1m.jpg', 'images/GmIwe7ibYAAP7LP.jpg',
                 'images/GplDbYtacAA6eMe.jpg', 'images/GqFrs7ZaYAAo3h-.jpg',
-                // Featured art
-                'images/1768724161355_image.png', 'images/1768770350230_image.png',
-                'images/1768770712319_image.png', 'images/1768771847908_image.png',
-                'images/1768772304325_image.png', 'images/Untitled_Artwork_Original.png',
                 // Uploaded collections (all of them)
                 'images/uploaded_image_2_1768636844588.png', 'images/uploaded_image_3_1768636844588.png',
                 'images/uploaded_image_4_1768636844588.jpg', 'images/uploaded_image_1_1768638579775.png',
@@ -5420,7 +5417,6 @@
                 'images/IMG_8371.jpeg', 'images/IMG_9197.jpeg', 'images/image0.jpeg',
                 // Themed
                 'images/plant_your_seed.png', 'images/hodl-diamond.png',
-                'images/Screenshot_2026-01-17_232436-removebg-preview.png',
                 'images/discord-commands.png'
             ];
 
@@ -5467,21 +5463,28 @@
                 img.src = src;
                 collage.appendChild(img);
 
-                // ~25% of images rotate slowly; the rest stay flat but move faster
-                const doesRotate = Math.random() < 0.25;
-                const angle = doesRotate ? Math.random() * 360 : 0;
-                const rotSpeed = doesRotate ? (Math.random() - 0.5) * 2 * maxRotSpeed : 0;
-                const speedMult = doesRotate
-                    ? (0.6 + Math.random() * 0.8)           // normal speed range
-                    : (1.2 + Math.random() * 0.8);          // 1.2–2.0× faster, no rotation
+                // No rotation — all images stay flat and slide
+                const doesRotate = false;
+                const angle = 0;
+                const rotSpeed = 0;
+                const speedMult = 1.2 + Math.random() * 0.8; // 1.2–2.0×
+                // Grid-based spawn: divide viewport into cells so images spread evenly
+                const cols = Math.ceil(Math.sqrt(totalImages * viewportW / Math.max(viewportH, 1)));
+                const rows = Math.ceil(totalImages / cols);
+                const cellW = viewportW / cols;
+                const cellH = viewportH / rows;
+                const col = i % cols;
+                const row = Math.floor(i / cols);
+                const spawnX = col * cellW + Math.random() * Math.max(0, cellW - size);
+                const spawnY = row * cellH + Math.random() * Math.max(0, cellH - size);
                 const imageData = {
                     element: img,
-                    x: Math.random() * Math.max(0, viewportW - size),
-                    y: Math.random() * Math.max(0, viewportH - size),
+                    x: spawnX,
+                    y: spawnY,
                     vx: (Math.random() - 0.5) * 2 * speedScale * speedMult,
                     vy: (Math.random() - 0.5) * 2 * speedScale * speedMult,
-                    rot: angle,
-                    rotSpeed: rotSpeed,
+                    rot: 0,
+                    rotSpeed: 0,
                     size: size,
                     lifetime: Math.random() * 45000 + 45000,
                     born: Date.now(),
@@ -5519,11 +5522,11 @@
                     } else if (nowTs > img.respawnTime) {
                         img.x = Math.random() * Math.max(0, viewportW - img.size);
                         img.y = Math.random() * Math.max(0, viewportH - img.size);
-                        // Re-roll rotator status on each respawn
-                        const doesRotate = Math.random() < 0.25;
-                        const maxRS = _lowEnd ? 0.2 : (_midRange ? 0.5 : 1.0);
-                        img.rotSpeed = doesRotate ? (Math.random() - 0.5) * 2 * maxRS : 0;
-                        img.rot = doesRotate ? Math.random() * 360 : 0;
+                        // Re-roll speed on each respawn, no rotation
+                        const doesRotate = false;
+                        const maxRS = 0;
+                        img.rotSpeed = 0;
+                        img.rot = 0;
                         const spd = _lowEnd ? 0.5 : (_midRange ? 0.9 : 1.5);
                         const rMult = doesRotate ? (0.6 + Math.random() * 0.8) : (1.2 + Math.random() * 0.8);
                         img.vx = (Math.random() - 0.5) * 2 * spd * rMult;
