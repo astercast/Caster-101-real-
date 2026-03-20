@@ -1149,279 +1149,145 @@
             opacity: 0.8;
         }
 
-        /* ── Bag Tracker dedicated CSS ── */
+        /* ── Bag Tracker — Modern Redesign ── */
         @keyframes bagGlow {
-            0%, 100% { text-shadow: 0 0 20px rgba(251,191,36,0.8), 0 0 40px rgba(251,191,36,0.3); }
-            50%       { text-shadow: 0 0 50px rgba(251,191,36,1),   0 0 90px rgba(251,191,36,0.5); }
+            0%, 100% { text-shadow: 0 0 20px rgba(251,191,36,0.6), 0 0 40px rgba(251,191,36,0.2); }
+            50%       { text-shadow: 0 0 40px rgba(251,191,36,0.9), 0 0 80px rgba(251,191,36,0.4); }
         }
 
-        .bag-header {
-            text-align: center;
-            margin-bottom: 32px;
-            position: relative;
-        }
-        .bag-header::after {
-            content: '';
-            display: block;
-            height: 1px;
-            background: linear-gradient(to right, transparent, rgba(251,191,36,0.5), rgba(220,38,38,0.4), rgba(251,191,36,0.5), transparent);
-            margin: 14px auto 0;
-            width: 60%;
-        }
+        /* ── Shared layout ── */
+        .bag-page { max-width: 860px; margin: 0 auto; padding: 24px 16px 40px; }
+
+        /* ── Header ── */
+        .bag-header { text-align:center; margin-bottom:28px; }
         .bag-title {
-            font-family: 'Cinzel Decorative', 'MedievalSharp', fantasy;
-            font-size: 36px;
-            color: #ffd700;
+            font-family: 'Cinzel Decorative', fantasy;
+            font-size: 30px; color: #ffd700;
             animation: bagGlow 4s ease-in-out infinite;
-            margin-bottom: 8px;
+            margin-bottom: 6px; letter-spacing: 0.02em;
         }
-        .bag-subtitle {
-            color: rgba(255,255,255,0.5);
-            font-size: 14px;
-            font-family: 'Inter', sans-serif;
-        }
+        .bag-subtitle { color: rgba(255,255,255,0.4); font-size: 13px; font-family: 'Inter', sans-serif; }
 
-        .bag-input-card {
-            background: linear-gradient(135deg, rgba(20,20,30,0.92), rgba(10,10,20,0.97));
-            border: 1px solid rgba(251,191,36,0.32);
-            border-radius: 18px;
-            padding: 24px;
-            margin-bottom: 28px;
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(251,191,36,0.07);
-            transition: border-color 0.3s, box-shadow 0.3s;
-            position: relative;
-            overflow: hidden;
+        /* ── Chain tabs ── */
+        .bag-chain-tabs {
+            display: flex; gap: 8px; margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.07); padding-bottom: 0;
         }
-        .bag-input-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(251,191,36,0.55), transparent);
+        .bag-chain-tab {
+            padding: 8px 18px 10px; font-size: 12px; font-weight: 700;
+            font-family: 'Inter', sans-serif; cursor: pointer; border: none;
+            background: transparent; color: rgba(255,255,255,0.35);
+            border-bottom: 2px solid transparent; margin-bottom: -1px;
+            transition: color 0.15s, border-color 0.15s; letter-spacing: 0.3px;
+        }
+        .bag-chain-tab.active-base { color: #fbbf24; border-bottom-color: #fbbf24; }
+        .bag-chain-tab.active-chia { color: #4ade80; border-bottom-color: #4ade80; }
+        .bag-chain-tab:hover:not(.active-base):not(.active-chia) { color: rgba(255,255,255,0.6); }
+
+        /* ── Input card ── */
+        .bag-input-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(251,191,36,0.2);
+            border-radius: 14px; padding: 18px 20px; margin-bottom: 20px;
+            transition: border-color 0.25s, box-shadow 0.25s;
         }
         .bag-input-card:focus-within {
-            border-color: rgba(251,191,36,0.65);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(251,191,36,0.2), 0 0 28px rgba(251,191,36,0.1);
+            border-color: rgba(251,191,36,0.5);
+            box-shadow: 0 0 0 3px rgba(251,191,36,0.07);
         }
-
         #walletAddress {
-            width: 100%;
-            padding: 14px 14px 14px 44px;
-            background: rgba(0,0,0,0.45);
-            border: 1px solid rgba(251,191,36,0.25);
-            border-radius: 12px;
-            color: white;
-            font-size: 14px;
-            font-family: 'Inter', sans-serif;
-            box-sizing: border-box;
-            outline: none;
-            transition: border-color 0.2s, box-shadow 0.2s;
+            width: 100%; padding: 12px 12px 12px 42px;
+            background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px; color: white; font-size: 13px;
+            font-family: 'Inter', sans-serif; box-sizing: border-box; outline: none;
+            transition: border-color 0.2s;
         }
-        #walletAddress:focus {
-            border-color: rgba(251,191,36,0.7);
-            box-shadow: 0 0 14px rgba(251,191,36,0.15);
-        }
-
+        #walletAddress:focus { border-color: rgba(251,191,36,0.5); }
         #track-btn {
-            padding: 14px 28px;
-            background: linear-gradient(135deg, #fbbf24, #f59e0b);
-            border: none;
-            border-radius: 12px;
-            color: #000;
-            font-size: 15px;
-            font-weight: 900;
-            cursor: pointer;
-            white-space: nowrap;
-            font-family: 'Space Grotesk', sans-serif;
-            letter-spacing: 0.03em;
-            box-shadow: 0 4px 16px rgba(251,191,36,0.4);
-            transition: transform 0.2s, box-shadow 0.2s;
-            position: relative;
-            overflow: hidden;
+            padding: 12px 22px; background: #fbbf24; border: none;
+            border-radius: 10px; color: #000; font-size: 13px; font-weight: 800;
+            cursor: pointer; white-space: nowrap; font-family: 'Inter', sans-serif;
+            letter-spacing: 0.02em; transition: filter 0.18s, transform 0.12s;
         }
-        #track-btn::after {
-            content: '';
-            position: absolute;
-            top: 0; left: -100%;
-            width: 100%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.28), transparent);
-            transition: left 0.45s;
-            pointer-events: none;
-        }
-        #track-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(251,191,36,0.6); }
-        #track-btn:hover::after { left: 100%; }
-        #track-btn:active { transform: translateY(1px) scale(0.97); transition: all 0.08s; }
-
+        #track-btn:hover { filter: brightness(1.12); transform: translateY(-1px); }
+        #track-btn:active { transform: scale(0.97); transition: all 0.07s; }
         .bag-quick-btn {
-            padding: 6px 14px;
-            background: rgba(251,191,36,0.1);
-            border: 1px solid rgba(251,191,36,0.3);
-            border-radius: 10px;
-            color: #fbbf24;
-            font-size: 11px;
-            cursor: pointer;
-            font-weight: 700;
-            font-family: 'Inter', sans-serif;
-            transition: background 0.2s, border-color 0.2s;
+            padding: 5px 12px; background: rgba(251,191,36,0.08);
+            border: 1px solid rgba(251,191,36,0.22); border-radius: 8px;
+            color: #fbbf24; font-size: 11px; cursor: pointer; font-weight: 600;
+            font-family: 'Inter', sans-serif; transition: background 0.15s;
         }
-        .bag-quick-btn:hover { background: rgba(251,191,36,0.2); border-color: rgba(251,191,36,0.6); }
+        .bag-quick-btn:hover { background: rgba(251,191,36,0.16); }
 
-        .bag-stat-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 14px;
-            margin-bottom: 20px;
+        /* ── Stat pills row ── */
+        .bag-pills { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
+        .bag-pill {
+            background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 20px; padding: 7px 14px; min-width: 80px;
         }
-        .bag-stat-card {
-            border-radius: 16px;
-            padding: 18px;
-            text-align: center;
-            backdrop-filter: blur(8px);
-            position: relative;
-            overflow: hidden;
-            transition: transform 0.2s, box-shadow 0.2s;
+        .bag-pill-label {
+            font-size: 9px; color: rgba(255,255,255,0.3); font-family: 'Inter', sans-serif;
+            font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 2px;
         }
-        .bag-stat-card:hover { transform: translateY(-2px); }
-        .bag-stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 2px;
-        }
-        .bag-stat-card.s-total  { background: linear-gradient(135deg,rgba(30,90,180,0.22),rgba(60,140,220,0.14)); border: 1px solid rgba(30,100,180,0.38); }
-        .bag-stat-card.s-total::before  { background: linear-gradient(90deg, transparent, rgba(96,165,250,0.7), transparent); }
-        .bag-stat-card.s-pos    { background: linear-gradient(135deg,rgba(0,82,255,0.16),rgba(0,82,255,0.08)); border: 1px solid rgba(0,82,255,0.42); }
-        .bag-stat-card.s-pos::before    { background: linear-gradient(90deg, transparent, rgba(60,100,255,0.75), transparent); }
-        .bag-stat-card.s-lp     { background: linear-gradient(135deg,rgba(99,179,237,0.16),rgba(99,179,237,0.08)); border: 1px solid rgba(99,179,237,0.4); }
-        .bag-stat-card.s-lp::before     { background: linear-gradient(90deg, transparent, rgba(99,179,237,0.72), transparent); }
-        .bag-stat-card.s-lpval  { background: linear-gradient(135deg,rgba(74,222,128,0.16),rgba(74,222,128,0.08)); border: 1px solid rgba(74,222,128,0.4); }
-        .bag-stat-card.s-lpval::before  { background: linear-gradient(90deg, transparent, rgba(74,222,128,0.72), transparent); }
-        .bag-stat-label {
-            font-size: 11px;
-            color: rgba(255,255,255,0.5);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 8px;
-            font-family: 'Inter', sans-serif;
-            font-weight: 600;
-        }
-        .bag-stat-value {
-            font-size: 28px;
-            font-weight: 900;
-            font-family: 'Space Grotesk', sans-serif;
-            letter-spacing: -0.02em;
-            font-variant-numeric: tabular-nums;
+        .bag-pill-value {
+            font-size: 15px; font-weight: 800; font-family: 'Space Grotesk', sans-serif;
+            letter-spacing: -0.01em;
         }
 
+        /* ── Allocation bar ── */
         .bag-alloc-wrap {
-            background: rgba(0,0,0,0.42);
-            border: 1px solid rgba(255,255,255,0.09);
-            border-radius: 14px;
-            padding: 16px 20px;
-            margin-bottom: 20px;
-            position: relative;
-            overflow: hidden;
-        }
-        .bag-alloc-wrap::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(251,191,36,0.35), transparent);
+            background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 12px; padding: 14px 18px; margin-bottom: 16px;
         }
         .bag-alloc-label {
-            font-size: 11px;
-            color: rgba(255,255,255,0.5);
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-family: 'Inter', sans-serif;
-            font-weight: 600;
+            font-size: 10px; color: rgba(255,255,255,0.35); margin-bottom: 8px;
+            text-transform: uppercase; letter-spacing: 1px; font-family: 'Inter', sans-serif; font-weight: 600;
         }
-        #bag-alloc-bar { display: flex; height: 12px; border-radius: 8px; overflow: hidden; }
-        #bag-alloc-legend { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 10px; }
+        #bag-alloc-bar { display:flex; height:6px; border-radius:6px; overflow:hidden; gap:1px; }
+        #bag-alloc-legend { display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; }
 
-        .bag-section-head {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 16px;
-        }
-        .bag-section-accent {
-            width: 3px;
-            height: 24px;
-            border-radius: 2px;
-            flex-shrink: 0;
-        }
-        .bag-section-title {
-            font-size: 16px;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-family: 'Space Grotesk', sans-serif;
-        }
-        .bag-section-meta {
-            font-size: 12px;
-            color: rgba(255,255,255,0.4);
-            font-family: 'Inter', sans-serif;
-        }
+        /* ── Section label ── */
+        .bag-section-head { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+        .bag-section-accent { width:3px; height:18px; border-radius:2px; flex-shrink:0; }
+        .bag-section-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; font-family:'Inter',sans-serif; }
+        .bag-section-meta { font-size:11px; color:rgba(255,255,255,0.3); font-family:'Inter',sans-serif; margin-left:auto; }
 
+        /* ── LP card (Base) ── */
         .lp-card {
-            background: linear-gradient(135deg, rgba(20,30,50,0.92), rgba(10,15,30,0.97));
-            border: 1px solid rgba(99,179,237,0.28);
-            border-radius: 16px;
-            padding: 20px;
-            transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+            background: rgba(30,50,90,0.22); border: 1px solid rgba(99,179,237,0.2);
+            border-radius: 12px; padding: 16px 18px; cursor: pointer;
+            transition: border-color 0.18s, background 0.18s, transform 0.15s;
         }
-        .lp-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, rgba(99,179,237,0.65), transparent);
-        }
-        .lp-card:hover {
-            border-color: rgba(99,179,237,0.65);
-            transform: translateY(-3px);
-            box-shadow: 0 12px 32px rgba(99,179,237,0.2), 0 0 0 1px rgba(99,179,237,0.25);
-        }
+        .lp-card:hover { border-color: rgba(99,179,237,0.5); background: rgba(30,50,90,0.35); transform: translateY(-2px); }
 
+        /* ── Token row (Base) ── */
         .bag-token-row {
-            background: linear-gradient(135deg, rgba(20,20,30,0.88), rgba(10,10,20,0.93));
-            border: 1px solid rgba(251,191,36,0.2);
-            border-radius: 14px;
-            padding: 16px 20px;
-            transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
+            display:flex; justify-content:space-between; align-items:center; gap:8px;
+            padding: 10px 14px; background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.07); border-radius: 10px;
+            cursor: pointer; transition: background 0.14s, border-color 0.14s, transform 0.12s;
         }
-        .bag-token-row.native-row { border-color: rgba(99,102,241,0.28); cursor: default; }
-        .bag-token-row:hover { border-color: rgba(251,191,36,0.55); transform: translateY(-2px); box-shadow: 0 8px 22px rgba(251,191,36,0.15); }
-        .bag-token-row.native-row:hover { border-color: rgba(99,102,241,0.62); box-shadow: 0 8px 22px rgba(99,102,241,0.15); transform: translateY(-2px); }
-        .bag-token-bar {
-            margin-top: 10px;
-            height: 3px;
-            background: rgba(255,255,255,0.06);
-            border-radius: 2px;
-            overflow: hidden;
-        }
-        .bag-token-bar-fill {
-            height: 100%;
-            border-radius: 2px;
-            transition: width 0.7s cubic-bezier(0.4,0,0.2,1);
-        }
+        .bag-token-row:hover { background: rgba(255,255,255,0.06); border-color: rgba(251,191,36,0.25); transform: translateY(-1px); }
+        .bag-token-row.native-row { border-color:rgba(99,102,241,0.15); cursor:default; }
+        .bag-token-row.native-row:hover { border-color:rgba(99,102,241,0.35); transform:none; }
+        .bag-token-bar { margin-top:8px; height:2px; background:rgba(255,255,255,0.05); border-radius:2px; overflow:hidden; }
+        .bag-token-bar-fill { height:100%; border-radius:2px; transition:width 0.6s cubic-bezier(0.4,0,0.2,1); }
+
+        /* Legacy compat — stat grid still used in places */
+        .bag-stat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:16px; }
+        .bag-stat-card { border-radius:12px; padding:14px; text-align:center; }
+        .bag-stat-card.s-total { background:rgba(30,90,180,0.15); border:1px solid rgba(30,100,180,0.3); }
+        .bag-stat-card.s-pos   { background:rgba(0,82,255,0.12);  border:1px solid rgba(0,82,255,0.3);   }
+        .bag-stat-card.s-lp    { background:rgba(99,179,237,0.12);border:1px solid rgba(99,179,237,0.3); }
+        .bag-stat-card.s-lpval { background:rgba(74,222,128,0.12);border:1px solid rgba(74,222,128,0.3); }
+        .bag-stat-label { font-size:10px; color:rgba(255,255,255,0.4); text-transform:uppercase; letter-spacing:0.8px; margin-bottom:6px; font-family:'Inter',sans-serif; font-weight:600; }
+        .bag-stat-value { font-size:22px; font-weight:900; font-family:'Space Grotesk',sans-serif; letter-spacing:-0.02em; }
 
         @media (max-width: 768px) {
-            .bag-stat-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
-            .bag-stat-value { font-size: 22px; }
-            .bag-title { font-size: 26px; }
+            .bag-stat-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+            .bag-stat-value { font-size: 18px; }
+            .bag-title { font-size: 22px; }
+            .bag-pills { gap:6px; }
         }
 
         /* Mobile: Desktop quick links */
@@ -3129,30 +2995,30 @@
                     </div>
                 </div>
 
-                <!-- Summary Cards (hidden until loaded) -->
-                <div id="bag-summary" style="display:none; margin-bottom:24px;">
-                    <div class="bag-stat-grid">
-                        <div class="bag-stat-card s-total">
-                            <div class="bag-stat-label">Total Value</div>
-                            <div id="bag-total-value" class="bag-stat-value" style="color:#fbbf24;">$0</div>
+                <!-- Summary (hidden until loaded) -->
+                <div id="bag-summary" style="display:none; margin-bottom:20px;">
+                    <div class="bag-pills">
+                        <div class="bag-pill">
+                            <div class="bag-pill-label">Total Value</div>
+                            <div id="bag-total-value" class="bag-pill-value" style="color:#fbbf24;">$0</div>
                         </div>
-                        <div class="bag-stat-card s-pos">
-                            <div class="bag-stat-label">Positions</div>
-                            <div id="bag-position-count" class="bag-stat-value" style="color:#60a5fa;">0</div>
+                        <div class="bag-pill">
+                            <div class="bag-pill-label">Positions</div>
+                            <div id="bag-position-count" class="bag-pill-value" style="color:#60a5fa;">0</div>
                         </div>
-                        <div class="bag-stat-card s-lp">
-                            <div class="bag-stat-label">LP Positions</div>
-                            <div id="bag-lp-count" class="bag-stat-value" style="color:#63b3ed;">0</div>
+                        <div class="bag-pill">
+                            <div class="bag-pill-label">LP Pools</div>
+                            <div id="bag-lp-count" class="bag-pill-value" style="color:#63b3ed;">0</div>
                         </div>
-                        <div class="bag-stat-card s-lpval">
-                            <div class="bag-stat-label">LP Value</div>
-                            <div id="bag-lp-value" class="bag-stat-value" style="color:#4ade80;">$0</div>
+                        <div class="bag-pill">
+                            <div class="bag-pill-label">LP Value</div>
+                            <div id="bag-lp-value" class="bag-pill-value" style="color:#4ade80;">$0</div>
                         </div>
                     </div>
 
                     <!-- Allocation bar -->
                     <div class="bag-alloc-wrap">
-                        <div class="bag-alloc-label">💼 Portfolio Allocation</div>
+                        <div class="bag-alloc-label">Portfolio Allocation</div>
                         <div id="bag-alloc-bar"></div>
                         <div id="bag-alloc-legend"></div>
                     </div>
@@ -6401,7 +6267,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
             const lpValue = lpTokens.reduce((s,t) => s+(t.value||0), 0);
             const topTokens = tokens.filter(t => (t.value||0) >= 1).slice(0, 10);
 
-            // Update summary
+            // Update summary pills
             document.getElementById('bag-summary').style.display = 'block';
             document.getElementById('bag-total-value').textContent = fmtUsd(total);
             document.getElementById('bag-position-count').textContent = tokens.length;
@@ -6414,112 +6280,133 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                 const legend = document.getElementById('bag-alloc-legend');
                 let otherVal = total - topTokens.reduce((s,t)=>s+(t.value||0),0);
                 const barItems = topTokens.map((t,i) => ({sym: t.symbol, val: t.value||0, color: BAG_COLORS[i]||'#888'}));
-                if (otherVal > 0.01 * total) barItems.push({sym:'Other', val:otherVal, color:'#555'});
+                if (otherVal > 0.01 * total) barItems.push({sym:'Other', val:otherVal, color:'rgba(255,255,255,0.12)'});
                 bar.innerHTML = barItems.map(it => {
                     const pct = ((it.val/total)*100).toFixed(1);
-                    return `<div style="flex:${it.val};background:${it.color};min-width:2px;" title="${it.sym}: ${pct}%"></div>`;
+                    return `<div style="flex:${it.val};background:${it.color};min-width:3px;border-radius:2px;" title="${it.sym}: ${pct}%"></div>`;
                 }).join('');
                 legend.innerHTML = barItems.slice(0,6).map(it => {
                     const pct = ((it.val/total)*100).toFixed(1);
-                    return `<div style="display:flex;align-items:center;gap:4px;font-size:10px;color:rgba(255,255,255,0.6);">
-                        <span style="width:8px;height:8px;background:${it.color};border-radius:2px;display:inline-block;"></span>
-                        <span>${it.sym} ${pct}%</span>
+                    return `<div style="display:flex;align-items:center;gap:4px;font-size:10px;color:rgba(255,255,255,0.5);font-family:'Inter',sans-serif;">
+                        <span style="width:7px;height:7px;background:${it.color};border-radius:2px;display:inline-block;flex-shrink:0;"></span>
+                        <span>${it.sym} <span style="color:rgba(255,255,255,0.28)">${pct}%</span></span>
                     </div>`;
                 }).join('');
             }
 
-            // Build position cards
             if (tokens.length === 0) {
                 document.getElementById('portfolioList').innerHTML = `
-                    <div style="text-align:center;padding:60px 20px;color:rgba(255,255,255,0.4);">
-                        <div style="font-size:48px;margin-bottom:16px;">📭</div>
-                        <div style="font-size:18px;margin-bottom:8px;">No positions found</div>
-                        <div style="font-size:13px;">This wallet has no ERC-20 tokens on Base</div>
+                    <div style="text-align:center;padding:60px 20px;color:rgba(255,255,255,0.3);">
+                        <div style="font-size:44px;margin-bottom:14px;">📭</div>
+                        <div style="font-size:16px;font-weight:700;color:rgba(255,255,255,0.5);margin-bottom:6px;">No positions</div>
+                        <div style="font-size:12px;font-family:'Inter',sans-serif;">No ERC-20 tokens found on Base for this address</div>
                     </div>`;
                 return;
             }
 
-            // Section headers
+            // ── token row builder (Base — gold palette) ──────────────────────
+            const baseTokenRow = (tok, total) => {
+                const val = tok.value || 0;
+                const pct = total > 0 ? ((val/total)*100).toFixed(1) : '0';
+                const isNative = tok.type === 'native';
+                const gradient = isNative ? 'linear-gradient(135deg,#4f46e5,#3730a3)' : 'linear-gradient(135deg,#92400e,#d97706)';
+                const valCol = isNative ? '#818cf8' : '#fbbf24';
+                const priceStr = tok.price > 0
+                    ? (tok.price < 0.001 ? '$'+tok.price.toFixed(8) : '$'+tok.price.toLocaleString(undefined,{maximumSignificantDigits:5}))
+                    : '—';
+                const link = (!isNative && tok.contract)
+                    ? `window.open('https://dex.9mm.pro/swap?outputCurrency=${tok.contract}','_blank')`
+                    : '';
+                return `<div class="bag-token-row${isNative?' native-row':''}" onclick="${link}">
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+                        <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+                            <div style="width:36px;height:36px;background:${gradient};border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#fff;flex-shrink:0;">${tok.symbol.slice(0,3).toUpperCase()}</div>
+                            <div style="min-width:0;">
+                                <div style="font-size:14px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${tok.symbol}</div>
+                                <div style="font-size:10px;color:rgba(255,255,255,0.3);font-family:'Inter',sans-serif;white-space:nowrap;">${fmtBal(tok.balance)} · ${priceStr}</div>
+                            </div>
+                        </div>
+                        <div style="text-align:right;flex-shrink:0;">
+                            <div style="font-size:15px;font-weight:800;color:${valCol};font-family:'Space Grotesk',sans-serif;">${fmtUsd(val)}</div>
+                            <div style="font-size:10px;color:rgba(255,255,255,0.25);font-family:'Inter',sans-serif;">${pct}% of bag</div>
+                        </div>
+                    </div>
+                    <div class="bag-token-bar">
+                        <div class="bag-token-bar-fill" style="width:${Math.min(parseFloat(pct)*2,100)}%;background:${gradient};"></div>
+                    </div>
+                </div>`;
+            };
+
             let html = '';
 
-            // LP Positions section (most important - show first)
+            // ── LP Positions ─────────────────────────────────────────────────
             if (lpTokens.length > 0) {
-                html += `<div style="margin-bottom:12px;">
-                    <div class="bag-section-head" style="margin-bottom:14px;">
+                html += `<div style="margin-bottom:20px;">
+                    <div class="bag-section-head">
                         <div class="bag-section-accent" style="background:linear-gradient(180deg,#63b3ed,#3b82f6);"></div>
-                        <span class="bag-section-title" style="color:#63b3ed;">🔄 LP Positions</span>
+                        <span class="bag-section-title" style="color:#63b3ed;">LP Positions</span>
                         <span class="bag-section-meta">${lpTokens.length} pools · ${fmtUsd(lpValue)}</span>
                     </div>
-                    <div style="display:grid;gap:12px;">`;
+                    <div style="display:grid;gap:10px;">`;
                 for (const tok of lpTokens) {
                     const val = tok.value || 0;
                     const pct = total > 0 ? ((val/total)*100).toFixed(1) : '0';
                     const share = tok.userSharePct ? parseFloat(tok.userSharePct) : 0;
                     const poolLiq = tok.totalLiqUsd || 0;
-                    html += `<div class="lp-card"
-                        onclick="window.open('https://dex.9mm.pro',\'_blank\')">
-                        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
-                            <div style="display:flex;align-items:center;gap:12px;">
-                                <div style="width:44px;height:44px;background:linear-gradient(135deg,#3b82f6,#1d4ed8);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">🔄</div>
+                    const t0 = (tok.pairName||tok.symbol||'').split('/')[0];
+                    const t1 = (tok.pairName||tok.symbol||'').split('/')[1];
+                    html += `<div class="lp-card" onclick="window.open('https://dex.9mm.pro','_blank')">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <div style="width:38px;height:38px;background:linear-gradient(135deg,#1e40af,#3b82f6);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;">🔄</div>
                                 <div>
-                                    <div style="font-size:17px;font-weight:800;color:white;margin-bottom:2px;">${tok.symbol}</div>
-                                    <div style="font-size:11px;color:rgba(99,179,237,0.8);font-weight:600;">LP Position · 9mm.pro</div>
+                                    <div style="font-size:15px;font-weight:800;color:#fff;">${tok.symbol}</div>
+                                    <div style="font-size:10px;color:rgba(99,179,237,0.7);font-family:'Inter',sans-serif;font-weight:600;">LP · 9mm.pro</div>
                                 </div>
                             </div>
                             <div style="text-align:right;">
-                                <div style="font-size:22px;font-weight:900;color:#63b3ed;">${fmtUsd(val)}</div>
-                                <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px;">${pct}% of bag</div>
+                                <div style="font-size:18px;font-weight:900;color:#63b3ed;font-family:'Space Grotesk',sans-serif;">${fmtUsd(val)}</div>
+                                <div style="font-size:10px;color:rgba(255,255,255,0.3);font-family:'Inter',sans-serif;">${pct}% of bag</div>
                             </div>
                         </div>
-                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.06);">
-                            <div><div style="font-size:10px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Your Share</div><div style="font-size:14px;font-weight:700;color:white;">${share > 0 ? share.toFixed(3) + "%" : "—"}</div></div>
-                            <div><div style="font-size:10px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Pool Liq</div><div style="font-size:14px;font-weight:700;color:#63b3ed;">${poolLiq > 0 ? fmtUsd(poolLiq) : "—"}</div></div>
-                            ${tok.price0 > 0 ? '<div><div style="font-size:10px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">' + (tok.pairName||tok.symbol||'').split('/')[0] + ' Price</div><div style="font-size:13px;font-weight:700;color:#fbbf24;">$' + (tok.price0 < 0.001 ? tok.price0.toExponential(3) : tok.price0.toLocaleString(undefined,{maximumSignificantDigits:4})) + '</div></div>' : '<div><div style="font-size:10px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Balance</div><div style="font-size:13px;font-weight:700;color:white;">' + fmtBal(tok.balance) + ' LP</div></div>'}
-                            ${tok.price1 > 0 ? '<div><div style="font-size:10px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">' + (tok.pairName||tok.symbol||'').split('/')[1] + ' Price</div><div style="font-size:13px;font-weight:700;color:#4ade80;">$' + (tok.price1 < 0.001 ? tok.price1.toExponential(3) : tok.price1.toLocaleString(undefined,{maximumSignificantDigits:4})) + '</div></div>' : '<div><div style="font-size:10px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">LP Tokens</div><div style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.6);">' + fmtBal(tok.balance) + '</div></div>'}
+                        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+                            <div><div style="font-size:9px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;font-family:'Inter',sans-serif;">Share</div><div style="font-size:13px;font-weight:700;color:#fff;">${share>0?share.toFixed(3)+'%':'—'}</div></div>
+                            <div><div style="font-size:9px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;font-family:'Inter',sans-serif;">Pool Liq</div><div style="font-size:13px;font-weight:700;color:#63b3ed;">${poolLiq>0?fmtUsd(poolLiq):'—'}</div></div>
+                            ${tok.price0>0?`<div><div style="font-size:9px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;font-family:'Inter',sans-serif;">${t0}</div><div style="font-size:13px;font-weight:700;color:#fbbf24;">$${tok.price0<0.001?tok.price0.toExponential(3):tok.price0.toLocaleString(undefined,{maximumSignificantDigits:4})}</div></div>`:`<div><div style="font-size:9px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;font-family:'Inter',sans-serif;">Balance</div><div style="font-size:13px;font-weight:700;color:#fff;">${fmtBal(tok.balance)} LP</div></div>`}
+                            ${tok.price1>0?`<div><div style="font-size:9px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;font-family:'Inter',sans-serif;">${t1}</div><div style="font-size:13px;font-weight:700;color:#4ade80;">$${tok.price1<0.001?tok.price1.toExponential(3):tok.price1.toLocaleString(undefined,{maximumSignificantDigits:4})}</div></div>`:`<div><div style="font-size:9px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;font-family:'Inter',sans-serif;">LP Tokens</div><div style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.4);">${fmtBal(tok.balance)}</div></div>`}
                         </div>
                     </div>`;
                 }
                 html += '</div></div>';
             }
 
-            // Regular tokens section
-            if (regularTokens.filter(t => (t.value||0) >= 0.01).length > 0) {
-                const showTokens = regularTokens.filter(t => (t.value||0) >= 0.01);
-                html += `<div style="margin-bottom:12px;${lpTokens.length>0?'margin-top:28px;':''}">
-                    <div class="bag-section-head" style="margin-bottom:14px;">
+            // ── Token Rows ────────────────────────────────────────────────────
+            const showTokens = regularTokens.filter(t => (t.value||0) >= 0.01);
+            if (showTokens.length > 0) {
+                const highV = showTokens.filter(t => (t.value||0) >= 1);
+                const lowV  = showTokens.filter(t => (t.value||0) < 1);
+                const lowTotal = lowV.reduce((s,t) => s+(t.value||0), 0);
+                const uid = 'btl' + Math.random().toString(36).slice(2,7);
+
+                html += `<div style="${lpTokens.length>0?'margin-top:4px;':''}">
+                    <div class="bag-section-head">
                         <div class="bag-section-accent" style="background:linear-gradient(180deg,#fbbf24,#f59e0b);"></div>
-                        <span class="bag-section-title" style="color:#fbbf24;">💎 Tokens</span>
+                        <span class="bag-section-title" style="color:#fbbf24;">Tokens</span>
                         <span class="bag-section-meta">${showTokens.length} assets</span>
                     </div>
-                    <div style="display:grid;gap:10px;">`;
-                for (const tok of showTokens) {
-                    const val = tok.value || 0;
-                    const pct = total > 0 ? ((val/total)*100).toFixed(1) : '0';
-                    const isNative = tok.type === 'native';
-                    const gradient = isNative ? 'linear-gradient(135deg,#627eea,#4a5fd8)' : 'linear-gradient(135deg,#fbbf24,#f59e0b)';
-                    const borderCol = isNative ? 'rgba(99,102,241,0.35)' : 'rgba(251,191,36,0.25)';
-                    const borderHov = isNative ? 'rgba(99,102,241,0.7)' : 'rgba(251,191,36,0.6)';
-                    const valCol = isNative ? '#818cf8' : '#fbbf24';
-                    const priceStr = tok.price > 0 ? (tok.price < 0.001 ? '$'+tok.price.toFixed(8) : '$'+tok.price.toLocaleString(undefined,{maximumSignificantDigits:5})) : '—';
-                    html += `<div class="bag-token-row${isNative?' native-row':''}"
-                        onclick="${!isNative&&tok.contract?'window.open(\'https://dex.9mm.pro/swap?outputCurrency='+tok.contract+'\',\'_blank\')':''}">
-                        <div style="display:flex;justify-content:space-between;align-items:center;">
-                            <div style="display:flex;align-items:center;gap:12px;">
-                                <div style="width:40px;height:40px;background:${gradient};border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:white;flex-shrink:0;">${tok.symbol.slice(0,3)}</div>
-                                <div>
-                                    <div style="font-size:15px;font-weight:800;color:white;">${tok.symbol}</div>
-                                    <div style="font-size:11px;color:rgba(255,255,255,0.4);">${fmtBal(tok.balance)} · ${priceStr}</div>
-                                </div>
+                    <div style="display:grid;gap:6px;">`;
+                for (const tok of highV) html += baseTokenRow(tok, total);
+                if (lowV.length > 0) {
+                    html += `</div>
+                        <div style="margin-top:6px;">
+                            <div onclick="var c=document.getElementById('${uid}');var open=c.style.display!=='none';c.style.display=open?'none':'grid';this.querySelector('.chv').textContent=open?'▸':'▾';"
+                                style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:9px;cursor:pointer;font-size:11px;color:rgba(255,255,255,0.35);font-family:'Inter',sans-serif;user-select:none;">
+                                <span><span class="chv">▸</span> Low value assets (${lowV.length})</span>
+                                <span>${fmtUsd(lowTotal)}</span>
                             </div>
-                            <div style="text-align:right;">
-                                <div style="font-size:18px;font-weight:800;color:${valCol}">${fmtUsd(val)}</div>
-                                <div style="font-size:11px;color:rgba(255,255,255,0.35);">${pct}% of bag</div>
-                            </div>
-                        </div>
-                        <div class="bag-token-bar">
-                            <div class="bag-token-bar-fill" style="width:${Math.min(parseFloat(pct)*2,100)}%;background:${gradient};"></div>
-                        </div>
-                    </div>`;
+                            <div id="${uid}" style="display:none;grid-template-columns:1fr;gap:5px;margin-top:4px;">`;
+                    for (const tok of lowV) html += baseTokenRow(tok, total);
+                    html += '</div></div>';
                 }
                 html += '</div></div>';
             }
@@ -9834,7 +9721,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderChiaPortfolioSection(addressOrList, xchBal, xchPrice, tokens, nfts, container) {
         const addrList = Array.isArray(addressOrList) ? addressOrList : [addressOrList];
         const xchV = xchBal * xchPrice;
-        // Merge LPs + CATs, sort by value desc
         const all = tokens.slice().sort(function(a, b) { return (b.value || 0) - (a.value || 0); });
         const tokenTotal = all.reduce(function(s, t) { return s + (t.value || 0); }, 0);
         const total = xchV + tokenTotal;
@@ -9864,11 +9750,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 ? ('TibetSwap LP \u00b7 ' + fmtBal(t.balance))
                 : (fmtBal(t.balance) + (t.price > 0 ? ' \u00b7 $' + (t.price < 0.0001 ? t.price.toExponential(2) : t.price < 0.01 ? t.price.toFixed(6) : t.price.toFixed(4)) : ''));
             var link = isLP ? 'https://app.tibetswap.io' : 'https://www.spacescan.io/cat/' + t.assetId;
-            var color = isLP ? '#63b3ed' : '#fbbf24';
-            var iconBg = isLP ? 'linear-gradient(135deg,#1e3a5f,#2563eb)' : 'linear-gradient(135deg,#78350f,#d97706)';
-            var iconInner = isLP ? '\ud83d\udd04' : '<span style="font-size:10px;font-weight:900;color:#fff;">' + t.sym.slice(0,3).toUpperCase() + '</span>';
-            var lpBadge = isLP ? '<span style="font-size:8px;background:rgba(99,179,237,0.15);border:1px solid rgba(99,179,237,0.3);border-radius:3px;padding:1px 4px;color:#63b3ed;font-weight:700;flex-shrink:0;font-family:Inter,sans-serif;line-height:1.4;">LP</span>' : '';
-            return '<div onclick="window.open(\'' + link + '\',\'_blank\')" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:10px;cursor:pointer;transition:background 0.12s;" onmouseover="this.style.background=\'rgba(255,255,255,0.07)\'" onmouseout="this.style.background=\'rgba(255,255,255,0.04)\'">'
+            var color = isLP ? '#63b3ed' : '#4ade80';
+            var iconBg = isLP ? 'linear-gradient(135deg,#1e3a5f,#2563eb)' : 'linear-gradient(135deg,#14532d,#16a34a)';
+            var iconInner = isLP
+                ? '<span style="font-size:14px;">\ud83d\udd04</span>'
+                : '<span style="font-size:10px;font-weight:900;color:#fff;">' + (t.sym||'?').slice(0,3).toUpperCase() + '</span>';
+            var lpBadge = isLP
+                ? '<span style="font-size:8px;background:rgba(99,179,237,0.12);border:1px solid rgba(99,179,237,0.25);border-radius:3px;padding:1px 4px;color:#63b3ed;font-weight:700;flex-shrink:0;font-family:Inter,sans-serif;line-height:1.4;">LP</span>'
+                : '';
+            return '<div onclick="window.open(\'' + link + '\',\'_blank\')" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:10px;cursor:pointer;transition:background 0.12s,border-color 0.12s;" onmouseover="this.style.background=\'rgba(74,222,128,0.05)\';this.style.borderColor=\'rgba(74,222,128,0.15)\'" onmouseout="this.style.background=\'rgba(255,255,255,0.03)\';this.style.borderColor=\'rgba(255,255,255,0.07)\'">'
                 + '<div style="display:flex;align-items:center;gap:9px;min-width:0;">'
                 + '<div style="width:34px;height:34px;background:' + iconBg + ';border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">' + iconInner + '</div>'
                 + '<div style="min-width:0;">'
@@ -9876,57 +9766,56 @@ document.addEventListener('DOMContentLoaded', () => {
                 + '<span style="font-size:13px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px;">' + displayName + '</span>'
                 + lpBadge
                 + '</div>'
-                + '<div style="font-size:10px;color:rgba(255,255,255,0.3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:Inter,sans-serif;">' + sub + '</div>'
+                + '<div style="font-size:10px;color:rgba(255,255,255,0.28);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:Inter,sans-serif;">' + sub + '</div>'
                 + '</div></div>'
-                + '<div style="font-size:14px;font-weight:800;color:' + color + ';white-space:nowrap;flex-shrink:0;">' + fmtUsd(t.value) + '</div>'
+                + '<div style="font-size:14px;font-weight:800;color:' + color + ';white-space:nowrap;flex-shrink:0;font-family:\'Space Grotesk\',sans-serif;">' + fmtUsd(t.value) + '</div>'
                 + '</div>';
         }
 
-        var h = '<div style="border-top:2px solid rgba(74,222,128,0.2);margin-top:28px;padding-top:18px;">';
+        var h = '<div style="border-top:1px solid rgba(74,222,128,0.15);margin-top:24px;padding-top:20px;">';
 
-        // Header
-        h += '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">'
-            + '<div style="display:flex;align-items:center;gap:9px;"><span style="font-size:18px;">\ud83c\udf31</span>'
-            + '<div><div style="font-size:16px;font-weight:900;color:#4ade80;font-family:Inter,sans-serif;line-height:1.2;">Chia Portfolio</div>'
-            + '<div style="font-size:10px;color:rgba(255,255,255,0.25);font-family:monospace;">' + walletLabel + '</div></div></div>'
-            + '<div style="font-size:22px;font-weight:900;color:#4ade80;font-family:Inter,sans-serif;">' + fmtUsd(total) + '</div></div>';
+        // Header row
+        h += '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px;">'
+            + '<div style="display:flex;align-items:center;gap:8px;">'
+            + '<div style="width:3px;height:18px;background:linear-gradient(180deg,#4ade80,#16a34a);border-radius:2px;flex-shrink:0;"></div>'
+            + '<div><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#4ade80;font-family:\'Inter\',sans-serif;">Chia Portfolio</div>'
+            + '<div style="font-size:10px;color:rgba(255,255,255,0.2);font-family:monospace;margin-top:1px;">' + walletLabel + '</div></div></div>'
+            + '<div style="font-size:20px;font-weight:900;color:#4ade80;font-family:\'Space Grotesk\',sans-serif;">' + fmtUsd(total) + '</div></div>';
 
         // Stat pills
-        h += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;">';
+        h += '<div class="bag-pills" style="margin-bottom:14px;">';
         var pills = [
             { l: 'XCH', v: fmtUsd(xchV), c: '#4ade80' },
             { l: 'Tokens', v: all.length + ' assets', c: '#fbbf24' },
         ];
         if (nfts.length) pills.push({ l: 'NFTs', v: nfts.length + '', c: '#a855f7' });
         for (var pi = 0; pi < pills.length; pi++) {
-            h += '<div style="background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:5px 11px;">'
-                + '<div style="font-size:9px;color:rgba(255,255,255,0.3);font-family:Inter,sans-serif;font-weight:600;letter-spacing:0.4px;text-transform:uppercase;">' + pills[pi].l + '</div>'
-                + '<div style="font-size:12px;font-weight:800;color:' + pills[pi].c + ';font-family:Inter,sans-serif;">' + pills[pi].v + '</div>'
-                + '</div>';
+            h += '<div class="bag-pill"><div class="bag-pill-label">' + pills[pi].l + '</div>'
+                + '<div class="bag-pill-value" style="color:' + pills[pi].c + ';font-size:13px;">' + pills[pi].v + '</div></div>';
         }
         h += '</div>';
 
         // XCH row
         if (xchBal > 0) {
-            h += '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;background:rgba(74,222,128,0.07);border:1px solid rgba(74,222,128,0.18);border-radius:10px;margin-bottom:5px;">'
+            h += '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 12px;background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.15);border-radius:10px;margin-bottom:5px;">'
                 + '<div style="display:flex;align-items:center;gap:9px;">'
                 + '<div style="width:34px;height:34px;background:linear-gradient(135deg,#14532d,#22c55e);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">\ud83c\udf31</div>'
                 + '<div><div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:1px;">XCH</div>'
-                + '<div style="font-size:10px;color:rgba(255,255,255,0.3);font-family:Inter,sans-serif;">' + fmtBal(xchBal) + ' \u00b7 $' + xchPrice.toFixed(2) + '/XCH</div></div></div>'
-                + '<div style="font-size:14px;font-weight:800;color:#4ade80;">' + fmtUsd(xchV) + '</div></div>';
+                + '<div style="font-size:10px;color:rgba(255,255,255,0.28);font-family:Inter,sans-serif;">' + fmtBal(xchBal) + ' \u00b7 $' + xchPrice.toFixed(2) + '/XCH</div></div></div>'
+                + '<div style="font-size:14px;font-weight:800;color:#4ade80;font-family:\'Space Grotesk\',sans-serif;">' + fmtUsd(xchV) + '</div></div>';
         }
 
-        // High value tokens (>= $1), LPs and CATs merged, sorted by value
+        // High value tokens
         if (highV.length > 0) {
             h += '<div style="display:grid;gap:5px;margin-bottom:5px;">';
             for (var i = 0; i < highV.length; i++) h += tokenRow(highV[i]);
             h += '</div>';
         }
 
-        // Low value dropdown (< $1)
+        // Low value dropdown
         if (lowV.length > 0) {
-            h += '<div style="margin-top:4px;">'
-                + '<div onclick="var c=document.getElementById(\'' + uid + '\');var open=c.style.display!==\'none\';c.style.display=open?\'none\':\'grid\';this.querySelector(\'.chv\').textContent=open?\'\u25b8\':\'\u25be\';" style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:9px;cursor:pointer;font-size:12px;color:rgba(255,255,255,0.4);font-family:Inter,sans-serif;user-select:none;">'
+            h += '<div style="margin-top:5px;">'
+                + '<div onclick="var c=document.getElementById(\'' + uid + '\');var open=c.style.display!==\'none\';c.style.display=open?\'none\':\'grid\';this.querySelector(\'.chv\').textContent=open?\'\u25b8\':\'\u25be\';" style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:9px;cursor:pointer;font-size:11px;color:rgba(255,255,255,0.35);font-family:Inter,sans-serif;user-select:none;">'
                 + '<span><span class="chv">\u25b8</span> Low value assets (' + lowV.length + ')</span>'
                 + '<span>' + fmtUsd(lowTotal) + '</span></div>'
                 + '<div id="' + uid + '" style="display:none;grid-template-columns:1fr;gap:5px;margin-top:4px;">';
@@ -9937,22 +9826,22 @@ document.addEventListener('DOMContentLoaded', () => {
         // NFT collections
         if (nfts.length > 0) {
             h += '<div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.06);">'
-                + '<div style="font-size:11px;font-weight:700;color:rgba(168,85,247,0.7);font-family:Inter,sans-serif;letter-spacing:0.5px;margin-bottom:8px;">\ud83d\uddbc\ufe0f NFT COLLECTIONS \u00b7 ' + nfts.length + '</div>'
-                + '<div style="display:flex;gap:7px;flex-wrap:wrap;">';
+                + '<div style="font-size:10px;font-weight:700;color:rgba(168,85,247,0.6);font-family:Inter,sans-serif;letter-spacing:0.8px;text-transform:uppercase;margin-bottom:8px;">\ud83d\uddbc\ufe0f NFT Collections \u00b7 ' + nfts.length + '</div>'
+                + '<div style="display:flex;gap:6px;flex-wrap:wrap;">';
             var showCols = cols.slice(0, 6);
             for (var ci = 0; ci < showCols.length; ci++) {
                 var c = showCols[ci];
-                h += '<div style="background:rgba(168,85,247,0.07);border:1px solid rgba(168,85,247,0.2);border-radius:8px;padding:7px 11px;display:flex;align-items:center;gap:7px;">'
-                    + '<span style="font-size:16px;font-weight:900;color:#a855f7;">' + c.count + '</span>'
-                    + '<span style="font-size:10px;color:rgba(255,255,255,0.5);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:Inter,sans-serif;">' + c.name + '</span></div>';
+                h += '<div style="background:rgba(168,85,247,0.06);border:1px solid rgba(168,85,247,0.18);border-radius:8px;padding:7px 11px;display:flex;align-items:center;gap:6px;">'
+                    + '<span style="font-size:14px;font-weight:900;color:#a855f7;">' + c.count + '</span>'
+                    + '<span style="font-size:10px;color:rgba(255,255,255,0.4);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:Inter,sans-serif;">' + c.name + '</span></div>';
             }
             var shownNFTs = showCols.reduce(function(s, c) { return s + c.count; }, 0);
-            if (nfts.length - shownNFTs > 0) h += '<div style="background:rgba(168,85,247,0.04);border:1px solid rgba(168,85,247,0.12);border-radius:8px;padding:7px 11px;font-size:10px;color:rgba(255,255,255,0.3);font-family:Inter,sans-serif;">+' + (nfts.length - shownNFTs) + ' more</div>';
-            h += '</div><a href="https://mintgarden.io" target="_blank" rel="noopener" style="display:inline-block;margin-top:8px;font-size:10px;color:rgba(168,85,247,0.4);text-decoration:none;font-family:Inter,sans-serif;">View on MintGarden \u2192</a></div>';
+            if (nfts.length - shownNFTs > 0) h += '<div style="background:rgba(168,85,247,0.03);border:1px solid rgba(168,85,247,0.1);border-radius:8px;padding:7px 11px;font-size:10px;color:rgba(255,255,255,0.25);font-family:Inter,sans-serif;">+' + (nfts.length - shownNFTs) + ' more</div>';
+            h += '</div><a href="https://mintgarden.io" target="_blank" rel="noopener" style="display:inline-block;margin-top:8px;font-size:10px;color:rgba(168,85,247,0.35);text-decoration:none;font-family:Inter,sans-serif;">View on MintGarden \u2192</a></div>';
         }
 
         if (!xchBal && all.length === 0 && nfts.length === 0) {
-            h += '<div style="text-align:center;padding:36px 20px;color:rgba(255,255,255,0.3);"><div style="font-size:32px;margin-bottom:10px;">\ud83d\udceb</div><div style="font-size:13px;font-family:Inter,sans-serif;">No Chia holdings found</div></div>';
+            h += '<div style="text-align:center;padding:36px 20px;color:rgba(255,255,255,0.25);"><div style="font-size:32px;margin-bottom:10px;">\ud83d\udceb</div><div style="font-size:13px;font-family:Inter,sans-serif;">No Chia holdings found</div></div>';
         }
 
         h += '</div>';
