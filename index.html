@@ -3038,9 +3038,9 @@
                 <!-- Positions List -->
                 <div id="portfolioList"></div>
 
-                <!-- Chia Portfolio — appears when Sage wallet connected -->
-                <div id="chia-reload-btn" style="display:none;max-width:1000px;margin:16px auto 0;padding:0 0 4px;text-align:right;">
-                    <button onclick="if(window._sageXchAddresses)loadAndRenderChiaPortfolio(window._sageXchAddresses);" style="background:rgba(74,222,128,0.09);border:1px solid rgba(74,222,128,0.22);border-radius:16px;padding:5px 14px;font-size:11px;font-family:'Inter',sans-serif;font-weight:600;color:rgba(74,222,128,0.7);cursor:pointer;transition:all 0.15s;" onmouseover="this.style.background='rgba(74,222,128,0.16)'" onmouseout="this.style.background='rgba(74,222,128,0.09)'">&#8635; Reload Chia Portfolio</button>
+                <!-- Chia Portfolio reload — shown when Sage is connected -->
+                <div id="chia-reload-btn" style="display:none;max-width:1000px;margin:24px auto 0;text-align:center;">
+                    <button onclick="if(window._sageXchAddresses){loadAndRenderChiaPortfolio(window._sageXchAddresses);}else if(window._sageSession){this.textContent='⏳ Reconnecting…';this.disabled=true;}" style="background:rgba(74,222,128,0.12);border:1px solid rgba(74,222,128,0.35);border-radius:20px;padding:10px 24px;font-size:13px;font-family:'Inter',sans-serif;font-weight:700;color:rgba(74,222,128,0.9);cursor:pointer;transition:all 0.2s;letter-spacing:0.3px;" onmouseover="this.style.background='rgba(74,222,128,0.22)'" onmouseout="this.style.background='rgba(74,222,128,0.12)'">⟳ Reload Chia Assets</button>
                 </div>
                 <div id="chia-portfolio-section" style="display:none; max-width:1000px; margin:0 auto; padding:0 0 20px;"></div>
             </div>
@@ -3898,6 +3898,10 @@
             if (tabName === "portfolio") {
                 if (window._sageXchAddresses && typeof loadAndRenderChiaPortfolio === 'function') {
                     setTimeout(function() { loadAndRenderChiaPortfolio(window._sageXchAddresses); }, 50);
+                } else if (window._sageSession) {
+                    // Session exists but addresses not yet resolved — show reload CTA
+                    var _rcb = document.getElementById('chia-reload-btn');
+                    if (_rcb) _rcb.style.display = 'block';
                 }
             }
             if (tabName === "treasury") {
