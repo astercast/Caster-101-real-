@@ -23,7 +23,7 @@ const TRACKED = {
         { id: 'sprout-chia', symbol: '🌱', name: 'Sprout', chain: 'Chia', assetId: 'ab558b1b841365a24d1ff2264c55982e55664a8b6e45bc107446b7e667bb463b' },
         { id: 'pizza-chia', symbol: '🍕', name: 'Pizza', chain: 'Chia', assetId: 'dd37f678dda586fad9b1daeae1f7c5c137ffa6d947e1ed5c7b4f3c430da80638' },
         { id: 'neck-chia', symbol: '$NECK', name: 'NeckCoin', chain: 'Chia', assetId: '1ad673d21799c9a224014ca71f9fe07cbc836fa23fa97b3be275d46d0b8bd9da' },
-        { id: 'chia-meme-chia', symbol: '$CHIA', name: 'Chia', chain: 'Chia', assetId: '69326954fe16117cd6250e929748b2a1ab916347598bc8180749279cfae21ddb' }
+        { id: 'chia-meme-chia', symbol: '$CHIA', name: 'VFVAPatek9000Inu', chain: 'Chia', assetId: '69326954fe16117cd6250e929748b2a1ab916347598bc8180749279cfae21ddb' }
     ],
     base: [
         { id: 'wxch-base', symbol: 'wXCH', name: 'Wrapped XCH', chain: 'Base', contract: '0x36be1d329444aef5d28df3662ec5b4f965cd93e9' },
@@ -34,7 +34,7 @@ const TRACKED = {
         { id: 'sprout-base', symbol: '🌱', name: 'Sprout', chain: 'Base', contract: '0xd1b771CB462a4B0e4d56Bb68b4bF832994CC8820' },
         { id: 'pizza-base', symbol: '🍕', name: 'Pizza', chain: 'Base', contract: '0x84070f2c685b3d4B63c66f0B13fB83Fa6ccb4035' },
         { id: 'neck-base', symbol: '$NECK', name: 'NeckCoin', chain: 'Base', contract: '0x359D5BFa1bb87598e2198EC139eE44D31Bd06FaC' },
-        { id: 'chia-meme-base', symbol: '$CHIA', name: 'Chia', chain: 'Base', contract: '0x05AefaFfF978EA4F9E6ff9FA3Bc2465B90598549' }
+        { id: 'chia-meme-base', symbol: '$CHIA', name: 'VFVAPatek9000Inu', chain: 'Base', contract: '0x05AefaFfF978EA4F9E6ff9FA3Bc2465B90598549' }
     ]
 };
 
