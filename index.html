@@ -10874,51 +10874,51 @@ document.addEventListener('DOMContentLoaded', () => {
         const chainId = (session.namespaces && session.namespaces.chia && session.namespaces.chia.chains && session.namespaces.chia.chains[0]) || 'chia:mainnet';
         const allAddresses = [];
 
-        for (const acc of (session.namespaces && session.namespaces.chia && session.namespaces.chia.accounts ? session.namespaces.chia.accounts : [])) {
-            const addr = acc.split(':')[2] || '';
-            if (/^xch1|^txch1/.test(addr) && !allAddresses.includes(addr)) allAddresses.push(addr);
+        function addAddr(a) { if (a && !allAddresses.includes(a)) allAddresses.push(a); }
+        function addPH(raw) {
+            var ph = (raw || '').replace(/^0x/, '');
+            if (/^[0-9a-f]{64}$/i.test(ph)) addAddr(puzzleHashToXchAddress(ph, 'xch'));
         }
 
-        const shouldLookup = !!opts.forceLookup || allAddresses.length === 0;
+        // 1. Session accounts (CAIP-10: chia:mainnet:xch1...)
+        for (const acc of (session.namespaces && session.namespaces.chia && session.namespaces.chia.accounts ? session.namespaces.chia.accounts : [])) {
+            const addr = acc.split(':')[2] || '';
+            if (/^xch1|^txch1/.test(addr)) addAddr(addr);
+        }
+
+        const shouldLookup = !!opts.forceLookup || allAddresses.length <= 1;
         if (shouldLookup && _sageWCClient) {
+            // 2. chip0002_getPublicKeys (empty params for max compatibility)
             try {
                 const keys = await _sageWCClient.request({
                     topic: session.topic, chainId,
-                    request: { method: 'chip0002_getPublicKeys', params: { min_index: 0, max_index: 19 } }
+                    request: { method: 'chip0002_getPublicKeys', params: {} }
                 });
                 if (Array.isArray(keys)) {
                     for (const k of keys) {
-                        // Sage may return objects with puzzle_hash, or CAIP-10 account strings, or raw hex
-                        let ph = typeof k === 'string' ? k : (k.puzzle_hash || k.address || k.fingerprint || '');
-                        // If it's a CAIP-10 account string like chia:mainnet:xch1...
+                        let ph = typeof k === 'string' ? k : (k.puzzle_hash || k.address || '');
                         if (ph.includes(':')) ph = ph.split(':')[2] || '';
-                        // If it's already a bech32 address, push directly
-                        if (/^xch1|^txch1/.test(ph)) {
-                            if (!allAddresses.includes(ph)) allAddresses.push(ph);
-                            continue;
-                        }
-                        // If it's a 64-char hex puzzle_hash, convert to address
-                        if (/^[0-9a-f]{64}$/i.test(ph)) {
-                            const addr = puzzleHashToXchAddress(ph, 'xch');
-                            if (!allAddresses.includes(addr)) allAddresses.push(addr);
-                        }
+                        if (/^xch1|^txch1/.test(ph)) { addAddr(ph); continue; }
+                        addPH(ph);
                     }
                 }
+                console.log('[Sage] getPublicKeys → ' + allAddresses.length + ' addresses');
             } catch(e) { console.warn('[Sage] getPublicKeys:', e && e.message ? e.message : e); }
-        }
 
-        if (allAddresses.length === 0 && _sageWCClient) {
+            // 3. Discover P2 addresses from actual XCH coins held in wallet
             try {
                 const coins = await _sageWCClient.request({
                     topic: session.topic, chainId,
-                    request: { method: 'chip0002_getAssetCoins', params: { type: null, assetId: null, includedLocked: false, limit: 1 } }
+                    request: { method: 'chip0002_getAssetCoins', params: { type: null, assetId: null, includeLocked: false, offset: 0, limit: 100 } }
                 });
-                if (Array.isArray(coins) && coins[0] && coins[0].coin && coins[0].coin.puzzle_hash) {
-                    allAddresses.push(puzzleHashToXchAddress(coins[0].coin.puzzle_hash, 'xch'));
+                if (Array.isArray(coins)) {
+                    for (const c of coins) addPH(c && c.coin ? c.coin.puzzle_hash : '');
+                    console.log('[Sage] XCH coin discovery: ' + coins.length + ' coins → ' + allAddresses.length + ' addresses');
                 }
-            } catch(e) { console.warn('[Sage] Could not derive XCH address:', e && e.message ? e.message : e); }
+            } catch(e) { console.warn('[Sage] coin discovery:', e && e.message ? e.message : e); }
         }
 
+        console.log('[Sage] Resolved ' + allAddresses.length + ' address(es):', allAddresses.map(function(a) { return a.slice(0,10) + '…'; }));
         return allAddresses;
     }
 
@@ -11199,19 +11199,19 @@ document.addEventListener('DOMContentLoaded', () => {
             })();
 
             // All wallet fetches in parallel — AND within each wallet, XCH + tokens + NFTs are parallel
+            console.log('[Chia] Querying ' + addrList.length + ' address(es):', addrList.map(function(a) { return a.slice(0,10) + '…'; }));
             const addressPromise = Promise.all(addrList.map(function(addr) {
-                // XCH balance — xchscan with 8s timeout fallback to spacescan
-                const xchBalP = fetchWithTimeout(
+                // XCH balance — xchscan (8s timeout), fallback to spacescan on ANY failure
+                var spacescanXchP = fetch('https://api.spacescan.io/address/xch-balance/' + addr)
+                    .then(function(r) { return r.ok ? r.json() : {}; })
+                    .then(function(d) { return d && d.balance ? parseFloat(d.balance) / 1e12 : 0; })
+                    .catch(function() { return 0; });
+                var xchBalP = Promise.race([
                     fetch('https://xchscan.com/api/account/balance?address=' + addr)
-                        .then(function(r) { return r.ok ? r.json() : {}; })
-                        .then(function(d) { return parseFloat((d && d.xch) ? d.xch : 0); })
-                        .catch(function() { return 0; }),
-                    8000,
-                    fetch('https://api.spacescan.io/address/xch-balance/' + addr)
-                        .then(function(r) { return r.ok ? r.json() : {}; })
-                        .then(function(d) { return d && d.balance ? parseFloat(d.balance) / 1e12 : 0; })
-                        .catch(function() { return 0; })
-                );
+                        .then(function(r) { if (!r.ok) throw new Error('xchscan ' + r.status); return r.json(); })
+                        .then(function(d) { return parseFloat((d && d.xch) ? d.xch : 0); }),
+                    new Promise(function(_, reject) { setTimeout(function() { reject(new Error('xchscan timeout')); }, 8000); })
+                ]).catch(function(e) { console.log('[Chia] xchscan fail for ' + addr.slice(0,10) + ': ' + e.message + ', using spacescan'); return spacescanXchP; });
 
                 const tokensP = (async function() {
                     let rawTokens = [], sPage = 1;
@@ -11242,6 +11242,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Wait for everything
             const [results, tm, xchPrice, dm] = await Promise.all([addressPromise, tibetPromise, xchPricePromise, dexiePromise]);
+
+            // Log per-address results for debugging
+            for (var ri = 0; ri < results.length; ri++) {
+                console.log('[Chia] ' + addrList[ri].slice(0,10) + ': XCH=' + results[ri].xchBal + ', tokens=' + results[ri].rawTokens.length + ', NFTs=' + results[ri].nfts.length);
+            }
 
             // Aggregate XCH
             const xchBal = results.reduce(function(s, r) { return s + r.xchBal; }, 0);
@@ -11322,7 +11327,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const collectionsMap = {};
         for (const nft of nfts) {
             const key = nft.collection_id || nft.collection_name || 'other';
-            if (!collectionsMap[key]) collectionsMap[key] = { name: (nft.collection_name || nft.name || 'Unknown').replace(/\s+#\d+$/, ''), count: 0, image: nft.preview_url || '' };
+            if (!collectionsMap[key]) collectionsMap[key] = { name: (nft.collection_name || nft.name || 'Unknown').replace(/\s+#\d+[\w\s]*$/, ''), count: 0, image: nft.preview_url || '' };
             collectionsMap[key].count++;
             if (!collectionsMap[key].image && nft.preview_url) collectionsMap[key].image = nft.preview_url;
         }
