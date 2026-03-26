@@ -10,6 +10,8 @@ const CAT_IDS = [
     '70010d83542594dd44314efbae75d82b3d9ae7d946921ed981a6cd08f0549e50', // LOVE
     'ab558b1b841365a24d1ff2264c55982e55664a8b6e45bc107446b7e667bb463b', // SPROUT
     'dd37f678dda586fad9b1daeae1f7c5c137ffa6d947e1ed5c7b4f3c430da80638', // PIZZA
+    '1ad673d21799c9a224014ca71f9fe07cbc836fa23fa97b3be275d46d0b8bd9da', // NECK
+    '69326954fe16117cd6250e929748b2a1ab916347598bc8180749279cfae21ddb', // CHIA (memecoin)
 ];
 
 const UA = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36', 'Accept': 'application/json' };
