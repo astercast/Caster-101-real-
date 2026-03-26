@@ -1445,8 +1445,8 @@
             position: relative;
             overflow: hidden;
             border-radius: 22px;
-            border: 1px solid rgba(255,255,255,0.08);
-            background: linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.02));
+            border: 1px solid rgba(255,255,255,0.12);
+            background: linear-gradient(180deg, rgba(18,16,30,0.82), rgba(12,10,24,0.78));
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             animation: bagRiseIn 0.62s cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -6745,32 +6745,38 @@
             const isMobile = viewportW <= 768;
 
             const images = [
-                // Featured art (wizard1-6 are duplicates of these — only list once)
-                'images/1768724161355_image.webp', 'images/1768770350230_image.webp',
-                'images/1768770712319_image.webp', 'images/1768771847908_image.webp',
-                'images/1768772304325_image.webp', 'images/Untitled_Artwork_Original.png',
-                // New G series
-                'images/GkS2-8oW4AA0jTv.jpg', 'images/Gllk9ozbkAAnkci.png',
-                'images/GmIBVcwbcAAvj1m.jpg', 'images/GmIwe7ibYAAP7LP.jpg',
-                'images/GplDbYtacAA6eMe.jpg', 'images/GqFrs7ZaYAAo3h-.jpg',
-                // Uploaded collections (all of them)
-                'images/uploaded_image_2_1768636844588.png', 'images/uploaded_image_3_1768636844588.png',
-                'images/uploaded_image_4_1768636844588.jpg', 'images/uploaded_image_1_1768638579775.png',
-                'images/uploaded_image_3_1768638579775.png',
-                'images/uploaded_image_4_1768638579775.jpg',
-                'images/uploaded_image_2_1768638691015.png', 'images/uploaded_image_3_1768638691015.png',
-                'images/uploaded_image_4_1768638691015.jpg', 'images/uploaded_image_1_1768638712026.jpg',
-                'images/uploaded_image_2_1768638712026.jpg', 'images/uploaded_image_3_1768638712026.png',
-                'images/uploaded_image_4_1768638712026.jpg',
-                // Photography
-                'images/IMG_0199.jpeg', 'images/IMG_0205.jpeg', 'images/IMG_2987.jpeg',
-                'images/IMG_5288.jpeg', 'images/IMG_5410.jpeg', 'images/IMG_7496.jpeg',
-                'images/IMG_7578.jpeg', 'images/IMG_7828.jpeg',
-                'images/IMG_7866.jpeg', 'images/IMG_8048.jpeg', 'images/IMG_8330.jpeg',
-                'images/IMG_8371.jpeg', 'images/IMG_9197.jpeg', 'images/image0.jpeg',
-                // Themed
-                'images/plant_your_seed.png', 'images/hodl-diamond.png',
-                'images/discord-commands.png'
+                'images/background images/GkS2-8oW4AA0jTv.jpg',
+                'images/background images/Gllk9ozbkAAnkci.png',
+                'images/background images/GmIBVcwbcAAvj1m.jpg',
+                'images/background images/GmIwe7ibYAAP7LP.jpg',
+                'images/background images/GplDbYtacAA6eMe.jpg',
+                'images/background images/GqFrs7ZaYAAo3h-.jpg',
+                'images/background images/hodl-diamond.png',
+                'images/background images/image0.jpeg',
+                'images/background images/IMG_0205.jpeg',
+                'images/background images/IMG_2987.jpeg',
+                'images/background images/IMG_7578.jpeg',
+                'images/background images/IMG_7828.jpeg',
+                'images/background images/IMG_7866.jpeg',
+                'images/background images/IMG_9197.jpeg',
+                'images/background images/og-valley.jpg',
+                'images/background images/plant_your_seed.png',
+                'images/background images/Screenshot_2026-01-17_232436-removebg-preview.png',
+                'images/background images/Untitled_Artwork_Original.png',
+                'images/background images/uploaded_image_1_1768638579775.png',
+                'images/background images/uploaded_image_1_1768638691015.png',
+                'images/background images/uploaded_image_1_1768638712026.jpg',
+                'images/background images/uploaded_image_2_1768636844588.png',
+                'images/background images/uploaded_image_2_1768638691015.png',
+                'images/background images/uploaded_image_2_1768638712026.jpg',
+                'images/background images/uploaded_image_3_1768636844588.png',
+                'images/background images/uploaded_image_3_1768638579775.png',
+                'images/background images/uploaded_image_3_1768638691015.png',
+                'images/background images/uploaded_image_3_1768638712026.png',
+                'images/background images/uploaded_image_4_1768636844588.jpg',
+                'images/background images/uploaded_image_4_1768638579775.jpg',
+                'images/background images/wizard4.png',
+                'images/background images/wizard6.png'
             ];
 
             // Shuffle so distribution isn't always same order
@@ -6835,7 +6841,7 @@
                     rot: 0,
                     rotSpeed: 0,
                     size: size,
-                    lifetime: Math.random() * 45000 + 45000,
+                    lifetime: Math.random() * 60000 + 90000,
                     born: Date.now(),
                     visible: true
                 };
@@ -6867,7 +6873,7 @@
                         img.element.style.transition = 'opacity 0.7s ease';
                         img.element.style.opacity = '0';
                         img.visible = false;
-                        img.respawnTime = nowTs + Math.random() * 12000 + 8000;
+                        img.respawnTime = nowTs + Math.random() * 20000 + 15000;
                     } else if (nowTs > img.respawnTime) {
                         img.x = Math.random() * Math.max(0, viewportW - img.size);
                         img.y = Math.random() * Math.max(0, viewportH - img.size);
