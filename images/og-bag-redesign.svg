@@ -1,0 +1,98 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="88" y1="44" x2="1128" y2="594" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#120E1D"/>
+      <stop offset="0.44" stop-color="#1A0E09"/>
+      <stop offset="1" stop-color="#09111D"/>
+    </linearGradient>
+    <radialGradient id="goldGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(208 118) rotate(25.1) scale(440 318)">
+      <stop stop-color="#FBBF24" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#FBBF24" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="greenGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1032 516) rotate(-153.8) scale(382 264)">
+      <stop stop-color="#4ADE80" stop-opacity="0.24"/>
+      <stop offset="1" stop-color="#4ADE80" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="goldLine" x1="170" y1="0" x2="1038" y2="630" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FBBF24"/>
+      <stop offset="1" stop-color="#FB7185"/>
+    </linearGradient>
+    <linearGradient id="greenLine" x1="720" y1="180" x2="1014" y2="524" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#86EFAC"/>
+      <stop offset="1" stop-color="#16A34A"/>
+    </linearGradient>
+    <filter id="blur40" x="-60" y="-60" width="1320" height="750" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="30"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="630" rx="0" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#goldGlow)"/>
+  <rect width="1200" height="630" fill="url(#greenGlow)"/>
+
+  <g opacity="0.18">
+    <path d="M0 86H1200" stroke="white"/>
+    <path d="M0 174H1200" stroke="white"/>
+    <path d="M0 262H1200" stroke="white"/>
+    <path d="M0 350H1200" stroke="white"/>
+    <path d="M0 438H1200" stroke="white"/>
+    <path d="M0 526H1200" stroke="white"/>
+    <path d="M126 0V630" stroke="white"/>
+    <path d="M274 0V630" stroke="white"/>
+    <path d="M422 0V630" stroke="white"/>
+    <path d="M570 0V630" stroke="white"/>
+    <path d="M718 0V630" stroke="white"/>
+    <path d="M866 0V630" stroke="white"/>
+    <path d="M1014 0V630" stroke="white"/>
+  </g>
+
+  <g filter="url(#blur40)">
+    <circle cx="210" cy="102" r="86" fill="#FBBF24" fill-opacity="0.28"/>
+    <circle cx="990" cy="514" r="80" fill="#22C55E" fill-opacity="0.22"/>
+  </g>
+
+  <rect x="66" y="58" width="1068" height="514" rx="34" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.12)"/>
+  <rect x="92" y="92" width="640" height="446" rx="28" fill="rgba(8,10,18,0.58)" stroke="rgba(255,255,255,0.10)"/>
+  <rect x="760" y="92" width="346" height="210" rx="24" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.10)"/>
+  <rect x="760" y="326" width="346" height="212" rx="24" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.10)"/>
+
+  <rect x="124" y="122" width="160" height="34" rx="17" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.10)"/>
+  <text x="150" y="144" fill="#E5E7EB" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700" letter-spacing="2.2">PORTFOLIO VAULT</text>
+
+  <text x="124" y="234" fill="#FFF4CC" font-family="Georgia, 'Times New Roman', serif" font-size="74" font-weight="700" letter-spacing="-2.8">Track the</text>
+  <text x="124" y="312" fill="#FFF4CC" font-family="Georgia, 'Times New Roman', serif" font-size="74" font-weight="700" letter-spacing="-2.8">whole bag</text>
+  <text x="124" y="390" fill="#FFF4CC" font-family="Georgia, 'Times New Roman', serif" font-size="74" font-weight="700" letter-spacing="-2.8">properly.</text>
+
+  <text x="124" y="442" fill="#D1D5DB" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="500">Base positions, LP exposure, and Sage-powered Chia</text>
+  <text x="124" y="474" fill="#D1D5DB" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="500">assets inside one sharp, high-signal portfolio view.</text>
+
+  <rect x="124" y="503" width="152" height="14" rx="7" fill="rgba(255,255,255,0.08)"/>
+  <rect x="124" y="503" width="78" height="14" rx="7" fill="url(#goldLine)"/>
+  <rect x="286" y="503" width="124" height="14" rx="7" fill="rgba(255,255,255,0.08)"/>
+  <rect x="286" y="503" width="46" height="14" rx="7" fill="#60A5FA"/>
+  <rect x="420" y="503" width="124" height="14" rx="7" fill="rgba(255,255,255,0.08)"/>
+  <rect x="420" y="503" width="28" height="14" rx="7" fill="#4ADE80"/>
+
+  <text x="794" y="132" fill="#9CA3AF" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700" letter-spacing="2.4">BAG SUMMARY</text>
+  <text x="794" y="202" fill="#FBBF24" font-family="Inter, Arial, sans-serif" font-size="56" font-weight="800" letter-spacing="-2">$42.6K</text>
+  <text x="794" y="234" fill="#E5E7EB" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="500">Concentration and LP weight at a glance</text>
+
+  <rect x="792" y="258" width="280" height="12" rx="6" fill="rgba(255,255,255,0.08)"/>
+  <rect x="792" y="258" width="124" height="12" rx="6" fill="url(#goldLine)"/>
+  <rect x="922" y="258" width="66" height="12" rx="6" fill="#60A5FA"/>
+  <rect x="994" y="258" width="34" height="12" rx="6" fill="#4ADE80"/>
+
+  <rect x="790" y="356" width="286" height="70" rx="18" fill="rgba(15,21,32,0.72)" stroke="rgba(74,222,128,0.16)"/>
+  <text x="818" y="382" fill="#86EFAC" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700" letter-spacing="2.1">SAGE CHIA VIEW</text>
+  <text x="818" y="414" fill="#F3F4F6" font-family="Inter, Arial, sans-serif" font-size="26" font-weight="700">XCH, CATs, LP, NFTs</text>
+
+  <rect x="790" y="442" width="286" height="70" rx="18" fill="rgba(15,21,32,0.72)" stroke="rgba(96,165,250,0.16)"/>
+  <text x="818" y="468" fill="#93C5FD" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700" letter-spacing="2.1">BASE READOUT</text>
+  <text x="818" y="500" fill="#F3F4F6" font-family="Inter, Arial, sans-serif" font-size="26" font-weight="700">Tokens, LP, allocation map</text>
+
+  <path d="M762 300C838 262 918 246 1076 246" stroke="url(#goldLine)" stroke-width="4" stroke-linecap="round"/>
+  <path d="M756 430C824 430 910 430 1076 430" stroke="url(#greenLine)" stroke-width="4" stroke-linecap="round"/>
+
+  <text x="94" y="592" fill="#E5E7EB" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700">Caster101</text>
+  <text x="1048" y="592" fill="#A7F3D0" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700">caster101.xyz/bag</text>
+</svg>

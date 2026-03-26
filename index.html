@@ -1171,6 +1171,29 @@
             50% { box-shadow: 0 0 0 1px rgba(251,191,36,0.18), 0 22px 52px rgba(0,0,0,0.45), 0 0 30px rgba(251,191,36,0.08); }
         }
 
+        @keyframes bagRiseIn {
+            from {
+                opacity: 0;
+                transform: translateY(18px) scale(0.985);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes bagDrift {
+            0%, 100% { transform: translate3d(0, 0, 0); }
+            50% { transform: translate3d(0, -4px, 0); }
+        }
+
+        @keyframes bagSweep {
+            0% { transform: translateX(-130%); opacity: 0; }
+            12% { opacity: 1; }
+            50% { transform: translateX(130%); opacity: 0.65; }
+            100% { transform: translateX(130%); opacity: 0; }
+        }
+
         .bag-page {
             max-width: 1120px;
             margin: 0 auto;
@@ -1191,6 +1214,7 @@
             -webkit-backdrop-filter: blur(18px);
             box-shadow: 0 24px 70px rgba(0,0,0,0.42), inset 0 1px 0 rgba(255,255,255,0.05);
             margin-bottom: 18px;
+            animation: bagRiseIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
 
         .bag-hero::before {
@@ -1282,7 +1306,11 @@
             font-family: 'Inter', sans-serif;
             font-size: 11px;
             color: rgba(255,255,255,0.72);
+            animation: bagRiseIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
+
+        .bag-meta-chip:nth-child(2) { animation-delay: 0.08s; }
+        .bag-meta-chip:nth-child(3) { animation-delay: 0.16s; }
 
         .bag-hero-side {
             display: grid;
@@ -1306,11 +1334,32 @@
             background: linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.02));
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
+            animation: bagRiseIn 0.62s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
 
         .bag-insight-card {
             padding: 16px 18px;
-            animation: bagPulseBorder 4.5s ease-in-out infinite;
+            animation: bagRiseIn 0.62s cubic-bezier(0.22, 1, 0.36, 1) both, bagPulseBorder 4.5s ease-in-out infinite 0.7s;
+        }
+
+        .bag-shell-card::after,
+        .bag-panel::after,
+        .bag-render-card::after,
+        .bag-chia-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(110deg, transparent 0%, rgba(255,255,255,0.08) 48%, transparent 100%);
+            transform: translateX(-130%);
+            opacity: 0;
+            pointer-events: none;
+            animation: bagSweep 8.5s ease-in-out infinite;
+        }
+
+        .bag-shell-card:nth-child(2)::after,
+        .bag-panel:nth-child(2)::after,
+        .bag-chia-card::after {
+            animation-delay: 1.4s;
         }
 
         .bag-insight-label,
@@ -1354,6 +1403,10 @@
         .bag-shell-card {
             padding: 22px;
             box-shadow: 0 18px 38px rgba(0,0,0,0.3);
+        }
+
+        .bag-command-grid > :nth-child(2) {
+            animation-delay: 0.12s;
         }
 
         .bag-input-card {
@@ -1664,7 +1717,12 @@
             border: 1px solid rgba(255,255,255,0.08);
             background: linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.02));
             box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+            animation: bagRiseIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
+
+        .bag-stat-card:nth-child(2) { animation-delay: 0.06s; }
+        .bag-stat-card:nth-child(3) { animation-delay: 0.12s; }
+        .bag-stat-card:nth-child(4) { animation-delay: 0.18s; }
 
         .bag-stat-card.s-total { background: linear-gradient(180deg, rgba(251,191,36,0.12), rgba(251,191,36,0.04)); }
         .bag-stat-card.s-pos { background: linear-gradient(180deg, rgba(96,165,250,0.12), rgba(96,165,250,0.04)); }
@@ -1829,6 +1887,7 @@
             padding: 14px;
             cursor: pointer;
             transition: background 0.14s, border-color 0.14s, transform 0.12s, box-shadow 0.14s;
+            animation: bagRiseIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
 
         .bag-token-row:hover {
@@ -1914,6 +1973,7 @@
             font-weight: 900;
             font-family: 'Space Grotesk', sans-serif;
             letter-spacing: -0.04em;
+            animation: bagDrift 6s ease-in-out infinite;
         }
 
         .bag-token-meta,
@@ -2082,6 +2142,7 @@
 
         .bag-collection-chip {
             padding: 14px;
+            animation: bagRiseIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
 
         .bag-collection-count {
@@ -2196,6 +2257,33 @@
             .bag-chia-highlight,
             .bag-collection-chip {
                 border-radius: 16px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .bag-hero,
+            .bag-meta-chip,
+            .bag-insight-card,
+            .bag-shell-card,
+            .bag-panel,
+            .bag-render-card,
+            .lp-card,
+            .bag-token-row,
+            .bag-chia-card,
+            .bag-collection-chip,
+            .bag-stat-card,
+            .bag-token-value,
+            .bag-lp-value,
+            .bag-chia-value {
+                animation: none !important;
+            }
+
+            .bag-shell-card::after,
+            .bag-panel::after,
+            .bag-render-card::after,
+            .bag-chia-card::after {
+                animation: none !important;
+                display: none;
             }
         }
 
