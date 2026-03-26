@@ -1311,8 +1311,8 @@
 
         @keyframes bagSweep {
             0% { transform: translateX(-130%); opacity: 0; }
-            12% { opacity: 1; }
-            50% { transform: translateX(130%); opacity: 0.65; }
+            12% { opacity: 0.45; }
+            50% { transform: translateX(130%); opacity: 0.3; }
             100% { transform: translateX(130%); opacity: 0; }
         }
 
@@ -1475,7 +1475,7 @@
             transform: translateX(-130%);
             opacity: 0;
             pointer-events: none;
-            animation: bagSweep 8.5s ease-in-out infinite;
+            animation: bagSweep 12s ease-in-out infinite;
         }
 
         .bag-shell-card:nth-child(2)::after,
@@ -10923,7 +10923,7 @@ document.addEventListener('DOMContentLoaded', () => {
         _sageXchAddress = allAddresses[0] || null;
         updateSageBtn(true, _sageXchAddress);
         if (_sageXchAddresses) {
-            if (!document.getElementById('portfolio') || !document.getElementById('portfolio').classList.contains('active')) showTab('portfolio');
+            if (fresh && (!document.getElementById('portfolio') || !document.getElementById('portfolio').classList.contains('active'))) showTab('portfolio');
             loadAndRenderChiaPortfolio(_sageXchAddresses);
         }
     }
@@ -11107,7 +11107,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!addrList.length) return;
         var section = document.getElementById('chia-portfolio-section');
         if (!section) return;
-        if (!document.getElementById('portfolio') || !document.getElementById('portfolio').classList.contains('active')) showTab('portfolio');
         section.style.display = 'block';
         var reloadBtn = document.getElementById('chia-reload-btn');
         if (reloadBtn) reloadBtn.style.display = 'grid';
