@@ -5387,7 +5387,7 @@
         const _mem   = navigator.deviceMemory || 4; // GB, undefined on Firefox (defaults 4)
         const _lowEnd  = isMobileDevice || _cores <= 2 || _mem <= 2;
         const _midRange = !_lowEnd && (_cores <= 4 || _mem <= 4);
-        const targetFps = _lowEnd ? 8 : (_midRange ? 30 : 60);
+        const targetFps = _lowEnd ? 20 : 60;
         const frameInterval = 1000 / targetFps;
         let viewportW = window.innerWidth;
         let viewportH = window.innerHeight;
@@ -5443,17 +5443,17 @@
             bgImages = images; // expose to respawn logic
             bgRespawnIdx = 0;
 
-            const totalImages = prefersReducedMotion ? 5
-                : _lowEnd   ? 10
-                : _midRange ? 80
-                : 130; // full screensaver chaos on high-end
+            const totalImages = prefersReducedMotion ? 3
+                : _lowEnd   ? 6
+                : _midRange ? 15
+                : 25;
             const minSize = isMobile ? 65 : 100;
             const maxSize = isMobile ? 120 : 200;
-            // Smooth, lively drift
-            const speedScale = prefersReducedMotion ? 0.08
-                : _lowEnd   ? 0.4
-                : _midRange ? 1.1
-                : 1.8;
+            // Gentle ambient drift
+            const speedScale = prefersReducedMotion ? 0.06
+                : _lowEnd   ? 0.2
+                : _midRange ? 0.35
+                : 0.5;
             const maxRotSpeed = 0; // no rotation
 
             for (let i = 0; i < totalImages; i++) {
@@ -5478,7 +5478,7 @@
                 const doesRotate = false;
                 const angle = 0;
                 const rotSpeed = 0;
-                const speedMult = 1.2 + Math.random() * 0.8; // 1.2–2.0×
+                const speedMult = 0.8 + Math.random() * 0.6; // 0.8–1.4×
                 // Grid-based spawn: divide viewport into cells so images spread evenly
                 const cols = Math.ceil(Math.sqrt(totalImages * viewportW / Math.max(viewportH, 1)));
                 const rows = Math.ceil(totalImages / cols);
@@ -5538,8 +5538,8 @@
                         const maxRS = 0;
                         img.rotSpeed = 0;
                         img.rot = 0;
-                        const spd = _lowEnd ? 0.4 : (_midRange ? 1.1 : 1.8);
-                        const rMult = doesRotate ? (0.6 + Math.random() * 0.8) : (1.2 + Math.random() * 0.8);
+                        const spd = _lowEnd ? 0.2 : (_midRange ? 0.35 : 0.5);
+                        const rMult = 0.8 + Math.random() * 0.6;
                         img.vx = (Math.random() - 0.5) * 2 * spd * rMult;
                         img.vy = (Math.random() - 0.5) * 2 * spd * rMult;
                         // Cycle through all images so every one eventually shows
