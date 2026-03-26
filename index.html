@@ -4330,7 +4330,7 @@
                 const aid = (pair.asset_id || '').toLowerCase();
                 if (!aid) continue;
                 const xchRes = parseFloat(pair.xch_reserve  || 0) / 1e12;
-                const catRes = parseFloat(pair.asset_reserve || 0) / 1e3;
+                const catRes = parseFloat(pair.token_reserve || 0) / 1e3;
                 tibetMap[aid] = {
                     priceUsd: catRes > 0 ? (xchRes / catRes) * xchPriceUSD : 0,
                 };
@@ -6978,10 +6978,10 @@ async function loadComprehensiveTreasury(force = false) {
                 let xchPrice = xchData?.chia?.usd || 0;
                 const tibetArr = Array.isArray(tibetRaw) ? tibetRaw : (tibetRaw.results || tibetRaw.pairs || []);
                 if (!xchPrice && tibetArr.length > 0) {
-                    const xchUsdPair = tibetArr.find(p => (p.short_name || '').toLowerCase().includes('xch-usd'));
+                    const xchUsdPair = tibetArr.find(p => (p.asset_short_name || '').toLowerCase().includes('xch-usd'));
                     if (xchUsdPair) {
                         const xr = parseFloat(xchUsdPair.xch_reserve || 0) / 1e12;
-                        const ar = parseFloat(xchUsdPair.asset_reserve || 1) / 1e3;
+                        const ar = parseFloat(xchUsdPair.token_reserve || 1) / 1e3;
                         xchPrice = ar > 0 ? xr / ar : 0;
                     }
                 }
@@ -6995,17 +6995,17 @@ async function loadComprehensiveTreasury(force = false) {
                     const aid = (pair.asset_id || '').toLowerCase();
                     if (!aid) continue;
                     const xchRes = parseFloat(pair.xch_reserve || 0) / 1e12;
-                    const catRes = parseFloat(pair.asset_reserve || 0) / 1e3;
+                    const catRes = parseFloat(pair.token_reserve || 0) / 1e3;
                     const priceUsd = catRes > 0 ? (xchRes / catRes) * xchPrice : 0;
                     tibetMap[aid] = {
                         priceUsd,
-                        short_name: pair.short_name || '',
-                        name: pair.name || ''
+                        short_name: pair.asset_short_name || '',
+                        name: pair.asset_name || ''
                     };
                     // Also index by LP token assetId (liquidity_asset_id)
                     const lpAid = (pair.liquidity_asset_id || '').toLowerCase();
                     if (lpAid) {
-                        const shortName = pair.short_name || '';
+                        const shortName = pair.asset_short_name || '';
                         const pairName = shortName.replace(/^TIBET-/i, '').replace(/-XCH$/i, '/XCH');
                         // xch_reserve is in mojos (divide by 1e12), liquidity is total LP supply
                         // token_reserve appears to use 1e3 decimals based on code above
@@ -7016,7 +7016,7 @@ async function loadComprehensiveTreasury(force = false) {
                             catAssetId: aid,
                             short_name: shortName,
                             pairName: pairName || shortName,
-                            name: pair.name || `TibetSwap LP ${pairName || shortName}`,
+                            name: pair.asset_name || `TibetSwap LP ${pairName || shortName}`,
                             poolXch,
                             poolTotalLiq,
                             poolTotalUsd
@@ -9651,19 +9651,39 @@ document.addEventListener('DOMContentLoaded', () => {
                     for (const p of allPairs) {
                         const aid = (p.asset_id || '').toLowerCase();
                         if (!aid) continue;
-                        const xr = parseFloat(p.xch_reserve || 0) / 1e12, cr = parseFloat(p.asset_reserve || 0) / 1e3;
-                        const cleanShort = (p.short_name || '').replace(/^TIBET-/i, '').replace(/-XCH$/i, '');
-                        const tokenName = (p.name && !/^TIBET/i.test(p.name)) ? p.name : cleanShort;
-                        map[aid] = { priceUsd: cr > 0 ? (xr / cr) * xp : 0, shortName: p.short_name || '', tokenName: tokenName };
+                        const xr = parseFloat(p.xch_reserve || 0) / 1e12, cr = parseFloat(p.token_reserve || 0) / 1e3;
+                        const cleanShort = (p.asset_short_name || '').replace(/^TIBET-/i, '').replace(/-XCH$/i, '');
+                        const tokenName = (p.asset_name && !/^TIBET/i.test(p.asset_name)) ? p.asset_name : cleanShort;
+                        map[aid] = { priceUsd: cr > 0 ? (xr / cr) * xp : 0, shortName: p.asset_short_name || '', tokenName: tokenName };
                         const la = (p.liquidity_asset_id || '').toLowerCase();
                         if (la) {
-                            const pn = (p.short_name || '').replace(/^TIBET-/i, '').replace(/-XCH$/i, '/XCH');
+                            const pn = (p.asset_short_name || '').replace(/^TIBET-/i, '').replace(/-XCH$/i, '/XCH');
                             map[la] = { isLP: true, pairName: pn, poolXch: xr, poolLiq: parseFloat(p.liquidity || 0), poolUsd: xr * 2 * xp };
                         }
                     }
                     window._sagePortfolioTibetMap = map; window._sagePortfolioTibetTs = Date.now();
                     return map;
                 })();
+            })();
+
+            // Dexie tickers (session-cached, 5 min TTL) — most reliable price source
+            const dexiePromise = (function() {
+                const now = Date.now();
+                if (window._sagePortfolioDexieMap && window._sagePortfolioDexieTs && (now - window._sagePortfolioDexieTs) < 300000)
+                    return Promise.resolve(window._sagePortfolioDexieMap);
+                return fetch('https://dexie.space/v2/prices/tickers')
+                    .then(function(r) { return r.ok ? r.json() : {}; }).catch(function() { return {}; })
+                    .then(function(d) {
+                        var map = {};
+                        for (var tick of (d.tickers || [])) {
+                            var bid = (tick.base_id || '').toLowerCase();
+                            var lp = parseFloat(tick.last_price || 0);
+                            var name = (tick.base_name || tick.base_currency || '').trim();
+                            if (bid && lp > 0) map[bid] = { priceXch: lp, name: name };
+                        }
+                        window._sagePortfolioDexieMap = map; window._sagePortfolioDexieTs = Date.now();
+                        return map;
+                    });
             })();
 
             // All wallet fetches in parallel — AND within each wallet, XCH + tokens + NFTs are parallel
@@ -9697,7 +9717,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }));
 
             // Wait for everything
-            const [results, tm, xchPrice] = await Promise.all([addressPromise, tibetPromise, xchPricePromise]);
+            const [results, tm, xchPrice, dm] = await Promise.all([addressPromise, tibetPromise, xchPricePromise, dexiePromise]);
 
             // Aggregate XCH
             const xchBal = results.reduce(function(s, r) { return s + r.xchBal; }, 0);
@@ -9710,18 +9730,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (!(parseFloat(t.balance || 0) > 0)) continue;
                     const aid = (t.asset_id || '').toLowerCase();
                     const tb = tm[aid] || null;
+                    const dx = dm[aid] || null;
                     const isLP = !!(tb && tb.isLP) || (t.name || '').toLowerCase().includes('tibet');
                     const bal = parseFloat(t.balance || 0);
-                    const pr = parseFloat(t.price || 0) || (tb && !tb.isLP ? tb.priceUsd || 0 : 0);
+                    // Price priority: Spacescan → TibetSwap → Dexie tickers
+                    const dexiePrice = (dx && !isLP) ? dx.priceXch * xchPrice : 0;
+                    const pr = parseFloat(t.price || 0) || (tb && !tb.isLP ? tb.priceUsd || 0 : 0) || dexiePrice;
                     let val = parseFloat(t.total_value || 0) || bal * pr;
                     if (isLP && tb && tb.poolLiq > 0) val = (bal / tb.poolLiq) * tb.poolXch * 2 * xchPrice;
                     const rawSym = (t.symbol || '').trim(), rawName = (t.name || '').trim();
                     // TibetSwap is the most reliable name source for CATs that have pairs
                     const tibetName = (tb && !tb.isLP && tb.tokenName) ? tb.tokenName
                         : (tb && !tb.isLP && tb.shortName) ? tb.shortName.replace(/^TIBET-/i, '').replace(/-XCH$/i, '') : '';
-                    // Priority: TibetSwap clean name → spacescan sym → spacescan name → hex truncation
-                    const sym = tibetName || (!isHexStr(rawSym) && rawSym) || (!isHexStr(rawName) && rawName) || aid.slice(0, 6).toUpperCase();
-                    const name = tibetName || (!isHexStr(rawName) && rawName) || (!isHexStr(rawSym) && rawSym) || sym;
+                    const dexieName = (dx && dx.name && !isHexStr(dx.name)) ? dx.name : '';
+                    // Priority: TibetSwap clean name → spacescan sym → Dexie name → spacescan name → hex truncation
+                    const sym = tibetName || (!isHexStr(rawSym) && rawSym) || dexieName || (!isHexStr(rawName) && rawName) || aid.slice(0, 6).toUpperCase();
+                    const name = tibetName || (!isHexStr(rawName) && rawName) || dexieName || (!isHexStr(rawSym) && rawSym) || sym;
                     if (tokenMap[aid]) {
                         tokenMap[aid].balance += bal;
                         tokenMap[aid].value += val;
