@@ -763,6 +763,33 @@
         .token-card.tc-dimmed .tc-mcap-label,
         .token-card.tc-dimmed .tc-mcap-value { font-size: 9px; }
 
+        /* ── 1D sparkline chart ────────────────────────────── */
+        .tc-chart {
+            width: 100%;
+            height: 36px;
+            margin: 8px 0 2px;
+            overflow: hidden;
+            border-radius: 3px;
+            opacity: 0;
+            transition: opacity 0.45s ease;
+            background: linear-gradient(90deg,
+                rgba(255,255,255,0.03) 25%,
+                rgba(255,255,255,0.07) 50%,
+                rgba(255,255,255,0.03) 75%);
+            background-size: 200% 100%;
+            animation: tcSkelPulse 1.8s infinite linear;
+        }
+        .tc-chart.tc-spark-ready {
+            opacity: 1;
+            background: none;
+            animation: none;
+        }
+        @keyframes tcSkelPulse {
+            from { background-position: 200% 0; }
+            to   { background-position: -200% 0; }
+        }
+        .tc-sparkline-svg { width: 100%; height: 100%; display: block; }
+
         /* ── Unified token card inner layout (tc-*) ── */
         .tc-top {
             display: flex;
@@ -7154,6 +7181,91 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
     }
 }
 
+        // ── 1D sparkline charts (GeckoTerminal, browser-direct) ─────────────
+        const _sparkCache = {};
+        const _sparkFlight = {};
+
+        function _sparkFetch(url, ms) {
+            const ctrl = new AbortController();
+            const t = setTimeout(() => ctrl.abort(), ms);
+            return fetch(url, { headers: { Accept: 'application/json;version=20230302' }, signal: ctrl.signal })
+                .finally(() => clearTimeout(t));
+        }
+
+        async function fetchSparkPrices(contract) {
+            const k = contract.toLowerCase();
+            if (_sparkCache[k]) return _sparkCache[k];
+            if (_sparkFlight[k]) return _sparkFlight[k];
+            _sparkFlight[k] = (async () => {
+                try {
+                    const r1 = await _sparkFetch(
+                        'https://api.geckoterminal.com/api/v2/networks/base/tokens/' + k + '/pools?limit=1', 8000);
+                    if (!r1.ok) return null;
+                    const d1 = await r1.json();
+                    const pool = d1.data?.[0];
+                    if (!pool) return null;
+                    const pAddr = pool.id.replace(/^base_/i, '');
+                    await new Promise(r => setTimeout(r, 150));
+                    const r2 = await _sparkFetch(
+                        'https://api.geckoterminal.com/api/v2/networks/base/pools/' + pAddr + '/ohlcv/hour?limit=24&currency=usd', 8000);
+                    if (!r2.ok) return null;
+                    const d2 = await r2.json();
+                    const list = d2.data?.attributes?.ohlcv_list;
+                    if (!list?.length) return null;
+                    // GeckoTerminal returns newest-first — reverse to oldest→newest
+                    const prices = list.slice().reverse().map(c => +c[4]).filter(p => p > 0);
+                    if (prices.length < 2) return null;
+                    _sparkCache[k] = prices;
+                    return prices;
+                } catch { return null; }
+                finally { delete _sparkFlight[k]; }
+            })();
+            return _sparkFlight[k];
+        }
+
+        function buildSparkSvg(prices, isUp) {
+            const W = 100, H = 28;
+            const mn = Math.min(...prices), mx = Math.max(...prices);
+            const rng = mx - mn || mn * 0.02 || 1;
+            const toY = p => +(H - (((p - mn) / rng) * (H - 3)) - 1.5).toFixed(2);
+            const pts = prices.map((p, i) =>
+                `${+((i / (prices.length - 1)) * W).toFixed(2)},${toY(p)}`);
+            const str = pts.join(' ');
+            const lx = pts[pts.length - 1].split(',')[0];
+            const color = isUp ? '#4ade80' : '#ef4444';
+            const uid = 'sp' + Math.random().toString(36).slice(2, 8);
+            return `<svg viewBox="0 0 ${W} ${H}" class="tc-sparkline-svg" aria-hidden="true" preserveAspectRatio="none"><defs><linearGradient id="${uid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${color}" stop-opacity="0.28"/><stop offset="100%" stop-color="${color}" stop-opacity="0"/></linearGradient></defs><polygon fill="url(#${uid})" points="${str} ${lx},${H} 0,${H}"/><polyline fill="none" stroke="${color}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" points="${str}"/></svg>`;
+        }
+
+        async function loadSparklines() {
+            const els = Array.from(document.querySelectorAll('#baseTokenList .tc-chart[data-contract]'));
+            if (!els.length) return;
+            // Cached tokens render instantly (e.g. after re-sort)
+            els.forEach(el => {
+                const k = (el.dataset.contract || '').toLowerCase();
+                const p = _sparkCache[k];
+                if (p) {
+                    el.innerHTML = buildSparkSvg(p, p[p.length - 1] >= p[0]);
+                    el.classList.add('tc-spark-ready');
+                }
+            });
+            // Staggered fetch for uncached
+            const todo = els.filter(el => !_sparkCache[(el.dataset.contract || '').toLowerCase()]);
+            await Promise.all(todo.map((el, i) => new Promise(res => setTimeout(async () => {
+                const c = el.dataset.contract;
+                if (!c || !document.contains(el)) { res(); return; }
+                const p = await fetchSparkPrices(c);
+                if (!document.contains(el)) { res(); return; }
+                if (p?.length >= 2) {
+                    el.innerHTML = buildSparkSvg(p, p[p.length - 1] >= p[0]);
+                    el.classList.add('tc-spark-ready');
+                } else {
+                    el.style.display = 'none';
+                }
+                res();
+            }, i * 500))));
+        }
+
         function renderTokens(tokensToRender = tokens) {
             console.log(`\n🎨 RENDERING TOKENS`);
             console.log(`   Total to render: ${tokensToRender.length}`);
@@ -7254,6 +7366,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                             <span class="tc-price">$${priceStr}</span>
                         </div>
                     </div>
+                    ${!isDimmed && token.contract ? '<div class="tc-chart" data-contract="' + token.contract + '"></div>' : ''}
                     <div class="tc-mid">
                         <span class="tc-price-inline">$${priceStr}</span>
                         <span class="tc-change" style="color:${changeColor};">${changeIcon} ${Math.abs(change).toFixed(1)}%</span>
@@ -7331,7 +7444,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
 
             baseList.innerHTML = baseTokens.map(createBaseCard).join('');
             chiaList.innerHTML = chiaTokens.map(createChiaCard).join('');
-            
+            loadSparklines();
             console.log(`   ✅ Rendering complete\n`);
         }
 
