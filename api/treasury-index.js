@@ -120,9 +120,9 @@ async function buildSnapshot(req) {
     const [base1, base2, chiaTreasury, xchData] = await Promise.all([
         safeFetch(`${origin}/api/treasury-comprehensive?address=${BASE_WALLET_1}&chain=base`, 25000).then(r => r.ok ? r.json() : {}).catch(() => ({})),
         safeFetch(`${origin}/api/treasury-comprehensive?address=${BASE_WALLET_2}&chain=base`, 25000).then(r => r.ok ? r.json() : {}).catch(() => ({})),
-        safeFetch(`${origin}/api/chia-cat-prices?mode=treasury&wallets=${encodeURIComponent([CHIA_WALLET_1, CHIA_WALLET_2, CHIA_WALLET_3].join(','))}`, 60000)
+        safeFetch(`${origin}/api/chia-cat-prices?mode=treasury&wallets=${encodeURIComponent([CHIA_WALLET_1, CHIA_WALLET_2, CHIA_WALLET_3].join(','))}`, 45000)
             .then(r => r.ok ? r.json() : {}).catch(() => ({})),
-        safeFetch(`${origin}/api/coingecko-proxy?ids=chia&vs_currencies=usd&t=${Date.now()}`, 10000).then(r => r.ok ? r.json() : {}).catch(() => ({}))
+        safeFetch(`${origin}/api/coingecko-proxy?ids=chia&vs_currencies=usd&t=${Date.now()}`, 8000).then(r => r.ok ? r.json() : {}).catch(() => ({}))
     ]);
 
     const baseLp1 = (base1.tokens || []).filter(t => t.type === 'lp');

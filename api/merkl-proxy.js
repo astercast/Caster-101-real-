@@ -3,9 +3,13 @@ export default async function handler(req, res) {
     res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
     if (req.method === 'OPTIONS') return res.status(200).end();
     try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000);
         const resp = await fetch('https://api.merkl.xyz/v4/opportunities?search=9mm&test=true', {
-            headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' }
+            headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },
+            signal: controller.signal
         });
+        clearTimeout(timeoutId);
         if (!resp.ok) throw new Error(`Merkl ${resp.status}`);
         const data = await resp.json();
         const items = Array.isArray(data) ? data : (data.items || []);

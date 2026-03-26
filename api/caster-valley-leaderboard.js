@@ -51,6 +51,12 @@ module.exports = async function handler(req, res) {
             const { deviceId, name, level, totalEssenceEarned } = req.body || {};
             if (!deviceId || !name) return json(400, { ok: false, error: 'Missing deviceId or name' });
 
+            const parsedEssence = Number(totalEssenceEarned);
+            if (!Number.isFinite(parsedEssence) || parsedEssence < 0) {
+                return json(400, { ok: false, error: 'Invalid totalEssenceEarned' });
+            }
+            const parsedLevel = Math.max(1, Math.min(parseInt(level) || 1, 999));
+
             // Read current leaderboard
             let lb = {};
             try {
@@ -64,9 +70,9 @@ module.exports = async function handler(req, res) {
             lb[deviceId] = {
                 deviceId,
                 name: String(name).slice(0, 20).replace(/[<>"]/g, ''),
-                level: parseInt(level) || 1,
+                level: parsedLevel,
                 totalEssenceEarned: Math.max(
-                    Math.floor(totalEssenceEarned || 0),
+                    Math.floor(parsedEssence),
                     existing?.totalEssenceEarned || 0
                 ),
                 updatedAt: Date.now()

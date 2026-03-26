@@ -10,6 +10,12 @@ export default async function handler(req, res) {
     const { path } = req.query;
     if (!path) return res.status(400).json({ error: 'Missing path parameter' });
 
+    // Whitelist allowed Spacescan path prefixes to prevent endpoint injection
+    const allowedPrefixes = ['cat/info/', 'address/balance/', 'address/xch-balance/', 'address/nft-balance/', 'address/token-balance/'];
+    if (!allowedPrefixes.some(p => path.startsWith(p))) {
+        return res.status(400).json({ error: 'Invalid path' });
+    }
+
     // Reconstruct the Spacescan URL
     const url = `https://api.spacescan.io/${path}`;
     

@@ -42,8 +42,12 @@ module.exports = async function handler(req, res) {
             if (!body.save || typeof body.save !== 'object') {
                 return json(res, 400, { ok: false, error: 'Missing save payload' });
             }
+            const serialized = JSON.stringify(body.save);
+            if (serialized.length > 500000) {
+                return json(res, 413, { ok: false, error: 'Save payload too large' });
+            }
             if (!body.save.savedAt) body.save.savedAt = Date.now();
-            await kvCmd('SET', key, JSON.stringify(body.save));
+            await kvCmd('SET', key, serialized);
             return json(res, 200, { ok: true });
         }
 

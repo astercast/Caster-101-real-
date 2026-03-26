@@ -5,10 +5,13 @@ export default async function handler(req, res) {
 
     try {
         // counterapi.dev — free, persistent, atomic hit counter
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
         const apiRes = await fetch(
             'https://api.counterapi.dev/v1/caster101/pageviews/up',
-            { headers: { 'Accept': 'application/json' } }
+            { headers: { 'Accept': 'application/json' }, signal: controller.signal }
         );
+        clearTimeout(timeoutId);
         if (!apiRes.ok) throw new Error(`counterapi ${apiRes.status}`);
         const data = await apiRes.json();
         // Returns { count: <number> }
