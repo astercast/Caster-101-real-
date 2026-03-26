@@ -5226,6 +5226,11 @@
         function isMarketSnapshotUsable(snapshot) {
             if (!snapshot || !Array.isArray(snapshot.base) || !Array.isArray(snapshot.chia)) return false;
 
+            // Reject stale snapshots missing newly-added tokens
+            const expectedChia = trackedTokens.filter(t => t.chain === 'Chia').length;
+            const expectedBase = trackedTokens.filter(t => t.chain === 'Base').length;
+            if (snapshot.chia.length < expectedChia || snapshot.base.length < expectedBase) return false;
+
             const basePriced = snapshot.base.filter(t => parseFloat(t.price || 0) > 0).length;
             const chiaPriced = snapshot.chia.filter(t => parseFloat(t.price || 0) > 0).length;
             const chiaWithMcap = snapshot.chia.filter(t => (t.assetId === 'Native') || parseFloat(t.marketCap || 0) > 0).length;
@@ -6997,7 +7002,11 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                 'SPROUT':     '🌱',
                 'wSPROUT':    '🌱',
                 'PIZZA':      '🍕',
-                'wPIZZA':     '🍕'
+                'wPIZZA':     '🍕',
+                'NECK':       '$NECK',
+                'wNECK':      '$NECK',
+                'CHIA':       '$CHIA',
+                'wCHIA':      '$CHIA'
             };
             const getEmoji = (sym) => {
                 // If already emoji/non-ASCII (trackedTokens store emoji as symbol), use as-is
