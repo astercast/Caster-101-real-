@@ -1400,9 +1400,22 @@
             margin-bottom: 18px;
         }
 
+        .bag-command-grid-tight {
+            grid-template-columns: minmax(0, 1fr) 280px;
+            align-items: stretch;
+        }
+
         .bag-shell-card {
             padding: 22px;
             box-shadow: 0 18px 38px rgba(0,0,0,0.3);
+        }
+
+        .bag-shell-card-primary {
+            padding: 18px 20px;
+        }
+
+        .bag-shell-card-secondary {
+            padding: 14px;
         }
 
         .bag-command-grid > :nth-child(2) {
@@ -1434,6 +1447,12 @@
             margin-bottom: 6px;
         }
 
+        .bag-panel-title-tight {
+            margin-bottom: 0;
+            font-size: 28px;
+            line-height: 1;
+        }
+
         .bag-panel-copy {
             font-family: 'Inter', sans-serif;
             font-size: 13px;
@@ -1452,6 +1471,22 @@
             font-size: 11px;
             font-weight: 700;
             white-space: nowrap;
+        }
+
+        .bag-panel-head-tight {
+            margin-bottom: 14px;
+            align-items: center;
+        }
+
+        .bag-hero-meta-tight {
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .bag-hero-meta-tight .bag-meta-chip {
+            padding: 7px 10px;
+            font-size: 10px;
+            color: rgba(255,255,255,0.84);
         }
 
         .wallet-input-row {
@@ -1582,6 +1617,23 @@
             display: grid;
             gap: 14px;
             height: 100%;
+        }
+
+        .bag-mini-overview-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            height: 100%;
+        }
+
+        .bag-mini-overview-card {
+            padding: 14px;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.02));
+            display: grid;
+            gap: 6px;
+            align-content: center;
         }
 
         .bag-side-stack {
@@ -1841,6 +1893,18 @@
             font-family: 'Inter', sans-serif;
         }
 
+        .bag-empty-state {
+            padding: 34px 22px;
+        }
+
+        .bag-empty-title {
+            margin-bottom: 0;
+        }
+
+        .bag-empty-copy {
+            display: none;
+        }
+
         .bag-section-head {
             display: flex;
             align-items: center;
@@ -2065,6 +2129,9 @@
             max-width: 1120px;
             margin: 22px auto 0;
             text-align: center;
+            display: grid;
+            gap: 8px;
+            justify-items: center;
         }
 
         .bag-chia-toolbar button {
@@ -2085,6 +2152,22 @@
         .bag-chia-toolbar button:hover {
             background: linear-gradient(135deg, rgba(74,222,128,0.24), rgba(16,185,129,0.12));
             transform: translateY(-1px);
+        }
+
+        .bag-chia-toolbar-note {
+            min-height: 16px;
+            font-size: 11px;
+            line-height: 1.4;
+            color: rgba(255,255,255,0.48);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .bag-chia-toolbar-note.is-warning {
+            color: #fbbf24;
+        }
+
+        .bag-chia-toolbar-note.is-success {
+            color: #86efac;
         }
 
         .bag-chia-shell {
@@ -2168,6 +2251,10 @@
                 grid-template-columns: 1fr;
             }
 
+            .bag-command-grid-tight {
+                grid-template-columns: 1fr;
+            }
+
             .bag-start-grid {
                 grid-template-columns: 1fr;
             }
@@ -2233,6 +2320,10 @@
             .bag-panel-head {
                 flex-direction: column;
                 align-items: flex-start;
+            }
+
+            .bag-hero-meta-tight {
+                justify-content: flex-start;
             }
 
             .bag-token-right,
@@ -3964,41 +4055,19 @@
 
         <div id="portfolio" class="content">
             <div class="bag-page">
-                <section class="bag-hero">
-                    <div class="bag-hero-grid">
-                        <div class="bag-header">
-                            <div class="bag-kicker">Arcane Portfolio Console</div>
-                            <h1 class="bag-title">Track the whole bag like it actually matters.</h1>
-                            <p class="bag-subtitle">Scan Base positions, LP exposure, and connected Sage Chia wallets inside one vault-grade view with cleaner hierarchy, faster reads, and stronger visual signal.</p>
-                            <div class="bag-hero-meta">
-                                <div class="bag-meta-chip">⚡ Base tokens + LP</div>
-                                <div class="bag-meta-chip">🌱 Sage-powered Chia bag</div>
-                                <div class="bag-meta-chip">🧪 Live pricing + allocation mix</div>
-                            </div>
-                        </div>
-                        <div class="bag-hero-side">
-                            <div class="bag-insight-card">
-                                <div class="bag-insight-label">What This View Does</div>
-                                <div class="bag-insight-value">One command.</div>
-                                <div class="bag-insight-copy">A single scan surfaces token concentration, LP dependence, and where the real weight of the wallet sits instead of dumping raw rows on the screen.</div>
-                            </div>
-                            <div class="bag-insight-card">
-                                <div class="bag-insight-label">Built For</div>
-                                <div class="bag-insight-copy">Fast checking before trades, treasury peeks, flex screenshots, and sanity passes when you want Base plus Chia in the same orbit.</div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <div class="bag-command-grid">
-                    <section class="bag-shell-card">
+                <div class="bag-command-grid bag-command-grid-tight">
+                    <section class="bag-shell-card bag-shell-card-primary">
                         <div class="bag-input-card">
-                            <div class="bag-panel-head">
+                            <div class="bag-panel-head bag-panel-head-tight">
                                 <div>
-                                    <div class="bag-panel-title">Scan Base Wallet</div>
-                                    <div class="bag-panel-copy">Paste any Base address and the vault will map tokens, price exposure, and LP positions into a readable layout instead of a raw explorer dump.</div>
+                                    <div class="bag-kicker">Portfolio</div>
+                                    <div class="bag-panel-title bag-panel-title-tight">Bag Tracker</div>
                                 </div>
-                                <div class="bag-panel-badge">Live portfolio spell</div>
+                                <div class="bag-hero-meta bag-hero-meta-tight">
+                                    <div class="bag-meta-chip">Base</div>
+                                    <div class="bag-meta-chip">LP</div>
+                                    <div class="bag-meta-chip">Chia</div>
+                                </div>
                             </div>
                             <div class="wallet-input-row">
                                 <div class="bag-input-wrap">
@@ -4015,15 +4084,20 @@
                         </div>
                     </section>
 
-                    <aside class="bag-shell-card bag-side-panel">
-                        <div>
-                            <div class="bag-panel-title">What lands in the readout</div>
-                            <div class="bag-side-copy">The redesign prioritizes signal: big number first, then concentration, then positions. Base and Chia keep separate identities so you can read the risk mix instantly.</div>
-                        </div>
-                        <div class="bag-side-list">
-                            <div class="bag-side-item"><span>✦</span><span><strong>Base scan</strong> resolves wallet value, token counts, LP weight, and direct market links.</span></div>
-                            <div class="bag-side-item"><span>✦</span><span><strong>Chia panel</strong> lights up automatically after Sage connects and groups XCH, CATs, LP, and NFT collections.</span></div>
-                            <div class="bag-side-item"><span>✦</span><span><strong>Allocation bar</strong> makes bag concentration obvious before you scroll the rows.</span></div>
+                    <aside class="bag-shell-card bag-shell-card-secondary">
+                        <div class="bag-mini-overview-grid">
+                            <div class="bag-mini-overview-card">
+                                <div class="bag-mini-label">Base View</div>
+                                <div class="bag-mini-value">Tokens + LP</div>
+                            </div>
+                            <div class="bag-mini-overview-card">
+                                <div class="bag-mini-label">Chia View</div>
+                                <div class="bag-mini-value">XCH + CATs</div>
+                            </div>
+                            <div class="bag-mini-overview-card">
+                                <div class="bag-mini-label">Focus</div>
+                                <div class="bag-mini-value">Top weights</div>
+                            </div>
                         </div>
                     </aside>
                 </div>
@@ -4084,30 +4158,30 @@
                 <div id="portfolioList" class="bag-results-stack">
                     <section class="bag-render-card bag-empty-state">
                         <div class="bag-empty-icon">🧿</div>
-                        <div class="bag-empty-title">The vault is ready.</div>
-                        <div class="bag-empty-copy">Drop in a Base wallet above to conjure the portfolio view. If Sage is connected, the Chia side appears below with XCH, CATs, LP positions, and NFT collections.</div>
+                        <div class="bag-empty-title">Scan a wallet.</div>
                         <div class="bag-start-grid" style="margin-top:18px;">
                             <div class="bag-start-tile">
                                 <div class="bag-start-icon">🔵</div>
-                                <div class="bag-start-title">Base first</div>
-                                <div class="bag-start-copy">Reads token balances, values, and LP exposure with direct trade links where available.</div>
+                                <div class="bag-start-title">Base</div>
+                                <div class="bag-start-copy">Token rows and LP positions.</div>
                             </div>
                             <div class="bag-start-tile">
                                 <div class="bag-start-icon">🪄</div>
-                                <div class="bag-start-title">Signal over clutter</div>
-                                <div class="bag-start-copy">Major positions stay upfront. Dust gets tucked away until you actually want to inspect it.</div>
+                                <div class="bag-start-title">Weights</div>
+                                <div class="bag-start-copy">Big positions first, dust collapsed.</div>
                             </div>
                             <div class="bag-start-tile">
                                 <div class="bag-start-icon">🌱</div>
-                                <div class="bag-start-title">Chia stays distinct</div>
-                                <div class="bag-start-copy">Connected Sage wallets render in a separate green lane so the cross-chain picture stays readable.</div>
+                                <div class="bag-start-title">Chia</div>
+                                <div class="bag-start-copy">Sage section appears below when connected.</div>
                             </div>
                         </div>
                     </section>
                 </div>
 
-                <div id="chia-reload-btn" class="bag-chia-toolbar" style="display:none;">
-                    <button onclick="if(window._sageXchAddresses){loadAndRenderChiaPortfolio(window._sageXchAddresses);}else if(window._sageSession){this.textContent='⏳ Reconnecting…';this.disabled=true;}">⟳ Reload Chia Assets</button>
+                <div id="chia-reload-btn" class="bag-chia-toolbar">
+                    <button id="chia-portfolio-action-btn" onclick="handleChiaPortfolioAction(this)">⟳ Load Chia Wallet</button>
+                    <div id="chia-action-notice" class="bag-chia-toolbar-note" aria-live="polite"></div>
                 </div>
                 <div id="chia-portfolio-section" class="bag-chia-shell"></div>
             </div>
@@ -4966,10 +5040,9 @@
                 if (window._sageXchAddresses && typeof loadAndRenderChiaPortfolio === 'function') {
                     setTimeout(function() { loadAndRenderChiaPortfolio(window._sageXchAddresses); }, 50);
                 } else if (window._sageSession) {
-                    // Session exists but addresses not yet resolved — show reload CTA
-                    var _rcb = document.getElementById('chia-reload-btn');
-                    if (_rcb) _rcb.style.display = 'block';
+                    updateChiaPortfolioAction();
                 }
+                updateChiaPortfolioAction();
             }
             if (tabName === "treasury") {
                 if (_treasuryCache.baseData && _treasuryCache.chiaData && _treasuryCache.nftData) {
@@ -7316,8 +7389,8 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
             document.getElementById('portfolioList').innerHTML = `
                 <section class="bag-render-card bag-loading-state">
                     <div class="bag-loading-icon">⚡</div>
-                    <div class="bag-loading-title">Reading the chain...</div>
-                    <div class="bag-loading-copy">Pulling Base token balances, LP positions, and live pricing into the vault view. The heavy rows will surface first once the scan resolves.</div>
+                    <div class="bag-loading-title">Scanning wallet...</div>
+                    <div class="bag-loading-copy">Fetching Base balances, LP positions, and pricing.</div>
                 </section>`;
             document.getElementById('bag-summary').style.display = 'none';
 
@@ -7418,7 +7491,6 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                     <section class="bag-render-card bag-empty-state">
                         <div class="bag-empty-icon">📭</div>
                         <div class="bag-empty-title">No Base positions found.</div>
-                        <div class="bag-empty-copy">This wallet did not return ERC-20 or LP positions from the Base scan. Try another address or connect Sage below for the Chia side of the bag.</div>
                     </section>`;
                 return;
             }
@@ -7462,8 +7534,8 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                 <div class="bag-results-hero">
                     <div>
                         <div class="bag-card-label">Base Vault Readout</div>
-                        <div class="bag-results-title">${tokens.length} positions across one wallet</div>
-                        <div class="bag-results-copy">Largest holding: ${dominant ? escapeHtml(dominant.symbol || dominant.pairName || 'Unknown') : '—'} · ${dominant ? dominantPct.toFixed(1) : '0'}% of the bag.</div>
+                        <div class="bag-results-title">${tokens.length} Base positions</div>
+                        <div class="bag-results-copy">Top holding: ${dominant ? escapeHtml(dominant.symbol || dominant.pairName || 'Unknown') : '—'} · ${dominant ? dominantPct.toFixed(1) : '0'}%</div>
                     </div>
                     <div class="bag-panel-badge">${safeShortAddress}</div>
                 </div>`;
@@ -7589,6 +7661,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                     }
                 }
             })();
+            updateChiaPortfolioAction();
             // ────────────────────────────────────────────────────────────────
             console.clear();
             console.log('%c🧙‍♂️ aWizard Treasury System Initialized', 'font-size: 20px; color: #fbbf24; font-weight: bold;');
@@ -10609,6 +10682,53 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function setChiaActionNotice(message, tone) {
+        const notice = document.getElementById('chia-action-notice');
+        if (!notice) return;
+        notice.className = 'bag-chia-toolbar-note';
+        if (tone === 'warning') notice.classList.add('is-warning');
+        if (tone === 'success') notice.classList.add('is-success');
+        notice.textContent = message || '';
+    }
+
+    function updateChiaPortfolioAction() {
+        const actionBtn = document.getElementById('chia-portfolio-action-btn');
+        if (!actionBtn) return;
+        if (_sageXchAddresses && _sageXchAddresses.length) {
+            actionBtn.textContent = '⟳ Reload Chia Assets';
+            actionBtn.disabled = false;
+            setChiaActionNotice('Sage connected. Reload anytime.', 'success');
+            return;
+        }
+        if (_sageSession) {
+            actionBtn.textContent = '⟳ Load Chia Wallet';
+            actionBtn.disabled = false;
+            setChiaActionNotice('Sage connected. Wallet addresses still resolving.', 'success');
+            return;
+        }
+        actionBtn.textContent = '⟳ Load Chia Wallet';
+        actionBtn.disabled = false;
+        setChiaActionNotice('Connect Sage to load Chia wallet assets.', 'warning');
+    }
+
+    function handleChiaPortfolioAction(button) {
+        if (_sageXchAddresses && _sageXchAddresses.length) {
+            setChiaActionNotice('Refreshing Chia holdings...', 'success');
+            loadAndRenderChiaPortfolio(_sageXchAddresses);
+            return;
+        }
+        if (_sageSession) {
+            setChiaActionNotice('Sage is connected. Waiting for wallet addresses to resolve.', 'success');
+            if (button) {
+                button.textContent = '⏳ Resolving Wallet...';
+                button.disabled = true;
+                setTimeout(updateChiaPortfolioAction, 1800);
+            }
+            return;
+        }
+        setChiaActionNotice('No Chia wallet connected. Click Connect Sage first.', 'warning');
+    }
+
     function updateSageBtn(state, address) {
         const btn = document.getElementById('sage-connect-btn');
         if (!btn) return;
@@ -10616,6 +10736,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (state === 'connecting') {
             btn.style.cssText = base + 'background:rgba(0,0,0,0.45);border-color:rgba(74,222,128,0.3);color:rgba(255,255,255,0.45);';
             btn.textContent = '\u23f3 Connecting\u2026'; btn.disabled = true;
+            setChiaActionNotice('Connecting to Sage...', 'success');
         } else if (state === true) {
             const short = address ? address.slice(0,6) + '\u2026' + address.slice(-4) : 'Connected';
             btn.style.cssText = base + 'background:rgba(0,25,0,0.6);border-color:rgba(74,222,128,0.65);color:#4ade80;box-shadow:0 0 14px rgba(74,222,128,0.2);';
@@ -10625,6 +10746,7 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.style.cssText = base + 'background:rgba(0,0,0,0.45);border-color:rgba(74,222,128,0.35);color:rgba(255,255,255,0.75);';
             btn.textContent = '\ud83c\udf31 Connect Sage'; btn.disabled = false; btn.onclick = sageConnect;
         }
+        updateChiaPortfolioAction();
     }
 
     function showSageMenu() {
@@ -10719,8 +10841,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!document.getElementById('portfolio') || !document.getElementById('portfolio').classList.contains('active')) showTab('portfolio');
         section.style.display = 'block';
         var reloadBtn = document.getElementById('chia-reload-btn');
-        if (reloadBtn) reloadBtn.style.display = 'block';
-        section.innerHTML = '<section class="bag-chia-card bag-loading-state"><div class="bag-loading-icon">\ud83c\udf31</div><div class="bag-loading-title" style="color:#4ade80;">Loading Chia Portfolio</div><div class="bag-loading-copy">Resolving ' + addrList.length + ' wallet' + (addrList.length > 1 ? 's' : '') + ' across XCH, CATs, TibetSwap LP positions, and NFT collections.</div></section>';
+        if (reloadBtn) reloadBtn.style.display = 'grid';
+        section.innerHTML = '<section class="bag-chia-card bag-loading-state"><div class="bag-loading-icon">\ud83c\udf31</div><div class="bag-loading-title" style="color:#4ade80;">Loading Chia</div><div class="bag-loading-copy">Resolving ' + addrList.length + ' wallet' + (addrList.length > 1 ? 's' : '') + '.</div></section>';
         try {
             // ── Kick off all independent fetches simultaneously ────────────
             // XCH price (session-cached, 5 min TTL)
@@ -10949,8 +11071,8 @@ document.addEventListener('DOMContentLoaded', () => {
         html += '<div class="bag-chia-head">'
             + '<div>'
             + '<div class="bag-card-label" style="color:rgba(134,239,172,0.72);">Sage Chia Portfolio</div>'
-            + '<div class="bag-results-title">Connected green side of the bag</div>'
-            + '<div class="bag-results-copy">Wallet scope: ' + walletLabel + ' · XCH, CATs, TibetSwap LP, and NFT collections grouped into one readout.</div>'
+            + '<div class="bag-results-title">Chia holdings</div>'
+            + '<div class="bag-results-copy">' + walletLabel + '</div>'
             + '</div>'
             + '<div class="bag-chia-total">' + fmtUsd(total) + '</div>'
             + '</div>';
@@ -11015,7 +11137,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (!xchBal && all.length === 0 && nfts.length === 0) {
-            html += '<div class="bag-empty-state"><div class="bag-empty-icon">📭</div><div class="bag-empty-title">No Chia holdings found.</div><div class="bag-empty-copy">This connected Sage wallet set did not return XCH, CAT, LP, or NFT balances.</div></div>';
+            html += '<div class="bag-empty-state"><div class="bag-empty-icon">📭</div><div class="bag-empty-title">No Chia holdings found.</div></div>';
         }
 
         html += '</section>';
@@ -11025,8 +11147,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function hideSageChiaPortfolio() {
         var s = document.getElementById('chia-portfolio-section');
         if (s) { s.style.display = 'none'; s.innerHTML = ''; }
-        var b = document.getElementById('chia-reload-btn');
-        if (b) b.style.display = 'none';
+        updateChiaPortfolioAction();
     }
     </script>
 
