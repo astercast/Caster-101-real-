@@ -10533,7 +10533,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Get a FREE WalletConnect Project ID: https://cloud.walletconnect.com
     // ══════════════════════════════════════════════════════════════
     const SAGE_WC_PROJECT_ID = '1c5b2380dfe636b3f228a49c17d2abef';
-    let _sageWCClient = null, _sageSession = null, _sageXchAddress = null, _sageXchAddresses = null, _sagePairingUri = null;
+    let _sageWCClient = null, _sageSession = null, _sageXchAddress = null, _sageXchAddresses = null, _sagePairingUri = null, _sageResolvingAddresses = false;
 
     window.addEventListener('sage-wc-sdk-ready', async () => {
         if (window._WCSignClient) await initSageWC();
@@ -10559,7 +10559,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const active = _sageWCClient.session.getAll().filter(s => s.expiry > now);
             if (active.length > 0) await onSageConnected(active[0], false);
             _sageWCClient.on('session_delete', () => {
-                _sageSession = null; _sageXchAddress = null;
+                _sageSession = null; _sageXchAddress = null; _sageXchAddresses = null; _sageResolvingAddresses = false;
                 updateSageBtn(false); hideSageChiaPortfolio();
             });
             console.log('[Sage] WalletConnect ready ✓');
@@ -10629,21 +10629,23 @@ document.addEventListener('DOMContentLoaded', () => {
         if (_sageSession && _sageWCClient) {
             try { await _sageWCClient.disconnect({ topic: _sageSession.topic, reason: { code: 6000, message: 'User disconnected' } }); } catch(e) {}
         }
-        _sageSession = null; _sageXchAddress = null; _sageXchAddresses = null;
+        _sageSession = null; _sageXchAddress = null; _sageXchAddresses = null; _sageResolvingAddresses = false;
         updateSageBtn(false); hideSageChiaPortfolio();
     }
 
-    async function onSageConnected(session, fresh) {
-        _sageSession = session;
+    async function resolveSageAddresses(session, options) {
+        const opts = options || {};
+        if (!session) return [];
         const chainId = (session.namespaces && session.namespaces.chia && session.namespaces.chia.chains && session.namespaces.chia.chains[0]) || 'chia:mainnet';
         const allAddresses = [];
-        // Collect all addresses already included in namespace accounts
+
         for (const acc of (session.namespaces && session.namespaces.chia && session.namespaces.chia.accounts ? session.namespaces.chia.accounts : [])) {
             const addr = acc.split(':')[2] || '';
             if (/^xch1|^txch1/.test(addr) && !allAddresses.includes(addr)) allAddresses.push(addr);
         }
-        // Ask Sage for all public keys to get every wallet address
-        if (fresh && _sageWCClient) {
+
+        const shouldLookup = !!opts.forceLookup || allAddresses.length === 0;
+        if (shouldLookup && _sageWCClient) {
             try {
                 const keys = await _sageWCClient.request({
                     topic: session.topic, chainId,
@@ -10660,8 +10662,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch(e) { console.warn('[Sage] getPublicKeys:', e && e.message ? e.message : e); }
         }
-        // Fallback: derive one address from a coin
-        if (allAddresses.length === 0 && fresh && _sageWCClient) {
+
+        if (allAddresses.length === 0 && _sageWCClient) {
             try {
                 const coins = await _sageWCClient.request({
                     topic: session.topic, chainId,
@@ -10672,6 +10674,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch(e) { console.warn('[Sage] Could not derive XCH address:', e && e.message ? e.message : e); }
         }
+
+        return allAddresses;
+    }
+
+    async function onSageConnected(session, fresh) {
+        _sageSession = session;
+        const allAddresses = await resolveSageAddresses(session, { forceLookup: !!fresh });
         console.log('[Sage] Connected with', allAddresses.length, 'address(es)', allAddresses);
         _sageXchAddresses = allAddresses.length > 0 ? allAddresses : null;
         _sageXchAddress = allAddresses[0] || null;
@@ -10694,6 +10703,12 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateChiaPortfolioAction() {
         const actionBtn = document.getElementById('chia-portfolio-action-btn');
         if (!actionBtn) return;
+        if (_sageResolvingAddresses) {
+            actionBtn.textContent = '⏳ Resolving Wallet...';
+            actionBtn.disabled = true;
+            setChiaActionNotice('Resolving Chia wallet addresses from Sage...', 'success');
+            return;
+        }
         if (_sageXchAddresses && _sageXchAddresses.length) {
             actionBtn.textContent = '⟳ Reload Chia Assets';
             actionBtn.disabled = false;
@@ -10711,18 +10726,32 @@ document.addEventListener('DOMContentLoaded', () => {
         setChiaActionNotice('Connect Sage to load Chia wallet assets.', 'warning');
     }
 
-    function handleChiaPortfolioAction(button) {
+    async function handleChiaPortfolioAction(button) {
         if (_sageXchAddresses && _sageXchAddresses.length) {
             setChiaActionNotice('Refreshing Chia holdings...', 'success');
             loadAndRenderChiaPortfolio(_sageXchAddresses);
             return;
         }
         if (_sageSession) {
-            setChiaActionNotice('Sage is connected. Waiting for wallet addresses to resolve.', 'success');
-            if (button) {
-                button.textContent = '⏳ Resolving Wallet...';
-                button.disabled = true;
-                setTimeout(updateChiaPortfolioAction, 1800);
+            _sageResolvingAddresses = true;
+            updateChiaPortfolioAction();
+            try {
+                const resolved = await resolveSageAddresses(_sageSession, { forceLookup: true });
+                _sageXchAddresses = resolved.length > 0 ? resolved : null;
+                _sageXchAddress = resolved[0] || null;
+                if (_sageXchAddresses) {
+                    setChiaActionNotice('Chia wallet resolved. Loading holdings...', 'success');
+                    updateSageBtn(true, _sageXchAddress);
+                    loadAndRenderChiaPortfolio(_sageXchAddresses);
+                    return;
+                }
+                setChiaActionNotice('Sage is connected, but no wallet addresses were returned.', 'warning');
+            } catch (err) {
+                console.warn('[Sage] Address resolution error:', err && err.message ? err.message : err);
+                setChiaActionNotice('Could not resolve Chia wallet addresses from Sage.', 'warning');
+            } finally {
+                _sageResolvingAddresses = false;
+                updateChiaPortfolioAction();
             }
             return;
         }
@@ -10764,7 +10793,10 @@ document.addEventListener('DOMContentLoaded', () => {
         popup.style.top = (rect.bottom + 8) + 'px';
         popup.style.right = (window.innerWidth - rect.right) + 'px';
         document.body.appendChild(popup);
-        document.getElementById('_smer') && document.getElementById('_smer').addEventListener('click', function() { popup.remove(); if (_sageXchAddresses) loadAndRenderChiaPortfolio(_sageXchAddresses); });
+        document.getElementById('_smer') && document.getElementById('_smer').addEventListener('click', function() {
+            popup.remove();
+            handleChiaPortfolioAction(document.getElementById('chia-portfolio-action-btn'));
+        });
         document.getElementById('_smdi') && document.getElementById('_smdi').addEventListener('click', function() { popup.remove(); sageDisconnect(); });
         setTimeout(function() {
             function dismiss(e) { if (!popup.contains(e.target) && e.target !== btn) { popup.remove(); document.removeEventListener('click', dismiss); } }
