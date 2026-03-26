@@ -1160,145 +1160,1043 @@
             opacity: 0.8;
         }
 
-        /* ── Bag Tracker — Modern Redesign ── */
+        /* ── Bag Tracker — Premium Vault Redesign ── */
         @keyframes bagGlow {
-            0%, 100% { text-shadow: 0 0 20px rgba(251,191,36,0.6), 0 0 40px rgba(251,191,36,0.2); }
-            50%       { text-shadow: 0 0 40px rgba(251,191,36,0.9), 0 0 80px rgba(251,191,36,0.4); }
+            0%, 100% { text-shadow: 0 0 18px rgba(251,191,36,0.45), 0 0 40px rgba(217,70,239,0.12); }
+            50% { text-shadow: 0 0 34px rgba(251,191,36,0.85), 0 0 70px rgba(96,165,250,0.16); }
         }
 
-        /* ── Shared layout ── */
-        .bag-page { max-width: 860px; margin: 0 auto; padding: 24px 16px 40px; }
+        @keyframes bagPulseBorder {
+            0%, 100% { box-shadow: 0 0 0 1px rgba(251,191,36,0.08), 0 18px 40px rgba(0,0,0,0.35); }
+            50% { box-shadow: 0 0 0 1px rgba(251,191,36,0.18), 0 22px 52px rgba(0,0,0,0.45), 0 0 30px rgba(251,191,36,0.08); }
+        }
 
-        /* ── Header ── */
-        .bag-header { text-align:center; margin-bottom:28px; }
+        .bag-page {
+            max-width: 1120px;
+            margin: 0 auto;
+            padding: 24px 16px 48px;
+        }
+
+        .bag-hero {
+            position: relative;
+            overflow: hidden;
+            padding: 30px 30px 26px;
+            border-radius: 28px;
+            border: 1px solid rgba(251,191,36,0.18);
+            background:
+                radial-gradient(circle at top left, rgba(251,191,36,0.16), transparent 30%),
+                radial-gradient(circle at top right, rgba(96,165,250,0.12), transparent 28%),
+                linear-gradient(140deg, rgba(14,10,20,0.96), rgba(21,11,8,0.94) 38%, rgba(7,16,28,0.94));
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            box-shadow: 0 24px 70px rgba(0,0,0,0.42), inset 0 1px 0 rgba(255,255,255,0.05);
+            margin-bottom: 18px;
+        }
+
+        .bag-hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(180deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 32px 32px;
+            mask-image: linear-gradient(180deg, rgba(0,0,0,0.7), transparent 92%);
+            pointer-events: none;
+        }
+
+        .bag-hero::after {
+            content: '';
+            position: absolute;
+            width: 260px;
+            height: 260px;
+            right: -90px;
+            top: -100px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(251,191,36,0.18), transparent 66%);
+            pointer-events: none;
+        }
+
+        .bag-hero-grid {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            grid-template-columns: minmax(0, 1.45fr) minmax(260px, 0.95fr);
+            gap: 20px;
+            align-items: end;
+        }
+
+        .bag-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 12px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: rgba(255,255,255,0.72);
+            font-family: 'Inter', sans-serif;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            margin-bottom: 14px;
+        }
+
+        .bag-header { text-align: left; margin-bottom: 0; }
+
         .bag-title {
-            font-family: 'Cinzel Decorative', fantasy;
-            font-size: 30px; color: #ffd700;
+            font-family: 'Cinzel', serif;
+            font-size: clamp(32px, 4.6vw, 56px);
+            line-height: 0.98;
+            color: #fff4cc;
             animation: bagGlow 4s ease-in-out infinite;
-            margin-bottom: 6px; letter-spacing: 0.02em;
+            margin-bottom: 10px;
+            letter-spacing: -0.03em;
+            max-width: 12ch;
         }
-        .bag-subtitle { color: rgba(255,255,255,0.4); font-size: 13px; font-family: 'Inter', sans-serif; }
 
-        /* ── Chain tabs ── */
-        .bag-chain-tabs {
-            display: flex; gap: 8px; margin-bottom: 20px;
-            border-bottom: 1px solid rgba(255,255,255,0.07); padding-bottom: 0;
+        .bag-subtitle {
+            max-width: 58ch;
+            color: rgba(255,255,255,0.68);
+            font-size: 14px;
+            line-height: 1.6;
+            font-family: 'Inter', sans-serif;
+            margin-bottom: 18px;
         }
-        .bag-chain-tab {
-            padding: 8px 18px 10px; font-size: 12px; font-weight: 700;
-            font-family: 'Inter', sans-serif; cursor: pointer; border: none;
-            background: transparent; color: rgba(255,255,255,0.35);
-            border-bottom: 2px solid transparent; margin-bottom: -1px;
-            transition: color 0.15s, border-color 0.15s; letter-spacing: 0.3px;
-        }
-        .bag-chain-tab.active-base { color: #fbbf24; border-bottom-color: #fbbf24; }
-        .bag-chain-tab.active-chia { color: #4ade80; border-bottom-color: #4ade80; }
-        .bag-chain-tab:hover:not(.active-base):not(.active-chia) { color: rgba(255,255,255,0.6); }
 
-        /* ── Input card ── */
+        .bag-hero-meta {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .bag-meta-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(0,0,0,0.24);
+            border: 1px solid rgba(255,255,255,0.08);
+            font-family: 'Inter', sans-serif;
+            font-size: 11px;
+            color: rgba(255,255,255,0.72);
+        }
+
+        .bag-hero-side {
+            display: grid;
+            gap: 12px;
+        }
+
+        .bag-insight-card,
+        .bag-shell-card,
+        .bag-panel,
+        .bag-alloc-wrap,
+        .bag-render-card,
+        .lp-card,
+        .bag-token-row,
+        .bag-chia-card,
+        .bag-chia-highlight,
+        .bag-collection-chip {
+            position: relative;
+            overflow: hidden;
+            border-radius: 22px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.02));
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+
+        .bag-insight-card {
+            padding: 16px 18px;
+            animation: bagPulseBorder 4.5s ease-in-out infinite;
+        }
+
+        .bag-insight-label,
+        .bag-card-label,
+        .bag-pill-label,
+        .bag-section-title,
+        .bag-alloc-label,
+        .bag-kv-label,
+        .bag-mini-label {
+            font-size: 10px;
+            color: rgba(255,255,255,0.42);
+            text-transform: uppercase;
+            letter-spacing: 1.1px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+        }
+
+        .bag-insight-value {
+            font-size: 28px;
+            font-family: 'Space Grotesk', sans-serif;
+            color: #fbbf24;
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            margin: 8px 0 5px;
+        }
+
+        .bag-insight-copy {
+            font-size: 12px;
+            line-height: 1.5;
+            color: rgba(255,255,255,0.56);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .bag-command-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.85fr);
+            gap: 18px;
+            margin-bottom: 18px;
+        }
+
+        .bag-shell-card {
+            padding: 22px;
+            box-shadow: 0 18px 38px rgba(0,0,0,0.3);
+        }
+
         .bag-input-card {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(251,191,36,0.2);
-            border-radius: 14px; padding: 18px 20px; margin-bottom: 20px;
-            transition: border-color 0.25s, box-shadow 0.25s;
+            padding: 0;
+            margin-bottom: 0;
+            background: transparent;
+            border: none;
+            box-shadow: none;
         }
-        .bag-input-card:focus-within {
-            border-color: rgba(251,191,36,0.5);
-            box-shadow: 0 0 0 3px rgba(251,191,36,0.07);
+
+        .bag-panel-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: flex-start;
+            margin-bottom: 18px;
         }
+
+        .bag-panel-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: -0.03em;
+            margin-bottom: 6px;
+        }
+
+        .bag-panel-copy {
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            line-height: 1.55;
+            color: rgba(255,255,255,0.58);
+            max-width: 46ch;
+        }
+
+        .bag-panel-badge {
+            padding: 8px 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(74,222,128,0.22);
+            background: rgba(74,222,128,0.08);
+            color: #86efac;
+            font-family: 'Inter', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .wallet-input-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .bag-input-wrap {
+            position: relative;
+        }
+
+        .bag-input-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 18px;
+            pointer-events: none;
+            opacity: 0.8;
+        }
+
         #walletAddress {
-            width: 100%; padding: 12px 12px 12px 42px;
-            background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 10px; color: white; font-size: 13px;
-            font-family: 'Inter', sans-serif; box-sizing: border-box; outline: none;
-            transition: border-color 0.2s;
+            width: 100%;
+            padding: 17px 18px 17px 48px;
+            background: linear-gradient(180deg, rgba(4,6,12,0.88), rgba(15,18,28,0.74));
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            color: white;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s, transform 0.16s;
         }
-        #walletAddress:focus { border-color: rgba(251,191,36,0.5); }
+
+        #walletAddress:focus {
+            border-color: rgba(251,191,36,0.45);
+            box-shadow: 0 0 0 4px rgba(251,191,36,0.08);
+            transform: translateY(-1px);
+        }
+
         #track-btn {
-            padding: 12px 22px; background: #fbbf24; border: none;
-            border-radius: 10px; color: #000; font-size: 13px; font-weight: 800;
-            cursor: pointer; white-space: nowrap; font-family: 'Inter', sans-serif;
-            letter-spacing: 0.02em; transition: filter 0.18s, transform 0.12s;
+            min-width: 170px;
+            padding: 16px 22px;
+            background: linear-gradient(135deg, #fbbf24, #fb7185);
+            border: none;
+            border-radius: 16px;
+            color: #160a00;
+            font-size: 13px;
+            font-weight: 900;
+            cursor: pointer;
+            white-space: nowrap;
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 0.08em;
+            transition: filter 0.18s, transform 0.12s, box-shadow 0.18s;
+            box-shadow: 0 14px 28px rgba(251,191,36,0.22);
         }
-        #track-btn:hover { filter: brightness(1.12); transform: translateY(-1px); }
-        #track-btn:active { transform: scale(0.97); transition: all 0.07s; }
+
+        #track-btn:hover {
+            filter: brightness(1.06);
+            transform: translateY(-1px);
+            box-shadow: 0 18px 36px rgba(251,191,36,0.26);
+        }
+
+        #track-btn:active {
+            transform: scale(0.98);
+            transition: all 0.07s;
+        }
+
+        .bag-tracked-address {
+            margin-top: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+            padding: 11px 14px;
+            border-radius: 14px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.07);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .bag-tracked-address code {
+            color: #fbbf24;
+            font-size: 12px;
+            font-family: 'Space Grotesk', sans-serif;
+            word-break: break-all;
+        }
+
+        .bag-tracked-label {
+            font-size: 10px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.4);
+            font-weight: 700;
+        }
+
+        .bag-preset-grid {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 16px;
+        }
+
         .bag-quick-btn {
-            padding: 5px 12px; background: rgba(251,191,36,0.08);
-            border: 1px solid rgba(251,191,36,0.22); border-radius: 8px;
-            color: #fbbf24; font-size: 11px; cursor: pointer; font-weight: 600;
-            font-family: 'Inter', sans-serif; transition: background 0.15s;
+            padding: 8px 12px;
+            background: rgba(251,191,36,0.08);
+            border: 1px solid rgba(251,191,36,0.22);
+            border-radius: 12px;
+            color: #fbbf24;
+            font-size: 11px;
+            cursor: pointer;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            transition: background 0.15s, border-color 0.15s, transform 0.12s;
         }
-        .bag-quick-btn:hover { background: rgba(251,191,36,0.16); }
 
-        /* ── Stat pills row ── */
-        .bag-pills { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
+        .bag-quick-btn:hover {
+            background: rgba(251,191,36,0.16);
+            border-color: rgba(251,191,36,0.38);
+            transform: translateY(-1px);
+        }
+
+        .bag-side-panel {
+            display: grid;
+            gap: 14px;
+            height: 100%;
+        }
+
+        .bag-side-stack {
+            display: grid;
+            gap: 10px;
+        }
+
+        .bag-side-copy {
+            font-size: 13px;
+            color: rgba(255,255,255,0.6);
+            line-height: 1.6;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .bag-side-list {
+            display: grid;
+            gap: 8px;
+        }
+
+        .bag-side-item {
+            display: grid;
+            grid-template-columns: 18px minmax(0, 1fr);
+            gap: 10px;
+            align-items: start;
+            color: rgba(255,255,255,0.72);
+            font-size: 12px;
+            line-height: 1.5;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .bag-side-item strong {
+            color: #fff;
+            font-weight: 700;
+        }
+
+        .bag-start-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .bag-start-tile {
+            padding: 16px;
+            border-radius: 18px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+        }
+
+        .bag-start-icon {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .bag-start-title {
+            font-size: 13px;
+            color: #fff;
+            font-weight: 700;
+            font-family: 'Space Grotesk', sans-serif;
+            margin-bottom: 6px;
+        }
+
+        .bag-start-copy {
+            font-size: 12px;
+            line-height: 1.55;
+            color: rgba(255,255,255,0.56);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .bag-summary-shell {
+            display: grid;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .bag-summary-top {
+            display: grid;
+            grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+            gap: 16px;
+        }
+
+        .bag-panel {
+            padding: 20px;
+            box-shadow: 0 16px 30px rgba(0,0,0,0.26);
+        }
+
+        .bag-total-panel {
+            background:
+                radial-gradient(circle at top left, rgba(251,191,36,0.16), transparent 28%),
+                linear-gradient(160deg, rgba(32,18,2,0.88), rgba(19,12,29,0.94));
+        }
+
+        .bag-total-amount {
+            font-size: clamp(36px, 5vw, 52px);
+            line-height: 0.95;
+            font-weight: 900;
+            color: #fbbf24;
+            font-family: 'Space Grotesk', sans-serif;
+            letter-spacing: -0.06em;
+            margin: 12px 0 18px;
+        }
+
+        .bag-total-subgrid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .bag-kv {
+            padding: 12px 13px;
+            border-radius: 14px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.07);
+        }
+
+        .bag-kv-value {
+            font-size: 15px;
+            font-family: 'Space Grotesk', sans-serif;
+            color: #fff;
+            font-weight: 800;
+            margin-top: 5px;
+        }
+
+        .bag-stat-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .bag-stat-card {
+            padding: 18px;
+            border-radius: 18px;
+            text-align: left;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.02));
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+        }
+
+        .bag-stat-card.s-total { background: linear-gradient(180deg, rgba(251,191,36,0.12), rgba(251,191,36,0.04)); }
+        .bag-stat-card.s-pos { background: linear-gradient(180deg, rgba(96,165,250,0.12), rgba(96,165,250,0.04)); }
+        .bag-stat-card.s-lp { background: linear-gradient(180deg, rgba(99,179,237,0.12), rgba(99,179,237,0.04)); }
+        .bag-stat-card.s-lpval { background: linear-gradient(180deg, rgba(74,222,128,0.12), rgba(74,222,128,0.04)); }
+
+        .bag-stat-value {
+            font-size: 28px;
+            font-weight: 900;
+            font-family: 'Space Grotesk', sans-serif;
+            letter-spacing: -0.04em;
+            color: #fff;
+            margin-top: 8px;
+        }
+
+        .bag-stat-foot {
+            margin-top: 8px;
+            font-size: 11px;
+            line-height: 1.45;
+            color: rgba(255,255,255,0.52);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .bag-pills {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 0;
+        }
+
         .bag-pill {
-            background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 20px; padding: 7px 14px; min-width: 80px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 20px;
+            padding: 8px 14px;
+            min-width: 88px;
         }
-        .bag-pill-label {
-            font-size: 9px; color: rgba(255,255,255,0.3); font-family: 'Inter', sans-serif;
-            font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 2px;
-        }
+
         .bag-pill-value {
-            font-size: 15px; font-weight: 800; font-family: 'Space Grotesk', sans-serif;
+            font-size: 15px;
+            font-weight: 800;
+            font-family: 'Space Grotesk', sans-serif;
             letter-spacing: -0.01em;
+            margin-top: 3px;
         }
 
-        /* ── Allocation bar ── */
         .bag-alloc-wrap {
-            background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.07);
-            border-radius: 12px; padding: 14px 18px; margin-bottom: 16px;
+            padding: 18px 20px;
+            margin-bottom: 0;
         }
-        .bag-alloc-label {
-            font-size: 10px; color: rgba(255,255,255,0.35); margin-bottom: 8px;
-            text-transform: uppercase; letter-spacing: 1px; font-family: 'Inter', sans-serif; font-weight: 600;
+
+        .bag-alloc-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 12px;
         }
-        #bag-alloc-bar { display:flex; height:6px; border-radius:6px; overflow:hidden; gap:1px; }
-        #bag-alloc-legend { display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; }
 
-        /* ── Section label ── */
-        .bag-section-head { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
-        .bag-section-accent { width:3px; height:18px; border-radius:2px; flex-shrink:0; }
-        .bag-section-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; font-family:'Inter',sans-serif; }
-        .bag-section-meta { font-size:11px; color:rgba(255,255,255,0.3); font-family:'Inter',sans-serif; margin-left:auto; }
+        .bag-alloc-copy {
+            font-size: 12px;
+            color: rgba(255,255,255,0.52);
+            font-family: 'Inter', sans-serif;
+            line-height: 1.5;
+        }
 
-        /* ── LP card (Base) ── */
+        #bag-alloc-bar {
+            display: flex;
+            height: 14px;
+            border-radius: 999px;
+            overflow: hidden;
+            gap: 2px;
+            padding: 2px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        #bag-alloc-legend {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+
+        .bag-results-stack {
+            display: grid;
+            gap: 18px;
+        }
+
+        .bag-render-card {
+            padding: 18px;
+            box-shadow: 0 16px 34px rgba(0,0,0,0.26);
+        }
+
+        .bag-results-hero {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: flex-end;
+            margin-bottom: 14px;
+        }
+
+        .bag-results-title {
+            font-size: 24px;
+            font-weight: 800;
+            font-family: 'Space Grotesk', sans-serif;
+            color: #fff;
+            letter-spacing: -0.04em;
+            margin-bottom: 4px;
+        }
+
+        .bag-results-copy {
+            font-size: 12px;
+            line-height: 1.55;
+            color: rgba(255,255,255,0.54);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .bag-section-head {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .bag-section-accent {
+            width: 4px;
+            height: 20px;
+            border-radius: 999px;
+            flex-shrink: 0;
+        }
+
+        .bag-section-meta {
+            font-size: 11px;
+            color: rgba(255,255,255,0.36);
+            font-family: 'Inter', sans-serif;
+            margin-left: auto;
+        }
+
+        .bag-token-stack,
+        .bag-lp-grid,
+        .bag-chia-token-grid,
+        .bag-collection-grid {
+            display: grid;
+            gap: 10px;
+        }
+
         .lp-card {
-            background: rgba(30,50,90,0.22); border: 1px solid rgba(99,179,237,0.2);
-            border-radius: 12px; padding: 16px 18px; cursor: pointer;
-            transition: border-color 0.18s, background 0.18s, transform 0.15s;
+            padding: 18px;
+            cursor: pointer;
+            transition: border-color 0.18s, transform 0.15s, box-shadow 0.18s;
         }
-        .lp-card:hover { border-color: rgba(99,179,237,0.5); background: rgba(30,50,90,0.35); transform: translateY(-2px); }
 
-        /* ── Token row (Base) ── */
+        .lp-card:hover {
+            border-color: rgba(99,179,237,0.45);
+            transform: translateY(-2px);
+            box-shadow: 0 18px 38px rgba(0,0,0,0.28), 0 0 24px rgba(96,165,250,0.08);
+        }
+
         .bag-token-row {
-            display:flex; justify-content:space-between; align-items:center; gap:8px;
-            padding: 10px 14px; background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.07); border-radius: 10px;
-            cursor: pointer; transition: background 0.14s, border-color 0.14s, transform 0.12s;
+            display: block;
+            padding: 14px;
+            cursor: pointer;
+            transition: background 0.14s, border-color 0.14s, transform 0.12s, box-shadow 0.14s;
         }
-        .bag-token-row:hover { background: rgba(255,255,255,0.06); border-color: rgba(251,191,36,0.25); transform: translateY(-1px); }
-        .bag-token-row.native-row { border-color:rgba(99,102,241,0.15); cursor:default; }
-        .bag-token-row.native-row:hover { border-color:rgba(99,102,241,0.35); transform:none; }
-        .bag-token-bar { margin-top:8px; height:2px; background:rgba(255,255,255,0.05); border-radius:2px; overflow:hidden; }
-        .bag-token-bar-fill { height:100%; border-radius:2px; transition:width 0.6s cubic-bezier(0.4,0,0.2,1); }
 
-        /* Legacy compat — stat grid still used in places */
-        .bag-stat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:16px; }
-        .bag-stat-card { border-radius:12px; padding:14px; text-align:center; }
-        .bag-stat-card.s-total { background:rgba(30,90,180,0.15); border:1px solid rgba(30,100,180,0.3); }
-        .bag-stat-card.s-pos   { background:rgba(0,82,255,0.12);  border:1px solid rgba(0,82,255,0.3);   }
-        .bag-stat-card.s-lp    { background:rgba(99,179,237,0.12);border:1px solid rgba(99,179,237,0.3); }
-        .bag-stat-card.s-lpval { background:rgba(74,222,128,0.12);border:1px solid rgba(74,222,128,0.3); }
-        .bag-stat-label { font-size:10px; color:rgba(255,255,255,0.4); text-transform:uppercase; letter-spacing:0.8px; margin-bottom:6px; font-family:'Inter',sans-serif; font-weight:600; }
-        .bag-stat-value { font-size:22px; font-weight:900; font-family:'Space Grotesk',sans-serif; letter-spacing:-0.02em; }
+        .bag-token-row:hover {
+            background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.025));
+            border-color: rgba(251,191,36,0.22);
+            transform: translateY(-1px);
+            box-shadow: 0 14px 24px rgba(0,0,0,0.18);
+        }
+
+        .bag-token-row.native-row { border-color: rgba(99,102,241,0.18); cursor: default; }
+        .bag-token-row.native-row:hover { border-color: rgba(99,102,241,0.3); transform: none; }
+
+        .bag-token-main,
+        .bag-lp-main,
+        .bag-chia-row-main {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .bag-token-left,
+        .bag-lp-left,
+        .bag-chia-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+        }
+
+        .bag-token-icon,
+        .bag-lp-icon,
+        .bag-chia-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 900;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);
+        }
+
+        .bag-token-name,
+        .bag-lp-name,
+        .bag-chia-name {
+            font-size: 15px;
+            font-weight: 800;
+            color: #fff;
+            line-height: 1.2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .bag-token-sub,
+        .bag-lp-sub,
+        .bag-chia-sub {
+            margin-top: 3px;
+            font-size: 11px;
+            color: rgba(255,255,255,0.42);
+            font-family: 'Inter', sans-serif;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .bag-token-right,
+        .bag-lp-right,
+        .bag-chia-right {
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        .bag-token-value,
+        .bag-lp-value,
+        .bag-chia-value {
+            font-size: 18px;
+            font-weight: 900;
+            font-family: 'Space Grotesk', sans-serif;
+            letter-spacing: -0.04em;
+        }
+
+        .bag-token-meta,
+        .bag-lp-meta,
+        .bag-chia-meta {
+            margin-top: 4px;
+            font-size: 11px;
+            color: rgba(255,255,255,0.34);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .bag-token-bar {
+            margin-top: 11px;
+            height: 8px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .bag-token-bar-fill {
+            height: 100%;
+            border-radius: 999px;
+            transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+        }
+
+        .bag-low-toggle {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 14px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px;
+            cursor: pointer;
+            font-size: 11px;
+            color: rgba(255,255,255,0.45);
+            font-family: 'Inter', sans-serif;
+            user-select: none;
+        }
+
+        .bag-low-list {
+            display: none;
+            grid-template-columns: 1fr;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .bag-empty-state,
+        .bag-loading-state,
+        .bag-error-state {
+            padding: 46px 26px;
+            text-align: center;
+        }
+
+        .bag-empty-icon,
+        .bag-loading-icon,
+        .bag-error-icon {
+            font-size: 40px;
+            margin-bottom: 14px;
+        }
+
+        .bag-empty-title,
+        .bag-loading-title,
+        .bag-error-title {
+            font-size: 22px;
+            font-weight: 800;
+            color: #fff;
+            font-family: 'Space Grotesk', sans-serif;
+            letter-spacing: -0.04em;
+            margin-bottom: 8px;
+        }
+
+        .bag-empty-copy,
+        .bag-loading-copy,
+        .bag-error-copy {
+            font-size: 13px;
+            line-height: 1.6;
+            color: rgba(255,255,255,0.56);
+            font-family: 'Inter', sans-serif;
+            max-width: 54ch;
+            margin: 0 auto;
+        }
+
+        .bag-loading-state .bag-loading-icon {
+            animation: pulse 1.6s infinite;
+        }
+
+        .bag-chia-toolbar {
+            max-width: 1120px;
+            margin: 22px auto 0;
+            text-align: center;
+        }
+
+        .bag-chia-toolbar button {
+            background: linear-gradient(135deg, rgba(74,222,128,0.16), rgba(16,185,129,0.08));
+            border: 1px solid rgba(74,222,128,0.35);
+            border-radius: 999px;
+            padding: 11px 24px;
+            font-size: 13px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 800;
+            color: rgba(74,222,128,0.96);
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 0.3px;
+            box-shadow: 0 14px 26px rgba(16,185,129,0.08);
+        }
+
+        .bag-chia-toolbar button:hover {
+            background: linear-gradient(135deg, rgba(74,222,128,0.24), rgba(16,185,129,0.12));
+            transform: translateY(-1px);
+        }
+
+        .bag-chia-shell {
+            display: none;
+            max-width: 1120px;
+            margin: 0 auto;
+            padding: 0 0 20px;
+        }
+
+        .bag-chia-card {
+            padding: 18px;
+            margin-top: 18px;
+            box-shadow: 0 16px 34px rgba(0,0,0,0.26);
+        }
+
+        .bag-chia-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .bag-chia-total {
+            font-size: 32px;
+            font-weight: 900;
+            color: #4ade80;
+            font-family: 'Space Grotesk', sans-serif;
+            letter-spacing: -0.05em;
+        }
+
+        .bag-chia-mini-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .bag-chia-highlight {
+            padding: 14px;
+        }
+
+        .bag-mini-value {
+            font-size: 18px;
+            font-weight: 800;
+            color: #fff;
+            font-family: 'Space Grotesk', sans-serif;
+            margin-top: 6px;
+        }
+
+        .bag-collection-grid {
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        }
+
+        .bag-collection-chip {
+            padding: 14px;
+        }
+
+        .bag-collection-count {
+            font-size: 24px;
+            font-weight: 900;
+            color: #c084fc;
+            font-family: 'Space Grotesk', sans-serif;
+            letter-spacing: -0.05em;
+        }
+
+        .bag-collection-name {
+            margin-top: 5px;
+            font-size: 11px;
+            line-height: 1.45;
+            color: rgba(255,255,255,0.54);
+            font-family: 'Inter', sans-serif;
+        }
+
+        @media (max-width: 980px) {
+            .bag-hero-grid,
+            .bag-command-grid,
+            .bag-summary-top {
+                grid-template-columns: 1fr;
+            }
+
+            .bag-start-grid {
+                grid-template-columns: 1fr;
+            }
+        }
 
         @media (max-width: 768px) {
-            .bag-stat-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
-            .bag-stat-value { font-size: 18px; }
-            .bag-title { font-size: 22px; }
-            .bag-pills { gap:6px; }
+            .bag-page {
+                padding: 10px 0 40px;
+            }
+
+            .bag-hero,
+            .bag-shell-card,
+            .bag-panel,
+            .bag-alloc-wrap,
+            .bag-render-card,
+            .bag-chia-card {
+                border-radius: 20px;
+            }
+
+            .bag-hero {
+                padding: 22px 18px 18px;
+            }
+
+            .bag-title {
+                font-size: 30px;
+                max-width: none;
+            }
+
+            .bag-subtitle,
+            .bag-panel-copy,
+            .bag-side-copy {
+                font-size: 12px;
+            }
+
+            .wallet-input-row {
+                grid-template-columns: 1fr;
+            }
+
+            #track-btn {
+                width: 100%;
+                min-width: 0;
+            }
+
+            .bag-command-grid,
+            .bag-summary-shell,
+            .bag-results-stack,
+            .bag-chia-mini-grid {
+                gap: 12px;
+            }
+
+            .bag-stat-grid,
+            .bag-total-subgrid,
+            .bag-chia-mini-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+
+            .bag-results-hero,
+            .bag-chia-head,
+            .bag-token-main,
+            .bag-lp-main,
+            .bag-chia-row-main,
+            .bag-panel-head {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .bag-token-right,
+            .bag-lp-right,
+            .bag-chia-right {
+                text-align: left;
+            }
+
+            .bag-stat-value,
+            .bag-total-amount,
+            .bag-chia-total {
+                font-size: 26px;
+            }
+
+            .bag-start-grid,
+            .bag-collection-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .bag-token-row,
+            .lp-card,
+            .bag-chia-highlight,
+            .bag-collection-chip {
+                border-radius: 16px;
+            }
         }
 
         /* Mobile: Desktop quick links */
@@ -2977,72 +3875,153 @@
         </div>
 
         <div id="portfolio" class="content">
-            <div style="max-width: 1000px; margin: 0 auto; padding: 20px;">
+            <div class="bag-page">
+                <section class="bag-hero">
+                    <div class="bag-hero-grid">
+                        <div class="bag-header">
+                            <div class="bag-kicker">Arcane Portfolio Console</div>
+                            <h1 class="bag-title">Track the whole bag like it actually matters.</h1>
+                            <p class="bag-subtitle">Scan Base positions, LP exposure, and connected Sage Chia wallets inside one vault-grade view with cleaner hierarchy, faster reads, and stronger visual signal.</p>
+                            <div class="bag-hero-meta">
+                                <div class="bag-meta-chip">⚡ Base tokens + LP</div>
+                                <div class="bag-meta-chip">🌱 Sage-powered Chia bag</div>
+                                <div class="bag-meta-chip">🧪 Live pricing + allocation mix</div>
+                            </div>
+                        </div>
+                        <div class="bag-hero-side">
+                            <div class="bag-insight-card">
+                                <div class="bag-insight-label">What This View Does</div>
+                                <div class="bag-insight-value">One command.</div>
+                                <div class="bag-insight-copy">A single scan surfaces token concentration, LP dependence, and where the real weight of the wallet sits instead of dumping raw rows on the screen.</div>
+                            </div>
+                            <div class="bag-insight-card">
+                                <div class="bag-insight-label">Built For</div>
+                                <div class="bag-insight-copy">Fast checking before trades, treasury peeks, flex screenshots, and sanity passes when you want Base plus Chia in the same orbit.</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
 
-                <!-- Header -->
-                <div class="bag-header">
-                    <h1 class="bag-title">💰 Track Ur Bag</h1>
-                    <p class="bag-subtitle">Enter any Base wallet address to see full holdings + LP positions</p>
+                <div class="bag-command-grid">
+                    <section class="bag-shell-card">
+                        <div class="bag-input-card">
+                            <div class="bag-panel-head">
+                                <div>
+                                    <div class="bag-panel-title">Scan Base Wallet</div>
+                                    <div class="bag-panel-copy">Paste any Base address and the vault will map tokens, price exposure, and LP positions into a readable layout instead of a raw explorer dump.</div>
+                                </div>
+                                <div class="bag-panel-badge">Live portfolio spell</div>
+                            </div>
+                            <div class="wallet-input-row">
+                                <div class="bag-input-wrap">
+                                    <span class="bag-input-icon">🔍</span>
+                                    <input type="text" id="walletAddress" placeholder="0x... Base wallet address" onkeydown="if(event.key==='Enter') trackAddress()">
+                                </div>
+                                <button onclick="trackAddress()" id="track-btn">SCAN BAG</button>
+                            </div>
+                            <div id="trackedAddressDisplay"></div>
+                            <div class="bag-preset-grid">
+                                <span class="bag-pill-label" style="align-self:center;">Quick load</span>
+                                <button class="bag-quick-btn" onclick="document.getElementById('walletAddress').value='0xEEDC069F861880eC1B5f41c9bC7a747DC1cE32b9'; trackAddress();">🧙 aWizard treasury wallet</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <aside class="bag-shell-card bag-side-panel">
+                        <div>
+                            <div class="bag-panel-title">What lands in the readout</div>
+                            <div class="bag-side-copy">The redesign prioritizes signal: big number first, then concentration, then positions. Base and Chia keep separate identities so you can read the risk mix instantly.</div>
+                        </div>
+                        <div class="bag-side-list">
+                            <div class="bag-side-item"><span>✦</span><span><strong>Base scan</strong> resolves wallet value, token counts, LP weight, and direct market links.</span></div>
+                            <div class="bag-side-item"><span>✦</span><span><strong>Chia panel</strong> lights up automatically after Sage connects and groups XCH, CATs, LP, and NFT collections.</span></div>
+                            <div class="bag-side-item"><span>✦</span><span><strong>Allocation bar</strong> makes bag concentration obvious before you scroll the rows.</span></div>
+                        </div>
+                    </aside>
                 </div>
 
-                <!-- Address Input -->
-                <div class="bag-input-card">
-                    <div class="wallet-input-row" style="display:flex; gap:12px; align-items:center;">
-                        <div style="flex:1; position:relative;">
-                            <span style="position:absolute; left:14px; top:50%; transform:translateY(-50%); font-size:18px; pointer-events:none;">🔍</span>
-                            <input type="text" id="walletAddress" placeholder="0x... Base wallet address"
-                                onkeydown="if(event.key==='Enter') trackAddress()">
-                        </div>
-                        <button onclick="trackAddress()" id="track-btn">✨ SCAN BAG</button>
-                    </div>
-                    <div id="trackedAddressDisplay" style="margin-top:10px;"></div>
-
-                    <!-- Quick presets -->
-                    <div style="margin-top:14px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-                        <span style="font-size:11px; color:rgba(255,255,255,0.4);">Quick load:</span>
-                        <button class="bag-quick-btn" onclick="document.getElementById('walletAddress').value='0xEEDC069F861880eC1B5f41c9bC7a747DC1cE32b9'; trackAddress();">
-                            🧙 0xEEDC...32b9
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Summary (hidden until loaded) -->
-                <div id="bag-summary" style="display:none; margin-bottom:20px;">
-                    <div class="bag-pills">
-                        <div class="bag-pill">
-                            <div class="bag-pill-label">Total Value</div>
-                            <div id="bag-total-value" class="bag-pill-value" style="color:#fbbf24;">$0</div>
-                        </div>
-                        <div class="bag-pill">
-                            <div class="bag-pill-label">Positions</div>
-                            <div id="bag-position-count" class="bag-pill-value" style="color:#60a5fa;">0</div>
-                        </div>
-                        <div class="bag-pill">
-                            <div class="bag-pill-label">LP Pools</div>
-                            <div id="bag-lp-count" class="bag-pill-value" style="color:#63b3ed;">0</div>
-                        </div>
-                        <div class="bag-pill">
-                            <div class="bag-pill-label">LP Value</div>
-                            <div id="bag-lp-value" class="bag-pill-value" style="color:#4ade80;">$0</div>
-                        </div>
+                <div id="bag-summary" class="bag-summary-shell" style="display:none;">
+                    <div class="bag-summary-top">
+                        <section class="bag-panel bag-total-panel">
+                            <div class="bag-card-label">Base Wallet Total</div>
+                            <div id="bag-total-value" class="bag-total-amount">$0</div>
+                            <div class="bag-total-subgrid">
+                                <div class="bag-kv">
+                                    <div class="bag-kv-label">Address</div>
+                                    <div id="bag-summary-address" class="bag-kv-value">Waiting for scan</div>
+                                </div>
+                                <div class="bag-kv">
+                                    <div class="bag-kv-label">Dominant Zone</div>
+                                    <div id="bag-summary-dominant" class="bag-kv-value">—</div>
+                                </div>
+                            </div>
+                        </section>
+                        <section class="bag-stat-grid">
+                            <div class="bag-stat-card s-total">
+                                <div class="bag-stat-label">Tracked Positions</div>
+                                <div id="bag-position-count" class="bag-stat-value">0</div>
+                                <div class="bag-stat-foot">All Base token and LP positions in this scan.</div>
+                            </div>
+                            <div class="bag-stat-card s-pos">
+                                <div class="bag-stat-label">Concentrated Asset</div>
+                                <div id="bag-top-holding" class="bag-stat-value">—</div>
+                                <div class="bag-stat-foot">Largest visible position by dollar weight.</div>
+                            </div>
+                            <div class="bag-stat-card s-lp">
+                                <div class="bag-stat-label">LP Pools</div>
+                                <div id="bag-lp-count" class="bag-stat-value">0</div>
+                                <div class="bag-stat-foot">Liquidity exposure across the bag.</div>
+                            </div>
+                            <div class="bag-stat-card s-lpval">
+                                <div class="bag-stat-label">LP Value</div>
+                                <div id="bag-lp-value" class="bag-stat-value">$0</div>
+                                <div class="bag-stat-foot">Estimated LP contribution to total value.</div>
+                            </div>
+                        </section>
                     </div>
 
-                    <!-- Allocation bar -->
-                    <div class="bag-alloc-wrap">
-                        <div class="bag-alloc-label">Portfolio Allocation</div>
+                    <section class="bag-alloc-wrap">
+                        <div class="bag-alloc-head">
+                            <div>
+                                <div class="bag-alloc-label">Allocation Map</div>
+                                <div class="bag-alloc-copy">Top wallet weight visualized as share of bag. Heavy concentration becomes obvious immediately.</div>
+                            </div>
+                            <div id="bag-alloc-total-note" class="bag-section-meta">Top holdings</div>
+                        </div>
                         <div id="bag-alloc-bar"></div>
                         <div id="bag-alloc-legend"></div>
-                    </div>
+                    </section>
                 </div>
 
-                <!-- Positions List -->
-                <div id="portfolioList"></div>
-
-                <!-- Chia Portfolio reload — shown when Sage is connected -->
-                <div id="chia-reload-btn" style="display:none;max-width:1000px;margin:24px auto 0;text-align:center;">
-                    <button onclick="if(window._sageXchAddresses){loadAndRenderChiaPortfolio(window._sageXchAddresses);}else if(window._sageSession){this.textContent='⏳ Reconnecting…';this.disabled=true;}" style="background:rgba(74,222,128,0.12);border:1px solid rgba(74,222,128,0.35);border-radius:20px;padding:10px 24px;font-size:13px;font-family:'Inter',sans-serif;font-weight:700;color:rgba(74,222,128,0.9);cursor:pointer;transition:all 0.2s;letter-spacing:0.3px;" onmouseover="this.style.background='rgba(74,222,128,0.22)'" onmouseout="this.style.background='rgba(74,222,128,0.12)'">⟳ Reload Chia Assets</button>
+                <div id="portfolioList" class="bag-results-stack">
+                    <section class="bag-render-card bag-empty-state">
+                        <div class="bag-empty-icon">🧿</div>
+                        <div class="bag-empty-title">The vault is ready.</div>
+                        <div class="bag-empty-copy">Drop in a Base wallet above to conjure the portfolio view. If Sage is connected, the Chia side appears below with XCH, CATs, LP positions, and NFT collections.</div>
+                        <div class="bag-start-grid" style="margin-top:18px;">
+                            <div class="bag-start-tile">
+                                <div class="bag-start-icon">🔵</div>
+                                <div class="bag-start-title">Base first</div>
+                                <div class="bag-start-copy">Reads token balances, values, and LP exposure with direct trade links where available.</div>
+                            </div>
+                            <div class="bag-start-tile">
+                                <div class="bag-start-icon">🪄</div>
+                                <div class="bag-start-title">Signal over clutter</div>
+                                <div class="bag-start-copy">Major positions stay upfront. Dust gets tucked away until you actually want to inspect it.</div>
+                            </div>
+                            <div class="bag-start-tile">
+                                <div class="bag-start-icon">🌱</div>
+                                <div class="bag-start-title">Chia stays distinct</div>
+                                <div class="bag-start-copy">Connected Sage wallets render in a separate green lane so the cross-chain picture stays readable.</div>
+                            </div>
+                        </div>
+                    </section>
                 </div>
-                <div id="chia-portfolio-section" style="display:none; max-width:1000px; margin:0 auto; padding:0 0 20px;"></div>
+
+                <div id="chia-reload-btn" class="bag-chia-toolbar" style="display:none;">
+                    <button onclick="if(window._sageXchAddresses){loadAndRenderChiaPortfolio(window._sageXchAddresses);}else if(window._sageSession){this.textContent='⏳ Reconnecting…';this.disabled=true;}">⟳ Reload Chia Assets</button>
+                </div>
+                <div id="chia-portfolio-section" class="bag-chia-shell"></div>
             </div>
         </div>
 
@@ -6216,6 +7195,15 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
             sortTokens(currentSort);
         }
 
+        function escapeHtml(value) {
+            return String(value == null ? '' : value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
         async function trackAddress() {
             const address = document.getElementById('walletAddress').value.trim();
             if (!address.startsWith('0x') || address.length !== 42) {
@@ -6223,19 +7211,26 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                 return;
             }
 
-            // Show scanning state
+            const safeAddress = escapeHtml(address);
+            const shortAddress = address.slice(0, 8) + '...' + address.slice(-6);
             const btn = document.getElementById('track-btn');
-            if (btn) { btn.textContent = '⏳ Scanning...'; btn.disabled = true; }
+            if (btn) { btn.textContent = 'SCANNING...'; btn.disabled = true; }
+
             document.getElementById('trackedAddressDisplay').innerHTML = `
-                <div style="margin-top:8px; font-size:11px; color:rgba(255,255,255,0.5); font-family:monospace;">
-                    📡 Scanning: <span style="color:#fbbf24">${address.slice(0,8)}...${address.slice(-6)}</span>
+                <div class="bag-tracked-address">
+                    <div>
+                        <div class="bag-tracked-label">Active wallet</div>
+                        <code>${safeAddress}</code>
+                    </div>
+                    <div class="bag-panel-badge">Scanning ${escapeHtml(shortAddress)}</div>
                 </div>`;
+
             document.getElementById('portfolioList').innerHTML = `
-                <div style="text-align:center; padding:60px 20px;">
-                    <div style="font-size:40px; margin-bottom:16px; animation:pulse 1.5s infinite;">⚡</div>
-                    <div style="font-size:16px; color:#fbbf24; font-weight:700; margin-bottom:8px;">Scanning the chain...</div>
-                    <div style="font-size:13px; color:rgba(255,255,255,0.4);">Fetching tokens, LP positions &amp; pricing via DexScreener + RPC</div>
-                </div>`;
+                <section class="bag-render-card bag-loading-state">
+                    <div class="bag-loading-icon">⚡</div>
+                    <div class="bag-loading-title">Reading the chain...</div>
+                    <div class="bag-loading-copy">Pulling Base token balances, LP positions, and live pricing into the vault view. The heavy rows will surface first once the scan resolves.</div>
+                </section>`;
             document.getElementById('bag-summary').style.display = 'none';
 
             try {
@@ -6247,13 +7242,13 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
             } catch (err) {
                 console.error('Bag scan error:', err);
                 document.getElementById('portfolioList').innerHTML =
-                    '<div style="text-align:center; padding:60px 20px; color:#ef4444;">' +
-                    '<div style="font-size:40px; margin-bottom:16px;">&#9888;&#65039;</div>' +
-                    '<div style="font-size:18px; font-weight:700; margin-bottom:8px;">Scan Failed</div>' +
-                    '<div style="font-size:13px; color:rgba(255,255,255,0.5);">' + err.message + '</div>' +
-                    '</div>';
+                    '<section class="bag-render-card bag-error-state">' +
+                    '<div class="bag-error-icon">⚠️</div>' +
+                    '<div class="bag-error-title">Scan Failed</div>' +
+                    '<div class="bag-error-copy">' + escapeHtml(err.message || 'Unknown error') + '</div>' +
+                    '</section>';
             } finally {
-                if (btn) { btn.textContent = '\u2728 SCAN BAG'; btn.disabled = false; }
+                if (btn) { btn.textContent = 'SCAN BAG'; btn.disabled = false; }
             }
         }
 
@@ -6275,157 +7270,184 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
         const BAG_COLORS = ['#fbbf24','#60a5fa','#4ade80','#a855f7','#f87171','#34d399','#fb923c','#c084fc','#e879f9','#38bdf8'];
 
         function renderBagResults(address, data) {
-            const tokens = (data.tokens || []).sort((a,b) => (b.value||0) - (a.value||0));
-            const total = data.total || tokens.reduce((s,t) => s+(t.value||0), 0);
-            const lpTokens = tokens.filter(t => t.type === 'lp');
-            const regularTokens = tokens.filter(t => t.type !== 'lp');
-            const lpValue = lpTokens.reduce((s,t) => s+(t.value||0), 0);
-            const topTokens = tokens.filter(t => (t.value||0) >= 1).slice(0, 10);
+            const tokens = (data.tokens || []).sort((a, b) => (b.value || 0) - (a.value || 0));
+            const total = data.total || tokens.reduce((sum, token) => sum + (token.value || 0), 0);
+            const lpTokens = tokens.filter(token => token.type === 'lp');
+            const regularTokens = tokens.filter(token => token.type !== 'lp');
+            const lpValue = lpTokens.reduce((sum, token) => sum + (token.value || 0), 0);
+            const topTokens = tokens.filter(token => (token.value || 0) >= 1).slice(0, 10);
+            const dominant = tokens[0] || null;
+            const dominantPct = dominant && total > 0 ? ((dominant.value || 0) / total) * 100 : 0;
+            const safeShortAddress = escapeHtml(address.slice(0, 8) + '...' + address.slice(-6));
 
-            // Update summary pills
-            document.getElementById('bag-summary').style.display = 'block';
+            document.getElementById('bag-summary').style.display = 'grid';
             document.getElementById('bag-total-value').textContent = fmtUsd(total);
             document.getElementById('bag-position-count').textContent = tokens.length;
             document.getElementById('bag-lp-count').textContent = lpTokens.length;
             document.getElementById('bag-lp-value').textContent = fmtUsd(lpValue);
+            document.getElementById('bag-summary-address').textContent = safeShortAddress;
+            document.getElementById('bag-summary-dominant').textContent = dominant ? ((dominant.symbol || dominant.pairName || 'Top asset').slice(0, 10)) : '—';
+            document.getElementById('bag-top-holding').textContent = dominant ? ((dominant.symbol || dominant.pairName || '—').slice(0, 8)) : '—';
+            document.getElementById('bag-alloc-total-note').textContent = dominant ? (dominantPct.toFixed(1) + '% concentrated in top position') : 'Top holdings';
 
-            // Allocation bar
+            const bar = document.getElementById('bag-alloc-bar');
+            const legend = document.getElementById('bag-alloc-legend');
             if (total > 0 && topTokens.length > 0) {
-                const bar = document.getElementById('bag-alloc-bar');
-                const legend = document.getElementById('bag-alloc-legend');
-                let otherVal = total - topTokens.reduce((s,t)=>s+(t.value||0),0);
-                const barItems = topTokens.map((t,i) => ({sym: t.symbol, val: t.value||0, color: BAG_COLORS[i]||'#888'}));
-                if (otherVal > 0.01 * total) barItems.push({sym:'Other', val:otherVal, color:'rgba(255,255,255,0.12)'});
-                bar.innerHTML = barItems.map(it => {
-                    const pct = ((it.val/total)*100).toFixed(1);
-                    return `<div style="flex:${it.val};background:${it.color};min-width:3px;border-radius:2px;" title="${it.sym}: ${pct}%"></div>`;
+                const otherVal = Math.max(total - topTokens.reduce((sum, token) => sum + (token.value || 0), 0), 0);
+                const barItems = topTokens.map((token, index) => ({
+                    sym: token.symbol || token.pairName || 'Token',
+                    val: token.value || 0,
+                    color: BAG_COLORS[index] || '#888'
+                }));
+                if (otherVal > 0.01 * total) barItems.push({ sym: 'Other', val: otherVal, color: 'rgba(255,255,255,0.22)' });
+                bar.innerHTML = barItems.map(item => {
+                    const pct = ((item.val / total) * 100).toFixed(1);
+                    return `<div style="flex:${item.val};background:${item.color};min-width:8px;border-radius:999px;" title="${escapeHtml(item.sym)}: ${pct}%"></div>`;
                 }).join('');
-                legend.innerHTML = barItems.slice(0,6).map(it => {
-                    const pct = ((it.val/total)*100).toFixed(1);
-                    return `<div style="display:flex;align-items:center;gap:4px;font-size:10px;color:rgba(255,255,255,0.5);font-family:'Inter',sans-serif;">
-                        <span style="width:7px;height:7px;background:${it.color};border-radius:2px;display:inline-block;flex-shrink:0;"></span>
-                        <span>${it.sym} <span style="color:rgba(255,255,255,0.28)">${pct}%</span></span>
+                legend.innerHTML = barItems.slice(0, 6).map(item => {
+                    const pct = ((item.val / total) * 100).toFixed(1);
+                    return `<div style="display:flex;align-items:center;gap:7px;font-size:11px;color:rgba(255,255,255,0.62);font-family:'Inter',sans-serif;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);padding:7px 10px;border-radius:999px;">
+                        <span style="width:9px;height:9px;background:${item.color};border-radius:999px;display:inline-block;flex-shrink:0;"></span>
+                        <span>${escapeHtml(item.sym)} <span style="color:rgba(255,255,255,0.32)">${pct}%</span></span>
                     </div>`;
                 }).join('');
+            } else {
+                bar.innerHTML = '<div style="flex:1;background:rgba(255,255,255,0.06);border-radius:999px;"></div>';
+                legend.innerHTML = '';
             }
+
+            document.getElementById('trackedAddressDisplay').innerHTML = `
+                <div class="bag-tracked-address">
+                    <div>
+                        <div class="bag-tracked-label">Scanned wallet</div>
+                        <code>${escapeHtml(address)}</code>
+                    </div>
+                    <div class="bag-panel-badge">${tokens.length} positions mapped</div>
+                </div>`;
 
             if (tokens.length === 0) {
                 document.getElementById('portfolioList').innerHTML = `
-                    <div style="text-align:center;padding:60px 20px;color:rgba(255,255,255,0.3);">
-                        <div style="font-size:44px;margin-bottom:14px;">📭</div>
-                        <div style="font-size:16px;font-weight:700;color:rgba(255,255,255,0.5);margin-bottom:6px;">No positions</div>
-                        <div style="font-size:12px;font-family:'Inter',sans-serif;">No ERC-20 tokens found on Base for this address</div>
-                    </div>`;
+                    <section class="bag-render-card bag-empty-state">
+                        <div class="bag-empty-icon">📭</div>
+                        <div class="bag-empty-title">No Base positions found.</div>
+                        <div class="bag-empty-copy">This wallet did not return ERC-20 or LP positions from the Base scan. Try another address or connect Sage below for the Chia side of the bag.</div>
+                    </section>`;
                 return;
             }
 
-            // ── token row builder (Base — gold palette) ──────────────────────
-            const baseTokenRow = (tok, total) => {
-                const val = tok.value || 0;
-                const pct = total > 0 ? ((val/total)*100).toFixed(1) : '0';
-                const isNative = tok.type === 'native';
-                const gradient = isNative ? 'linear-gradient(135deg,#4f46e5,#3730a3)' : 'linear-gradient(135deg,#92400e,#d97706)';
-                const valCol = isNative ? '#818cf8' : '#fbbf24';
-                const priceStr = tok.price > 0
-                    ? (tok.price < 0.001 ? '$'+tok.price.toFixed(8) : '$'+tok.price.toLocaleString(undefined,{maximumSignificantDigits:5}))
-                    : '—';
-                const link = (!isNative && tok.contract)
-                    ? `window.open('https://dex.9mm.pro/swap?outputCurrency=${tok.contract}','_blank')`
+            const baseTokenRow = (token, totalValue) => {
+                const value = token.value || 0;
+                const pct = totalValue > 0 ? ((value / totalValue) * 100).toFixed(1) : '0';
+                const isNative = token.type === 'native';
+                const gradient = isNative ? 'linear-gradient(135deg,#4f46e5,#312e81)' : 'linear-gradient(135deg,#a16207,#f59e0b)';
+                const valueColor = isNative ? '#a5b4fc' : '#fbbf24';
+                const priceStr = token.price > 0
+                    ? (token.price < 0.001 ? '$' + token.price.toFixed(8) : '$' + token.price.toLocaleString(undefined, { maximumSignificantDigits: 5 }))
+                    : 'Unpriced';
+                const displaySymbol = escapeHtml((token.symbol || 'UNK').slice(0, 12));
+                const displayName = escapeHtml(token.name || token.symbol || 'Unknown token');
+                const contract = token.contract ? String(token.contract) : '';
+                const openAttr = (!isNative && contract)
+                    ? ` onclick="window.open('https://dex.9mm.pro/swap?outputCurrency=${escapeHtml(contract)}','_blank')"`
                     : '';
-                return `<div class="bag-token-row${isNative?' native-row':''}" onclick="${link}">
-                    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
-                        <div style="display:flex;align-items:center;gap:10px;min-width:0;">
-                            <div style="width:36px;height:36px;background:${gradient};border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#fff;flex-shrink:0;">${tok.symbol.slice(0,3).toUpperCase()}</div>
+                return `<div class="bag-token-row${isNative ? ' native-row' : ''}"${openAttr}>
+                    <div class="bag-token-main">
+                        <div class="bag-token-left">
+                            <div class="bag-token-icon" style="background:${gradient};">${displaySymbol.slice(0, 3).toUpperCase()}</div>
                             <div style="min-width:0;">
-                                <div style="font-size:14px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${tok.symbol}</div>
-                                <div style="font-size:10px;color:rgba(255,255,255,0.3);font-family:'Inter',sans-serif;white-space:nowrap;">${fmtBal(tok.balance)} · ${priceStr}</div>
+                                <div class="bag-token-name">${displayName}</div>
+                                <div class="bag-token-sub">${fmtBal(token.balance)} held · ${escapeHtml(priceStr)}</div>
                             </div>
                         </div>
-                        <div style="text-align:right;flex-shrink:0;">
-                            <div style="font-size:15px;font-weight:800;color:${valCol};font-family:'Space Grotesk',sans-serif;">${fmtUsd(val)}</div>
-                            <div style="font-size:10px;color:rgba(255,255,255,0.25);font-family:'Inter',sans-serif;">${pct}% of bag</div>
+                        <div class="bag-token-right">
+                            <div class="bag-token-value" style="color:${valueColor};">${fmtUsd(value)}</div>
+                            <div class="bag-token-meta">${pct}% of bag</div>
                         </div>
                     </div>
                     <div class="bag-token-bar">
-                        <div class="bag-token-bar-fill" style="width:${Math.min(parseFloat(pct)*2,100)}%;background:${gradient};"></div>
+                        <div class="bag-token-bar-fill" style="width:${Math.min(parseFloat(pct) * 1.8, 100)}%;background:${gradient};"></div>
                     </div>
                 </div>`;
             };
 
-            let html = '';
-
-            // ── LP Positions ─────────────────────────────────────────────────
-            if (lpTokens.length > 0) {
-                html += `<div style="margin-bottom:20px;">
-                    <div class="bag-section-head">
-                        <div class="bag-section-accent" style="background:linear-gradient(180deg,#63b3ed,#3b82f6);"></div>
-                        <span class="bag-section-title" style="color:#63b3ed;">LP Positions</span>
-                        <span class="bag-section-meta">${lpTokens.length} pools · ${fmtUsd(lpValue)}</span>
+            let html = `<section class="bag-render-card">
+                <div class="bag-results-hero">
+                    <div>
+                        <div class="bag-card-label">Base Vault Readout</div>
+                        <div class="bag-results-title">${tokens.length} positions across one wallet</div>
+                        <div class="bag-results-copy">Largest holding: ${dominant ? escapeHtml(dominant.symbol || dominant.pairName || 'Unknown') : '—'} · ${dominant ? dominantPct.toFixed(1) : '0'}% of the bag.</div>
                     </div>
-                    <div style="display:grid;gap:10px;">`;
-                for (const tok of lpTokens) {
-                    const val = tok.value || 0;
-                    const pct = total > 0 ? ((val/total)*100).toFixed(1) : '0';
-                    const share = tok.userSharePct ? parseFloat(tok.userSharePct) : 0;
-                    const poolLiq = tok.totalLiqUsd || 0;
-                    const t0 = (tok.pairName||tok.symbol||'').split('/')[0];
-                    const t1 = (tok.pairName||tok.symbol||'').split('/')[1];
+                    <div class="bag-panel-badge">${safeShortAddress}</div>
+                </div>`;
+
+            if (lpTokens.length > 0) {
+                html += `<div class="bag-section-head">
+                    <div class="bag-section-accent" style="background:linear-gradient(180deg,#63b3ed,#3b82f6);"></div>
+                    <span class="bag-section-title" style="color:#93c5fd;">LP Positions</span>
+                    <span class="bag-section-meta">${lpTokens.length} pools · ${fmtUsd(lpValue)}</span>
+                </div>
+                <div class="bag-lp-grid">`;
+                for (const token of lpTokens) {
+                    const value = token.value || 0;
+                    const pct = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
+                    const share = token.userSharePct ? parseFloat(token.userSharePct) : 0;
+                    const poolLiquidity = token.totalLiqUsd || 0;
+                    const pairA = escapeHtml(((token.pairName || token.symbol || '').split('/')[0] || 'Token A').trim());
+                    const pairB = escapeHtml(((token.pairName || token.symbol || '').split('/')[1] || 'Token B').trim());
                     html += `<div class="lp-card" onclick="window.open('https://dex.9mm.pro','_blank')">
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-                            <div style="display:flex;align-items:center;gap:10px;">
-                                <div style="width:38px;height:38px;background:linear-gradient(135deg,#1e40af,#3b82f6);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;">🔄</div>
-                                <div>
-                                    <div style="font-size:15px;font-weight:800;color:#fff;">${tok.symbol}</div>
-                                    <div style="font-size:10px;color:rgba(99,179,237,0.7);font-family:'Inter',sans-serif;font-weight:600;">LP · 9mm.pro</div>
+                        <div class="bag-lp-main">
+                            <div class="bag-lp-left">
+                                <div class="bag-lp-icon" style="background:linear-gradient(135deg,#1d4ed8,#38bdf8);font-size:16px;">🔄</div>
+                                <div style="min-width:0;">
+                                    <div class="bag-lp-name">${escapeHtml(token.symbol || token.pairName || 'LP Position')}</div>
+                                    <div class="bag-lp-sub">9mm liquidity pair · ${fmtBal(token.balance)} LP tokens</div>
                                 </div>
                             </div>
-                            <div style="text-align:right;">
-                                <div style="font-size:18px;font-weight:900;color:#63b3ed;font-family:'Space Grotesk',sans-serif;">${fmtUsd(val)}</div>
-                                <div style="font-size:10px;color:rgba(255,255,255,0.3);font-family:'Inter',sans-serif;">${pct}% of bag</div>
+                            <div class="bag-lp-right">
+                                <div class="bag-lp-value" style="color:#93c5fd;">${fmtUsd(value)}</div>
+                                <div class="bag-lp-meta">${pct}% of bag</div>
                             </div>
                         </div>
-                        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
-                            <div><div style="font-size:9px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;font-family:'Inter',sans-serif;">Share</div><div style="font-size:13px;font-weight:700;color:#fff;">${share>0?share.toFixed(3)+'%':'—'}</div></div>
-                            <div><div style="font-size:9px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;font-family:'Inter',sans-serif;">Pool Liq</div><div style="font-size:13px;font-weight:700;color:#63b3ed;">${poolLiq>0?fmtUsd(poolLiq):'—'}</div></div>
-                            ${tok.price0>0?`<div><div style="font-size:9px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;font-family:'Inter',sans-serif;">${t0}</div><div style="font-size:13px;font-weight:700;color:#fbbf24;">$${tok.price0<0.001?tok.price0.toExponential(3):tok.price0.toLocaleString(undefined,{maximumSignificantDigits:4})}</div></div>`:`<div><div style="font-size:9px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;font-family:'Inter',sans-serif;">Balance</div><div style="font-size:13px;font-weight:700;color:#fff;">${fmtBal(tok.balance)} LP</div></div>`}
-                            ${tok.price1>0?`<div><div style="font-size:9px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;font-family:'Inter',sans-serif;">${t1}</div><div style="font-size:13px;font-weight:700;color:#4ade80;">$${tok.price1<0.001?tok.price1.toExponential(3):tok.price1.toLocaleString(undefined,{maximumSignificantDigits:4})}</div></div>`:`<div><div style="font-size:9px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;font-family:'Inter',sans-serif;">LP Tokens</div><div style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.4);">${fmtBal(tok.balance)}</div></div>`}
+                        <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.06);">
+                            <div><div class="bag-mini-label">Share</div><div class="bag-mini-value">${share > 0 ? share.toFixed(3) + '%' : '—'}</div></div>
+                            <div><div class="bag-mini-label">Pool Liquidity</div><div class="bag-mini-value" style="color:#93c5fd;">${poolLiquidity > 0 ? fmtUsd(poolLiquidity) : '—'}</div></div>
+                            <div><div class="bag-mini-label">${pairA}</div><div class="bag-mini-value" style="color:#fbbf24;">${token.price0 > 0 ? '$' + (token.price0 < 0.001 ? token.price0.toExponential(3) : token.price0.toLocaleString(undefined, { maximumSignificantDigits: 4 })) : '—'}</div></div>
+                            <div><div class="bag-mini-label">${pairB}</div><div class="bag-mini-value" style="color:#86efac;">${token.price1 > 0 ? '$' + (token.price1 < 0.001 ? token.price1.toExponential(3) : token.price1.toLocaleString(undefined, { maximumSignificantDigits: 4 })) : '—'}</div></div>
                         </div>
                     </div>`;
                 }
-                html += '</div></div>';
+                html += '</div>';
             }
 
-            // ── Token Rows ────────────────────────────────────────────────────
-            const showTokens = regularTokens.filter(t => (t.value||0) >= 0.01);
-            if (showTokens.length > 0) {
-                const highV = showTokens.filter(t => (t.value||0) >= 1);
-                const lowV  = showTokens.filter(t => (t.value||0) < 1);
-                const lowTotal = lowV.reduce((s,t) => s+(t.value||0), 0);
-                const uid = 'btl' + Math.random().toString(36).slice(2,7);
+            const visibleTokens = regularTokens.filter(token => (token.value || 0) >= 0.01);
+            if (visibleTokens.length > 0) {
+                const highValueTokens = visibleTokens.filter(token => (token.value || 0) >= 1);
+                const lowValueTokens = visibleTokens.filter(token => (token.value || 0) < 1);
+                const lowValueTotal = lowValueTokens.reduce((sum, token) => sum + (token.value || 0), 0);
+                const lowValueId = 'btl' + Math.random().toString(36).slice(2, 7);
 
-                html += `<div style="${lpTokens.length>0?'margin-top:4px;':''}">
-                    <div class="bag-section-head">
-                        <div class="bag-section-accent" style="background:linear-gradient(180deg,#fbbf24,#f59e0b);"></div>
-                        <span class="bag-section-title" style="color:#fbbf24;">Tokens</span>
-                        <span class="bag-section-meta">${showTokens.length} assets</span>
-                    </div>
-                    <div style="display:grid;gap:6px;">`;
-                for (const tok of highV) html += baseTokenRow(tok, total);
-                if (lowV.length > 0) {
-                    html += `</div>
-                        <div style="margin-top:6px;">
-                            <div onclick="var c=document.getElementById('${uid}');var open=c.style.display!=='none';c.style.display=open?'none':'grid';this.querySelector('.chv').textContent=open?'▸':'▾';"
-                                style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:9px;cursor:pointer;font-size:11px;color:rgba(255,255,255,0.35);font-family:'Inter',sans-serif;user-select:none;">
-                                <span><span class="chv">▸</span> Low value assets (${lowV.length})</span>
-                                <span>${fmtUsd(lowTotal)}</span>
-                            </div>
-                            <div id="${uid}" style="display:none;grid-template-columns:1fr;gap:5px;margin-top:4px;">`;
-                    for (const tok of lowV) html += baseTokenRow(tok, total);
+                html += `<div class="bag-section-head" style="margin-top:${lpTokens.length > 0 ? '18px' : '4px'};">
+                    <div class="bag-section-accent" style="background:linear-gradient(180deg,#fbbf24,#fb7185);"></div>
+                    <span class="bag-section-title" style="color:#fbbf24;">Tokens</span>
+                    <span class="bag-section-meta">${visibleTokens.length} visible assets</span>
+                </div>
+                <div class="bag-token-stack">`;
+                for (const token of highValueTokens) html += baseTokenRow(token, total);
+                html += '</div>';
+
+                if (lowValueTokens.length > 0) {
+                    html += `<div style="margin-top:10px;">
+                        <div class="bag-low-toggle" onclick="var c=document.getElementById('${lowValueId}');var open=c.style.display!=='none';c.style.display=open?'none':'grid';this.querySelector('.chv').textContent=open?'▸':'▾';">
+                            <span><span class="chv">▸</span> Low value assets (${lowValueTokens.length})</span>
+                            <span>${fmtUsd(lowValueTotal)}</span>
+                        </div>
+                        <div id="${lowValueId}" class="bag-low-list">`;
+                    for (const token of lowValueTokens) html += baseTokenRow(token, total);
                     html += '</div></div>';
                 }
-                html += '</div></div>';
             }
 
+            html += '</section>';
             document.getElementById('portfolioList').innerHTML = html;
         }
         // Initialize
@@ -9610,7 +10632,7 @@ document.addEventListener('DOMContentLoaded', () => {
         section.style.display = 'block';
         var reloadBtn = document.getElementById('chia-reload-btn');
         if (reloadBtn) reloadBtn.style.display = 'block';
-        section.innerHTML = '<div style="border-top:2px solid rgba(74,222,128,0.15);margin-top:28px;padding:40px 20px;text-align:center;"><div style="font-size:36px;margin-bottom:12px;animation:pulse 1.5s infinite;">\ud83c\udf31</div><div style="font-size:15px;color:#4ade80;font-weight:700;font-family:Inter,sans-serif;margin-bottom:6px;">Loading Chia Portfolio\u2026</div><div style="font-size:12px;color:rgba(255,255,255,0.35);font-family:Inter,sans-serif;">' + addrList.length + ' wallet' + (addrList.length > 1 ? 's' : '') + ' \u00b7 XCH \u00b7 CATs \u00b7 TibetSwap LP \u00b7 NFTs</div></div>';
+        section.innerHTML = '<section class="bag-chia-card bag-loading-state"><div class="bag-loading-icon">\ud83c\udf31</div><div class="bag-loading-title" style="color:#4ade80;">Loading Chia Portfolio</div><div class="bag-loading-copy">Resolving ' + addrList.length + ' wallet' + (addrList.length > 1 ? 's' : '') + ' across XCH, CATs, TibetSwap LP positions, and NFT collections.</div></section>';
         try {
             // ── Kick off all independent fetches simultaneously ────────────
             // XCH price (session-cached, 5 min TTL)
@@ -9781,138 +10803,135 @@ document.addEventListener('DOMContentLoaded', () => {
 
             renderChiaPortfolioSection(addrList, xchBal, xchPrice, tokens, nfts, section);
         } catch(err) {
-            section.innerHTML = '<div style="border-top:2px solid rgba(74,222,128,0.15);margin-top:28px;padding:40px 20px;text-align:center;color:#ef4444;"><div style="font-size:32px;margin-bottom:12px;">\u26a0\ufe0f</div><div style="font-size:16px;font-weight:700;margin-bottom:8px;font-family:Inter,sans-serif;">Chia Portfolio Error</div><div style="font-size:12px;color:rgba(255,255,255,0.4);font-family:Inter,sans-serif;">' + err.message + '</div></div>';
+            section.innerHTML = '<section class="bag-chia-card bag-error-state"><div class="bag-error-icon">\u26a0\ufe0f</div><div class="bag-error-title">Chia Portfolio Error</div><div class="bag-error-copy">' + escapeHtml(err.message || 'Unknown error') + '</div></section>';
         }
     }
 
     function renderChiaPortfolioSection(addressOrList, xchBal, xchPrice, tokens, nfts, container) {
         const addrList = Array.isArray(addressOrList) ? addressOrList : [addressOrList];
-        const xchV = xchBal * xchPrice;
+        const xchValue = xchBal * xchPrice;
         const all = tokens.slice().sort(function(a, b) { return (b.value || 0) - (a.value || 0); });
-        const tokenTotal = all.reduce(function(s, t) { return s + (t.value || 0); }, 0);
-        const total = xchV + tokenTotal;
-        const highV = all.filter(function(t) { return (t.value || 0) >= 1; });
-        const lowV  = all.filter(function(t) { return (t.value || 0) > 0 && (t.value || 0) < 1; });
-        const lowTotal = lowV.reduce(function(s, t) { return s + (t.value || 0); }, 0);
+        const tokenTotal = all.reduce(function(sum, token) { return sum + (token.value || 0); }, 0);
+        const total = xchValue + tokenTotal;
+        const highValue = all.filter(function(token) { return (token.value || 0) >= 1; });
+        const lowValue = all.filter(function(token) { return (token.value || 0) > 0 && (token.value || 0) < 1; });
+        const lowTotal = lowValue.reduce(function(sum, token) { return sum + (token.value || 0); }, 0);
 
-        const colMap = {};
-        for (const n of nfts) {
-            const k = n.collection_id || n.collection_name || 'other';
-            if (!colMap[k]) colMap[k] = { name: (n.collection_name || n.name || 'Unknown').replace(/\s+#\d+$/, ''), count: 0 };
-            colMap[k].count++;
+        const collectionsMap = {};
+        for (const nft of nfts) {
+            const key = nft.collection_id || nft.collection_name || 'other';
+            if (!collectionsMap[key]) collectionsMap[key] = { name: (nft.collection_name || nft.name || 'Unknown').replace(/\s+#\d+$/, ''), count: 0 };
+            collectionsMap[key].count++;
         }
-        const cols = Object.values(colMap).sort(function(a, b) { return b.count - a.count; });
+        const collections = Object.values(collectionsMap).sort(function(a, b) { return b.count - a.count; });
         const walletLabel = addrList.length > 1
-            ? addrList.length + ' wallets'
-            : (addrList[0].slice(0, 8) + '\u2026' + addrList[0].slice(-6));
-        const uid = 'lcv' + Math.random().toString(36).slice(2, 7);
+            ? escapeHtml(addrList.length + ' wallets')
+            : escapeHtml(addrList[0].slice(0, 8) + '\u2026' + addrList[0].slice(-6));
+        const lowValueId = 'lcv' + Math.random().toString(36).slice(2, 7);
 
-        function tokenRow(t) {
-            var isLP = t.isLP;
-            var isHex = function(s) { return /^[0-9a-f]{8,}$/i.test((s||'').trim()); };
+        function tokenRow(token) {
+            var isLP = token.isLP;
+            var isHex = function(value) { return /^[0-9a-f]{8,}$/i.test((value || '').trim()); };
             var displayName = isLP
-                ? (t.pairName || t.name || t.sym)
-                : (!isHex(t.name) && t.name ? t.name : (!isHex(t.sym) && t.sym ? t.sym : t.assetId.slice(0,8) + '\u2026'));
+                ? (token.pairName || token.name || token.sym)
+                : (!isHex(token.name) && token.name ? token.name : (!isHex(token.sym) && token.sym ? token.sym : token.assetId.slice(0, 8) + '\u2026'));
             var sub = isLP
-                ? ('TibetSwap LP \u00b7 ' + fmtBal(t.balance))
-                : (fmtBal(t.balance) + (t.price > 0 ? ' \u00b7 $' + (t.price < 0.0001 ? t.price.toExponential(2) : t.price < 0.01 ? t.price.toFixed(6) : t.price.toFixed(4)) : ''));
-            var link = isLP ? 'https://app.tibetswap.io' : 'https://www.spacescan.io/cat/' + t.assetId;
-            var color = isLP ? '#63b3ed' : '#4ade80';
+                ? ('TibetSwap LP · ' + fmtBal(token.balance))
+                : (fmtBal(token.balance) + (token.price > 0 ? ' · $' + (token.price < 0.0001 ? token.price.toExponential(2) : token.price < 0.01 ? token.price.toFixed(6) : token.price.toFixed(4)) : ''));
+            var link = isLP ? 'https://app.tibetswap.io' : 'https://www.spacescan.io/cat/' + token.assetId;
+            var color = isLP ? '#93c5fd' : '#86efac';
             var iconBg = isLP ? 'linear-gradient(135deg,#1e3a5f,#2563eb)' : 'linear-gradient(135deg,#14532d,#16a34a)';
-            var iconInner = isLP
-                ? '<span style="font-size:14px;">\ud83d\udd04</span>'
-                : '<span style="font-size:10px;font-weight:900;color:#fff;">' + (t.sym||'?').slice(0,3).toUpperCase() + '</span>';
-            var lpBadge = isLP
-                ? '<span style="font-size:8px;background:rgba(99,179,237,0.12);border:1px solid rgba(99,179,237,0.25);border-radius:3px;padding:1px 4px;color:#63b3ed;font-weight:700;flex-shrink:0;font-family:Inter,sans-serif;line-height:1.4;">LP</span>'
-                : '';
-            return '<div onclick="window.open(\'' + link + '\',\'_blank\')" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:10px;cursor:pointer;transition:background 0.12s,border-color 0.12s;" onmouseover="this.style.background=\'rgba(74,222,128,0.05)\';this.style.borderColor=\'rgba(74,222,128,0.15)\'" onmouseout="this.style.background=\'rgba(255,255,255,0.03)\';this.style.borderColor=\'rgba(255,255,255,0.07)\'">'
-                + '<div style="display:flex;align-items:center;gap:9px;min-width:0;">'
-                + '<div style="width:34px;height:34px;background:' + iconBg + ';border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">' + iconInner + '</div>'
+            var iconInner = isLP ? '🔄' : escapeHtml((token.sym || '?').slice(0, 3).toUpperCase());
+            return '<div class="bag-token-row" onclick="window.open(\'' + link + '\',\'_blank\')">'
+                + '<div class="bag-chia-row-main">'
+                + '<div class="bag-chia-left">'
+                + '<div class="bag-chia-icon" style="background:' + iconBg + ';font-size:' + (isLP ? '16px' : '12px') + ';">' + iconInner + '</div>'
                 + '<div style="min-width:0;">'
-                + '<div style="display:flex;align-items:center;gap:5px;margin-bottom:1px;">'
-                + '<span style="font-size:13px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px;">' + displayName + '</span>'
-                + lpBadge
-                + '</div>'
-                + '<div style="font-size:10px;color:rgba(255,255,255,0.28);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:Inter,sans-serif;">' + sub + '</div>'
+                + '<div class="bag-chia-name">' + escapeHtml(displayName) + (isLP ? ' <span style="font-size:10px;color:#93c5fd;font-family:Inter,sans-serif;">LP</span>' : '') + '</div>'
+                + '<div class="bag-chia-sub">' + escapeHtml(sub) + '</div>'
                 + '</div></div>'
-                + '<div style="font-size:14px;font-weight:800;color:' + color + ';white-space:nowrap;flex-shrink:0;font-family:\'Space Grotesk\',sans-serif;">' + fmtUsd(t.value) + '</div>'
+                + '<div class="bag-chia-right">'
+                + '<div class="bag-chia-value" style="color:' + color + ';">' + fmtUsd(token.value) + '</div>'
+                + '<div class="bag-chia-meta">' + (total > 0 ? (((token.value || 0) / total) * 100).toFixed(1) : '0') + '% of Chia bag</div>'
+                + '</div></div>'
                 + '</div>';
         }
 
-        var h = '<div style="border-top:1px solid rgba(74,222,128,0.15);margin-top:24px;padding-top:20px;">';
+        var html = '<section class="bag-chia-card">';
+        html += '<div class="bag-chia-head">'
+            + '<div>'
+            + '<div class="bag-card-label" style="color:rgba(134,239,172,0.72);">Sage Chia Portfolio</div>'
+            + '<div class="bag-results-title">Connected green side of the bag</div>'
+            + '<div class="bag-results-copy">Wallet scope: ' + walletLabel + ' · XCH, CATs, TibetSwap LP, and NFT collections grouped into one readout.</div>'
+            + '</div>'
+            + '<div class="bag-chia-total">' + fmtUsd(total) + '</div>'
+            + '</div>';
 
-        // Header row
-        h += '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px;">'
-            + '<div style="display:flex;align-items:center;gap:8px;">'
-            + '<div style="width:3px;height:18px;background:linear-gradient(180deg,#4ade80,#16a34a);border-radius:2px;flex-shrink:0;"></div>'
-            + '<div><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#4ade80;font-family:\'Inter\',sans-serif;">Chia Portfolio</div>'
-            + '<div style="font-size:10px;color:rgba(255,255,255,0.2);font-family:monospace;margin-top:1px;">' + walletLabel + '</div></div></div>'
-            + '<div style="font-size:20px;font-weight:900;color:#4ade80;font-family:\'Space Grotesk\',sans-serif;">' + fmtUsd(total) + '</div></div>';
+        html += '<div class="bag-chia-mini-grid">'
+            + '<div class="bag-chia-highlight"><div class="bag-mini-label">XCH</div><div class="bag-mini-value" style="color:#86efac;">' + fmtUsd(xchValue) + '</div></div>'
+            + '<div class="bag-chia-highlight"><div class="bag-mini-label">Tracked Tokens</div><div class="bag-mini-value">' + all.length + '</div></div>'
+            + '<div class="bag-chia-highlight"><div class="bag-mini-label">NFTs</div><div class="bag-mini-value" style="color:#c084fc;">' + nfts.length + '</div></div>'
+            + '</div>';
 
-        // Stat pills
-        h += '<div class="bag-pills" style="margin-bottom:14px;">';
-        var pills = [
-            { l: 'XCH', v: fmtUsd(xchV), c: '#4ade80' },
-            { l: 'Tokens', v: all.length + ' assets', c: '#fbbf24' },
-        ];
-        if (nfts.length) pills.push({ l: 'NFTs', v: nfts.length + '', c: '#a855f7' });
-        for (var pi = 0; pi < pills.length; pi++) {
-            h += '<div class="bag-pill"><div class="bag-pill-label">' + pills[pi].l + '</div>'
-                + '<div class="bag-pill-value" style="color:' + pills[pi].c + ';font-size:13px;">' + pills[pi].v + '</div></div>';
-        }
-        h += '</div>';
-
-        // XCH row
         if (xchBal > 0) {
-            h += '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 12px;background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.15);border-radius:10px;margin-bottom:5px;">'
-                + '<div style="display:flex;align-items:center;gap:9px;">'
-                + '<div style="width:34px;height:34px;background:linear-gradient(135deg,#14532d,#22c55e);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">\ud83c\udf31</div>'
-                + '<div><div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:1px;">XCH</div>'
-                + '<div style="font-size:10px;color:rgba(255,255,255,0.28);font-family:Inter,sans-serif;">' + fmtBal(xchBal) + ' \u00b7 $' + xchPrice.toFixed(2) + '/XCH</div></div></div>'
-                + '<div style="font-size:14px;font-weight:800;color:#4ade80;font-family:\'Space Grotesk\',sans-serif;">' + fmtUsd(xchV) + '</div></div>';
+            html += '<div class="bag-token-row" style="margin-bottom:10px;cursor:default;border-color:rgba(74,222,128,0.16);background:linear-gradient(180deg, rgba(74,222,128,0.08), rgba(74,222,128,0.03));">'
+                + '<div class="bag-chia-row-main">'
+                + '<div class="bag-chia-left">'
+                + '<div class="bag-chia-icon" style="background:linear-gradient(135deg,#166534,#22c55e);font-size:16px;">🌱</div>'
+                + '<div><div class="bag-chia-name">XCH</div><div class="bag-chia-sub">' + fmtBal(xchBal) + ' held · $' + xchPrice.toFixed(2) + '/XCH</div></div>'
+                + '</div>'
+                + '<div class="bag-chia-right"><div class="bag-chia-value" style="color:#86efac;">' + fmtUsd(xchValue) + '</div><div class="bag-chia-meta">native Chia balance</div></div>'
+                + '</div></div>';
         }
 
-        // High value tokens
-        if (highV.length > 0) {
-            h += '<div style="display:grid;gap:5px;margin-bottom:5px;">';
-            for (var i = 0; i < highV.length; i++) h += tokenRow(highV[i]);
-            h += '</div>';
+        if (highValue.length > 0) {
+            html += '<div class="bag-section-head" style="margin-top:4px;">'
+                + '<div class="bag-section-accent" style="background:linear-gradient(180deg,#4ade80,#22c55e);"></div>'
+                + '<span class="bag-section-title" style="color:#86efac;">Top Chia Assets</span>'
+                + '<span class="bag-section-meta">' + highValue.length + ' assets worth ' + fmtUsd(highValue.reduce(function(sum, token) { return sum + (token.value || 0); }, 0)) + '</span>'
+                + '</div>'
+                + '<div class="bag-chia-token-grid">';
+            for (var i = 0; i < highValue.length; i++) html += tokenRow(highValue[i]);
+            html += '</div>';
         }
 
-        // Low value dropdown
-        if (lowV.length > 0) {
-            h += '<div style="margin-top:5px;">'
-                + '<div onclick="var c=document.getElementById(\'' + uid + '\');var open=c.style.display!==\'none\';c.style.display=open?\'none\':\'grid\';this.querySelector(\'.chv\').textContent=open?\'\u25b8\':\'\u25be\';" style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:9px;cursor:pointer;font-size:11px;color:rgba(255,255,255,0.35);font-family:Inter,sans-serif;user-select:none;">'
-                + '<span><span class="chv">\u25b8</span> Low value assets (' + lowV.length + ')</span>'
+        if (lowValue.length > 0) {
+            html += '<div style="margin-top:10px;">'
+                + '<div class="bag-low-toggle" onclick="var c=document.getElementById(\'' + lowValueId + '\');var open=c.style.display!==\'none\';c.style.display=open?\'none\':\'grid\';this.querySelector(\'.chv\').textContent=open?\'▸\':\'▾\';">'
+                + '<span><span class="chv">▸</span> Low value CATs (' + lowValue.length + ')</span>'
                 + '<span>' + fmtUsd(lowTotal) + '</span></div>'
-                + '<div id="' + uid + '" style="display:none;grid-template-columns:1fr;gap:5px;margin-top:4px;">';
-            for (var j = 0; j < lowV.length; j++) h += tokenRow(lowV[j]);
-            h += '</div></div>';
+                + '<div id="' + lowValueId + '" class="bag-low-list">';
+            for (var j = 0; j < lowValue.length; j++) html += tokenRow(lowValue[j]);
+            html += '</div></div>';
         }
 
-        // NFT collections
         if (nfts.length > 0) {
-            h += '<div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.06);">'
-                + '<div style="font-size:10px;font-weight:700;color:rgba(168,85,247,0.6);font-family:Inter,sans-serif;letter-spacing:0.8px;text-transform:uppercase;margin-bottom:8px;">\ud83d\uddbc\ufe0f NFT Collections \u00b7 ' + nfts.length + '</div>'
-                + '<div style="display:flex;gap:6px;flex-wrap:wrap;">';
-            var showCols = cols.slice(0, 6);
-            for (var ci = 0; ci < showCols.length; ci++) {
-                var c = showCols[ci];
-                h += '<div style="background:rgba(168,85,247,0.06);border:1px solid rgba(168,85,247,0.18);border-radius:8px;padding:7px 11px;display:flex;align-items:center;gap:6px;">'
-                    + '<span style="font-size:14px;font-weight:900;color:#a855f7;">' + c.count + '</span>'
-                    + '<span style="font-size:10px;color:rgba(255,255,255,0.4);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:Inter,sans-serif;">' + c.name + '</span></div>';
+            html += '<div class="bag-section-head" style="margin-top:18px;">'
+                + '<div class="bag-section-accent" style="background:linear-gradient(180deg,#c084fc,#8b5cf6);"></div>'
+                + '<span class="bag-section-title" style="color:#d8b4fe;">NFT Collections</span>'
+                + '<span class="bag-section-meta">' + nfts.length + ' NFTs</span>'
+                + '</div>'
+                + '<div class="bag-collection-grid">';
+            var shown = collections.slice(0, 6);
+            for (var ci = 0; ci < shown.length; ci++) {
+                html += '<div class="bag-collection-chip">'
+                    + '<div class="bag-collection-count">' + shown[ci].count + '</div>'
+                    + '<div class="bag-collection-name">' + escapeHtml(shown[ci].name) + '</div>'
+                    + '</div>';
             }
-            var shownNFTs = showCols.reduce(function(s, c) { return s + c.count; }, 0);
-            if (nfts.length - shownNFTs > 0) h += '<div style="background:rgba(168,85,247,0.03);border:1px solid rgba(168,85,247,0.1);border-radius:8px;padding:7px 11px;font-size:10px;color:rgba(255,255,255,0.25);font-family:Inter,sans-serif;">+' + (nfts.length - shownNFTs) + ' more</div>';
-            h += '</div><a href="https://mintgarden.io" target="_blank" rel="noopener" style="display:inline-block;margin-top:8px;font-size:10px;color:rgba(168,85,247,0.35);text-decoration:none;font-family:Inter,sans-serif;">View on MintGarden \u2192</a></div>';
+            if (collections.length > shown.length) {
+                var extraCount = collections.slice(6).reduce(function(sum, item) { return sum + item.count; }, 0);
+                html += '<div class="bag-collection-chip"><div class="bag-collection-count">+' + extraCount + '</div><div class="bag-collection-name">Additional NFTs beyond the featured collections.</div></div>';
+            }
+            html += '</div><a href="https://mintgarden.io" target="_blank" rel="noopener" style="display:inline-block;margin-top:10px;font-size:11px;color:rgba(216,180,254,0.78);text-decoration:none;font-family:Inter,sans-serif;">View collection details on MintGarden →</a>';
         }
 
         if (!xchBal && all.length === 0 && nfts.length === 0) {
-            h += '<div style="text-align:center;padding:36px 20px;color:rgba(255,255,255,0.25);"><div style="font-size:32px;margin-bottom:10px;">\ud83d\udceb</div><div style="font-size:13px;font-family:Inter,sans-serif;">No Chia holdings found</div></div>';
+            html += '<div class="bag-empty-state"><div class="bag-empty-icon">📭</div><div class="bag-empty-title">No Chia holdings found.</div><div class="bag-empty-copy">This connected Sage wallet set did not return XCH, CAT, LP, or NFT balances.</div></div>';
         }
 
-        h += '</div>';
-        container.innerHTML = h;
+        html += '</section>';
+        container.innerHTML = html;
     }
 
     function hideSageChiaPortfolio() {
