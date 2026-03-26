@@ -1152,6 +1152,121 @@
             transition: all 0.08s;
         }
 
+        /* ── Useful Links Dropdown ─────────────────────────── */
+        .useful-links-dropdown {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 16px;
+        }
+        .useful-links-toggle {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 16px;
+            background: rgba(0,0,0,0.55);
+            border: 2px solid rgba(251,191,36,0.6);
+            border-radius: 8px;
+            color: #fbbf24;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s;
+            backdrop-filter: blur(8px);
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        .useful-links-toggle:hover {
+            border-color: rgba(251,191,36,1);
+            background: rgba(251,191,36,0.1);
+            box-shadow: 0 0 14px rgba(251,191,36,0.25);
+        }
+        .useful-links-toggle .toggle-arrow {
+            transition: transform 0.25s;
+            font-size: 10px;
+        }
+        .useful-links-dropdown.open .toggle-arrow {
+            transform: rotate(180deg);
+        }
+        .useful-links-panel {
+            display: none;
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 50%;
+            transform: translateX(-50%);
+            width: max(320px, 50vw);
+            max-width: 480px;
+            max-height: 70vh;
+            overflow-y: auto;
+            background: rgba(8,6,18,0.96);
+            border: 1px solid rgba(251,191,36,0.35);
+            border-radius: 10px;
+            backdrop-filter: blur(18px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.7), 0 0 20px rgba(251,191,36,0.08);
+            z-index: 900;
+            padding: 6px;
+        }
+        .useful-links-dropdown.open .useful-links-panel {
+            display: block;
+            animation: ulDrop 0.2s ease-out;
+        }
+        @keyframes ulDrop {
+            from { opacity: 0; transform: translateX(-50%) translateY(-6px); }
+            to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        .ul-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 9px 12px;
+            border-radius: 7px;
+            text-decoration: none;
+            color: white;
+            transition: background 0.18s;
+        }
+        .ul-item:hover {
+            background: rgba(251,191,36,0.1);
+        }
+        .ul-item-emoji {
+            font-size: 16px;
+            flex-shrink: 0;
+            width: 22px;
+            text-align: center;
+            line-height: 1.3;
+        }
+        .ul-item-text {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+            min-width: 0;
+        }
+        .ul-item-name {
+            font-size: 12px;
+            font-weight: 700;
+            color: #fbbf24;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        .ul-item-desc {
+            font-size: 10.5px;
+            color: rgba(255,255,255,0.55);
+            line-height: 1.35;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        .ul-divider {
+            height: 1px;
+            background: rgba(251,191,36,0.15);
+            margin: 4px 8px;
+        }
+        .ul-item.warp-highlight {
+            border: 1px solid rgba(251,191,36,0.4);
+            background: rgba(251,191,36,0.06);
+        }
+        .ul-item.discord-highlight {
+            border: 1px solid rgba(88,101,242,0.4);
+            background: rgba(88,101,242,0.06);
+        }
+        .ul-item.discord-highlight .ul-item-name {
+            color: #7289da;
+        }
+
         .section-divider {
             height: 1px;
             background: linear-gradient(to right, transparent, rgba(220, 38, 38, 0.5), rgba(251, 191, 36, 0.6), rgba(220, 38, 38, 0.5), transparent);
@@ -3812,25 +3927,99 @@
         </div>
 
         <div id="market" class="content">
-            <div class="quick-links">
-                <div class="quick-links-row">
-                    <a href="https://dexie.space" target="_blank" class="quick-link-btn" title="Trade here">🦢 dexie.space</a>
-                    <a href="https://mintgarden.io" target="_blank" class="quick-link-btn" title="Chia NFT marketplace and minting">🍃 mintgarden.io</a>
-                    <a href="https://dex.9mm.pro" target="_blank" class="quick-link-btn" title="The bread and butter (base warped tokens)">🔫 dex.9mm.pro</a>
-                    <a href="https://circuitdao.com" target="_blank" class="quick-link-btn" title="Stablecoin magic">💲 circuitdao.com</a>
-                    <a href="https://wojak.ink" target="_blank" class="quick-link-btn" title="Crazy">🎨 wojak.ink</a>
-                    <a href="https://crate.ink" target="_blank" class="quick-link-btn" title="Web3 minting experience on Chia">📦 crate.ink</a>
-                    <a href="https://thisweekinchia.com/" target="_blank" class="quick-link-btn" title="Chia news">📰 thisweekinchia.com</a>
-                    <a href="https://www.spacescan.io" target="_blank" class="quick-link-btn" title="Chia blockchain explorer">🔭 spacescan.io</a>
-                    <a href="https://xch.trade" target="_blank" class="quick-link-btn" title="Check CATs">💱 xch.trade</a>
-                    <a href="https://tangtalk.io" target="_blank" class="quick-link-btn" title="Chia community">🍊 tangtalk.io</a>
-                </div>
-                <div class="quick-links-row">
-                    <a href="https://warp.awizard.dev" target="_blank" class="quick-link-btn warp-btn" title="Warp your bag">
-                        <span style="font-size: 14px;">⚡</span>
-                        <span>warp.awizard.dev</span>
-                    </a>
-                    <a href="https://discord.gg/awizard" target="_blank" class="quick-link-btn" style="border: none; color: #5865F2; box-shadow: 0 0 12px rgba(88, 101, 242, 0.4);" title="Chat and verify your wallet">💬 discord.gg/awizard</a>
+            <div style="display:flex; justify-content:center;">
+                <div class="useful-links-dropdown" id="usefulLinksDropdown">
+                    <button class="useful-links-toggle" onclick="document.getElementById('usefulLinksDropdown').classList.toggle('open')">
+                        🔗 Useful Links <span class="toggle-arrow">▼</span>
+                    </button>
+                    <div class="useful-links-panel">
+                        <a href="https://warp.awizard.dev" target="_blank" class="ul-item warp-highlight">
+                            <span class="ul-item-emoji">⚡</span>
+                            <div class="ul-item-text">
+                                <span class="ul-item-name">warp.awizard.dev</span>
+                                <span class="ul-item-desc">Warp tokens between Chia and Base</span>
+                            </div>
+                        </a>
+                        <a href="https://discord.gg/awizard" target="_blank" class="ul-item discord-highlight">
+                            <span class="ul-item-emoji">💬</span>
+                            <div class="ul-item-text">
+                                <span class="ul-item-name">discord.gg/awizard</span>
+                                <span class="ul-item-desc">Chat, verify your wallet, and join the community</span>
+                            </div>
+                        </a>
+                        <div class="ul-divider"></div>
+                        <a href="https://dexie.space" target="_blank" class="ul-item">
+                            <span class="ul-item-emoji">🦢</span>
+                            <div class="ul-item-text">
+                                <span class="ul-item-name">dexie.space</span>
+                                <span class="ul-item-desc">Chia DEX — trade CATs and NFTs</span>
+                            </div>
+                        </a>
+                        <a href="https://dex.9mm.pro" target="_blank" class="ul-item">
+                            <span class="ul-item-emoji">🔫</span>
+                            <div class="ul-item-text">
+                                <span class="ul-item-name">dex.9mm.pro</span>
+                                <span class="ul-item-desc">Base DEX — swap warped tokens</span>
+                            </div>
+                        </a>
+                        <a href="https://mintgarden.io" target="_blank" class="ul-item">
+                            <span class="ul-item-emoji">🍃</span>
+                            <div class="ul-item-text">
+                                <span class="ul-item-name">mintgarden.io</span>
+                                <span class="ul-item-desc">Chia NFT marketplace and minting platform</span>
+                            </div>
+                        </a>
+                        <a href="https://circuitdao.com" target="_blank" class="ul-item">
+                            <span class="ul-item-emoji">💲</span>
+                            <div class="ul-item-text">
+                                <span class="ul-item-name">circuitdao.com</span>
+                                <span class="ul-item-desc">Stablecoin protocol on Chia</span>
+                            </div>
+                        </a>
+                        <a href="https://www.spacescan.io" target="_blank" class="ul-item">
+                            <span class="ul-item-emoji">🔭</span>
+                            <div class="ul-item-text">
+                                <span class="ul-item-name">spacescan.io</span>
+                                <span class="ul-item-desc">Chia blockchain explorer</span>
+                            </div>
+                        </a>
+                        <a href="https://xch.trade" target="_blank" class="ul-item">
+                            <span class="ul-item-emoji">💱</span>
+                            <div class="ul-item-text">
+                                <span class="ul-item-name">xch.trade</span>
+                                <span class="ul-item-desc">Quick CAT price checker</span>
+                            </div>
+                        </a>
+                        <div class="ul-divider"></div>
+                        <a href="https://wojak.ink" target="_blank" class="ul-item">
+                            <span class="ul-item-emoji">🎨</span>
+                            <div class="ul-item-text">
+                                <span class="ul-item-name">wojak.ink</span>
+                                <span class="ul-item-desc">Meme art on Chia</span>
+                            </div>
+                        </a>
+                        <a href="https://crate.ink" target="_blank" class="ul-item">
+                            <span class="ul-item-emoji">📦</span>
+                            <div class="ul-item-text">
+                                <span class="ul-item-name">crate.ink</span>
+                                <span class="ul-item-desc">Web3 minting experience on Chia</span>
+                            </div>
+                        </a>
+                        <a href="https://thisweekinchia.com/" target="_blank" class="ul-item">
+                            <span class="ul-item-emoji">📰</span>
+                            <div class="ul-item-text">
+                                <span class="ul-item-name">thisweekinchia.com</span>
+                                <span class="ul-item-desc">Weekly Chia ecosystem news</span>
+                            </div>
+                        </a>
+                        <a href="https://tangtalk.io" target="_blank" class="ul-item">
+                            <span class="ul-item-emoji">🍊</span>
+                            <div class="ul-item-text">
+                                <span class="ul-item-name">tangtalk.io</span>
+                                <span class="ul-item-desc">Chia community forum</span>
+                            </div>
+                        </a>
+                    </div>
                 </div>
             </div>
 
@@ -10321,6 +10510,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // ── Click outside WTV to close ──
         document.addEventListener('click', (e) => {
+            // Close useful-links dropdown
+            const uld = document.getElementById('usefulLinksDropdown');
+            if (uld && uld.classList.contains('open') && !e.target.closest('#usefulLinksDropdown')) {
+                uld.classList.remove('open');
+            }
             const mp = document.getElementById('video-miniplayer');
             if (!mp || mp.style.display === 'none') return;
             if (!mp.classList.contains('show-wtv')) return;
