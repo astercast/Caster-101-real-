@@ -747,21 +747,16 @@
             justify-content: space-between;
             min-height: 110px;
         }
-        /* Dimmed non-emoji tokens ($NECK, $CHIA etc) */
-        .token-card.tc-dimmed {
-            opacity: 0.55;
-            min-height: 80px;
-            padding: 10px 14px;
-            border-color: rgba(255,255,255,0.1);
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        /* Ticker-only tokens ($NECK, $CHIA) — card is normal, just dim the ticker text */
+        .token-card.tc-dimmed .tc-emoji {
+            font-size: 11px;
+            color: rgba(255,255,255,0.45);
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 600;
         }
-        .token-card.tc-dimmed .tc-emoji { font-size: 12px; }
-        .token-card.tc-dimmed .tc-name { font-size: 11px; }
-        .token-card.tc-dimmed .tc-price { font-size: 12px; }
-        .token-card.tc-dimmed .tc-price-inline { font-size: 11px; }
-        .token-card.tc-dimmed .tc-change { font-size: 10px; }
-        .token-card.tc-dimmed .tc-mcap-label,
-        .token-card.tc-dimmed .tc-mcap-value { font-size: 9px; }
+        .token-card.tc-dimmed .tc-name {
+            color: rgba(255,255,255,0.55);
+        }
 
         /* ── 1D sparkline chart ────────────────────────────── */
         .tc-chart {
@@ -783,6 +778,14 @@
             opacity: 1;
             background: none;
             animation: none;
+        }
+        /* failed fetch or Chia-side height spacer — invisible but keeps card height */
+        .tc-chart.tc-chart-empty,
+        .tc-chart.tc-chart-gap {
+            opacity: 0;
+            animation: none;
+            background: none;
+            pointer-events: none;
         }
         @keyframes tcSkelPulse {
             from { background-position: 200% 0; }
@@ -7266,7 +7269,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                     el.innerHTML = buildSparkSvg(p, p[p.length - 1] >= p[0]);
                     el.classList.add('tc-spark-ready');
                 } else {
-                    el.style.display = 'none';
+                    el.classList.add('tc-chart-empty');
                 }
                 res();
             }, i * 500))));
@@ -7372,7 +7375,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                             <span class="tc-price">$${priceStr}</span>
                         </div>
                     </div>
-                    ${!isDimmed && token.contract ? '<div class="tc-chart" data-contract="' + token.contract + '"></div>' : ''}
+                    ${token.contract ? '<div class="tc-chart" data-contract="' + token.contract + '"></div>' : ''}
                     <div class="tc-mid">
                         <span class="tc-price-inline">$${priceStr}</span>
                         <span class="tc-change" style="color:${changeColor};">${changeIcon} ${Math.abs(change).toFixed(1)}%</span>
@@ -7437,6 +7440,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                             <span class="tc-price">$${priceStr}</span>
                         </div>
                     </div>
+                    <div class="tc-chart tc-chart-gap"></div>
                     <div class="tc-mid">
                         <span class="tc-price-inline">$${priceStr}</span>
                         <span class="tc-change" style="color:${arbColor};">${arbDisplay}</span>
