@@ -4449,6 +4449,10 @@
                             <div class="bag-panel-title bag-panel-title-tight">Bag Tracker</div>
                         </div>
                     </div>
+                    <div class="bag-preset-grid" style="margin-bottom:10px;">
+                        <span class="bag-pill-label" style="align-self:center;">Quick load</span>
+                        <button class="bag-quick-btn" onclick="document.getElementById('walletAddress').value='0xEEDC069F861880eC1B5f41c9bC7a747DC1cE32b9'; trackAddress();">🧙 wizard treasury #1</button>
+                    </div>
                     <div class="wallet-input-row">
                         <div class="bag-input-wrap">
                             <span class="bag-input-icon">🔍</span>
@@ -4461,10 +4465,6 @@
                         <span id="chia-action-notice" class="bag-chia-toolbar-note" aria-live="polite"></span>
                     </div>
                     <div id="trackedAddressDisplay"></div>
-                    <div class="bag-preset-grid">
-                        <span class="bag-pill-label" style="align-self:center;">Quick load</span>
-                        <button class="bag-quick-btn" onclick="document.getElementById('walletAddress').value='0xEEDC069F861880eC1B5f41c9bC7a747DC1cE32b9'; trackAddress();">🧙 aWizard treasury wallet</button>
-                    </div>
                 </section>
 
                 <!-- ── Compact Summary Bar (hidden until scan) ── -->
@@ -11107,40 +11107,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     offset += pageSize;
                 }
             } catch(e) { console.warn('[Sage] XCH coin discovery:', e && e.message ? e.message : e); }
-
-            // 4. Discover addresses from CAT coins (CAT puzzle_hash wraps the inner P2 — try parent_coin_info)
-            try {
-                const catCoins = await _sageWCClient.request({
-                    topic: session.topic, chainId,
-                    request: { method: 'chip0002_getAssetCoins', params: { type: 'cat', assetId: null, includeLocked: false, offset: 0, limit: 200 } }
-                });
-                if (Array.isArray(catCoins) && catCoins.length > 0) {
-                    var prevCount = allAddresses.length;
-                    for (const c of catCoins) {
-                        // CAT coin puzzle_hash is the outer (wrapped) hash — try lineage/hint if available
-                        if (c && c.coin) {
-                            addPH(c.coin.puzzle_hash);
-                            // Some implementations include a 'hint' or 'p2_puzzle_hash' field
-                            if (c.hint) addPH(c.hint);
-                            if (c.p2_puzzle_hash) addPH(c.p2_puzzle_hash);
-                        }
-                    }
-                    console.log('[Sage] CAT coin discovery: ' + catCoins.length + ' coins → ' + (allAddresses.length - prevCount) + ' new addresses');
-                }
-            } catch(e) { console.warn('[Sage] CAT coin discovery:', e && e.message ? e.message : e); }
-
-            // 5. Discover addresses from NFT coins
-            try {
-                const nftCoins = await _sageWCClient.request({
-                    topic: session.topic, chainId,
-                    request: { method: 'chip0002_getAssetCoins', params: { type: 'nft', assetId: null, includeLocked: false, offset: 0, limit: 100 } }
-                });
-                if (Array.isArray(nftCoins) && nftCoins.length > 0) {
-                    var prevCount = allAddresses.length;
-                    for (const c of nftCoins) addPH(c && c.coin ? c.coin.puzzle_hash : '');
-                    console.log('[Sage] NFT coin discovery: ' + nftCoins.length + ' coins → ' + (allAddresses.length - prevCount) + ' new addresses');
-                }
-            } catch(e) { console.warn('[Sage] NFT coin discovery:', e && e.message ? e.message : e); }
         }
 
         console.log('[Sage] Resolved ' + allAddresses.length + ' address(es):', allAddresses.map(function(a) { return a.slice(0,10) + '…'; }));
