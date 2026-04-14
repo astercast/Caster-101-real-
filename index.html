@@ -656,12 +656,10 @@
 
         .market-column.base-column {
             border: none;
-            box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
         }
 
         .market-column.chia-column {
             border: none;
-            box-shadow: 0 0 15px rgba(132, 204, 22, 0.2);
         }
 
         @keyframes rune-sweep {
@@ -673,17 +671,16 @@
         }
 
         .column-header {
-            padding: 12px;
-            font-weight: 900;
-            font-size: 16px;
+            padding: 10px;
+            font-weight: 800;
+            font-size: 13px;
             text-align: center;
-            border: 2px solid rgba(74, 222, 128, 0.5);
-            border-radius: 8px;
-            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            margin-bottom: 10px;
             font-family: 'Inter', sans-serif;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3),
-                        0 0 0 1px rgba(74, 222, 128, 0.3),
-                        0 0 20px rgba(74, 222, 128, 0.2);
             position: relative;
             overflow: hidden;
         }
@@ -696,50 +693,41 @@
         }
 
         .column-header.base {
-            background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.3), transparent);
-            color: #3b82f6;
-            text-shadow: 0 0 10px #3b82f6;
+            background: rgba(59, 130, 246, 0.08);
+            color: #60a5fa;
+            border-color: rgba(59, 130, 246, 0.2);
         }
 
         .column-header.chia {
-            background: linear-gradient(90deg, transparent, rgba(132, 204, 22, 0.3), transparent);
-            color: #84cc16;
-            text-shadow: 0 0 10px #84cc16;
+            background: rgba(74, 222, 128, 0.08);
+            color: #4ade80;
+            border-color: rgba(74, 222, 128, 0.2);
         }
 
         .column-header::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: -100%;
-            width: 100%;
-            height: 2px;
-            animation: rune-sweep 4s ease-in-out infinite;
+            content: none;
         }
 
         .column-header.base::after {
-            background: linear-gradient(90deg, transparent, #3b82f6, #93c5fd, #3b82f6, transparent);
+            content: none;
         }
 
         .column-header.chia::after {
-            background: linear-gradient(90deg, transparent, #84cc16, #bef264, #84cc16, transparent);
-            animation-delay: 2s;
+            content: none;
         }
 
         .token-card {
-            background: linear-gradient(135deg, rgba(20, 20, 30, 0.9), rgba(10, 10, 20, 0.95));
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(251, 191, 36, 0.25);
+            background: linear-gradient(180deg, rgba(18, 18, 28, 0.92), rgba(12, 12, 22, 0.96));
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 14px;
             padding: 14px 18px;
-            margin-bottom: 10px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-bottom: 8px;
+            transition: all 0.2s ease;
             position: relative;
             overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4),
-                        inset 0 1px 0 rgba(255, 255, 255, 0.08),
-                        0 2px 8px rgba(251, 191, 36, 0.05);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
             content-visibility: auto;
             contain: layout style paint;
             display: flex;
@@ -867,17 +855,7 @@
         }
         
         .token-card::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                radial-gradient(circle at 20% 50%, rgba(251, 191, 36, 0.03) 0%, transparent 50%),
-                radial-gradient(circle at 80% 50%, rgba(220, 38, 38, 0.03) 0%, transparent 50%);
-            pointer-events: none;
-            opacity: 0.6;
+            content: none;
         }
 
         /* Tang tickers — hidden by default, revealed by checkbox */
@@ -896,15 +874,11 @@
         /* Desktop specific interactions */
         @media (min-width: 769px) {
             .token-card:hover {
-                transform: translateY(-3px) scale(1.01) translate3d(0, 0, 0);
-                border: 1px solid rgba(251, 191, 36, 0.7);
-                box-shadow: 0 12px 32px rgba(251, 191, 36, 0.2),
-                            0 6px 16px rgba(0, 0, 0, 0.5),
-                            inset 0 1px 0 rgba(255, 255, 255, 0.15),
-                            0 0 0 1px rgba(251, 191, 36, 0.4),
-                            0 0 24px rgba(251, 191, 36, 0.25),
-                            inset 0 0 30px rgba(251, 191, 36, 0.03);
-                background: linear-gradient(135deg, rgba(35, 35, 45, 0.95), rgba(20, 20, 30, 0.98));
+                transform: translateY(-2px);
+                border: 1px solid rgba(251, 191, 36, 0.5);
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4),
+                            0 0 0 1px rgba(251, 191, 36, 0.2);
+                background: linear-gradient(135deg, rgba(28, 28, 38, 0.95), rgba(16, 16, 26, 0.98));
                 cursor: pointer;
                 z-index: 10;
             }
@@ -914,49 +888,44 @@
             }
 
             .token-card:hover::after {
-                content: "↗ VIEW";
+                content: "↗";
                 position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background: linear-gradient(135deg, rgba(251, 191, 36, 0.18), rgba(251, 191, 36, 0.08));
+                top: 8px;
+                right: 8px;
+                left: auto;
+                transform: none;
+                background: rgba(251, 191, 36, 0.12);
                 color: #fbbf24;
-                padding: 4px 10px;
+                width: 22px;
+                height: 22px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
                 border-radius: 6px;
-                border: 1px solid rgba(251, 191, 36, 0.35);
-                font-size: 10px;
+                font-size: 11px;
                 font-weight: 700;
-                letter-spacing: 1px;
                 pointer-events: none;
                 opacity: 0;
-                animation: fadeInCenter 0.25s forwards;
+                animation: fadeInCenter 0.2s forwards;
                 z-index: 20;
-                backdrop-filter: blur(4px);
-                white-space: nowrap;
             }
 
             /* Color-coded hover glow — green for up-trending, red for down */
             .token-card[data-trend="up"]:hover {
-                border-color: rgba(74, 222, 128, 0.65) !important;
-                box-shadow: 0 12px 28px rgba(74, 222, 128, 0.18),
-                            0 6px 16px rgba(0, 0, 0, 0.5),
-                            inset 0 1px 0 rgba(255, 255, 255, 0.12),
-                            0 0 0 1px rgba(74, 222, 128, 0.35),
-                            0 0 20px rgba(74, 222, 128, 0.15) !important;
+                border-color: rgba(74, 222, 128, 0.45) !important;
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4),
+                            0 0 0 1px rgba(74, 222, 128, 0.2) !important;
             }
 
             .token-card[data-trend="down"]:hover {
-                border-color: rgba(239, 68, 68, 0.65) !important;
-                box-shadow: 0 12px 28px rgba(239, 68, 68, 0.18),
-                            0 6px 16px rgba(0, 0, 0, 0.5),
-                            inset 0 1px 0 rgba(255, 255, 255, 0.12),
-                            0 0 0 1px rgba(239, 68, 68, 0.35),
-                            0 0 20px rgba(239, 68, 68, 0.15) !important;
+                border-color: rgba(239, 68, 68, 0.45) !important;
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4),
+                            0 0 0 1px rgba(239, 68, 68, 0.2) !important;
             }
 
             @keyframes fadeInCenter {
-                from { opacity: 0; transform: translate(-50%, -50%) scale(0.85); }
-                to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+                from { opacity: 0; transform: scale(0.85); }
+                to   { opacity: 1; transform: scale(1); }
             }
         }
         /* ↑ @media (min-width: 769px) closed */
@@ -1194,6 +1163,31 @@
             transition: transform 0.25s;
             font-size: 10px;
         }
+
+        .quick-link-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 9px 18px;
+            border-radius: 999px;
+            font-family: 'Inter', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.85);
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            text-decoration: none;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .quick-link-pill:hover {
+            background: rgba(251,191,36,0.12);
+            border-color: rgba(251,191,36,0.35);
+            color: #fbbf24;
+            transform: translateY(-1px);
+        }
+
         .useful-links-dropdown.open .toggle-arrow {
             transform: rotate(180deg);
         }
@@ -2073,22 +2067,35 @@
         }
 
         .bag-token-row {
-            display: block;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
             padding: 14px;
             cursor: pointer;
-            transition: background 0.14s, border-color 0.14s, transform 0.12s, box-shadow 0.14s;
+            background: linear-gradient(135deg, rgba(30,30,40,0.7), rgba(15,15,25,0.9));
+            border: 2px solid rgba(251,191,36,0.3);
+            border-radius: 12px;
+            min-height: 90px;
+            transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
             animation: bagRiseIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
 
         .bag-token-row:hover {
-            background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.025));
-            border-color: rgba(251,191,36,0.22);
-            transform: translateY(-1px);
-            box-shadow: 0 14px 24px rgba(0,0,0,0.18);
+            border-color: rgba(251,191,36,0.6);
+            transform: translateX(4px);
+            box-shadow: 0 4px 16px rgba(251,191,36,0.15);
         }
 
-        .bag-token-row.native-row { border-color: rgba(99,102,241,0.18); cursor: default; }
-        .bag-token-row.native-row:hover { border-color: rgba(99,102,241,0.3); transform: none; }
+        .bag-token-row.lp-row {
+            border-color: rgba(99,179,237,0.4);
+        }
+
+        .bag-token-row.lp-row:hover {
+            border-color: rgba(99,179,237,0.8);
+        }
+
+        .bag-token-row.native-row { border-color: rgba(74,222,128,0.25); cursor: default; }
+        .bag-token-row.native-row:hover { border-color: rgba(74,222,128,0.4); transform: none; box-shadow: none; }
 
         .bag-token-main,
         .bag-lp-main,
@@ -2413,7 +2420,7 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 16px;
-            align-items: start;
+            align-items: stretch;
         }
 
         .bag-col {
@@ -2706,12 +2713,18 @@
             position: relative;
             margin: 20px auto 8px;
             max-width: 680px;
-            background: linear-gradient(135deg, rgba(8, 12, 20, 0.95), rgba(16, 20, 30, 0.92));
-            border: 1px solid rgba(29, 185, 84, 0.35);
-            border-radius: 14px;
-            box-shadow: 0 10px 26px rgba(0, 0, 0, 0.45), 0 0 24px rgba(29, 185, 84, 0.08);
-            backdrop-filter: blur(12px);
-            padding: 10px 12px 8px;
+            background: rgba(10, 14, 22, 0.92);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 16px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 12px 14px 10px;
+            transition: border-color 0.3s;
+        }
+
+        .spotify-mini:hover {
+            border-color: rgba(29, 185, 84, 0.2);
         }
 
         .spotify-mini-header {
@@ -2719,15 +2732,15 @@
             align-items: center;
             justify-content: space-between;
             gap: 12px;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
         }
 
         .spotify-mini-title {
-            font-family: 'Cinzel', serif;
+            font-family: 'Inter', sans-serif;
             font-size: 11px;
-            letter-spacing: 0.8px;
-            color: rgba(255, 255, 255, 0.8);
-            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.4px;
+            color: rgba(255, 255, 255, 0.5);
         }
 
         .spotify-mini-title span {
@@ -2738,92 +2751,93 @@
         .spotify-mini-actions {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
 
         .spotify-mini-btn {
-            border: 1px solid rgba(29, 185, 84, 0.45);
-            background: rgba(29, 185, 84, 0.15);
-            color: #b7f3cc;
-            font-size: 9px;
-            padding: 5px 8px;
-            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 10px;
+            padding: 6px 10px;
+            border-radius: 8px;
             cursor: pointer;
             font-family: 'Inter', sans-serif;
             font-weight: 600;
             text-decoration: none;
-            transition: all 0.2s ease;
+            transition: all 0.15s;
             white-space: nowrap;
         }
 
         .spotify-mini-btn:hover {
-            background: rgba(29, 185, 84, 0.25);
-            border-color: rgba(29, 185, 84, 0.8);
-            transform: translateY(-1px);
+            background: rgba(29, 185, 84, 0.12);
+            border-color: rgba(29, 185, 84, 0.3);
+            color: #86efac;
         }
 
         .spotify-mini-close {
             display: none !important;
             border: none;
-            background: rgba(255, 255, 255, 0.12);
-            color: rgba(255, 255, 255, 0.7);
+            background: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.5);
             width: 24px;
             height: 24px;
             border-radius: 8px;
             cursor: pointer;
             font-size: 14px;
             line-height: 1;
-            transition: all 0.2s ease;
+            transition: all 0.15s;
         }
 
         .spotify-mini-close:hover {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.15);
             color: #fff;
         }
 
         .spotify-mini-controls {
             display: flex;
             align-items: center;
-            gap: 6px;
-            margin-bottom: 6px;
+            gap: 5px;
+            margin-bottom: 8px;
         }
 
         .spotify-mini-controls button {
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            background: rgba(255, 255, 255, 0.08);
-            color: rgba(255, 255, 255, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.04);
+            color: rgba(255, 255, 255, 0.6);
             font-size: 11px;
-            padding: 5px 8px;
-            border-radius: 10px;
+            padding: 5px 10px;
+            border-radius: 8px;
             cursor: pointer;
             font-family: 'Inter', sans-serif;
-            font-weight: 700;
-            transition: all 0.2s ease;
+            font-weight: 600;
+            transition: all 0.15s;
         }
 
         .spotify-mini-controls button:hover {
-            background: rgba(255, 255, 255, 0.16);
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.85);
         }
 
         .spotify-mini-embed {
             width: 100%;
-            height: 140px;
+            height: 152px;
             border-radius: 12px;
             overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            background: rgba(0, 0, 0, 0.4);
+            border: none;
+            background: rgba(0, 0, 0, 0.3);
         }
 
         @media (max-width: 768px) {
             .spotify-mini {
                 margin: 16px auto 6px;
                 max-width: 100%;
-                padding: 8px 10px 6px;
+                padding: 10px 10px 8px;
+                border-radius: 14px;
             }
 
             .spotify-mini-title {
                 font-size: 10px;
-                letter-spacing: 0.6px;
             }
 
             .spotify-mini-controls {
@@ -4094,46 +4108,29 @@
         </div>
 
         <div id="market" class="content">
-            <div style="display:flex; justify-content:center;">
+            <div style="display:flex; flex-direction:column; align-items:center; gap:10px;">
+                <div class="quick-links-row" style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center;">
+                    <a href="https://cast.awizard.dev/" target="_blank" class="quick-link-pill">✨ Caster Dex</a>
+                    <a href="https://warp.awizard.dev" target="_blank" class="quick-link-pill">⚡ Warp</a>
+                    <a href="https://discord.gg/awizard" target="_blank" class="quick-link-pill">💬 Discord</a>
+                </div>
                 <div class="useful-links-dropdown" id="usefulLinksDropdown">
                     <button class="useful-links-toggle" onclick="document.getElementById('usefulLinksDropdown').classList.toggle('open')">
                         🔗 Useful Links <span class="toggle-arrow">▼</span>
                     </button>
                     <div class="useful-links-panel">
-                        <a href="https://cast.awizard.dev/" target="_blank" class="ul-item warp-highlight">
-                            <span class="ul-item-emoji">✨</span>
-                            <div class="ul-item-text">
-                                <span class="ul-item-name">cast.awizard.dev</span>
-                                <span class="ul-item-desc">Caster Dex</span>
-                            </div>
-                        </a>
-                        <a href="https://warp.awizard.dev" target="_blank" class="ul-item warp-highlight">
-                            <span class="ul-item-emoji">⚡</span>
-                            <div class="ul-item-text">
-                                <span class="ul-item-name">warp.awizard.dev</span>
-                                <span class="ul-item-desc">Warp tokens between Chia and Base</span>
-                            </div>
-                        </a>
-                        <a href="https://discord.gg/awizard" target="_blank" class="ul-item discord-highlight">
-                            <span class="ul-item-emoji">💬</span>
-                            <div class="ul-item-text">
-                                <span class="ul-item-name">discord.gg/awizard</span>
-                                <span class="ul-item-desc">Chat, verify your wallet, and join the community</span>
-                            </div>
-                        </a>
-                        <div class="ul-divider"></div>
                         <a href="https://dexie.space" target="_blank" class="ul-item">
                             <span class="ul-item-emoji">🦢</span>
                             <div class="ul-item-text">
                                 <span class="ul-item-name">dexie.space</span>
-                                <span class="ul-item-desc">Chia DEX — trade CATs and NFTs</span>
+                                <span class="ul-item-desc">Chia DEX - trade CATs and NFTs</span>
                             </div>
                         </a>
                         <a href="https://dex.9mm.pro" target="_blank" class="ul-item">
                             <span class="ul-item-emoji">🔫</span>
                             <div class="ul-item-text">
                                 <span class="ul-item-name">dex.9mm.pro</span>
-                                <span class="ul-item-desc">Base DEX — swap warped tokens</span>
+                                <span class="ul-item-desc">Base DEX - swap warped tokens</span>
                             </div>
                         </a>
                         <a href="https://mintgarden.io" target="_blank" class="ul-item">
@@ -5054,7 +5051,7 @@
 
                     <!-- Intro paragraph -->
                     <div style="background: linear-gradient(135deg, rgba(251,191,36,0.06), rgba(220,38,38,0.04)); border: 1px solid rgba(251,191,36,0.15); border-radius: 16px; padding: 24px; margin-bottom: 28px;">
-                        <p style="font-size: 14px; line-height: 1.75; color: rgba(255,255,255,0.82); font-family: 'Space Grotesk', sans-serif; margin: 0;">The aWizard Collective is a close-knit, community-first project on the Chia blockchain (XCH), built around NFTs, tokens, education, generous rewards, and meaningful collaborations. It focuses on growth magic — sprouts, love, wizards — incentivized participation, and leaving holders better off through sustained value.</p>
+                        <p style="font-size: 14px; line-height: 1.75; color: rgba(255,255,255,0.82); font-family: 'Space Grotesk', sans-serif; margin: 0;">The aWizard Collective is a close-knit, community-first project on the Chia blockchain (XCH), built around NFTs, tokens, education, generous rewards, and meaningful collaborations. It focuses on growth magic - sprouts, love, wizards - incentivized participation, and leaving holders better off through sustained value.</p>
                     </div>
 
                     <!-- Chapter 1: Origins -->
@@ -5067,8 +5064,8 @@
                             </div>
                         </div>
                         <div style="border-left: 2px solid rgba(124,58,237,0.3); padding-left: 20px; margin-left: 17px;">
-                            <p style="font-size:13px; line-height:1.75; color:rgba(255,255,255,0.72); font-family:'Space Grotesk',sans-serif; margin:0 0 12px;">The story starts in 2022 on Ethereum, where core members connected through vibrant NFT communities. They met via mints, discords, giveaways, spaces, traits discussions, and art collaborations — building friendships and exploring web3 together. Members brought all sorts of experiences, knowledge, and talents to the table. Constantly connecting on live X spaces and participating in the same ecosystems the Wizards stuck together.</p>
-                            <p style="font-size:13px; line-height:1.75; color:rgba(255,255,255,0.72); font-family:'Space Grotesk',sans-serif; margin:0;">It was in this environment that <span style="color:#c4b5fd; font-weight:600;">aWizardDao</span> was born as a small, grassroots DAO. Starting modestly, it provided educational resources, community chats, and project links — serving as an early hub for learning and collaboration. This laid the foundation for the collective's emphasis on transparency, onboarding, and shared growth. NFTs were minted here as the very first access tokens to the same Discord we use today. The same Base multi-sig wallet we use now was set up back then with initial High Council members.</p>
+                            <p style="font-size:13px; line-height:1.75; color:rgba(255,255,255,0.72); font-family:'Space Grotesk',sans-serif; margin:0 0 12px;">The story starts in 2022 on Ethereum, where core members connected through vibrant NFT communities. They met via mints, discords, giveaways, spaces, traits discussions, and art collaborations - building friendships and exploring web3 together. Members brought all sorts of experiences, knowledge, and talents to the table. Constantly connecting on live X spaces and participating in the same ecosystems the Wizards stuck together.</p>
+                            <p style="font-size:13px; line-height:1.75; color:rgba(255,255,255,0.72); font-family:'Space Grotesk',sans-serif; margin:0;">It was in this environment that <span style="color:#c4b5fd; font-weight:600;">aWizardDao</span> was born as a small, grassroots DAO. Starting modestly, it provided educational resources, community chats, and project links - serving as an early hub for learning and collaboration. This laid the foundation for the collective's emphasis on transparency, onboarding, and shared growth. NFTs were minted here as the very first access tokens to the same Discord we use today. The same Base multi-sig wallet we use now was set up back then with initial High Council members.</p>
                         </div>
                     </div>
 
@@ -5082,7 +5079,7 @@
                             </div>
                         </div>
                         <div style="border-left: 2px solid rgba(74,222,128,0.3); padding-left: 20px; margin-left: 17px;">
-                            <p style="font-size:13px; line-height:1.75; color:rgba(255,255,255,0.72); font-family:'Space Grotesk',sans-serif; margin:0 0 12px;">Later, the group shifted focus to Chia's greener, proof-of-space-and-time model — drawn to its regulatory alignment, security, enterprise-readiness, and real-world utility potential. This move allowed the DAO and community to evolve on a more sustainable chain, migrating ideas, assets, and energy to XCH while retaining Ethereum roots.</p>
+                            <p style="font-size:13px; line-height:1.75; color:rgba(255,255,255,0.72); font-family:'Space Grotesk',sans-serif; margin:0 0 12px;">Later, the group shifted focus to Chia's greener, proof-of-space-and-time model - drawn to its regulatory alignment, security, enterprise-readiness, and real-world utility potential. This move allowed the DAO and community to evolve on a more sustainable chain, migrating ideas, assets, and energy to XCH while retaining Ethereum roots.</p>
                             <p style="font-size:13px; line-height:1.75; color:rgba(255,255,255,0.72); font-family:'Space Grotesk',sans-serif; margin:0;">On Chia, aWizard remained intentionally small-scale at first, prioritizing quality connections and real contributions over mass adoption.</p>
                         </div>
                     </div>
@@ -5107,7 +5104,7 @@
                             </div>
                             <div style="display:flex; gap:10px; align-items:flex-start;">
                                 <span style="color:#fbbf24; font-size:14px; flex-shrink:0; margin-top:2px;">🌱</span>
-                                <p style="font-size:13px; line-height:1.65; color:rgba(255,255,255,0.72); font-family:'Space Grotesk',sans-serif; margin:0;"><span style="color:#fbbf24; font-weight:600;">$SPROUT</span> launched early 2025 — "Seeding Potential Randomness Over Usage Time." Random airdrops to NFT holders made it the "seed" token of the collective, rewarding patience, participation, and long-term holding rather than hype. By March 2025 it was already part of daily drop mechanics for Caster OG holders alongside $LOVE, and it remains one of the most distributed and beloved CATs in the aWizard ecosystem.</p>
+                                <p style="font-size:13px; line-height:1.65; color:rgba(255,255,255,0.72); font-family:'Space Grotesk',sans-serif; margin:0;"><span style="color:#fbbf24; font-weight:600;">$SPROUT</span> launched early 2025 - "Seeding Potential Randomness Over Usage Time." Random airdrops to NFT holders made it the "seed" token of the collective, rewarding patience, participation, and long-term holding rather than hype. By March 2025 it was already part of daily drop mechanics for Caster OG holders alongside $LOVE, and it remains one of the most distributed and beloved CATs in the aWizard ecosystem.</p>
                             </div>
                             <div style="display:flex; gap:10px; align-items:flex-start;">
                                 <span style="color:#fbbf24; font-size:14px; flex-shrink:0; margin-top:2px;">🤖</span>
@@ -5115,15 +5112,15 @@
                             </div>
                             <div style="display:flex; gap:10px; align-items:flex-start;">
                                 <span style="color:#fbbf24; font-size:14px; flex-shrink:0; margin-top:2px;">📚</span>
-                                <p style="font-size:13px; line-height:1.65; color:rgba(255,255,255,0.72); font-family:'Space Grotesk',sans-serif; margin:0;">Through X spaces, educational threads, and collaborations, aWizard continued <span style="color:#fbbf24; font-weight:600;">onboarding users</span> by explaining Chia's advantages and bridging from Ethereum backgrounds — growing the ecosystem one dedicated member at a time.</p>
+                                <p style="font-size:13px; line-height:1.65; color:rgba(255,255,255,0.72); font-family:'Space Grotesk',sans-serif; margin:0;">Through X spaces, educational threads, and collaborations, aWizard continued <span style="color:#fbbf24; font-weight:600;">onboarding users</span> by explaining Chia's advantages and bridging from Ethereum backgrounds - growing the ecosystem one dedicated member at a time.</p>
                             </div>
                             <div style="display:flex; gap:10px; align-items:flex-start;">
                                 <span style="color:#fbbf24; font-size:14px; flex-shrink:0; margin-top:2px;">☀️</span>
-                                <p style="font-size:13px; line-height:1.65; color:rgba(255,255,255,0.72); font-family:'Space Grotesk',sans-serif; margin:0;">The <span style="color:#fbbf24; font-weight:600;">First Summer of Love</span> — a vibrant, community-driven meme campaign in summer 2025 — rallied the Chia ecosystem around the <span style="color:#fbbf24; font-weight:600;">$LOVE</span> token through airdrops, giveaways, and high-energy engagement. Together, the community burned over <span style="color:#fbbf24; font-weight:600;">333 XCH worth of tokens and LP</span> to permanently set the CAT in stone on the Chia blockchain.</p>
+                                <p style="font-size:13px; line-height:1.65; color:rgba(255,255,255,0.72); font-family:'Space Grotesk',sans-serif; margin:0;">The <span style="color:#fbbf24; font-weight:600;">First Summer of Love</span> - a vibrant, community-driven meme campaign in summer 2025 - rallied the Chia ecosystem around the <span style="color:#fbbf24; font-weight:600;">$LOVE</span> token through airdrops, giveaways, and high-energy engagement. Together, the community burned over <span style="color:#fbbf24; font-weight:600;">333 XCH worth of tokens and LP</span> to permanently set the CAT in stone on the Chia blockchain.</p>
                             </div>
                             <div style="display:flex; gap:10px; align-items:flex-start;">
                                 <span style="color:#fbbf24; font-size:14px; flex-shrink:0; margin-top:2px;">🔮</span>
-                                <p style="font-size:13px; line-height:1.65; color:rgba(255,255,255,0.72); font-family:'Space Grotesk',sans-serif; margin:0;"><span style="color:#fbbf24; font-weight:600;">$CASTER</span> launched Fall 2025 as the "dimensional shift-onchain-magic asset" tied to the expanding Caster universe, bringing many Wizard coins to Base liquidity. It went live just before <span style="color:#dc2626; font-weight:600;">#Castober</span> and was immediately paired with aggressive Merkl reward campaigns on 9mm.pro. In the first #Castober, the community burned 57 $CASTER (~2% of the 3,000 total supply) and gave away 1/1 hand-drawn NFTs. $CASTER became the high-energy, spell-powered counterpart to the slower, nurturing $SPROUT and $LOVE — tying the whole wizard ecosystem together on Base.</p>
+                                <p style="font-size:13px; line-height:1.65; color:rgba(255,255,255,0.72); font-family:'Space Grotesk',sans-serif; margin:0;"><span style="color:#fbbf24; font-weight:600;">$CASTER</span> launched Fall 2025 as the "dimensional shift-onchain-magic asset" tied to the expanding Caster universe, bringing many Wizard coins to Base liquidity. It went live just before <span style="color:#dc2626; font-weight:600;">#Castober</span> and was immediately paired with aggressive Merkl reward campaigns on 9mm.pro. In the first #Castober, the community burned 57 $CASTER (~2% of the 3,000 total supply) and gave away 1/1 hand-drawn NFTs. $CASTER became the high-energy, spell-powered counterpart to the slower, nurturing $SPROUT and $LOVE - tying the whole wizard ecosystem together on Base.</p>
                             </div>
                             <div style="display:flex; gap:10px; align-items:flex-start;">
                                 <span style="color:#fbbf24; font-size:14px; flex-shrink:0; margin-top:2px;">📜</span>
@@ -5159,7 +5156,7 @@
                     <!-- Closing statement -->
                     <div style="background: linear-gradient(135deg, rgba(251,191,36,0.08), rgba(220,38,38,0.05)); border: 1px solid rgba(251,191,36,0.2); border-radius: 16px; padding: 24px; margin-top: 8px; position: relative; overflow: hidden;">
                         <div style="position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, rgba(251,191,36,0.5), rgba(220,38,38,0.3), transparent);"></div>
-                        <p style="font-size: 14px; line-height: 1.75; color: rgba(255,255,255,0.8); font-family: 'Space Grotesk', sans-serif; margin: 0; text-align: center;">These elements reflect aWizard's commitment to <span style="color:#fbbf24; font-weight:700;">value-driven growth</span> over hype — burns tighten supply, yield rewards attract and retain liquidity, and the community's culture keeps the magic alive.</p>
+                        <p style="font-size: 14px; line-height: 1.75; color: rgba(255,255,255,0.8); font-family: 'Space Grotesk', sans-serif; margin: 0; text-align: center;">These elements reflect aWizard's commitment to <span style="color:#fbbf24; font-weight:700;">value-driven growth</span> over hype - burns tighten supply, yield rewards attract and retain liquidity, and the community's culture keeps the magic alive.</p>
                     </div>
 
                     <!-- Decorative divider -->
@@ -5957,7 +5954,7 @@
                 }
 
                 if (price > 0) {
-                    console.log(`  ✅ ${t.displayName||t.name}: $${price.toFixed(8)} supply=${supply.toLocaleString()} mcap=$${mcap > 0 ? (mcap/1e6).toFixed(3)+'M' : '—'} [${src}] status=${mcapStatus}`);
+                    console.log(`  ✅ ${t.displayName||t.name}: $${price.toFixed(8)} supply=${supply.toLocaleString()} mcap=$${mcap > 0 ? (mcap/1e6).toFixed(3)+'M' : '-'} [${src}] status=${mcapStatus}`);
                 } else {
                     console.warn(`  ⚠️  ${t.displayName||t.name}: no price from any source`);
                 }
@@ -6776,7 +6773,7 @@
             } catch (err) {
                 console.error('NFT loading error:', err);
                 const g = document.getElementById('collections-grid');
-                if (g) g.innerHTML = '<div style="text-align:center;padding:60px;color:#ef4444;grid-column:1/-1;">⚠️ Error loading NFT collections — click to retry</div>';
+                if (g) g.innerHTML = '<div style="text-align:center;padding:60px;color:#ef4444;grid-column:1/-1;">⚠️ Error loading NFT collections - click to retry</div>';
             } finally {
                 nftsLoading = false;
             }
@@ -6819,7 +6816,7 @@
             }).join('');
 
             const header = `<div style="grid-column:1/-1;margin:8px 0 4px;font-family:'Cinzel',serif;font-size:13px;color:rgba(74,222,128,0.8);letter-spacing:2px;text-transform:uppercase;">
-                🌱 Chia NFT Collections — ${totalNFTs} NFTs across ${collections.length} collections (3 wallets)
+                🌱 Chia NFT Collections - ${totalNFTs} NFTs across ${collections.length} collections (3 wallets)
             </div>`;
             gallery.innerHTML = header + cards;
         }
@@ -7193,7 +7190,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                 token.price.toFixed(2)
             ) : '0.00';
             const mcap = token.marketCap || 0;
-            const mcapStr = mcap > 1e6 ? '$'+(mcap/1e6).toFixed(1)+'M' : mcap > 1e3 ? '$'+(mcap/1e3).toFixed(0)+'K' : mcap > 0 ? '$'+mcap.toFixed(0) : '—';
+            const mcapStr = mcap > 1e6 ? '$'+(mcap/1e6).toFixed(1)+'M' : mcap > 1e3 ? '$'+(mcap/1e3).toFixed(0)+'K' : mcap > 0 ? '$'+mcap.toFixed(0) : '-';
 
             return `
                 <div class="token-card${isDimmed ? ' tc-dimmed' : ''}" data-trend="${change >= 0 ? 'up' : 'down'}" onclick="openTokenLink('${token.chain}', '${token.assetId || token.contract}', '${token.symbol}')">
@@ -7263,7 +7260,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                 marketCapDisplay = '⚠️ cannot fetch';
                 marketCapColor = 'rgba(255,255,255,0.35)';
             } else {
-                marketCapDisplay = '—';
+                marketCapDisplay = '-';
                 marketCapColor = 'rgba(255,255,255,0.3)';
             }
             return `
@@ -7395,7 +7392,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                 const changeColor = change >= 0 ? '#4ade80' : '#ef4444';
                 const changeIcon = change >= 0 ? '↑' : '↓';
                 const mcap = token.marketCap || 0;
-                const mcapStr = mcap > 1e6 ? '$'+(mcap/1e6).toFixed(1)+'M' : mcap > 1e3 ? '$'+(mcap/1e3).toFixed(0)+'K' : mcap > 0 ? '$'+mcap.toFixed(0) : '—';
+                const mcapStr = mcap > 1e6 ? '$'+(mcap/1e6).toFixed(1)+'M' : mcap > 1e3 ? '$'+(mcap/1e3).toFixed(0)+'K' : mcap > 0 ? '$'+mcap.toFixed(0) : '-';
 
                 return `
                 <div class="token-card${isDimmed ? ' tc-dimmed' : ''}${isTang ? ' tang-ticker' : ''}" data-trend="${change >= 0 ? 'up' : 'down'}" onclick="openTokenLink('${token.chain}', '${token.assetId || token.contract}', '${token.symbol}')">
@@ -7446,11 +7443,11 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
 
                 // Mcap
                 const mcap = token.marketCap || 0;
-                const fmtMcap = n => n > 1e6 ? '$'+(n/1e6).toFixed(2)+'M' : n > 1e3 ? '$'+(n/1e3).toFixed(1)+'K' : n > 0 ? '$'+n.toFixed(0) : '—';
+                const fmtMcap = n => n > 1e6 ? '$'+(n/1e6).toFixed(2)+'M' : n > 1e3 ? '$'+(n/1e3).toFixed(1)+'K' : n > 0 ? '$'+n.toFixed(0) : '-';
                 let mcapText, mcapColor;
                 if (mcap > 0) { mcapText = fmtMcap(mcap); mcapColor = '#fbbf24'; }
                 else if (token.mcapStatus === 'no_supply' && token.price > 0) { mcapText = '⚠️ cannot fetch'; mcapColor = 'rgba(255,255,255,0.35)'; }
-                else { mcapText = '—'; mcapColor = 'rgba(255,255,255,0.3)'; }
+                else { mcapText = '-'; mcapColor = 'rgba(255,255,255,0.3)'; }
 
                 const emoji = getEmoji(token.symbol);
                 const isDimmed = token.symbol.startsWith('$') || token.symbol.startsWith('w$');
@@ -7705,7 +7702,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                                 </div>
                                 <div class="tc-footer">
                                     <span class="tc-mcap-label">Market Cap</span>
-                                    <span class="tc-mcap-value">${token.marketCap > 1e6 ? '$'+(token.marketCap/1e6).toFixed(1)+'M' : token.marketCap > 0 ? '$'+(token.marketCap/1e3).toFixed(0)+'K' : '—'}</span>
+                                    <span class="tc-mcap-value">${token.marketCap > 1e6 ? '$'+(token.marketCap/1e6).toFixed(1)+'M' : token.marketCap > 0 ? '$'+(token.marketCap/1e3).toFixed(0)+'K' : '-'}</span>
                                 </div>
                             </div>
                         `;
@@ -7845,8 +7842,8 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
             document.getElementById('bag-lp-count').textContent = lpTokens.length;
             document.getElementById('bag-lp-value').textContent = fmtUsd(lpValue);
             document.getElementById('bag-summary-address').textContent = safeShortAddress;
-            document.getElementById('bag-summary-dominant').textContent = dominant ? ((dominant.symbol || dominant.pairName || 'Top asset').slice(0, 10)) : '—';
-            document.getElementById('bag-top-holding').textContent = dominant ? ((dominant.symbol || dominant.pairName || '—').slice(0, 8)) : '—';
+            document.getElementById('bag-summary-dominant').textContent = dominant ? ((dominant.symbol || dominant.pairName || 'Top asset').slice(0, 10)) : '-';
+            document.getElementById('bag-top-holding').textContent = dominant ? ((dominant.symbol || dominant.pairName || '-').slice(0, 8)) : '-';
             document.getElementById('bag-alloc-total-note').textContent = dominant ? (dominantPct.toFixed(1) + '% concentrated in top position') : 'Top holdings';
 
             const bar = document.getElementById('bag-alloc-bar');
@@ -7933,7 +7930,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                     <div>
                         <div class="bag-card-label">Base Vault Readout</div>
                         <div class="bag-results-title">${tokens.length} Base positions</div>
-                        <div class="bag-results-copy">Top holding: ${dominant ? escapeHtml(dominant.symbol || dominant.pairName || 'Unknown') : '—'} · ${dominant ? dominantPct.toFixed(1) : '0'}%</div>
+                        <div class="bag-results-copy">Top holding: ${dominant ? escapeHtml(dominant.symbol || dominant.pairName || 'Unknown') : '-'} · ${dominant ? dominantPct.toFixed(1) : '0'}%</div>
                     </div>
                     <div class="bag-panel-badge">${safeShortAddress}</div>
                 </div>`;
@@ -7967,10 +7964,10 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                             </div>
                         </div>
                         <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.06);">
-                            <div><div class="bag-mini-label">Share</div><div class="bag-mini-value">${share > 0 ? share.toFixed(3) + '%' : '—'}</div></div>
-                            <div><div class="bag-mini-label">Pool Liquidity</div><div class="bag-mini-value" style="color:#93c5fd;">${poolLiquidity > 0 ? fmtUsd(poolLiquidity) : '—'}</div></div>
-                            <div><div class="bag-mini-label">${pairA}</div><div class="bag-mini-value" style="color:#fbbf24;">${token.price0 > 0 ? '$' + (token.price0 < 0.001 ? token.price0.toExponential(3) : token.price0.toLocaleString(undefined, { maximumSignificantDigits: 4 })) : '—'}</div></div>
-                            <div><div class="bag-mini-label">${pairB}</div><div class="bag-mini-value" style="color:#86efac;">${token.price1 > 0 ? '$' + (token.price1 < 0.001 ? token.price1.toExponential(3) : token.price1.toLocaleString(undefined, { maximumSignificantDigits: 4 })) : '—'}</div></div>
+                            <div><div class="bag-mini-label">Share</div><div class="bag-mini-value">${share > 0 ? share.toFixed(3) + '%' : '-'}</div></div>
+                            <div><div class="bag-mini-label">Pool Liquidity</div><div class="bag-mini-value" style="color:#93c5fd;">${poolLiquidity > 0 ? fmtUsd(poolLiquidity) : '-'}</div></div>
+                            <div><div class="bag-mini-label">${pairA}</div><div class="bag-mini-value" style="color:#fbbf24;">${token.price0 > 0 ? '$' + (token.price0 < 0.001 ? token.price0.toExponential(3) : token.price0.toLocaleString(undefined, { maximumSignificantDigits: 4 })) : '-'}</div></div>
+                            <div><div class="bag-mini-label">${pairB}</div><div class="bag-mini-value" style="color:#86efac;">${token.price1 > 0 ? '$' + (token.price1 < 0.001 ? token.price1.toExponential(3) : token.price1.toLocaleString(undefined, { maximumSignificantDigits: 4 })) : '-'}</div></div>
                         </div>
                     </div>`;
                 }
@@ -9378,7 +9375,7 @@ function updateTreasuryDisplay(baseData, chiaData, nftData) {
 }
 
 function fmtPrice(price) {
-    if (!price || price === 0) return '—';
+    if (!price || price === 0) return '-';
     if (price < 0.000001) return '$' + price.toExponential(2);
     if (price < 0.0001)   return '$' + price.toFixed(8);
     if (price < 0.01)     return '$' + price.toFixed(6);
@@ -9407,9 +9404,9 @@ function buildTokenCard(token) {
     let detailHtml = '';
     if (isLP) {
         const poolFmt  = (token.totalLiqUsd || 0) > 0
-            ? '$' + (token.totalLiqUsd).toLocaleString(undefined, {maximumFractionDigits: 0}) : '—';
+            ? '$' + (token.totalLiqUsd).toLocaleString(undefined, {maximumFractionDigits: 0}) : '-';
         const shareFmt = parseFloat(token.userSharePct || 0) > 0
-            ? parseFloat(token.userSharePct).toFixed(3) + '%' : '—';
+            ? parseFloat(token.userSharePct).toFixed(3) + '%' : '-';
         detailHtml = `
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;color:rgba(255,255,255,0.6);margin-top:8px;">
                 <span>Share: ${shareFmt}</span>
@@ -11523,25 +11520,34 @@ document.addEventListener('DOMContentLoaded', () => {
             var displayName = isLP
                 ? (token.pairName || token.name || token.sym)
                 : (!isHex(token.name) && token.name ? token.name : (!isHex(token.sym) && token.sym ? token.sym : token.assetId.slice(0, 8) + '\u2026'));
-            var sub = isLP
-                ? ('TibetSwap LP · ' + fmtBal(token.balance))
-                : (fmtBal(token.balance) + (token.price > 0 ? ' · $' + (token.price < 0.0001 ? token.price.toExponential(2) : token.price < 0.01 ? token.price.toFixed(6) : token.price.toFixed(4)) : ''));
             var link = isLP ? 'https://app.tibetswap.io' : 'https://www.spacescan.io/cat/' + token.assetId;
-            var color = isLP ? '#93c5fd' : '#86efac';
-            var iconBg = isLP ? 'linear-gradient(135deg,#1e3a5f,#2563eb)' : 'linear-gradient(135deg,#14532d,#16a34a)';
-            var iconInner = isLP ? '🔄' : escapeHtml((token.sym || '?').slice(0, 3).toUpperCase());
-            return '<div class="bag-token-row" onclick="window.open(\'' + link + '\',\'_blank\')">'
-                + '<div class="bag-chia-row-main">'
-                + '<div class="bag-chia-left">'
-                + '<div class="bag-chia-icon" style="background:' + iconBg + ';font-size:' + (isLP ? '16px' : '12px') + ';">' + iconInner + '</div>'
-                + '<div style="min-width:0;">'
-                + '<div class="bag-chia-name">' + escapeHtml(displayName) + (isLP ? ' <span style="font-size:10px;color:#93c5fd;font-family:Inter,sans-serif;">LP</span>' : '') + '</div>'
-                + '<div class="bag-chia-sub">' + escapeHtml(sub) + '</div>'
-                + '</div></div>'
-                + '<div class="bag-chia-right">'
-                + '<div class="bag-chia-value" style="color:' + color + ';">' + fmtUsd(token.value) + '</div>'
-                + '<div class="bag-chia-meta">' + (total > 0 ? (((token.value || 0) / total) * 100).toFixed(1) : '0') + '% of Chia bag</div>'
-                + '</div></div>'
+            var valueColor = isLP ? '#63b3ed' : '#4ade80';
+            var val = token.value || 0;
+            var bal = token.balance || 0;
+            var price = token.price || 0;
+            var lpClass = isLP ? ' lp-row' : '';
+            var linkIcon = link ? ' <span style="font-size:10px;opacity:0.4;">\u2197</span>' : '';
+
+            var detailHtml;
+            if (isLP) {
+                detailHtml = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;color:rgba(255,255,255,0.6);margin-top:8px;">'
+                    + '<span>Bal: ' + fmtBal(bal) + '</span>'
+                    + '<span>TibetSwap LP</span>'
+                    + '</div>';
+            } else {
+                var priceFmt = !price || price === 0 ? '-' : price < 0.000001 ? '$' + price.toExponential(2) : price < 0.0001 ? '$' + price.toFixed(8) : price < 0.01 ? '$' + price.toFixed(6) : price < 1 ? '$' + price.toFixed(4) : '$' + price.toLocaleString(undefined, {maximumSignificantDigits: 5});
+                detailHtml = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;color:rgba(255,255,255,0.6);margin-top:8px;">'
+                    + '<span>Bal: ' + fmtBal(bal) + '</span>'
+                    + '<span>Price: ' + priceFmt + '</span>'
+                    + '</div>';
+            }
+
+            return '<div class="bag-token-row' + lpClass + '" onclick="window.open(\'' + link + '\',\'_blank\')">'
+                + '<div style="display:flex;justify-content:space-between;align-items:center;">'
+                + '<span style="font-size:15px;font-weight:700;color:white;max-width:65%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(displayName) + (isLP ? ' <span style="font-size:11px;color:#63b3ed;font-weight:600;opacity:0.85;">(LP)</span>' : '') + linkIcon + '</span>'
+                + '<span style="font-size:16px;font-weight:700;color:' + valueColor + ';">' + fmtUsd(val) + '</span>'
+                + '</div>'
+                + detailHtml
                 + '</div>';
         }
 
@@ -11557,19 +11563,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
         html += '<div class="bag-chia-mini-grid">'
             + '<div class="bag-chia-highlight"><div class="bag-mini-label">XCH</div><div class="bag-mini-value" style="color:#86efac;">' + fmtUsd(xchValue) + '</div></div>'
-            + '<div class="bag-chia-highlight"><div class="bag-mini-label">Tracked Tokens</div><div class="bag-mini-value">' + all.length + '</div></div>'
+            + '<div class="bag-chia-highlight"><div class="bag-mini-label">CATs</div><div class="bag-mini-value">' + all.length + '</div></div>'
             + '<div class="bag-chia-highlight"><div class="bag-mini-label">NFTs</div><div class="bag-mini-value" style="color:#c084fc;">' + nfts.length + '</div></div>'
             + '</div>';
 
         if (xchBal > 0) {
-            html += '<div class="bag-token-row" style="margin-bottom:10px;cursor:default;border-color:rgba(74,222,128,0.16);background:linear-gradient(180deg, rgba(74,222,128,0.08), rgba(74,222,128,0.03));">'
-                + '<div class="bag-chia-row-main">'
-                + '<div class="bag-chia-left">'
-                + '<div class="bag-chia-icon" style="background:linear-gradient(135deg,#166534,#22c55e);font-size:16px;">🌱</div>'
-                + '<div><div class="bag-chia-name">XCH</div><div class="bag-chia-sub">' + fmtBal(xchBal) + ' held · $' + xchPrice.toFixed(2) + '/XCH</div></div>'
+            html += '<div class="bag-token-row native-row" style="margin-bottom:10px;">'
+                + '<div style="display:flex;justify-content:space-between;align-items:center;">'
+                + '<span style="font-size:15px;font-weight:700;color:white;">XCH <span style="font-size:10px;opacity:0.4;">\u2197</span></span>'
+                + '<span style="font-size:16px;font-weight:700;color:#4ade80;">' + fmtUsd(xchValue) + '</span>'
                 + '</div>'
-                + '<div class="bag-chia-right"><div class="bag-chia-value" style="color:#86efac;">' + fmtUsd(xchValue) + '</div><div class="bag-chia-meta">native Chia balance</div></div>'
-                + '</div></div>';
+                + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;color:rgba(255,255,255,0.6);margin-top:8px;">'
+                + '<span>Bal: ' + fmtBal(xchBal) + '</span>'
+                + '<span>Price: $' + xchPrice.toFixed(2) + '</span>'
         }
 
         if (highValue.length > 0) {
@@ -11594,12 +11600,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (nfts.length > 0) {
-            html += '<div class="bag-section-head" style="margin-top:18px;">'
-                + '<div class="bag-section-accent" style="background:linear-gradient(180deg,#c084fc,#8b5cf6);"></div>'
-                + '<span class="bag-section-title" style="color:#d8b4fe;">NFT Collections</span>'
-                + '<span class="bag-section-meta">' + nfts.length + ' NFTs</span>'
-                + '</div>'
-                + '<div class="bag-collection-grid">';
+            var nftCollapseId = 'nftc' + Math.random().toString(36).slice(2, 7);
+            html += '<div style="margin-top:10px;">'
+                + '<div class="bag-low-toggle" onclick="var c=document.getElementById(\'' + nftCollapseId + '\');var open=c.style.display!==\'none\';c.style.display=open?\'none\':\'grid\';this.querySelector(\'.chv\').textContent=open?\'\\u25b8\':\'\\u25be\';">'
+                + '<span><span class="chv">\u25b8</span> NFT Collections (' + collections.length + ')</span>'
+                + '<span style="color:#c084fc;">' + nfts.length + ' NFTs</span></div>'
+                + '<div id="' + nftCollapseId + '" class="bag-collection-grid" style="display:none;">';
             for (var ci = 0; ci < collections.length; ci++) {
                 var imgTag = collections[ci].image
                     ? '<img src="' + escapeHtml(collections[ci].image) + '" alt="" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:14px 14px 0 0;display:block;background:#1a1628;" loading="lazy" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'
@@ -11612,7 +11618,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     + '<div style="margin-top:3px;font-size:12px;color:#c084fc;font-family:Inter,sans-serif;font-weight:800;">×' + collections[ci].count + ' held</div>'
                     + '</div></div>';
             }
-            html += '</div><a href="https://mintgarden.io" target="_blank" rel="noopener" style="display:inline-block;margin-top:10px;font-size:11px;color:rgba(216,180,254,0.78);text-decoration:none;font-family:Inter,sans-serif;">View collection details on MintGarden →</a>';
+            html += '</div><a href="https://mintgarden.io" target="_blank" rel="noopener" style="display:inline-block;margin-top:10px;font-size:11px;color:rgba(216,180,254,0.78);text-decoration:none;font-family:Inter,sans-serif;">View collection details on MintGarden →</a>'
+                + '</div>';
         }
 
         if (!xchBal && all.length === 0 && nfts.length === 0) {
