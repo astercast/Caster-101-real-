@@ -5249,7 +5249,7 @@
                     console.log('💾 Restoring treasury from cache (' + new Date(_treasuryCache.timestamp).toLocaleTimeString() + ')');
                     updateTreasuryDisplay(_treasuryCache.baseData, _treasuryCache.chiaData, _treasuryCache.nftData);
                     window._chiaNFTData = _treasuryCache.nftData;
-                    window._chiaXchPrice = _treasuryCache.chiaData?.xchPrice || 4;
+                    window._chiaXchPrice = _treasuryCache.chiaData?.xchPrice || 2.20;
                     updateNFTGallery(_treasuryCache.nftData);
                 }
                 // Load fresh treasury in background - check if function exists
@@ -5320,6 +5320,11 @@
             }
             if (tabName === "market") {
                 initMarketData();
+                // Force refresh if data is stale (> 60s since last update)
+                if (marketInitialized && marketLastUpdatedAt && (Date.now() - marketLastUpdatedAt) > 60000) {
+                    console.log('[Market] Tab opened with stale data (' + Math.round((Date.now() - marketLastUpdatedAt)/1000) + 's old) — refreshing');
+                    updateData();
+                }
             }
             if (tabName === "secretgame") {
                 const gf = document.getElementById('awizard-game-frame');
@@ -5651,7 +5656,7 @@
             // ── XCH price ──
             let xchPriceUSD = xchData.chia?.usd || 0;
             let xchMarketCap = parseFloat(xchData.chia?.usd_market_cap || 0);
-            if (xchPriceUSD === 0) xchPriceUSD = 2.80; // hard fallback
+            if (xchPriceUSD === 0) xchPriceUSD = 2.20; // hard fallback (updated Apr 2026)
             const xchChange = parseFloat(xchData.chia?.usd_24h_change || 0);
             console.log(`XCH: $${xchPriceUSD.toFixed(4)} MCap: $${(xchMarketCap/1e6).toFixed(1)}M`);
 
@@ -6581,7 +6586,7 @@
                     } catch(e) { console.warn(`NFT fetch failed for ${addr.slice(-20)}:`, e.message); }
                 }
 
-                const xchPrice = window._chiaXchPrice || 4;
+                const xchPrice = window._chiaXchPrice || 2.20;
                 console.log('📦 Total NFTs loaded (browser-direct):', allNFTs.length);
 
                 const colMap = {};
@@ -8181,7 +8186,7 @@ async function loadComprehensiveTreasury(force = false) {
 
                 // Set globals used by NFT gallery
                 window._chiaNFTData  = nftData;
-                window._chiaXchPrice = idx.chiaData.xchPrice || 4;
+                window._chiaXchPrice = idx.chiaData.xchPrice || 2.20;
 
                 // Render immediately
                 updateTreasuryDisplay(idx.baseData, idx.chiaData, nftData);
@@ -8191,7 +8196,7 @@ async function loadComprehensiveTreasury(force = false) {
                 // If empty, fire loadNFTs() which uses browser-direct Spacescan — it actually works.
                 if (nftData.collections && nftData.collections.length > 0) {
                     window._chiaNFTData  = nftData;
-                    window._chiaXchPrice = idx.chiaData.xchPrice || 4;
+                    window._chiaXchPrice = idx.chiaData.xchPrice || 2.20;
                     updateNFTGallery(nftData);
                 } else {
                     console.log('⚡ Blob has no NFTs (server cannot reach Spacescan wallet endpoints) — loading via browser-direct...');
@@ -8293,7 +8298,7 @@ async function loadComprehensiveTreasury(force = false) {
         };
 
         let mergedChiaTokens = [], mergedChiaTotal = 0, mergedNFTCols = [], mergedNFTCount = 0;
-        let chiaXchPrice = window._chiaXchPrice || 2.80;
+        let chiaXchPrice = window._chiaXchPrice || 2.20;
         let tibetLpMap = {}; // LP token assetId → { name, pairName, catAssetId }
         let chiaTreasuryCacheAge = 0; // Track cache age for display
         let isRefreshingChiaTreasury = false; // Prevent multiple simultaneous refreshes
@@ -8398,7 +8403,7 @@ async function loadComprehensiveTreasury(force = false) {
                         xchPrice = ar > 0 ? xr / ar : 0;
                     }
                 }
-                if (!xchPrice || xchPrice <= 0) xchPrice = 2.8;
+                if (!xchPrice || xchPrice <= 0) xchPrice = 2.20;
                 chiaXchPrice = xchPrice;
                 window._chiaXchPrice = xchPrice;
 
@@ -9133,7 +9138,7 @@ function updateTreasuryDisplay(baseData, chiaData, nftData) {
     // Store NFT data globally so the NFT tab can use it without a second Lambda call
     if (nftData && nftData.collections && nftData.collections.length > 0) {
         window._chiaNFTData  = nftData;
-        window._chiaXchPrice = chiaData?.xchPrice || 4;
+        window._chiaXchPrice = chiaData?.xchPrice || 2.20;
     }
     
     const baseTotal = baseData?.total || 0;

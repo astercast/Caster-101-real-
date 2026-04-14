@@ -25,10 +25,7 @@ export default async function handler(req, res) {
     }).sort((a, b) => b.apr - a.apr).slice(0, 3);
     return res.status(200).json(pools);
   } catch (err) {
-    return res.status(200).json([
-      { name: 'WETH / SPROUT', symbol: 'WETH / SPROUT', apr: 125.1, tvl: 2076, url: 'https://app.merkl.xyz/?search=ninemm&sort=apr-desc&test=true' },
-      { name: 'CASTER / SPROUT', symbol: 'CASTER / SPROUT', apr: 73.3, tvl: 3284, url: 'https://app.merkl.xyz/?search=ninemm&sort=apr-desc&test=true' },
-      { name: 'WETH / CBBTC', symbol: 'WETH / CBBTC', apr: 64.2, tvl: 17167, url: 'https://app.merkl.xyz/?search=ninemm&sort=apr-desc&test=true' }
-    ]);
+    console.warn('[merkl-pools] Fetch failed:', err.message);
+    return res.status(200).json([]);
   }
 }

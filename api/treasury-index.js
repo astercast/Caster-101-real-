@@ -137,7 +137,7 @@ async function buildSnapshot(req) {
         wallets: [BASE_WALLET_1, BASE_WALLET_2]
     };
 
-    const xchPrice = parseFloat(xchData?.chia?.usd || 2.8);
+    const xchPrice = parseFloat(xchData?.chia?.usd || 2.20);
     const wallets = Array.isArray(chiaTreasury?.wallets) ? chiaTreasury.wallets : [];
 
     const chiaMap = new Map();

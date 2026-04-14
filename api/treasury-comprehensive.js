@@ -50,9 +50,9 @@ async function getEthPrice() {
 async function getXchPrice() {
     try {
         const r = await safeFetch('https://api.coingecko.com/api/v3/simple/price?ids=chia&vs_currencies=usd', {}, 5000);
-        if (r.ok) { const d = await r.json(); return d.chia?.usd || 4; }
+        if (r.ok) { const d = await r.json(); return d.chia?.usd || 2.20; }
     } catch {}
-    return 4;
+    return 2.20;
 }
 
 // ─── BASE RPC helpers ─────────────────────────────────────────────────────────

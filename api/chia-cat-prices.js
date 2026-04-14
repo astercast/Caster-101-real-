@@ -145,7 +145,7 @@ export default async function handler(req, res) {
             ),
         ]);
 
-        const xchUsd = xchResp?.chia?.usd || 3;
+        const xchUsd = xchResp?.chia?.usd || 2.20;
 
         // Build Dexie ticker map: assetId -> priceUsd
         const tickerMap = {};
@@ -201,6 +201,6 @@ export default async function handler(req, res) {
         return res.status(200).json({ prices, changes, mcaps, xch_usd: xchUsd, sources, success: true, elapsed_ms: Date.now() - t0 });
     } catch (e) {
         console.error(`[emoji-market] Error: ${e.message}`);
-        return res.status(200).json({ prices: {}, changes: {}, mcaps: {}, xch_usd: 3, success: false, error: e.message });
+        return res.status(200).json({ prices: {}, changes: {}, mcaps: {}, xch_usd: 2.20, success: false, error: e.message });
     }
 }
