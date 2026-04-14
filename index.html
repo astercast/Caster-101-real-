@@ -1982,6 +1982,7 @@
         .bag-results-stack {
             display: grid;
             gap: 18px;
+            flex: 1;
         }
 
         .bag-render-card {
@@ -2308,6 +2309,7 @@
             max-width: none;
             margin: 0;
             padding: 0 0 20px;
+            flex: 1;
         }
 
         /* ── Sage Connect Row ── */
@@ -2425,6 +2427,8 @@
 
         .bag-col {
             min-width: 0;
+            display: flex;
+            flex-direction: column;
         }
 
         .bag-split.show-base {
@@ -2469,6 +2473,7 @@
             padding: 18px;
             margin-top: 18px;
             box-shadow: 0 16px 34px rgba(0,0,0,0.26);
+            flex: 1;
         }
 
         .bag-chia-head {
@@ -7491,7 +7496,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                 if (id === 'Native' || id === 'XCH_NATIVE' || !id) {
                     window.open('https://www.spacescan.io', '_blank');
                 } else {
-                    window.open(`https://www.spacescan.io/cat/${id}`, '_blank');
+                    window.open(`https://www.spacescan.io/token/${id}`, '_blank');
                 }
             } else if (chain === 'Base') {
                 // Link to 9mm Pro swap with specific token
@@ -9437,7 +9442,7 @@ function buildTokenCard(token) {
     let explorerUrl = '';
     if (!isLP) {
         if (token.assetId && token.assetId !== 'XCH_NATIVE') {
-            explorerUrl = `https://www.spacescan.io/cat/${token.assetId}`;
+            explorerUrl = `https://www.spacescan.io/token/${token.assetId}`;
         } else if (token.assetId === 'XCH_NATIVE') {
             explorerUrl = 'https://www.spacescan.io';
         } else if (token.contract) {
@@ -11067,8 +11072,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (/^xch1|^txch1/.test(addr)) addAddr(addr);
         }
 
-        const shouldLookup = !!opts.forceLookup || allAddresses.length <= 1;
-        if (shouldLookup && _sageWCClient) {
+        // Always do full coin discovery to find all derived addresses
+        if (_sageWCClient) {
             // 2. chip0002_getPublicKeys (empty params for max compatibility)
             try {
                 const keys = await _sageWCClient.request({
@@ -11086,17 +11091,56 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('[Sage] getPublicKeys → ' + allAddresses.length + ' addresses');
             } catch(e) { console.warn('[Sage] getPublicKeys:', e && e.message ? e.message : e); }
 
-            // 3. Discover P2 addresses from actual XCH coins held in wallet
+            // 3. Discover P2 addresses from actual XCH coins held in wallet (paginated)
             try {
-                const coins = await _sageWCClient.request({
-                    topic: session.topic, chainId,
-                    request: { method: 'chip0002_getAssetCoins', params: { type: null, assetId: null, includeLocked: false, offset: 0, limit: 100 } }
-                });
-                if (Array.isArray(coins)) {
+                let offset = 0;
+                const pageSize = 100;
+                while (true) {
+                    const coins = await _sageWCClient.request({
+                        topic: session.topic, chainId,
+                        request: { method: 'chip0002_getAssetCoins', params: { type: null, assetId: null, includeLocked: false, offset: offset, limit: pageSize } }
+                    });
+                    if (!Array.isArray(coins) || coins.length === 0) break;
                     for (const c of coins) addPH(c && c.coin ? c.coin.puzzle_hash : '');
-                    console.log('[Sage] XCH coin discovery: ' + coins.length + ' coins → ' + allAddresses.length + ' addresses');
+                    console.log('[Sage] XCH coin page offset=' + offset + ': ' + coins.length + ' coins → ' + allAddresses.length + ' addresses');
+                    if (coins.length < pageSize) break;
+                    offset += pageSize;
                 }
-            } catch(e) { console.warn('[Sage] coin discovery:', e && e.message ? e.message : e); }
+            } catch(e) { console.warn('[Sage] XCH coin discovery:', e && e.message ? e.message : e); }
+
+            // 4. Discover addresses from CAT coins (CAT puzzle_hash wraps the inner P2 — try parent_coin_info)
+            try {
+                const catCoins = await _sageWCClient.request({
+                    topic: session.topic, chainId,
+                    request: { method: 'chip0002_getAssetCoins', params: { type: 'cat', assetId: null, includeLocked: false, offset: 0, limit: 200 } }
+                });
+                if (Array.isArray(catCoins) && catCoins.length > 0) {
+                    var prevCount = allAddresses.length;
+                    for (const c of catCoins) {
+                        // CAT coin puzzle_hash is the outer (wrapped) hash — try lineage/hint if available
+                        if (c && c.coin) {
+                            addPH(c.coin.puzzle_hash);
+                            // Some implementations include a 'hint' or 'p2_puzzle_hash' field
+                            if (c.hint) addPH(c.hint);
+                            if (c.p2_puzzle_hash) addPH(c.p2_puzzle_hash);
+                        }
+                    }
+                    console.log('[Sage] CAT coin discovery: ' + catCoins.length + ' coins → ' + (allAddresses.length - prevCount) + ' new addresses');
+                }
+            } catch(e) { console.warn('[Sage] CAT coin discovery:', e && e.message ? e.message : e); }
+
+            // 5. Discover addresses from NFT coins
+            try {
+                const nftCoins = await _sageWCClient.request({
+                    topic: session.topic, chainId,
+                    request: { method: 'chip0002_getAssetCoins', params: { type: 'nft', assetId: null, includeLocked: false, offset: 0, limit: 100 } }
+                });
+                if (Array.isArray(nftCoins) && nftCoins.length > 0) {
+                    var prevCount = allAddresses.length;
+                    for (const c of nftCoins) addPH(c && c.coin ? c.coin.puzzle_hash : '');
+                    console.log('[Sage] NFT coin discovery: ' + nftCoins.length + ' coins → ' + (allAddresses.length - prevCount) + ' new addresses');
+                }
+            } catch(e) { console.warn('[Sage] NFT coin discovery:', e && e.message ? e.message : e); }
         }
 
         console.log('[Sage] Resolved ' + allAddresses.length + ' address(es):', allAddresses.map(function(a) { return a.slice(0,10) + '…'; }));
@@ -11296,7 +11340,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!addrList.length) return;
         var section = document.getElementById('chia-portfolio-section');
         if (!section) return;
-        section.style.display = 'block';
+        section.style.display = 'flex';
+        section.style.flexDirection = 'column';
         // Show chia column + chain tabs
         var chiaCol = document.getElementById('bag-chia-col');
         if (chiaCol) { chiaCol.style.display = ''; }
@@ -11460,10 +11505,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     // TibetSwap is the most reliable name source for CATs that have pairs
                     const tibetName = (tb && !tb.isLP && tb.tokenName) ? tb.tokenName
                         : (tb && !tb.isLP && tb.shortName) ? tb.shortName.replace(/^TIBET-/i, '').replace(/-XCH$/i, '') : '';
+                    // For LP tokens, use the pair name as the display name
+                    const lpName = (isLP && tb && tb.pairName) ? tb.pairName : '';
                     const dexieName = (dx && dx.name && !isHexStr(dx.name)) ? dx.name : '';
-                    // Priority: TibetSwap clean name → spacescan sym → Dexie name → spacescan name → hex truncation
-                    const sym = tibetName || (!isHexStr(rawSym) && rawSym) || dexieName || (!isHexStr(rawName) && rawName) || aid.slice(0, 6).toUpperCase();
-                    const name = tibetName || (!isHexStr(rawName) && rawName) || dexieName || (!isHexStr(rawSym) && rawSym) || sym;
+                    // Priority: LP pair name → TibetSwap clean name → spacescan sym → Dexie name → spacescan name → hex truncation
+                    const sym = lpName || tibetName || (!isHexStr(rawSym) && rawSym) || dexieName || (!isHexStr(rawName) && rawName) || aid.slice(0, 6).toUpperCase();
+                    const name = lpName || tibetName || (!isHexStr(rawName) && rawName) || dexieName || (!isHexStr(rawSym) && rawSym) || sym;
                     if (tokenMap[aid]) {
                         tokenMap[aid].balance += bal;
                         tokenMap[aid].value += val;
@@ -11559,7 +11606,7 @@ document.addEventListener('DOMContentLoaded', () => {
             var displayName = isLP
                 ? (token.pairName || token.name || token.sym)
                 : (!isHex(token.name) && token.name ? token.name : (!isHex(token.sym) && token.sym ? token.sym : token.assetId.slice(0, 8) + '\u2026'));
-            var link = isLP ? 'https://app.tibetswap.io' : 'https://www.spacescan.io/cat/' + token.assetId;
+            var link = isLP ? 'https://app.tibetswap.io' : 'https://www.spacescan.io/token/' + token.assetId;
             var valueColor = isLP ? '#63b3ed' : '#4ade80';
             var val = token.value || 0;
             var bal = token.balance || 0;
