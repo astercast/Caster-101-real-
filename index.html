@@ -4451,7 +4451,7 @@
                     </div>
                     <div class="bag-preset-grid" style="margin-bottom:10px;">
                         <span class="bag-pill-label" style="align-self:center;">Quick load</span>
-                        <button class="bag-quick-btn" onclick="document.getElementById('walletAddress').value='0xEEDC069F861880eC1B5f41c9bC7a747DC1cE32b9'; trackAddress();">🧙 wizard treasury #1</button>
+                        <button class="bag-quick-btn" onclick="document.getElementById('walletAddress').value='0xEEDC069F861880eC1B5f41c9bC7a747DC1cE32b9'; trackAddress();">🧙 wizard #1</button>
                     </div>
                     <div class="wallet-input-row">
                         <div class="bag-input-wrap">
@@ -11022,14 +11022,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const { uri, approval } = await _sageWCClient.connect({
                 requiredNamespaces: {
                     chia: {
-                        methods: ['chip0002_getPublicKeys', 'chip0002_getAssetCoins', 'chip0002_getAssetBalance'],
+                        methods: ['chip0002_getAssetCoins', 'chip0002_getAssetBalance'],
                         chains: ['chia:mainnet'],
                         events: [],
                     }
                 },
                 optionalNamespaces: {
                     chia: {
-                        methods: ['chip0002_getPublicKeys', 'chip0002_getAssetCoins', 'chip0002_getAssetBalance'],
+                        methods: ['chip0002_getAssetCoins', 'chip0002_getAssetBalance'],
                         chains: ['chia:testnet11'],
                         events: [],
                     }
@@ -11074,22 +11074,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Always do full coin discovery to find all derived addresses
         if (_sageWCClient) {
-            // 2. chip0002_getPublicKeys (empty params for max compatibility)
+            // 2. Query wallet-reported XCH balance via getAssetBalance (authoritative)
             try {
-                const keys = await _sageWCClient.request({
+                const walletBal = await _sageWCClient.request({
                     topic: session.topic, chainId,
-                    request: { method: 'chip0002_getPublicKeys', params: {} }
+                    request: { method: 'chip0002_getAssetBalance', params: { type: null, assetId: null } }
                 });
-                if (Array.isArray(keys)) {
-                    for (const k of keys) {
-                        let ph = typeof k === 'string' ? k : (k.puzzle_hash || k.address || '');
-                        if (ph.includes(':')) ph = ph.split(':')[2] || '';
-                        if (/^xch1|^txch1/.test(ph)) { addAddr(ph); continue; }
-                        addPH(ph);
-                    }
+                if (walletBal) {
+                    var confirmedMojos = parseInt(walletBal.confirmed || walletBal.spendable || '0', 10);
+                    window._sageWalletXchMojos = confirmedMojos;
+                    console.log('[Sage] getAssetBalance → ' + (confirmedMojos / 1e12).toFixed(6) + ' XCH (' + confirmedMojos + ' mojos)');
                 }
-                console.log('[Sage] getPublicKeys → ' + allAddresses.length + ' addresses');
-            } catch(e) { console.warn('[Sage] getPublicKeys:', e && e.message ? e.message : e); }
+            } catch(e) { console.warn('[Sage] getAssetBalance:', e && e.message ? e.message : e); }
 
             // 3. Discover P2 addresses from actual XCH coins held in wallet (paginated)
             try {
@@ -11448,8 +11444,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('[Chia] ' + addrList[ri].slice(0,10) + ': XCH=' + results[ri].xchBal + ', tokens=' + results[ri].rawTokens.length + ', NFTs=' + results[ri].nfts.length);
             }
 
-            // Aggregate XCH
-            const xchBal = results.reduce(function(s, r) { return s + r.xchBal; }, 0);
+            // Aggregate XCH — prefer wallet-reported balance (authoritative), API sum as fallback
+            const apiXchBal = results.reduce(function(s, r) { return s + r.xchBal; }, 0);
+            const walletXchBal = (window._sageWalletXchMojos > 0) ? (window._sageWalletXchMojos / 1e12) : 0;
+            const xchBal = walletXchBal > 0 ? walletXchBal : apiXchBal;
+            if (walletXchBal > 0 && Math.abs(walletXchBal - apiXchBal) > 0.001) {
+                console.log('[Chia] Using wallet XCH=' + walletXchBal.toFixed(6) + ' (API sum=' + apiXchBal.toFixed(6) + ')');
+            }
 
             // Aggregate tokens: merge by asset_id, sum balances+values
             const isHexStr = function(s) { return /^[0-9a-f]{8,}$/i.test((s || '').trim()); };
@@ -11628,6 +11629,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;color:rgba(255,255,255,0.6);margin-top:8px;font-family:Inter,sans-serif;">'
                 + '<span>Bal: ' + fmtBal(xchBal) + '</span>'
                 + '<span>Price: $' + xchPrice.toFixed(2) + '</span>'
+                + '</div></div>';
         }
 
         if (highValue.length > 0) {
