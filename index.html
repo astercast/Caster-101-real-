@@ -2298,9 +2298,164 @@
 
         .bag-chia-shell {
             display: none;
-            max-width: 1120px;
-            margin: 0 auto;
+            max-width: none;
+            margin: 0;
             padding: 0 0 20px;
+        }
+
+        /* ── Sage Connect Row ── */
+        .bag-sage-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 14px;
+            flex-wrap: wrap;
+        }
+
+        .bag-sage-btn {
+            background: linear-gradient(135deg, rgba(74,222,128,0.12), rgba(16,185,129,0.06));
+            border: 1px solid rgba(74,222,128,0.3);
+            border-radius: 14px;
+            padding: 13px 22px;
+            color: rgba(74,222,128,0.92);
+            font-size: 13px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 0.3px;
+            box-shadow: 0 8px 20px rgba(16,185,129,0.06);
+        }
+
+        .bag-sage-btn:hover {
+            background: linear-gradient(135deg, rgba(74,222,128,0.22), rgba(16,185,129,0.12));
+            transform: translateY(-1px);
+            box-shadow: 0 12px 28px rgba(16,185,129,0.1);
+        }
+
+        .bag-sage-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* ── Compact Summary ── */
+        .bag-summary-compact {
+            margin-bottom: 18px;
+        }
+
+        .bag-summary-compact .bag-summary-top-row {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 28px;
+            align-items: center;
+            padding: 18px 22px;
+        }
+
+        .bag-summary-compact .bag-total-amount {
+            font-size: clamp(28px, 4vw, 40px);
+            margin: 6px 0 0;
+        }
+
+        .bag-summary-alloc-block {
+            min-width: 0;
+        }
+
+        .bag-summary-alloc-block #bag-alloc-bar {
+            display: flex;
+            gap: 3px;
+            height: 10px;
+            border-radius: 999px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .bag-summary-alloc-block #bag-alloc-legend {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        /* ── Chain Tabs ── */
+        .bag-chain-tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 16px;
+        }
+
+        .bag-ctab {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 9px 20px;
+            color: rgba(255,255,255,0.5);
+            font-size: 12px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 0.2px;
+        }
+
+        .bag-ctab:hover {
+            background: rgba(255,255,255,0.07);
+            color: rgba(255,255,255,0.7);
+        }
+
+        .bag-ctab.active {
+            background: rgba(251,191,36,0.12);
+            border-color: rgba(251,191,36,0.35);
+            color: #fbbf24;
+        }
+
+        /* ── Results Split Grid ── */
+        .bag-split {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            align-items: start;
+        }
+
+        .bag-col {
+            min-width: 0;
+        }
+
+        .bag-split.show-base {
+            grid-template-columns: 1fr;
+        }
+
+        .bag-split.show-base .bag-col-chia {
+            display: none !important;
+        }
+
+        .bag-split.show-chia {
+            grid-template-columns: 1fr;
+        }
+
+        .bag-split.show-chia .bag-col-base {
+            display: none !important;
+        }
+
+        /* When only one col is visible, make it full width */
+        .bag-split:not(.has-chia) {
+            grid-template-columns: 1fr;
+        }
+
+        @media (max-width: 900px) {
+            .bag-split {
+                grid-template-columns: 1fr;
+            }
+
+            .bag-sage-btn {
+                width: 100%;
+                text-align: center;
+            }
+
+            .bag-summary-compact .bag-summary-top-row {
+                grid-template-columns: 1fr;
+                gap: 14px;
+                padding: 14px 16px;
+            }
         }
 
         .bag-chia-card {
@@ -4283,135 +4438,82 @@
 
         <div id="portfolio" class="content">
             <div class="bag-page">
-                <div class="bag-command-grid bag-command-grid-tight">
-                    <section class="bag-shell-card bag-shell-card-primary">
-                        <div class="bag-input-card">
-                            <div class="bag-panel-head bag-panel-head-tight">
-                                <div>
-                                    <div class="bag-kicker">Portfolio</div>
-                                    <div class="bag-panel-title bag-panel-title-tight">Bag Tracker</div>
-                                </div>
-                                <div class="bag-hero-meta bag-hero-meta-tight">
-                                    <div class="bag-meta-chip">Base</div>
-                                    <div class="bag-meta-chip">LP</div>
-                                    <div class="bag-meta-chip">Chia</div>
-                                </div>
-                            </div>
-                            <div class="wallet-input-row">
-                                <div class="bag-input-wrap">
-                                    <span class="bag-input-icon">🔍</span>
-                                    <input type="text" id="walletAddress" placeholder="0x... Base wallet address" onkeydown="if(event.key==='Enter') trackAddress()">
-                                </div>
-                                <button onclick="trackAddress()" id="track-btn">SCAN BAG</button>
-                            </div>
-                            <div id="trackedAddressDisplay"></div>
-                            <div class="bag-preset-grid">
-                                <span class="bag-pill-label" style="align-self:center;">Quick load</span>
-                                <button class="bag-quick-btn" onclick="document.getElementById('walletAddress').value='0xEEDC069F861880eC1B5f41c9bC7a747DC1cE32b9'; trackAddress();">🧙 aWizard treasury wallet</button>
-                            </div>
-                        </div>
-                    </section>
 
-                    <aside class="bag-shell-card bag-shell-card-secondary">
-                        <div class="bag-mini-overview-grid">
-                            <div class="bag-mini-overview-card">
-                                <div class="bag-mini-label">Base View</div>
-                                <div class="bag-mini-value">Tokens + LP</div>
-                            </div>
-                            <div class="bag-mini-overview-card">
-                                <div class="bag-mini-label">Chia View</div>
-                                <div class="bag-mini-value">XCH + CATs</div>
-                            </div>
-                            <div class="bag-mini-overview-card">
-                                <div class="bag-mini-label">Focus</div>
-                                <div class="bag-mini-value">Top weights</div>
-                            </div>
+                <!-- ── Input Card ── -->
+                <section class="bag-shell-card bag-shell-card-primary">
+                    <div class="bag-panel-head bag-panel-head-tight">
+                        <div>
+                            <div class="bag-kicker">Portfolio</div>
+                            <div class="bag-panel-title bag-panel-title-tight">Bag Tracker</div>
                         </div>
-                    </aside>
-                </div>
-
-                <div id="bag-summary" class="bag-summary-shell" style="display:none;">
-                    <div class="bag-summary-top">
-                        <section class="bag-panel bag-total-panel">
-                            <div class="bag-card-label">Base Wallet Total</div>
-                            <div id="bag-total-value" class="bag-total-amount">$0</div>
-                            <div class="bag-total-subgrid">
-                                <div class="bag-kv">
-                                    <div class="bag-kv-label">Address</div>
-                                    <div id="bag-summary-address" class="bag-kv-value">Waiting for scan</div>
-                                </div>
-                                <div class="bag-kv">
-                                    <div class="bag-kv-label">Dominant Zone</div>
-                                    <div id="bag-summary-dominant" class="bag-kv-value">—</div>
-                                </div>
-                            </div>
-                        </section>
-                        <section class="bag-stat-grid">
-                            <div class="bag-stat-card s-total">
-                                <div class="bag-stat-label">Tracked Positions</div>
-                                <div id="bag-position-count" class="bag-stat-value">0</div>
-                                <div class="bag-stat-foot">All Base token and LP positions in this scan.</div>
-                            </div>
-                            <div class="bag-stat-card s-pos">
-                                <div class="bag-stat-label">Concentrated Asset</div>
-                                <div id="bag-top-holding" class="bag-stat-value">—</div>
-                                <div class="bag-stat-foot">Largest visible position by dollar weight.</div>
-                            </div>
-                            <div class="bag-stat-card s-lp">
-                                <div class="bag-stat-label">LP Pools</div>
-                                <div id="bag-lp-count" class="bag-stat-value">0</div>
-                                <div class="bag-stat-foot">Liquidity exposure across the bag.</div>
-                            </div>
-                            <div class="bag-stat-card s-lpval">
-                                <div class="bag-stat-label">LP Value</div>
-                                <div id="bag-lp-value" class="bag-stat-value">$0</div>
-                                <div class="bag-stat-foot">Estimated LP contribution to total value.</div>
-                            </div>
-                        </section>
                     </div>
-
-                    <section class="bag-alloc-wrap">
-                        <div class="bag-alloc-head">
-                            <div>
-                                <div class="bag-alloc-label">Allocation Map</div>
-                                <div class="bag-alloc-copy">Top wallet weight visualized as share of bag. Heavy concentration becomes obvious immediately.</div>
-                            </div>
-                            <div id="bag-alloc-total-note" class="bag-section-meta">Top holdings</div>
+                    <div class="wallet-input-row">
+                        <div class="bag-input-wrap">
+                            <span class="bag-input-icon">🔍</span>
+                            <input type="text" id="walletAddress" placeholder="0x... Base wallet address" onkeydown="if(event.key==='Enter') trackAddress()">
                         </div>
-                        <div id="bag-alloc-bar"></div>
-                        <div id="bag-alloc-legend"></div>
-                    </section>
-                </div>
+                        <button onclick="trackAddress()" id="track-btn">SCAN BAG</button>
+                    </div>
+                    <div class="bag-sage-row">
+                        <button id="chia-portfolio-action-btn" onclick="handleChiaPortfolioAction(this)" class="bag-sage-btn">🌱 Connect Sage Wallet</button>
+                        <span id="chia-action-notice" class="bag-chia-toolbar-note" aria-live="polite"></span>
+                    </div>
+                    <div id="trackedAddressDisplay"></div>
+                    <div class="bag-preset-grid">
+                        <span class="bag-pill-label" style="align-self:center;">Quick load</span>
+                        <button class="bag-quick-btn" onclick="document.getElementById('walletAddress').value='0xEEDC069F861880eC1B5f41c9bC7a747DC1cE32b9'; trackAddress();">🧙 aWizard treasury wallet</button>
+                    </div>
+                </section>
 
-                <div id="portfolioList" class="bag-results-stack">
-                    <section class="bag-render-card bag-empty-state">
-                        <div class="bag-empty-icon">🧿</div>
-                        <div class="bag-empty-title">Scan a wallet.</div>
-                        <div class="bag-start-grid" style="margin-top:18px;">
-                            <div class="bag-start-tile">
-                                <div class="bag-start-icon">🔵</div>
-                                <div class="bag-start-title">Base</div>
-                                <div class="bag-start-copy">Token rows and LP positions.</div>
-                            </div>
-                            <div class="bag-start-tile">
-                                <div class="bag-start-icon">🪄</div>
-                                <div class="bag-start-title">Weights</div>
-                                <div class="bag-start-copy">Big positions first, dust collapsed.</div>
-                            </div>
-                            <div class="bag-start-tile">
-                                <div class="bag-start-icon">🌱</div>
-                                <div class="bag-start-title">Chia</div>
-                                <div class="bag-start-copy">Sage section appears below when connected.</div>
-                            </div>
+                <!-- ── Compact Summary Bar (hidden until scan) ── -->
+                <div id="bag-summary" class="bag-summary-shell bag-summary-compact" style="display:none;">
+                    <div class="bag-summary-top-row">
+                        <div class="bag-summary-total-block">
+                            <div class="bag-mini-label">Total Value</div>
+                            <div id="bag-total-value" class="bag-total-amount">$0</div>
                         </div>
-                    </section>
+                        <div class="bag-summary-alloc-block">
+                            <div id="bag-alloc-bar"></div>
+                            <div id="bag-alloc-legend"></div>
+                        </div>
+                    </div>
+                    <!-- Hidden stat holders for renderBagResults compat -->
+                    <div style="display:none;" aria-hidden="true">
+                        <span id="bag-position-count"></span>
+                        <span id="bag-lp-count"></span>
+                        <span id="bag-lp-value"></span>
+                        <span id="bag-summary-address"></span>
+                        <span id="bag-summary-dominant"></span>
+                        <span id="bag-top-holding"></span>
+                        <span id="bag-alloc-total-note"></span>
+                    </div>
                 </div>
 
-                <div id="chia-reload-btn" class="bag-chia-toolbar">
-                    <button id="chia-portfolio-action-btn" onclick="handleChiaPortfolioAction(this)">⟳ Load Chia Wallet</button>
-                    <div id="chia-action-notice" class="bag-chia-toolbar-note" aria-live="polite"></div>
+                <!-- ── Chain Tabs ── -->
+                <div class="bag-chain-tabs" id="bag-chain-tabs" style="display:none;">
+                    <button class="bag-ctab active" onclick="switchBagChain('all',this)">All</button>
+                    <button class="bag-ctab" onclick="switchBagChain('base',this)">🔵 Base</button>
+                    <button class="bag-ctab" onclick="switchBagChain('chia',this)">🌱 Chia</button>
                 </div>
-                <div id="chia-portfolio-section" class="bag-chia-shell"></div>
+
+                <!-- ── Results Split ── -->
+                <div class="bag-split" id="bag-split">
+                    <div id="bag-base-col" class="bag-col bag-col-base">
+                        <div id="portfolioList" class="bag-results-stack">
+                            <section class="bag-render-card bag-empty-state">
+                                <div class="bag-empty-icon">🔵</div>
+                                <div class="bag-empty-title">Scan a Base wallet above</div>
+                            </section>
+                        </div>
+                    </div>
+                    <div id="bag-chia-col" class="bag-col bag-col-chia" style="display:none;">
+                        <div id="chia-portfolio-section" class="bag-chia-shell"></div>
+                    </div>
+                </div>
+
+                <!-- Hidden: keeps old toolbar compat -->
+                <div id="chia-reload-btn" style="display:none;"></div>
+
             </div>
         </div>
 
@@ -7717,6 +7819,15 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
 
         const BAG_COLORS = ['#fbbf24','#60a5fa','#4ade80','#a855f7','#f87171','#34d399','#fb923c','#c084fc','#e879f9','#38bdf8'];
 
+        function switchBagChain(chain, btn) {
+            document.querySelectorAll('.bag-ctab').forEach(function(b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+            var split = document.getElementById('bag-split');
+            split.classList.remove('show-base', 'show-chia');
+            if (chain === 'base') split.classList.add('show-base');
+            else if (chain === 'chia') split.classList.add('show-chia');
+        }
+
         function renderBagResults(address, data) {
             const tokens = (data.tokens || []).sort((a, b) => (b.value || 0) - (a.value || 0));
             const total = data.total || tokens.reduce((sum, token) => sum + (token.value || 0), 0);
@@ -7896,6 +8007,10 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
 
             html += '</section>';
             document.getElementById('portfolioList').innerHTML = html;
+
+            // Show chain tabs after Base scan
+            var chainTabs = document.getElementById('bag-chain-tabs');
+            if (chainTabs) chainTabs.style.display = 'flex';
         }
         // Initialize
         window.onload = function () {
@@ -11056,7 +11171,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             return;
         }
-        setChiaActionNotice('No Chia wallet connected. Click Connect Sage first.', 'warning');
+        setChiaActionNotice('Opening Sage wallet connection...', 'success');
+        sageConnect();
     }
 
     function updateSageBtn(state, address) {
@@ -11172,6 +11288,13 @@ document.addEventListener('DOMContentLoaded', () => {
         var section = document.getElementById('chia-portfolio-section');
         if (!section) return;
         section.style.display = 'block';
+        // Show chia column + chain tabs
+        var chiaCol = document.getElementById('bag-chia-col');
+        if (chiaCol) { chiaCol.style.display = ''; }
+        var splitEl = document.getElementById('bag-split');
+        if (splitEl) splitEl.classList.add('has-chia');
+        var chainTabs = document.getElementById('bag-chain-tabs');
+        if (chainTabs) chainTabs.style.display = 'flex';
         var reloadBtn = document.getElementById('chia-reload-btn');
         if (reloadBtn) reloadBtn.style.display = 'grid';
         section.innerHTML = '<section class="bag-chia-card bag-loading-state"><div class="bag-loading-icon">\ud83c\udf31</div><div class="bag-loading-title" style="color:#4ade80;">Loading Chia</div><div class="bag-loading-copy">Resolving ' + addrList.length + ' wallet' + (addrList.length > 1 ? 's' : '') + '.</div></section>';
