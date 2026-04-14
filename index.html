@@ -3189,6 +3189,10 @@
                 gap: 8px !important;
             }
 
+            /* Tang tickers — must repeat hide inside mobile block so it wins over .token-card display:flex */
+            .tang-ticker { display: none !important; }
+            .show-tang .tang-ticker { display: flex !important; }
+
             /* ── Mobile tc-* card overrides ── */
             .tc-top {
                 flex-wrap: nowrap !important;
@@ -4124,18 +4128,12 @@
                         🔗 Useful Links <span class="toggle-arrow">▼</span>
                     </button>
                     <div class="useful-links-panel">
+                        <!-- .io sites -->
                         <a href="https://dexie.space" target="_blank" class="ul-item">
                             <span class="ul-item-emoji">🦢</span>
                             <div class="ul-item-text">
                                 <span class="ul-item-name">dexie.space</span>
                                 <span class="ul-item-desc">Chia DEX - trade CATs and NFTs</span>
-                            </div>
-                        </a>
-                        <a href="https://dex.9mm.pro" target="_blank" class="ul-item">
-                            <span class="ul-item-emoji">🔫</span>
-                            <div class="ul-item-text">
-                                <span class="ul-item-name">dex.9mm.pro</span>
-                                <span class="ul-item-desc">Base DEX - swap warped tokens</span>
                             </div>
                         </a>
                         <a href="https://mintgarden.io" target="_blank" class="ul-item">
@@ -4145,6 +4143,21 @@
                                 <span class="ul-item-desc">Chia NFT marketplace and minting platform</span>
                             </div>
                         </a>
+                        <a href="https://www.spacescan.io" target="_blank" class="ul-item">
+                            <span class="ul-item-emoji">🔭</span>
+                            <div class="ul-item-text">
+                                <span class="ul-item-name">spacescan.io</span>
+                                <span class="ul-item-desc">Chia blockchain explorer</span>
+                            </div>
+                        </a>
+                        <a href="https://tangtalk.io" target="_blank" class="ul-item">
+                            <span class="ul-item-emoji">🍊</span>
+                            <div class="ul-item-text">
+                                <span class="ul-item-name">tangtalk.io</span>
+                                <span class="ul-item-desc">Decentralized smartphone with rewards</span>
+                            </div>
+                        </a>
+                        <!-- .com sites -->
                         <a href="https://circuitdao.com" target="_blank" class="ul-item">
                             <span class="ul-item-emoji">💲</span>
                             <div class="ul-item-text">
@@ -4152,11 +4165,19 @@
                                 <span class="ul-item-desc">Stablecoin protocol on Chia</span>
                             </div>
                         </a>
-                        <a href="https://www.spacescan.io" target="_blank" class="ul-item">
-                            <span class="ul-item-emoji">🔭</span>
+                        <a href="https://thisweekinchia.com/" target="_blank" class="ul-item">
+                            <span class="ul-item-emoji">📰</span>
                             <div class="ul-item-text">
-                                <span class="ul-item-name">spacescan.io</span>
-                                <span class="ul-item-desc">Chia blockchain explorer</span>
+                                <span class="ul-item-name">thisweekinchia.com</span>
+                                <span class="ul-item-desc">Weekly Chia ecosystem news</span>
+                            </div>
+                        </a>
+                        <!-- .pro / .trade / .ink sites -->
+                        <a href="https://dex.9mm.pro" target="_blank" class="ul-item">
+                            <span class="ul-item-emoji">🔫</span>
+                            <div class="ul-item-text">
+                                <span class="ul-item-name">dex.9mm.pro</span>
+                                <span class="ul-item-desc">Base DEX - swap warped tokens</span>
                             </div>
                         </a>
                         <a href="https://xch.trade" target="_blank" class="ul-item">
@@ -4178,20 +4199,6 @@
                             <div class="ul-item-text">
                                 <span class="ul-item-name">crate.ink</span>
                                 <span class="ul-item-desc">Web3 minting experience on Chia</span>
-                            </div>
-                        </a>
-                        <a href="https://thisweekinchia.com/" target="_blank" class="ul-item">
-                            <span class="ul-item-emoji">📰</span>
-                            <div class="ul-item-text">
-                                <span class="ul-item-name">thisweekinchia.com</span>
-                                <span class="ul-item-desc">Weekly Chia ecosystem news</span>
-                            </div>
-                        </a>
-                        <a href="https://tangtalk.io" target="_blank" class="ul-item">
-                            <span class="ul-item-emoji">🍊</span>
-                            <div class="ul-item-text">
-                                <span class="ul-item-name">tangtalk.io</span>
-                                <span class="ul-item-desc">Decentralized smartphone with rewards</span>
                             </div>
                         </a>
                     </div>
@@ -4356,7 +4363,7 @@
             <div id="market-data-status" style="margin-top:10px;font-size:11px;color:rgba(255,255,255,0.55);font-family:'Inter',sans-serif;"></div>
             
             <script>
-                const TANG_NAMES = new Set(['HonK','NeckCoin','VFVAPatek9000Inu','BEPE']);
+                const TANG_NAMES = new Set(['HonK','NeckCoin','VFVAPatek9000Inu','BEPE','HOA']);
                 function toggleTangTickers(show) {
                     document.getElementById('chiaTokenList').classList.toggle('show-tang', show);
                     document.getElementById('baseTokenList').classList.toggle('show-tang', show);
@@ -5492,6 +5499,7 @@
             { id: 'honk-chia', symbol: '🪿', name: 'HonK', displayName: '$HONK', chain: 'Chia', assetId: '048b1358f3b55a70c4db22114c2f52569c0398ba19e8212b8daf1cb25c90a641' },
             { id: 'neck-chia', symbol: '$NECK', name: 'NeckCoin', chain: 'Chia', assetId: '1ad673d21799c9a224014ca71f9fe07cbc836fa23fa97b3be275d46d0b8bd9da' },
             { id: 'chia-meme-chia', symbol: '$CHIA', name: 'VFVAPatek9000Inu', chain: 'Chia', assetId: '69326954fe16117cd6250e929748b2a1ab916347598bc8180749279cfae21ddb' },
+            { id: 'hoa-chia', symbol: '🍊', name: 'HOA', chain: 'Chia', assetId: 'e816ee18ce2337c4128449bc539fbbe2ecfdd2098c4e7cab4667e223c3bdc23d' },
             
             // Base Network
             { id: 'wxch-base', symbol: 'wXCH', name: 'Wrapped XCH', chain: 'Base', contract: '0x36be1d329444aef5d28df3662ec5b4f965cd93e9' },
@@ -5504,7 +5512,8 @@
             { id: 'bepe-base', symbol: '$BEPE', name: 'BEPE', chain: 'Base', contract: '0xBB5cBDAE23C5368557CC9A32337863eECf03cF9f' },
             { id: 'honk-base', symbol: '🪿', name: 'HonK', displayName: '$HONK', chain: 'Base', contract: '0xF6C04947A13481daAf4E8756B04f3D6bB7C30efF' },
             { id: 'neck-base', symbol: '$NECK', name: 'NeckCoin', chain: 'Base', contract: '0x359D5BFa1bb87598e2198EC139eE44D31Bd06FaC' },
-            { id: 'chia-meme-base', symbol: '$CHIA', name: 'VFVAPatek9000Inu', chain: 'Base', contract: '0x05AefaFfF978EA4F9E6ff9FA3Bc2465B90598549' }
+            { id: 'chia-meme-base', symbol: '$CHIA', name: 'VFVAPatek9000Inu', chain: 'Base', contract: '0x05AefaFfF978EA4F9E6ff9FA3Bc2465B90598549' },
+            { id: 'hoa-base', symbol: '🍊', name: 'HOA', chain: 'Base', contract: '0xee642384091f4bb9ab457b875E4e209b5a0BD147' }
         ];
 
         let tokens = []; // Will be populated with live data
@@ -7155,6 +7164,8 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
         'wBEPE': '$BEPE',
         'HONK': '🪿',
         'wHONK': '🪿',
+        'HOA': '🍊',
+        'wHOA': '🍊',
         'NECK': '$NECK',
         'wNECK': '$NECK',
         'CHIA': '$CHIA',
@@ -7373,7 +7384,9 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                 'BEPE':       '$BEPE',
                 'wBEPE':      '$BEPE',
                 'HONK':       '🪿',
-                'wHONK':      '🪿'
+                'wHONK':      '🪿',
+                'HOA':        '🍊',
+                'wHOA':       '🍊'
             };
             const getEmoji = (sym) => {
                 // If already emoji/non-ASCII (trackedTokens store emoji as symbol), use as-is
