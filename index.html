@@ -2141,7 +2141,7 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            font-family: 'Space Grotesk', sans-serif;
+            font-family: 'Cinzel', serif;
         }
 
         .bag-token-sub,
@@ -2168,7 +2168,7 @@
         .bag-chia-value {
             font-size: 18px;
             font-weight: 900;
-            font-family: 'Space Grotesk', sans-serif;
+            font-family: 'Space Grotesk', 'Cinzel', serif;
             letter-spacing: -0.04em;
             animation: bagDrift 6s ease-in-out infinite;
         }
@@ -7491,7 +7491,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                 if (id === 'Native' || id === 'XCH_NATIVE' || !id) {
                     window.open('https://www.spacescan.io', '_blank');
                 } else {
-                    window.open(`https://spacescan.io/xch/token/${id}`, '_blank');
+                    window.open(`https://www.spacescan.io/cat/${id}`, '_blank');
                 }
             } else if (chain === 'Base') {
                 // Link to 9mm Pro swap with specific token
@@ -9401,6 +9401,18 @@ function buildTokenCard(token) {
     const bal   = token.balance || 0;
     const price = token.price   || 0;
 
+    // Display name: prefer symbol if readable, else name, else truncated assetId
+    const isHex = (s) => /^[0-9a-f]{8,}$/i.test((s || '').trim());
+    const rawSym = (token.symbol || '').trim();
+    const rawName = (token.name || '').trim();
+    const displayName = (!isHex(rawSym) && rawSym && !rawSym.startsWith('Token '))
+        ? rawSym
+        : (!isHex(rawName) && rawName && !rawName.startsWith('Token '))
+            ? rawName
+            : (token.assetId && token.assetId !== 'XCH_NATIVE')
+                ? token.assetId.slice(0, 8).toUpperCase() + '\u2026'
+                : rawSym || 'Unknown';
+
     let detailHtml = '';
     if (isLP) {
         const poolFmt  = (token.totalLiqUsd || 0) > 0
@@ -9425,7 +9437,7 @@ function buildTokenCard(token) {
     let explorerUrl = '';
     if (!isLP) {
         if (token.assetId && token.assetId !== 'XCH_NATIVE') {
-            explorerUrl = `https://spacescan.io/xch/token/${token.assetId}`;
+            explorerUrl = `https://www.spacescan.io/cat/${token.assetId}`;
         } else if (token.assetId === 'XCH_NATIVE') {
             explorerUrl = 'https://www.spacescan.io';
         } else if (token.contract) {
@@ -9445,10 +9457,10 @@ function buildTokenCard(token) {
         onmouseover="this.style.borderColor='${hoverBorder}';this.style.transform='translateX(4px)';this.style.boxShadow='0 4px 16px rgba(251,191,36,0.15)';"
         onmouseout="this.style.borderColor='${borderColor}';this.style.transform='translateX(0)';this.style.boxShadow='none';">
         <div style="display:flex;justify-content:space-between;align-items:center;">
-            <span style="font-size:15px;font-weight:700;color:white;max-width:65%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${token.symbol || 'Unknown'}${isLP ? ' <span style="font-size:11px;color:#63b3ed;font-weight:600;opacity:0.85;">(LP)</span>' : ''}${explorerUrl ? ' <span style="font-size:10px;opacity:0.4;">↗</span>' : ''}</span>
-            <span style="font-size:16px;font-weight:700;color:${valueColor};">$${val >= 1000 ? val.toLocaleString(undefined,{maximumFractionDigits:0}) : val.toFixed(2)}</span>
+            <span style="font-size:15px;font-weight:700;color:white;max-width:65%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'Cinzel',serif;">${displayName}${isLP ? ' <span style="font-size:11px;color:#63b3ed;font-weight:600;opacity:0.85;font-family:Inter,sans-serif;">(LP)</span>' : ''}${explorerUrl ? ' <span style="font-size:10px;opacity:0.4;">↗</span>' : ''}</span>
+            <span style="font-size:16px;font-weight:700;color:${valueColor};font-family:'Space Grotesk','Cinzel',serif;">$${val >= 1000 ? val.toLocaleString(undefined,{maximumFractionDigits:0}) : val.toFixed(2)}</span>
         </div>
-        ${detailHtml}
+        <div style="font-family:'Inter',sans-serif;">${detailHtml}</div>
     </div>`;
 }
 
@@ -11461,24 +11473,50 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             }
-            // TAIL database fallback for tokens still showing as hex IDs
+            // TAIL database + Spacescan cat/info fallback for tokens still showing as hex IDs
             const nameCache = window._catNameCache = window._catNameCache || {};
             const unknownToks = Object.values(tokenMap).filter(function(t) { return !t.isLP && isHexStr(t.sym); });
             if (unknownToks.length > 0) {
                 const toFetch = unknownToks.filter(function(t) { return !(t.assetId in nameCache); });
                 if (toFetch.length > 0) {
-                    const fetched = await Promise.all(toFetch.map(function(t) {
-                        return fetch('https://api.taildatabase.com/coin/' + t.assetId)
+                    // Try TailDatabase /tail/ endpoint first (authoritative CAT registry)
+                    const tailResults = await Promise.allSettled(toFetch.map(function(t) {
+                        return fetch('https://api.taildatabase.com/tail/' + t.assetId, { headers: { 'Accept': 'application/json' } })
                             .then(function(r) { return r.ok ? r.json() : null; })
                             .catch(function() { return null; });
                     }));
-                    toFetch.forEach(function(t, i) { nameCache[t.assetId] = fetched[i] || null; });
+                    // For tokens TailDB missed, try Spacescan cat/info
+                    const missedToks = [];
+                    for (var fi = 0; fi < toFetch.length; fi++) {
+                        var tailRes = tailResults[fi];
+                        if (tailRes.status === 'fulfilled' && tailRes.value && (tailRes.value.name || '').trim()) {
+                            nameCache[toFetch[fi].assetId] = { name: tailRes.value.name, code: tailRes.value.code || tailRes.value.symbol || '' };
+                        } else {
+                            missedToks.push(toFetch[fi]);
+                        }
+                    }
+                    if (missedToks.length > 0) {
+                        var ssResults = await Promise.allSettled(missedToks.map(function(t) {
+                            return fetch('https://api.spacescan.io/cat/info/' + t.assetId)
+                                .then(function(r) { return r.ok ? r.json() : null; })
+                                .catch(function() { return null; });
+                        }));
+                        for (var si = 0; si < missedToks.length; si++) {
+                            var ssRes = ssResults[si];
+                            var info = (ssRes.status === 'fulfilled' && ssRes.value) ? (ssRes.value.data || ssRes.value) : null;
+                            if (info && ((info.name || '').trim() || (info.symbol || '').trim())) {
+                                nameCache[missedToks[si].assetId] = { name: (info.name || info.asset_name || '').trim(), code: (info.symbol || info.code || info.short_name || '').trim() };
+                            } else {
+                                nameCache[missedToks[si].assetId] = null;
+                            }
+                        }
+                    }
                 }
                 for (const t of unknownToks) {
                     const c = nameCache[t.assetId];
                     if (c) {
-                        if (c.name && !isHexStr(c.name)) { t.name = c.name; if (isHexStr(t.sym)) t.sym = c.code || c.ticker || c.name.slice(0,8); }
-                        if ((c.code || c.ticker) && !isHexStr(c.code || c.ticker)) t.sym = c.code || c.ticker;
+                        if (c.name && !isHexStr(c.name)) { t.name = c.name; if (isHexStr(t.sym)) t.sym = c.code || c.name.slice(0,8); }
+                        if (c.code && !isHexStr(c.code)) t.sym = c.code;
                     }
                 }
             }
@@ -11499,6 +11537,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const total = xchValue + tokenTotal;
         const highValue = all.filter(function(token) { return (token.value || 0) >= 1; });
         const lowValue = all.filter(function(token) { return (token.value || 0) > 0 && (token.value || 0) < 1; });
+        const zeroValue = all.filter(function(token) { return (token.value || 0) === 0; });
         const lowTotal = lowValue.reduce(function(sum, token) { return sum + (token.value || 0); }, 0);
 
         const collectionsMap = {};
@@ -11544,10 +11583,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             return '<div class="bag-token-row' + lpClass + '" onclick="window.open(\'' + link + '\',\'_blank\')">'
                 + '<div style="display:flex;justify-content:space-between;align-items:center;">'
-                + '<span style="font-size:15px;font-weight:700;color:white;max-width:65%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(displayName) + (isLP ? ' <span style="font-size:11px;color:#63b3ed;font-weight:600;opacity:0.85;">(LP)</span>' : '') + linkIcon + '</span>'
-                + '<span style="font-size:16px;font-weight:700;color:' + valueColor + ';">' + fmtUsd(val) + '</span>'
+                + '<span style="font-size:15px;font-weight:700;color:white;max-width:65%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:Cinzel,serif;">' + escapeHtml(displayName) + (isLP ? ' <span style="font-size:11px;color:#63b3ed;font-weight:600;opacity:0.85;font-family:Inter,sans-serif;">(LP)</span>' : '') + linkIcon + '</span>'
+                + '<span style="font-size:16px;font-weight:700;color:' + valueColor + ';font-family:Space Grotesk,Cinzel,serif;">' + fmtUsd(val) + '</span>'
                 + '</div>'
-                + detailHtml
+                + '<div style="font-family:Inter,sans-serif;">' + detailHtml + '</div>'
                 + '</div>';
         }
 
@@ -11570,10 +11609,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (xchBal > 0) {
             html += '<div class="bag-token-row native-row" style="margin-bottom:10px;">'
                 + '<div style="display:flex;justify-content:space-between;align-items:center;">'
-                + '<span style="font-size:15px;font-weight:700;color:white;">XCH <span style="font-size:10px;opacity:0.4;">\u2197</span></span>'
-                + '<span style="font-size:16px;font-weight:700;color:#4ade80;">' + fmtUsd(xchValue) + '</span>'
+                + '<span style="font-size:15px;font-weight:700;color:white;font-family:Cinzel,serif;">XCH <span style="font-size:10px;opacity:0.4;">\u2197</span></span>'
+                + '<span style="font-size:16px;font-weight:700;color:#4ade80;font-family:Space Grotesk,Cinzel,serif;">' + fmtUsd(xchValue) + '</span>'
                 + '</div>'
-                + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;color:rgba(255,255,255,0.6);margin-top:8px;">'
+                + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;color:rgba(255,255,255,0.6);margin-top:8px;font-family:Inter,sans-serif;">'
                 + '<span>Bal: ' + fmtBal(xchBal) + '</span>'
                 + '<span>Price: $' + xchPrice.toFixed(2) + '</span>'
         }
@@ -11589,13 +11628,14 @@ document.addEventListener('DOMContentLoaded', () => {
             html += '</div>';
         }
 
-        if (lowValue.length > 0) {
+        if (lowValue.length > 0 || zeroValue.length > 0) {
+            var lowAll = lowValue.concat(zeroValue);
             html += '<div style="margin-top:10px;">'
                 + '<div class="bag-low-toggle" onclick="var c=document.getElementById(\'' + lowValueId + '\');var open=c.style.display!==\'none\';c.style.display=open?\'none\':\'grid\';this.querySelector(\'.chv\').textContent=open?\'▸\':\'▾\';">'
-                + '<span><span class="chv">▸</span> Low value CATs (' + lowValue.length + ')</span>'
+                + '<span><span class="chv">▸</span> Low/unpriced CATs (' + lowAll.length + ')</span>'
                 + '<span>' + fmtUsd(lowTotal) + '</span></div>'
                 + '<div id="' + lowValueId + '" class="bag-low-list">';
-            for (var j = 0; j < lowValue.length; j++) html += tokenRow(lowValue[j]);
+            for (var j = 0; j < lowAll.length; j++) html += tokenRow(lowAll[j]);
             html += '</div></div>';
         }
 
