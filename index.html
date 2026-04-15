@@ -7834,6 +7834,16 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
 
         const BAG_COLORS = ['#fbbf24','#60a5fa','#4ade80','#a855f7','#f87171','#34d399','#fb923c','#c084fc','#e879f9','#38bdf8'];
 
+        let _bagBaseTotal = 0;
+        let _bagChiaTotal = 0;
+        function updateBagCombinedTotal() {
+            var combined = _bagBaseTotal + _bagChiaTotal;
+            var el = document.getElementById('bag-total-value');
+            if (el) el.textContent = fmtUsd(combined);
+            var summary = document.getElementById('bag-summary');
+            if (summary && combined > 0) summary.style.display = 'grid';
+        }
+
         function switchBagChain(chain, btn) {
             document.querySelectorAll('.bag-ctab').forEach(function(b) { b.classList.remove('active'); });
             btn.classList.add('active');
@@ -7855,7 +7865,8 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
             const safeShortAddress = escapeHtml(address.slice(0, 8) + '...' + address.slice(-6));
 
             document.getElementById('bag-summary').style.display = 'grid';
-            document.getElementById('bag-total-value').textContent = fmtUsd(total);
+            _bagBaseTotal = total;
+            updateBagCombinedTotal();
             document.getElementById('bag-position-count').textContent = tokens.length;
             document.getElementById('bag-lp-count').textContent = lpTokens.length;
             document.getElementById('bag-lp-value').textContent = fmtUsd(lpValue);
@@ -11621,6 +11632,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 + '<div style="font-family:Inter,sans-serif;">' + detailHtml + '</div>'
                 + '</div>';
         }
+
+        _bagChiaTotal = total;
+        updateBagCombinedTotal();
 
         var html = '<section class="bag-chia-card">';
         html += '<div class="bag-chia-head">'
