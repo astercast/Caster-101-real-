@@ -7957,7 +7957,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
             let html = `<section class="bag-render-card">
                 <div class="bag-results-hero">
                     <div>
-                        <div class="bag-card-label">Base Vault Readout</div>
+                        <div class="bag-card-label">Base Wallet Portfolio</div>
                         <div class="bag-results-title">Base Holdings</div>
                         <div class="bag-results-copy">${safeShortAddress}</div>
                     </div>
@@ -7970,12 +7970,12 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                 </div>`;
 
             if (lpTokens.length > 0) {
-                html += `<div class="bag-section-head">
-                    <div class="bag-section-accent" style="background:linear-gradient(180deg,#63b3ed,#3b82f6);"></div>
-                    <span class="bag-section-title" style="color:#93c5fd;">LP Positions</span>
-                    <span class="bag-section-meta">${lpTokens.length} pools · ${fmtUsd(lpValue)}</span>
+                const lpGridId = 'blp' + Math.random().toString(36).slice(2, 7);
+                html += `<div class="bag-low-toggle" style="margin-top:6px;" onclick="var c=document.getElementById('${lpGridId}');var open=c.style.display!=='none';c.style.display=open?'none':'grid';this.querySelector('.chv').textContent=open?'▸':'▾';">
+                    <span><span class="chv">▸</span> LP Positions (${lpTokens.length})</span>
+                    <span>${fmtUsd(lpValue)}</span>
                 </div>
-                <div class="bag-lp-grid">`;
+                <div id="${lpGridId}" class="bag-lp-grid" style="display:none;">`;
                 for (const token of lpTokens) {
                     const value = token.value || 0;
                     const pct = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
@@ -11651,18 +11651,6 @@ document.addEventListener('DOMContentLoaded', () => {
             + '<div class="bag-chia-highlight"><div class="bag-mini-label">CATs</div><div class="bag-mini-value">' + all.length + '</div></div>'
             + '<div class="bag-chia-highlight"><div class="bag-mini-label">NFTs</div><div class="bag-mini-value" style="color:#c084fc;">' + nfts.length + '</div></div>'
             + '</div>';
-
-        if (xchBal > 0) {
-            html += '<div class="bag-token-row native-row" style="margin-bottom:10px;">'
-                + '<div style="display:flex;justify-content:space-between;align-items:center;">'
-                + '<span style="font-size:15px;font-weight:700;color:white;font-family:Cinzel,serif;">XCH <span style="font-size:10px;opacity:0.4;">\u2197</span></span>'
-                + '<span style="font-size:16px;font-weight:700;color:#4ade80;font-family:Space Grotesk,Cinzel,serif;">' + fmtUsd(xchValue) + '</span>'
-                + '</div>'
-                + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;color:rgba(255,255,255,0.6);margin-top:8px;font-family:Inter,sans-serif;">'
-                + '<span>Bal: ' + fmtBal(xchBal) + '</span>'
-                + '<span>Price: $' + xchPrice.toFixed(2) + '</span>'
-                + '</div></div>';
-        }
 
         if (highValue.length > 0) {
             html += '<div class="bag-section-head" style="margin-top:4px;">'
