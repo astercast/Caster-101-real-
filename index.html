@@ -5856,16 +5856,12 @@
                     src = 'dexie';
                 }
 
-                // 2) Serverless batch (Spacescan price if server got it — includes 24h change)
+                // 2) Serverless batch — use for 24h change (always), price only if Dexie missed
                 const bp = parseFloat(batchPrices[t.assetId] || 0);
-                if (bp > 0) {
-                    // Prefer serverless if it has the price — it also carries 24h change
+                change = parseFloat(batchChanges[t.assetId] || 0);
+                if (price === 0 && bp > 0) {
                     price = bp;
-                    change = parseFloat(batchChanges[t.assetId] || 0);
                     src = batchSources[t.assetId] || 'batch';
-                } else if (price > 0) {
-                    // Dexie had price, try to get 24h change from serverless anyway
-                    change = parseFloat(batchChanges[t.assetId] || 0);
                 }
 
                 // 3) TibetSwap fallback
@@ -11051,7 +11047,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const { uri, approval } = await _sageWCClient.connect({
                 requiredNamespaces: {
                     chia: {
-                        methods: ['chip0002_getAssetCoins', 'chip0002_getAssetBalance'],
+                        methods: ['chip0002_getAssetCoins', 'chip0002_getAssetBalance', 'chip0002_getNFTs'],
                         chains: ['chia:mainnet'],
                         events: [],
                     }
@@ -11465,15 +11461,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }));
 
-            // Wait for everything
-            const [results, tm, xchPrice, dm] = await Promise.all([addressPromise, tibetPromise, xchPricePromise, dexiePromise]);
-
-            // ── Wallet-direct CAT coin discovery (covers ALL derived addresses) ──
-            // Spacescan per-address queries miss tokens on undiscovered derived addresses;
-            // getAssetCoins(type:'cat') returns every CAT coin across the entire wallet.
-            const walletCatBals = {};
-            if (_sageWCClient && _sageSession) {
+            // ── Wallet-direct discovery (runs in parallel with Spacescan fetches) ──
+            const walletDiscoveryPromise = (async function() {
+                const walletCatBals = {};
+                let walletNfts = null;
+                if (!_sageWCClient || !_sageSession) return { walletCatBals, walletNfts };
                 const wChainId = (_sageSession.namespaces && _sageSession.namespaces.chia && _sageSession.namespaces.chia.chains && _sageSession.namespaces.chia.chains[0]) || 'chia:mainnet';
+                // CAT coin scan — all CATs across all derived addresses
                 try {
                     let catOffset = 0;
                     const catPageSize = 100;
@@ -11494,26 +11488,27 @@ document.addEventListener('DOMContentLoaded', () => {
                         catOffset += catPageSize;
                     }
                 } catch(e) { console.warn('[Chia] CAT coin discovery:', e && e.message ? e.message : e); }
-                console.log('[Chia] Wallet CAT scan: ' + Object.keys(walletCatBals).length + ' unique tokens found across all addresses');
-            }
-
-            // ── Wallet-direct NFT discovery ──
-            let walletNfts = null;
-            if (_sageWCClient && _sageSession) {
-                const wChainId2 = (_sageSession.namespaces && _sageSession.namespaces.chia && _sageSession.namespaces.chia.chains && _sageSession.namespaces.chia.chains[0]) || 'chia:mainnet';
+                console.log('[Chia] Wallet CAT scan: ' + Object.keys(walletCatBals).length + ' unique tokens');
+                // NFT scan
                 const approvedMethods = (_sageSession.namespaces && _sageSession.namespaces.chia && _sageSession.namespaces.chia.methods) || [];
                 if (approvedMethods.includes('chip0002_getNFTs')) {
                     try {
                         walletNfts = await fetchWithTimeout(
                             _sageWCClient.request({
-                                topic: _sageSession.topic, chainId: wChainId2,
+                                topic: _sageSession.topic, chainId: wChainId,
                                 request: { method: 'chip0002_getNFTs', params: {} }
                             }), 12000, null);
                         if (Array.isArray(walletNfts)) console.log('[Chia] Wallet getNFTs: ' + walletNfts.length + ' NFTs');
                         else walletNfts = null;
-                    } catch(e) { console.warn('[Chia] getNFTs fallback:', e && e.message ? e.message : e); walletNfts = null; }
+                    } catch(e) { console.warn('[Chia] getNFTs:', e && e.message ? e.message : e); walletNfts = null; }
                 }
-            }
+                return { walletCatBals, walletNfts };
+            })();
+
+            // Wait for everything (wallet discovery now runs in parallel)
+            const [results, tm, xchPrice, dm, walletData] = await Promise.all([addressPromise, tibetPromise, xchPricePromise, dexiePromise, walletDiscoveryPromise]);
+            const walletCatBals = walletData.walletCatBals;
+            const walletNfts = walletData.walletNfts;
 
             // Log per-address results for debugging
             for (var ri = 0; ri < results.length; ri++) {
@@ -11615,28 +11610,55 @@ document.addEventListener('DOMContentLoaded', () => {
             const tokens = Object.values(tokenMap);
 
             // ── Override with wallet-reported CAT balances (authoritative, covers all derived addresses) ──
+            const walletNewIds = [];
             for (const catId of Object.keys(walletCatBals)) {
                 const walletBal = walletCatBals[catId];
                 const existing = tokenMap[catId];
                 if (existing) {
-                    // Wallet is authoritative — override Spacescan balance
                     if (Math.abs(existing.balance - walletBal) > 0.001) {
                         console.log('[Chia] CAT ' + (existing.sym || catId.slice(0,8)) + ': Spacescan=' + existing.balance + ' → wallet=' + walletBal);
                     }
                     existing.balance = walletBal;
-                    existing.value = walletBal * existing.price;
+                    if (existing.isLP && (tm[catId]) && tm[catId].poolLiq > 0) {
+                        existing.value = (walletBal / tm[catId].poolLiq) * tm[catId].poolXch * 2 * xchPrice;
+                    } else {
+                        existing.value = walletBal * existing.price;
+                    }
                 } else if (walletBal > 0) {
-                    // Token on a derived address Spacescan didn't see — create entry
                     const tb2 = tm[catId] || null;
                     const dx2 = dm[catId] || null;
-                    const dxP = (dx2 && dx2.priceXch) ? dx2.priceXch * xchPrice : 0;
+                    const isLP2 = !!(tb2 && tb2.isLP);
+                    const dxP = (dx2 && !isLP2 && dx2.priceXch) ? dx2.priceXch * xchPrice : 0;
                     const tbP = (tb2 && !tb2.isLP) ? (tb2.priceUsd || 0) : 0;
                     const pr2 = dxP || tbP;
-                    const tbName = (tb2 && tb2.tokenName) ? tb2.tokenName : '';
-                    const dxName = (dx2 && dx2.name) ? dx2.name : '';
-                    const sym2 = tbName || dxName || catId.slice(0, 6).toUpperCase();
-                    tokenMap[catId] = { sym: sym2, name: tbName || dxName || sym2, assetId: catId, balance: walletBal, price: pr2, value: walletBal * pr2, isLP: false, pairName: '' };
-                    console.log('[Chia] Discovered wallet-only CAT ' + sym2 + ': ' + walletBal + ' tokens');
+                    let val2 = walletBal * pr2;
+                    if (isLP2 && tb2.poolLiq > 0) val2 = (walletBal / tb2.poolLiq) * tb2.poolXch * 2 * xchPrice;
+                    const lpName2 = (isLP2 && tb2.pairName) ? tb2.pairName : '';
+                    const tbName = (tb2 && !tb2.isLP && tb2.tokenName) ? tb2.tokenName : '';
+                    const dxName = (dx2 && dx2.name && !isHexStr(dx2.name)) ? dx2.name : '';
+                    const sym2 = lpName2 || tbName || dxName || catId.slice(0, 6).toUpperCase();
+                    tokenMap[catId] = { sym: sym2, name: lpName2 || tbName || dxName || sym2, assetId: catId, balance: walletBal, price: pr2, value: val2, isLP: isLP2, pairName: (tb2 && tb2.pairName) || '' };
+                    walletNewIds.push(catId);
+                    console.log('[Chia] Discovered wallet-only ' + (isLP2 ? 'LP ' : 'CAT ') + sym2 + ': ' + walletBal);
+                }
+            }
+
+            // Name resolution for wallet-only tokens with hex names
+            if (walletNewIds.length > 0) {
+                const hexNewToks = walletNewIds.map(function(id) { return tokenMap[id]; }).filter(function(t) { return !t.isLP && isHexStr(t.sym); });
+                if (hexNewToks.length > 0) {
+                    const tailR = await Promise.allSettled(hexNewToks.map(function(t) {
+                        return fetch('https://api.taildatabase.com/tail/' + t.assetId, { headers: { 'Accept': 'application/json' } })
+                            .then(function(r) { return r.ok ? r.json() : null; }).catch(function() { return null; });
+                    }));
+                    for (var ni = 0; ni < hexNewToks.length; ni++) {
+                        var nr = tailR[ni];
+                        if (nr.status === 'fulfilled' && nr.value && (nr.value.name || '').trim()) {
+                            hexNewToks[ni].name = nr.value.name;
+                            hexNewToks[ni].sym = nr.value.code || nr.value.symbol || nr.value.name.slice(0, 8);
+                            nameCache[hexNewToks[ni].assetId] = { name: nr.value.name, code: nr.value.code || nr.value.symbol || '' };
+                        }
+                    }
                 }
             }
 
