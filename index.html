@@ -1988,6 +1988,7 @@
         .bag-render-card {
             padding: 18px;
             box-shadow: 0 16px 34px rgba(0,0,0,0.26);
+            flex: 1;
         }
 
         .bag-results-hero {
@@ -2471,7 +2472,6 @@
 
         .bag-chia-card {
             padding: 18px;
-            margin-top: 18px;
             box-shadow: 0 16px 34px rgba(0,0,0,0.26);
             flex: 1;
         }
@@ -7903,7 +7903,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                 document.getElementById('portfolioList').innerHTML = `
                     <section class="bag-render-card bag-empty-state">
                         <div class="bag-empty-icon">📭</div>
-                        <div class="bag-empty-title">No Base positions found.</div>
+                        <div class="bag-empty-title">No Base holdings found.</div>
                     </section>`;
                 return;
             }
@@ -7947,10 +7947,15 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                 <div class="bag-results-hero">
                     <div>
                         <div class="bag-card-label">Base Vault Readout</div>
-                        <div class="bag-results-title">${tokens.length} Base positions</div>
-                        <div class="bag-results-copy">Top holding: ${dominant ? escapeHtml(dominant.symbol || dominant.pairName || 'Unknown') : '-'} · ${dominant ? dominantPct.toFixed(1) : '0'}%</div>
+                        <div class="bag-results-title">Base Holdings</div>
+                        <div class="bag-results-copy">${safeShortAddress}</div>
                     </div>
-                    <div class="bag-panel-badge">${safeShortAddress}</div>
+                    <div class="bag-chia-total" style="color:#60a5fa;">${fmtUsd(total)}</div>
+                </div>
+                <div class="bag-chia-mini-grid">
+                    <div class="bag-chia-highlight"><div class="bag-mini-label">ETH</div><div class="bag-mini-value" style="color:#a5b4fc;">${fmtUsd(regularTokens.find(t => t.type === 'native')?.value || 0)}</div></div>
+                    <div class="bag-chia-highlight"><div class="bag-mini-label">Tokens</div><div class="bag-mini-value">${regularTokens.length}</div></div>
+                    <div class="bag-chia-highlight"><div class="bag-mini-label">LPs</div><div class="bag-mini-value" style="color:#93c5fd;">${lpTokens.length}</div></div>
                 </div>`;
 
             if (lpTokens.length > 0) {
