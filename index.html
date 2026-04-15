@@ -5751,8 +5751,14 @@
         }
 
 
+        const MCAP_CACHE_KEY = 'caster101_mcap_cache_v1';
+        function loadMcapCache() { try { return JSON.parse(localStorage.getItem(MCAP_CACHE_KEY) || '{}'); } catch { return {}; } }
+        function saveMcapCache(c) { try { localStorage.setItem(MCAP_CACHE_KEY, JSON.stringify(c)); } catch {} }
+
         async function fetchChiaData(baseData = [], fallbackMcapMap = {}) {
             console.log('--- CHIA PRICES: Browser-direct (Dexie tickers + Spacescan supply) ---');
+            // Load persistent mcap cache (survives page reloads, stale snapshot invalidation)
+            const mcapCache = loadMcapCache();
 
             const chiaTargets = trackedTokens.filter(t => t.chain === 'Chia');
             const catTargets  = chiaTargets.filter(t => t.assetId !== 'Native');
@@ -5962,6 +5968,11 @@
                         mcap = fallback.marketCap;
                     }
                     src += '+cachedMcap';
+                } else if (price > 0 && mcapCache[t.assetId] && mcapCache[t.assetId].mcap > 0) {
+                    // Persistent cache fallback — adjust for price movement
+                    const cached = mcapCache[t.assetId];
+                    mcap = cached.price > 0 ? cached.mcap * (price / cached.price) : cached.mcap;
+                    src += '+persistCache';
                 } else if (price > 0 && supply === 0) {
                     mcapStatus = 'no_supply'; // Has price but supply fetch failed (rate limit)
                 } else {
@@ -5975,7 +5986,11 @@
                 }
 
                 results.push({...t, price, change24h: change, marketCap: mcap, mcapStatus});
+
+                // Persist successful mcap to cache
+                if (mcap > 0 && price > 0) mcapCache[t.assetId] = { mcap, price, ts: Date.now() };
             }
+            saveMcapCache(mcapCache);
 
             console.log(`Chia: ${results.filter(r => r.price > 0).length}/${results.length} priced, ${results.filter(r => r.marketCap > 0).length} with mcap`);
             return results;
