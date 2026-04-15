@@ -11468,39 +11468,33 @@ document.addEventListener('DOMContentLoaded', () => {
             // Wait for everything
             const [results, tm, xchPrice, dm] = await Promise.all([addressPromise, tibetPromise, xchPricePromise, dexiePromise]);
 
-            // ── Wallet-direct CAT balance discovery (covers ALL derived addresses) ──
+            // ── Wallet-direct CAT coin discovery (covers ALL derived addresses) ──
             // Spacescan per-address queries miss tokens on undiscovered derived addresses;
-            // getAssetBalance reports the wallet-wide total for each CAT.
-            const TRACKED_CATS = [
-                'a09af8b0d12b27772c64f89cf0d1db95186dca5b1871babc5108ff44f36305e6',
-                'eb2155a177b6060535dd8e72e98ddb0c77aea21fab53737de1c1ced3cb38e4c4',
-                'ae1536f56760e471ad85ead45f00d680ff9cca73b8cc3407be778f1c0c606eac',
-                '70010d83542594dd44314efbae75d82b3d9ae7d946921ed981a6cd08f0549e50',
-                'ab558b1b841365a24d1ff2264c55982e55664a8b6e45bc107446b7e667bb463b',
-                'dd37f678dda586fad9b1daeae1f7c5c137ffa6d947e1ed5c7b4f3c430da80638',
-                'ccda69ff6c44d687994efdbee30689be51d2347f739287ab4bb7b52344f8bf1d',
-                '048b1358f3b55a70c4db22114c2f52569c0398ba19e8212b8daf1cb25c90a641',
-                '1ad673d21799c9a224014ca71f9fe07cbc836fa23fa97b3be275d46d0b8bd9da',
-                '69326954fe16117cd6250e929748b2a1ab916347598bc8180749279cfae21ddb',
-                'e816ee18ce2337c4128449bc539fbbe2ecfdd2098c4e7cab4667e223c3bdc23d',
-            ];
+            // getAssetCoins(type:'cat') returns every CAT coin across the entire wallet.
             const walletCatBals = {};
             if (_sageWCClient && _sageSession) {
                 const wChainId = (_sageSession.namespaces && _sageSession.namespaces.chia && _sageSession.namespaces.chia.chains && _sageSession.namespaces.chia.chains[0]) || 'chia:mainnet';
-                const catResults = await Promise.allSettled(TRACKED_CATS.map(function(id) {
-                    return _sageWCClient.request({
-                        topic: _sageSession.topic, chainId: wChainId,
-                        request: { method: 'chip0002_getAssetBalance', params: { type: 'cat', assetId: id } }
-                    });
-                }));
-                for (var ci = 0; ci < TRACKED_CATS.length; ci++) {
-                    var cr = catResults[ci];
-                    if (cr.status === 'fulfilled' && cr.value) {
-                        var catMojos = parseInt(cr.value.confirmed || cr.value.spendable || '0', 10);
-                        if (catMojos > 0) walletCatBals[TRACKED_CATS[ci]] = catMojos / 1000;
+                try {
+                    let catOffset = 0;
+                    const catPageSize = 100;
+                    while (true) {
+                        const catCoins = await fetchWithTimeout(
+                            _sageWCClient.request({
+                                topic: _sageSession.topic, chainId: wChainId,
+                                request: { method: 'chip0002_getAssetCoins', params: { type: 'cat', assetId: null, includeLocked: false, offset: catOffset, limit: catPageSize } }
+                            }), 15000, null);
+                        if (!Array.isArray(catCoins) || catCoins.length === 0) break;
+                        for (const cc of catCoins) {
+                            const aid = (cc.assetId || cc.asset_id || '').toLowerCase();
+                            const amt = parseInt(cc.coin && cc.coin.amount ? cc.coin.amount : 0, 10);
+                            if (aid && amt > 0) walletCatBals[aid] = (walletCatBals[aid] || 0) + (amt / 1000);
+                        }
+                        console.log('[Chia] CAT coin page offset=' + catOffset + ': ' + catCoins.length + ' coins');
+                        if (catCoins.length < catPageSize) break;
+                        catOffset += catPageSize;
                     }
-                }
-                console.log('[Chia] Wallet CAT balances: ' + Object.keys(walletCatBals).length + ' tokens found across all addresses');
+                } catch(e) { console.warn('[Chia] CAT coin discovery:', e && e.message ? e.message : e); }
+                console.log('[Chia] Wallet CAT scan: ' + Object.keys(walletCatBals).length + ' unique tokens found across all addresses');
             }
 
             // ── Wallet-direct NFT discovery ──
