@@ -11058,7 +11058,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 },
                 optionalNamespaces: {
                     chia: {
-                        methods: ['chip0002_getAssetCoins', 'chip0002_getAssetBalance'],
+                        methods: ['chip0002_getAssetCoins', 'chip0002_getAssetBalance', 'chip0002_getNFTs'],
                         chains: ['chia:testnet11'],
                         events: [],
                     }
@@ -11468,6 +11468,59 @@ document.addEventListener('DOMContentLoaded', () => {
             // Wait for everything
             const [results, tm, xchPrice, dm] = await Promise.all([addressPromise, tibetPromise, xchPricePromise, dexiePromise]);
 
+            // ── Wallet-direct CAT balance discovery (covers ALL derived addresses) ──
+            // Spacescan per-address queries miss tokens on undiscovered derived addresses;
+            // getAssetBalance reports the wallet-wide total for each CAT.
+            const TRACKED_CATS = [
+                'a09af8b0d12b27772c64f89cf0d1db95186dca5b1871babc5108ff44f36305e6',
+                'eb2155a177b6060535dd8e72e98ddb0c77aea21fab53737de1c1ced3cb38e4c4',
+                'ae1536f56760e471ad85ead45f00d680ff9cca73b8cc3407be778f1c0c606eac',
+                '70010d83542594dd44314efbae75d82b3d9ae7d946921ed981a6cd08f0549e50',
+                'ab558b1b841365a24d1ff2264c55982e55664a8b6e45bc107446b7e667bb463b',
+                'dd37f678dda586fad9b1daeae1f7c5c137ffa6d947e1ed5c7b4f3c430da80638',
+                'ccda69ff6c44d687994efdbee30689be51d2347f739287ab4bb7b52344f8bf1d',
+                '048b1358f3b55a70c4db22114c2f52569c0398ba19e8212b8daf1cb25c90a641',
+                '1ad673d21799c9a224014ca71f9fe07cbc836fa23fa97b3be275d46d0b8bd9da',
+                '69326954fe16117cd6250e929748b2a1ab916347598bc8180749279cfae21ddb',
+                'e816ee18ce2337c4128449bc539fbbe2ecfdd2098c4e7cab4667e223c3bdc23d',
+            ];
+            const walletCatBals = {};
+            if (_sageWCClient && _sageSession) {
+                const wChainId = (_sageSession.namespaces && _sageSession.namespaces.chia && _sageSession.namespaces.chia.chains && _sageSession.namespaces.chia.chains[0]) || 'chia:mainnet';
+                const catResults = await Promise.allSettled(TRACKED_CATS.map(function(id) {
+                    return _sageWCClient.request({
+                        topic: _sageSession.topic, chainId: wChainId,
+                        request: { method: 'chip0002_getAssetBalance', params: { type: 'cat', assetId: id } }
+                    });
+                }));
+                for (var ci = 0; ci < TRACKED_CATS.length; ci++) {
+                    var cr = catResults[ci];
+                    if (cr.status === 'fulfilled' && cr.value) {
+                        var catMojos = parseInt(cr.value.confirmed || cr.value.spendable || '0', 10);
+                        if (catMojos > 0) walletCatBals[TRACKED_CATS[ci]] = catMojos / 1000;
+                    }
+                }
+                console.log('[Chia] Wallet CAT balances: ' + Object.keys(walletCatBals).length + ' tokens found across all addresses');
+            }
+
+            // ── Wallet-direct NFT discovery ──
+            let walletNfts = null;
+            if (_sageWCClient && _sageSession) {
+                const wChainId2 = (_sageSession.namespaces && _sageSession.namespaces.chia && _sageSession.namespaces.chia.chains && _sageSession.namespaces.chia.chains[0]) || 'chia:mainnet';
+                const approvedMethods = (_sageSession.namespaces && _sageSession.namespaces.chia && _sageSession.namespaces.chia.methods) || [];
+                if (approvedMethods.includes('chip0002_getNFTs')) {
+                    try {
+                        walletNfts = await fetchWithTimeout(
+                            _sageWCClient.request({
+                                topic: _sageSession.topic, chainId: wChainId2,
+                                request: { method: 'chip0002_getNFTs', params: {} }
+                            }), 12000, null);
+                        if (Array.isArray(walletNfts)) console.log('[Chia] Wallet getNFTs: ' + walletNfts.length + ' NFTs');
+                        else walletNfts = null;
+                    } catch(e) { console.warn('[Chia] getNFTs fallback:', e && e.message ? e.message : e); walletNfts = null; }
+                }
+            }
+
             // Log per-address results for debugging
             for (var ri = 0; ri < results.length; ri++) {
                 console.log('[Chia] ' + addrList[ri].slice(0,10) + ': XCH=' + results[ri].xchBal + ', tokens=' + results[ri].rawTokens.length + ', NFTs=' + results[ri].nfts.length);
@@ -11566,9 +11619,58 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
             const tokens = Object.values(tokenMap);
-            const nfts = results.reduce(function(acc, r) { return acc.concat(r.nfts); }, []);
 
-            renderChiaPortfolioSection(addrList, xchBal, xchPrice, tokens, nfts, section);
+            // ── Override with wallet-reported CAT balances (authoritative, covers all derived addresses) ──
+            for (const catId of Object.keys(walletCatBals)) {
+                const walletBal = walletCatBals[catId];
+                const existing = tokenMap[catId];
+                if (existing) {
+                    // Wallet is authoritative — override Spacescan balance
+                    if (Math.abs(existing.balance - walletBal) > 0.001) {
+                        console.log('[Chia] CAT ' + (existing.sym || catId.slice(0,8)) + ': Spacescan=' + existing.balance + ' → wallet=' + walletBal);
+                    }
+                    existing.balance = walletBal;
+                    existing.value = walletBal * existing.price;
+                } else if (walletBal > 0) {
+                    // Token on a derived address Spacescan didn't see — create entry
+                    const tb2 = tm[catId] || null;
+                    const dx2 = dm[catId] || null;
+                    const dxP = (dx2 && dx2.priceXch) ? dx2.priceXch * xchPrice : 0;
+                    const tbP = (tb2 && !tb2.isLP) ? (tb2.priceUsd || 0) : 0;
+                    const pr2 = dxP || tbP;
+                    const tbName = (tb2 && tb2.tokenName) ? tb2.tokenName : '';
+                    const dxName = (dx2 && dx2.name) ? dx2.name : '';
+                    const sym2 = tbName || dxName || catId.slice(0, 6).toUpperCase();
+                    tokenMap[catId] = { sym: sym2, name: tbName || dxName || sym2, assetId: catId, balance: walletBal, price: pr2, value: walletBal * pr2, isLP: false, pairName: '' };
+                    console.log('[Chia] Discovered wallet-only CAT ' + sym2 + ': ' + walletBal + ' tokens');
+                }
+            }
+
+            // Rebuild tokens array after wallet overrides
+            const finalTokens = Object.values(tokenMap);
+
+            // ── Merge wallet NFTs with Spacescan NFTs ──
+            let nfts = results.reduce(function(acc, r) { return acc.concat(r.nfts); }, []);
+            if (walletNfts && walletNfts.length > 0) {
+                // Deduplicate by launcher_id / nftId
+                const seenIds = new Set(nfts.map(function(n) { return n.launcher_id || n.launcherId || n.nft_id || ''; }).filter(Boolean));
+                for (const wn of walletNfts) {
+                    const wnId = wn.launcher_id || wn.launcherId || wn.nft_id || wn.nftId || '';
+                    if (wnId && !seenIds.has(wnId)) {
+                        nfts.push({
+                            launcher_id: wnId,
+                            name: wn.name || 'NFT',
+                            collection_id: wn.collectionId || wn.collection_id || '',
+                            collection_name: wn.collection_name || '',
+                            preview_url: wn.imageUri || wn.thumbnailUri || wn.preview_url || ''
+                        });
+                        seenIds.add(wnId);
+                    }
+                }
+                console.log('[Chia] Merged NFTs: ' + nfts.length + ' total (' + walletNfts.length + ' from wallet)');
+            }
+
+            renderChiaPortfolioSection(addrList, xchBal, xchPrice, finalTokens, nfts, section);
         } catch(err) {
             section.innerHTML = '<section class="bag-chia-card bag-error-state"><div class="bag-error-icon">\u26a0\ufe0f</div><div class="bag-error-title">Chia Portfolio Error</div><div class="bag-error-copy">' + escapeHtml(err.message || 'Unknown error') + '</div></section>';
         }
