@@ -4446,6 +4446,11 @@
         </div>
 
         <div id="portfolio" class="content">
+            <div style="background:linear-gradient(135deg,rgba(180,80,20,0.18),rgba(120,40,10,0.12));border:1px solid rgba(251,191,36,0.25);border-radius:14px;padding:18px 22px;margin:0 auto 16px;max-width:720px;text-align:center;">
+                <div style="font-size:20px;margin-bottom:6px;">🔮</div>
+                <div style="font-family:Cinzel,serif;font-size:16px;font-weight:700;color:#fbbf24;margin-bottom:6px;">This page isn't really casting right now</div>
+                <div style="font-family:'Space Grotesk',sans-serif;font-size:13px;color:rgba(255,255,255,0.65);line-height:1.5;">You can still try it out, but things may not load correctly. Fix coming soon.</div>
+            </div>
             <div class="bag-page">
 
                 <!-- ── Input Card ── -->
@@ -7933,7 +7938,6 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                 return `<div class="bag-token-row${isNative ? ' native-row' : ''}"${openAttr}>
                     <div class="bag-token-main">
                         <div class="bag-token-left">
-                            <div class="bag-token-icon" style="background:${gradient};">${displaySymbol.slice(0, 3).toUpperCase()}</div>
                             <div style="min-width:0;">
                                 <div class="bag-token-name">${displayName}</div>
                                 <div class="bag-token-sub">${fmtBal(token.balance)} held · ${escapeHtml(priceStr)}</div>
@@ -11112,7 +11116,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch(e) { console.warn('[Sage] getAssetBalance:', e && e.message ? e.message : e); }
 
-            // 3. Discover P2 addresses from actual XCH coins held in wallet (paginated)
+            // 3. Discover P2 addresses + CAT balances from actual coins held in wallet (paginated)
+            window._sageCoinScanCats = {};
             try {
                 let offset = 0;
                 const pageSize = 100;
@@ -11122,12 +11127,20 @@ document.addEventListener('DOMContentLoaded', () => {
                         request: { method: 'chip0002_getAssetCoins', params: { type: null, assetId: null, includeLocked: false, offset: offset, limit: pageSize } }
                     });
                     if (!Array.isArray(coins) || coins.length === 0) break;
-                    for (const c of coins) addPH(c && c.coin ? c.coin.puzzle_hash : '');
-                    console.log('[Sage] XCH coin page offset=' + offset + ': ' + coins.length + ' coins → ' + allAddresses.length + ' addresses');
+                    for (const c of coins) {
+                        addPH(c && c.coin ? c.coin.puzzle_hash : '');
+                        // Extract CAT data (coins with an assetId are CATs)
+                        var caid = (c.assetId || c.asset_id || '').toLowerCase();
+                        if (caid) {
+                            var camt = parseInt(c.coin && c.coin.amount ? c.coin.amount : 0, 10);
+                            if (camt > 0) window._sageCoinScanCats[caid] = (window._sageCoinScanCats[caid] || 0) + (camt / 1000);
+                        }
+                    }
+                    console.log('[Sage] Coin page offset=' + offset + ': ' + coins.length + ' coins → ' + allAddresses.length + ' addrs, ' + Object.keys(window._sageCoinScanCats).length + ' CATs');
                     if (coins.length < pageSize) break;
                     offset += pageSize;
                 }
-            } catch(e) { console.warn('[Sage] XCH coin discovery:', e && e.message ? e.message : e); }
+            } catch(e) { console.warn('[Sage] Coin discovery:', e && e.message ? e.message : e); }
         }
 
         console.log('[Sage] Resolved ' + allAddresses.length + ' address(es):', allAddresses.map(function(a) { return a.slice(0,10) + '…'; }));
@@ -11467,35 +11480,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 let walletNfts = null;
                 if (!_sageWCClient || !_sageSession) return { walletCatBals, walletNfts };
                 const wChainId = (_sageSession.namespaces && _sageSession.namespaces.chia && _sageSession.namespaces.chia.chains && _sageSession.namespaces.chia.chains[0]) || 'chia:mainnet';
-                // CAT coin scan — try full discovery first (omit assetId), fall back to per-token queries
-                let fullScanWorked = false;
-                try {
-                    let catOffset = 0;
-                    const catPageSize = 100;
-                    while (true) {
-                        const catCoins = await fetchWithTimeout(
-                            _sageWCClient.request({
-                                topic: _sageSession.topic, chainId: wChainId,
-                                request: { method: 'chip0002_getAssetCoins', params: { type: 'cat', includeLocked: false, offset: catOffset, limit: catPageSize } }
-                            }), 15000, null);
-                        if (!Array.isArray(catCoins) || catCoins.length === 0) break;
-                        for (const cc of catCoins) {
-                            const aid = (cc.assetId || cc.asset_id || '').toLowerCase();
-                            const amt = parseInt(cc.coin && cc.coin.amount ? cc.coin.amount : 0, 10);
-                            if (aid && amt > 0) walletCatBals[aid] = (walletCatBals[aid] || 0) + (amt / 1000);
-                        }
-                        console.log('[Chia] CAT coin page offset=' + catOffset + ': ' + catCoins.length + ' coins');
-                        if (catCoins.length < catPageSize) break;
-                        catOffset += catPageSize;
-                    }
-                    fullScanWorked = true;
-                    console.log('[Chia] Full CAT scan: ' + Object.keys(walletCatBals).length + ' unique tokens');
-                } catch(e) {
-                    console.warn('[Chia] Full CAT scan failed, falling back to per-token queries:', e && e.message ? e.message : e);
-                }
-                // Fallback: query each tracked CAT individually via getAssetBalance
-                if (!fullScanWorked) {
-                    const KNOWN_CATS = [
+                // CAT balances — use cached data from resolveSageAddresses coin scan (discovers ALL CATs)
+                if (window._sageCoinScanCats && Object.keys(window._sageCoinScanCats).length > 0) {
+                    Object.assign(walletCatBals, window._sageCoinScanCats);
+                    console.log('[Chia] Using cached coin scan: ' + Object.keys(walletCatBals).length + ' CATs');
+                } else {
+                    // Fallback: query each tracked CAT individually via getAssetBalance
+                    var KNOWN_CATS = [
                         'a09af8b0d12b27772c64f89cf0d1db95186dca5b1871babc5108ff44f36305e6',
                         'eb2155a177b6060535dd8e72e98ddb0c77aea21fab53737de1c1ced3cb38e4c4',
                         'ae1536f56760e471ad85ead45f00d680ff9cca73b8cc3407be778f1c0c606eac',
@@ -11509,7 +11500,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         'e816ee18ce2337c4128449bc539fbbe2ecfdd2098c4e7cab4667e223c3bdc23d',
                     ];
                     try {
-                        const catResults = await Promise.allSettled(KNOWN_CATS.map(function(id) {
+                        var catResults = await Promise.allSettled(KNOWN_CATS.map(function(id) {
                             return _sageWCClient.request({
                                 topic: _sageSession.topic, chainId: wChainId,
                                 request: { method: 'chip0002_getAssetBalance', params: { type: 'cat', assetId: id } }
@@ -11731,7 +11722,15 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderChiaPortfolioSection(addressOrList, xchBal, xchPrice, tokens, nfts, container) {
         const addrList = Array.isArray(addressOrList) ? addressOrList : [addressOrList];
         const xchValue = xchBal * xchPrice;
-        const all = tokens.slice().sort(function(a, b) { return (b.value || 0) - (a.value || 0); });
+        var isHexName = function(s) { return /^[0-9a-f]{8,}$/i.test((s || '').trim()); };
+        // Filter: hide tokens with no price AND no known name (untradeable junk)
+        const tradeable = tokens.filter(function(token) {
+            if ((token.value || 0) > 0) return true;
+            if (token.isLP) return true;
+            if (!isHexName(token.name) || !isHexName(token.sym)) return true;
+            return false; // hex name + zero value = untradeable unknown token
+        });
+        const all = tradeable.slice().sort(function(a, b) { return (b.value || 0) - (a.value || 0); });
         const tokenTotal = all.reduce(function(sum, token) { return sum + (token.value || 0); }, 0);
         const total = xchValue + tokenTotal;
         const highValue = all.filter(function(token) { return (token.value || 0) >= 1; });
