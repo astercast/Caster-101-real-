@@ -11492,10 +11492,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     const dx = dm[aid] || null;
                     const isLP = !!(tb && tb.isLP) || (t.name || '').toLowerCase().includes('tibet');
                     const bal = parseFloat(t.balance || 0);
-                    // Price priority: Spacescan → TibetSwap → Dexie tickers
+                    // Price priority: Dexie tickers (most liquid) → TibetSwap → Spacescan
                     const dexiePrice = (dx && !isLP) ? dx.priceXch * xchPrice : 0;
-                    const pr = parseFloat(t.price || 0) || (tb && !tb.isLP ? tb.priceUsd || 0 : 0) || dexiePrice;
-                    let val = parseFloat(t.total_value || 0) || bal * pr;
+                    const tibetPrice = (tb && !tb.isLP) ? (tb.priceUsd || 0) : 0;
+                    const spacescanPrice = parseFloat(t.price || 0);
+                    const pr = dexiePrice || tibetPrice || spacescanPrice;
+                    let val = bal * pr;
                     if (isLP && tb && tb.poolLiq > 0) val = (bal / tb.poolLiq) * tb.poolXch * 2 * xchPrice;
                     const rawSym = (t.symbol || '').trim(), rawName = (t.name || '').trim();
                     // TibetSwap is the most reliable name source for CATs that have pairs
