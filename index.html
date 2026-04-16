@@ -4379,7 +4379,17 @@
                 function toggleTangTickers(show) {
                     document.getElementById('chiaTokenList').classList.toggle('show-tang', show);
                     document.getElementById('baseTokenList').classList.toggle('show-tang', show);
+                    try { localStorage.setItem('caster101_tang_toggle', show ? '1' : '0'); } catch {}
                 }
+                // Restore tang toggle on load
+                (function() {
+                    try {
+                        if (localStorage.getItem('caster101_tang_toggle') === '1') {
+                            var cb = document.getElementById('tang-toggle-cb');
+                            if (cb) { cb.checked = true; toggleTangTickers(true); }
+                        }
+                    } catch {}
+                })();
                 function toggleSortInfo() {
                     const tooltip = document.getElementById('sort-info-tooltip');
                     tooltip.style.display = tooltip.style.display === 'none' ? 'block' : 'none';
@@ -6182,7 +6192,7 @@
             return out;
         }
 
-        async function updateData() {
+        async function updateData(force) {
             // Show loading state
             const refreshIcon = document.getElementById('market-refresh-icon');
             const refreshBtn = document.getElementById('market-refresh-btn');
@@ -6208,7 +6218,7 @@
             }
 
             // ── FAST PATH: market-index Blob cache (usually < 300ms) ──────────────
-            try {
+            if (!force) { try {
                 const idxResp = await fetch('/api/market-index', { cache: 'no-store' });
                 if (idxResp.ok) {
                     const idx = await idxResp.json();
@@ -6229,7 +6239,7 @@
                 console.warn('⚠️ market-index fast path returned no usable data, falling back to direct fetch');
             } catch (e) {
                 console.warn('⚠️ market-index fast path failed:', e.message, '— falling back to direct fetch');
-            }
+            } } // end if(!force)
             // ── END FAST PATH ──────────────────────────────────────────────────────
 
             console.log('🔄 Starting data fetch (Base + Chia in parallel)...');
@@ -6299,7 +6309,7 @@
         function manualMarketRefresh() {
             if (marketRefreshLocked) return;
             marketRefreshLocked = true;
-            updateData().catch(function(e) { console.warn('Manual refresh failed:', e.message); }).finally(function() {
+            updateData(true).catch(function(e) { console.warn('Manual refresh failed:', e.message); }).finally(function() {
                 setTimeout(function() { marketRefreshLocked = false; }, 5000);
             });
         }
