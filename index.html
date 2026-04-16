@@ -4381,15 +4381,16 @@
                     document.getElementById('baseTokenList').classList.toggle('show-tang', show);
                     try { localStorage.setItem('caster101_tang_toggle', show ? '1' : '0'); } catch {}
                 }
-                // Restore tang toggle on load
-                (function() {
+                // Restore tang toggle after DOM is ready (list elements are below this script)
+                document.addEventListener('DOMContentLoaded', function() {
                     try {
                         if (localStorage.getItem('caster101_tang_toggle') === '1') {
                             var cb = document.getElementById('tang-toggle-cb');
-                            if (cb) { cb.checked = true; toggleTangTickers(true); }
+                            if (cb) cb.checked = true;
+                            toggleTangTickers(true);
                         }
                     } catch {}
-                })();
+                });
                 function toggleSortInfo() {
                     const tooltip = document.getElementById('sort-info-tooltip');
                     tooltip.style.display = tooltip.style.display === 'none' ? 'block' : 'none';
