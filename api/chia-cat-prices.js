@@ -18,6 +18,10 @@ const CAT_IDS = [
     'e816ee18ce2337c4128449bc539fbbe2ecfdd2098c4e7cab4667e223c3bdc23d', // HOA
 ];
 
+const STATIC_SUPPLY_FALLBACKS = {
+    'e335003c6d59aaaabe27eeeaf8a7b1308765f6bc9492a0b16394f50dec6bdcb7': 9900000000, // HODL circulating supply
+};
+
 const UA = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36', 'Accept': 'application/json' };
 const sleep = ms => new Promise(res => setTimeout(res, ms));
 
@@ -180,6 +184,8 @@ export default async function handler(req, res) {
                 price = dexiePrice;
                 src = 'dexie';
                 if (ss && ss.change) change = ss.change;
+                    const staticSupply = STATIC_SUPPLY_FALLBACKS[id] || 0;
+                    if (staticSupply > 0) mcaps[id] = staticSupply * price;
             }
 
             prices[id] = price;

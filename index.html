@@ -5719,6 +5719,9 @@
         // ══════════════════════════════════════════════════════════════════════════
         const supplyCache = {}; // In-memory: { assetId: { supply, total, ts } }
         const SUPPLY_CACHE_TTL = 3 * 60 * 60 * 1000; // 3 hours
+            const STATIC_SUPPLY_FALLBACKS = {
+                'e335003c6d59aaaabe27eeeaf8a7b1308765f6bc9492a0b16394f50dec6bdcb7': 9900000000 // HODL circulating supply
+            };
 
         // Load cached supplies from localStorage on startup
         try {
@@ -5974,6 +5977,7 @@
                 let src      = tp.src;
 
                 const supply = supplyResults[t.assetId] || 0;
+                    const staticSupply = STATIC_SUPPLY_FALLBACKS[t.assetId] || 0;
                 const batchMcap = parseFloat(batchMcaps[t.assetId] || 0);
                 const fallback = fallbackMcapMap[t.assetId] || null;
                 let mcap = 0;
@@ -5982,6 +5986,9 @@
                 if (supply > 0 && price > 0) {
                     mcap = supply * price;
                     src += '+supply';
+                    } else if (price > 0 && staticSupply > 0) {
+                        mcap = staticSupply * price;
+                        src += '+staticSupply';
                 } else if (price > 0 && batchMcap > 0) {
                     mcap = batchMcap;
                     src += '+batchMcap';
