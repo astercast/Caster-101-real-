@@ -14,6 +14,7 @@ const CAT_IDS = [
     '048b1358f3b55a70c4db22114c2f52569c0398ba19e8212b8daf1cb25c90a641', // HONK
     '1ad673d21799c9a224014ca71f9fe07cbc836fa23fa97b3be275d46d0b8bd9da', // NECK
     '69326954fe16117cd6250e929748b2a1ab916347598bc8180749279cfae21ddb', // CHIA (memecoin)
+        'e335003c6d59aaaabe27eeeaf8a7b1308765f6bc9492a0b16394f50dec6bdcb7', // HODL
     'e816ee18ce2337c4128449bc539fbbe2ecfdd2098c4e7cab4667e223c3bdc23d', // HOA
 ];
 
