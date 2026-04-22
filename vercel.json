@@ -1,5 +1,11 @@
 {
   "version": 2,
+  "crons": [
+    {
+      "path": "/api/market-index-refresh",
+      "schedule": "* * * * *"
+    }
+  ],
   "rewrites": [
     { "source": "/market", "destination": "/market.html" },
     { "source": "/bag", "destination": "/bag.html" },
@@ -25,6 +31,9 @@
       "maxDuration": 60
     },
     "api/market-index.js": {
+      "maxDuration": 30
+    },
+    "api/market-index-refresh.js": {
       "maxDuration": 30
     },
     "api/game-index.js": {
