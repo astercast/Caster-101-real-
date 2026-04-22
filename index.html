@@ -6228,22 +6228,31 @@
             }
 
             // ── FAST PATH: market-index Blob cache (usually < 300ms) ──────────────
+            // Only used when not forced AND the Blob is newer than what we already have displayed.
             if (!force) { try {
                 const idxResp = await fetch('/api/market-index', { cache: 'no-store' });
                 if (idxResp.ok) {
                     const idx = await idxResp.json();
                     if (isMarketSnapshotUsable(idx)) {
-                        console.log(`⚡ Market index hit (source=${idx.source || '?'}, ${idx.base.length} base + ${idx.chia.length} chia tokens)`);
-                        tokens = [...idx.base, ...idx.chia];
-                        refreshData();
-                        marketLastUpdatedAt = idx.savedAt || Date.now();
-                        updateMarketStatus();
-                        saveMarketSnapshotLocal(idx);
-                        fetchMerklPools();
-                        // Stop loading spinner
-                        if (refreshIcon) refreshIcon.classList.remove('spinning');
-                        if (refreshBtn) refreshBtn.disabled = false;
-                        return;
+                        const blobAge = (idx.savedAt || 0);
+                        const currentAge = marketLastUpdatedAt || 0;
+                        // Only apply Blob data if it is not older than what we already rendered.
+                        // Allow a 10s window for POST propagation lag.
+                        if (blobAge >= currentAge - 10000) {
+                            console.log(`⚡ Market index hit (source=${idx.source || '?'}, ${idx.base.length} base + ${idx.chia.length} chia tokens)`);
+                            tokens = [...idx.base, ...idx.chia];
+                            refreshData();
+                            marketLastUpdatedAt = idx.savedAt || Date.now();
+                            updateMarketStatus();
+                            saveMarketSnapshotLocal(idx);
+                            fetchMerklPools();
+                            // Stop loading spinner
+                            if (refreshIcon) refreshIcon.classList.remove('spinning');
+                            if (refreshBtn) refreshBtn.disabled = false;
+                            return;
+                        } else {
+                            console.log(`⚡ Market Blob is stale (blob=${new Date(blobAge).toISOString()}, current=${new Date(currentAge).toISOString()}) — doing full fetch`);
+                        }
                     }
                 }
                 console.warn('⚠️ market-index fast path returned no usable data, falling back to direct fetch');
@@ -6328,7 +6337,7 @@
             if (marketInitialized) return;
             marketInitialized = true;
             updateMarketStatus('Loading data...');
-            updateData();
+            updateData(true); // Always do a full fresh fetch on first visit
         }
 
         // Merkl Magic - Fetch 9mm.pro pools
