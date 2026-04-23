@@ -5553,6 +5553,7 @@
         let marketIndexLoadedAt = 0;
         let marketIndexPromise = null;
         const MARKET_SNAPSHOT_LOCAL_KEY = 'caster101_market_snapshot_v1';
+        const MARKET_SNAPSHOT_MAX_AGE_MS = 2 * 60 * 1000;
         let treasuryIndexSnapshot = null;
         let treasuryIndexLoadedAt = 0;
         let treasuryIndexPromise = null;
@@ -5605,6 +5606,9 @@
 
         function isMarketSnapshotUsable(snapshot) {
             if (!snapshot || !Array.isArray(snapshot.base) || !Array.isArray(snapshot.chia)) return false;
+
+            const savedAt = parseFloat(snapshot.savedAt || 0);
+            if (!savedAt || (Date.now() - savedAt) > MARKET_SNAPSHOT_MAX_AGE_MS) return false;
 
             // Reject stale snapshots missing newly-added tokens
             const expectedChia = trackedTokens.filter(t => t.chain === 'Chia').length;
@@ -6236,9 +6240,10 @@
                     if (isMarketSnapshotUsable(idx)) {
                         const blobAge = (idx.savedAt || 0);
                         const currentAge = marketLastUpdatedAt || 0;
+                        const isFreshEnough = (Date.now() - blobAge) <= MARKET_SNAPSHOT_MAX_AGE_MS;
                         // Only apply Blob data if it is not older than what we already rendered.
                         // Allow a 10s window for POST propagation lag.
-                        if (blobAge >= currentAge - 10000) {
+                        if (isFreshEnough && blobAge >= currentAge - 10000) {
                             console.log(`⚡ Market index hit (source=${idx.source || '?'}, ${idx.base.length} base + ${idx.chia.length} chia tokens)`);
                             tokens = [...idx.base, ...idx.chia];
                             refreshData();
