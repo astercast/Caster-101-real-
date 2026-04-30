@@ -36,6 +36,15 @@
     "api/market-index-refresh.js": {
       "maxDuration": 30
     },
+    "api/prices.js": {
+      "maxDuration": 30
+    },
+    "api/arbitrage.js": {
+      "maxDuration": 30
+    },
+    "api/metadata.js": {
+      "maxDuration": 30
+    },
     "api/game-index.js": {
       "maxDuration": 30
     },
