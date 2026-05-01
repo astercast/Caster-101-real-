@@ -18,6 +18,7 @@ const TOKEN_ALIASES = {
     neckcoin: ['neckcoin', 'neck', '$neck'],
     vfvapatek9000inu: ['vfvapatek9000inu', '$chia', 'chia-meme'],
     hodl: ['hodl', '$hodl', '💎'],
+    mana: ['mana', '$🧙‍♂️', '🧙‍♂️'],
     hoa: ['hoa', '🍊'],
     wizardbucks: ['wizardbucks', 'wiz', '🧙💸']
 };
