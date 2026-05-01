@@ -56,7 +56,7 @@ async function safeFetch(url, timeout = 25000) {
 }
 
 function toRow(token) {
-    const resolvedKey = resolveTokenKey(token.displayName || token.name || token.symbol || token.id || '');
+    const resolvedKey = resolveTokenKey(token.name || token.displayName || token.symbol || token.id || '');
     const aliasSet = new Set(TOKEN_ALIASES[resolvedKey] || []);
     aliasSet.add((token.displayName || token.name || '').toLowerCase());
     aliasSet.add((token.symbol || '').toLowerCase());
