@@ -633,9 +633,9 @@
             gap: 10px;
         }
 
-        /* ── Chain Tab Switcher (mobile only) ── */
+        /* ── Chain Tab Switcher — disabled, using 2-col ── */
         .chain-tab-bar {
-            display: none;
+            display: none !important;
         }
 
         /* ── Market Columns ── */
@@ -676,8 +676,8 @@
 
         /* ── Token Cards ── */
         .token-card {
-            background: rgba(16, 16, 24, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.07);
+            background: rgba(16, 16, 24, 0.93);
+            border: 1px solid rgba(255, 255, 255, 0.09);
             border-radius: 12px;
             padding: 11px 13px;
             cursor: pointer;
@@ -715,8 +715,7 @@
             font-size: 18px;
             line-height: 1;
             flex-shrink: 0;
-            width: 22px;
-            text-align: center;
+            white-space: nowrap;
         }
 
         .tc-name {
@@ -3009,113 +3008,92 @@
 
             .filter-btn {
                 font-family: 'Space Grotesk', sans-serif !important;
-                padding: 7px 14px !important;
-                font-size: 12px !important;
+                padding: 7px 12px !important;
+                font-size: 11px !important;
                 font-weight: 600 !important;
                 border-radius: 20px !important;
                 letter-spacing: 0.03em !important;
             }
 
-            /* Chain Tab Switcher */
-            .chain-tab-bar {
-                display: flex !important;
-                gap: 8px !important;
-                margin-bottom: 12px !important;
-            }
-
-            .chain-tab {
-                flex: 1 !important;
-                padding: 10px !important;
-                border-radius: 10px !important;
-                font-size: 13px !important;
-                font-weight: 700 !important;
-                font-family: 'Space Grotesk', sans-serif !important;
-                background: rgba(255, 255, 255, 0.05) !important;
-                border: 1px solid rgba(255, 255, 255, 0.1) !important;
-                color: rgba(255, 255, 255, 0.55) !important;
-                cursor: pointer !important;
-                transition: all 0.2s ease !important;
-                text-align: center !important;
-            }
-
-            .chain-tab.active-chia {
-                background: rgba(74, 222, 128, 0.1) !important;
-                border-color: rgba(74, 222, 128, 0.4) !important;
-                color: #4ade80 !important;
-            }
-
-            .chain-tab.active-base {
-                background: rgba(0, 82, 255, 0.1) !important;
-                border-color: rgba(0, 82, 255, 0.4) !important;
-                color: #60a5fa !important;
-            }
-
-            /* Market Columns — single-column switcher on mobile */
+            /* Market Columns — 2 side-by-side on mobile */
             .market-columns {
-                flex-direction: column !important;
-                gap: 0 !important;
-            }
-
-            /* Hide base by default; show when .show-base is set */
-            .market-columns .base-column {
-                display: none !important;
-            }
-
-            .market-columns.show-base .chia-column {
-                display: none !important;
-            }
-
-            .market-columns.show-base .base-column {
-                display: flex !important;
-                flex-direction: column !important;
+                flex-direction: row !important;
+                gap: 8px !important;
             }
 
             .market-column {
+                flex: 1 !important;
                 min-width: 0 !important;
                 padding: 0 !important;
             }
 
             .column-header {
                 font-family: 'Space Grotesk', sans-serif !important;
-                font-size: 11px !important;
+                font-size: 10px !important;
                 font-weight: 700 !important;
-                padding: 8px 12px !important;
-                margin-bottom: 8px !important;
-                border-radius: 9px !important;
+                padding: 7px 6px !important;
+                margin-bottom: 6px !important;
+                border-radius: 8px !important;
                 letter-spacing: 0.06em !important;
             }
 
-            /* Token Cards — full width, comfortable on mobile */
+            /* Token Cards — compact half-width */
             .token-card {
-                padding: 10px 12px !important;
-                border-radius: 11px !important;
+                padding: 7px 8px !important;
+                border-radius: 10px !important;
             }
 
             .token-grid {
-                gap: 6px !important;
+                gap: 5px !important;
             }
 
             /* tc-* mobile overrides */
-            .tc-emoji { font-size: 16px !important; }
+            .tc-top {
+                gap: 5px !important;
+            }
+
+            .tc-left {
+                gap: 4px !important;
+                min-width: 0 !important;
+                flex: 1 !important;
+            }
+
+            .tc-emoji {
+                font-size: 13px !important;
+                flex-shrink: 0 !important;
+            }
 
             .tc-name {
-                font-size: 12px !important;
-                font-family: 'Space Grotesk', sans-serif !important;
-                letter-spacing: 0.04em !important;
-                color: rgba(255, 255, 255, 0.9) !important;
+                font-size: 10px !important;
+                letter-spacing: 0.03em !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                white-space: nowrap !important;
+            }
+
+            .tc-right { display: none !important; }
+
+            .tc-mid {
+                margin-top: 3px !important;
             }
 
             .tc-price {
-                font-size: 13px !important;
+                font-size: 10px !important;
             }
 
             .tc-change {
-                font-size: 11px !important;
+                font-size: 9px !important;
                 font-weight: 600 !important;
+                white-space: nowrap !important;
             }
 
-            .tc-mcap-label { font-size: 9px !important; }
-            .tc-mcap-value { font-size: 11px !important; }
+            .tc-footer {
+                margin-top: 4px !important;
+                padding-top: 4px !important;
+            }
+
+            .tc-mcap-label { font-size: 8px !important; }
+            .tc-mcap-value { font-size: 9px !important; }
 
             /* Tang toggle */
             .tang-toggle { font-size: 11px !important; padding: 6px 10px !important; }
@@ -4274,33 +4252,9 @@
                     }
                 });
 
-                function switchChain(chain, el) {
-                    const mc = document.getElementById('market-columns');
-                    const tabChia = document.getElementById('chain-tab-chia');
-                    const tabBase = document.getElementById('chain-tab-base');
-                    if (chain === 'base') {
-                        mc.classList.add('show-base');
-                        tabBase.classList.add('active-base');
-                        tabBase.classList.remove('active-chia');
-                        tabChia.classList.remove('active-chia');
-                        tabChia.classList.remove('active-base');
-                    } else {
-                        mc.classList.remove('show-base');
-                        tabChia.classList.add('active-chia');
-                        tabChia.classList.remove('active-base');
-                        tabBase.classList.remove('active-chia');
-                        tabBase.classList.remove('active-base');
-                    }
-                }
             </script>
 
-            <!-- Mobile chain tab switcher (hidden on desktop via CSS) -->
-            <div class="chain-tab-bar" id="chain-tab-bar">
-                <button class="chain-tab active-chia" id="chain-tab-chia" onclick="switchChain('chia', this)">🌱 Chia</button>
-                <button class="chain-tab" id="chain-tab-base" onclick="switchChain('base', this)">🔵 Base</button>
-            </div>
-
-            <div class="market-columns" id="market-columns">
+            <div class="market-columns">
                 <!-- Chia Chain Column (Left) -->
                 <div class="market-column chia-column">
                     <div class="column-header chia">🌱 Chia</div>
