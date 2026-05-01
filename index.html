@@ -686,6 +686,10 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
+            justify-content: space-between;
+            min-height: 88px;
+            max-height: 88px;
+            box-sizing: border-box;
         }
 
         .token-card.tc-dimmed .tc-emoji {
@@ -3037,10 +3041,14 @@
                 letter-spacing: 0.06em !important;
             }
 
-            /* Token Cards — compact half-width */
+            /* Token Cards — compact half-width, fixed height so all cards align */
             .token-card {
                 padding: 7px 8px !important;
                 border-radius: 10px !important;
+                min-height: 76px !important;
+                max-height: 76px !important;
+                justify-content: space-between !important;
+                box-sizing: border-box !important;
             }
 
             .token-grid {
