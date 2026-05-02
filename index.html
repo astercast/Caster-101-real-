@@ -7512,17 +7512,32 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
             console.log(`   ✅ Rendering complete\n`);
         }
 
+        // xch.trade ticker overrides keyed by Chia asset ID
+        const XCH_TRADE_MAP = {
+            'eb2155a177b6060535dd8e72e98ddb0c77aea21fab53737de1c1ced3cb38e4c4': '\uD83E\uDE84\u26A1\uFE0F', // SpellPower
+            'ae1536f56760e471ad85ead45f00d680ff9cca73b8cc3407be778f1c0c606eac': 'BYC',
+            'e816ee18ce2337c4128449bc539fbbe2ecfdd2098c4e7cab4667e223c3bdc23d': 'HOA',
+            'ab558b1b841365a24d1ff2264c55982e55664a8b6e45bc107446b7e667bb463b': 'SPROUT',
+            'ccda69ff6c44d687994efdbee30689be51d2347f739287ab4bb7b52344f8bf1d': 'BEPE',
+            '048b1358f3b55a70c4db22114c2f52569c0398ba19e8212b8daf1cb25c90a641': 'HonK',
+            '1653a1df583f3ae6a822ab214b74d2a08fb4309025d54f2db140e5e6bc06e9da': 'MANA',
+        };
+
         function openTokenLink(chain, id, symbol) {
             if (chain === 'Chia') {
                 if (id === 'Native' || id === 'XCH_NATIVE' || !id) {
                     window.open('https://www.spacescan.io', '_blank');
                 } else {
-                    const tokenSymbol = String(symbol || '').replace(/^w/, '').trim();
-                    if (tokenSymbol) {
-                        const encodedSymbol = encodeURIComponent(tokenSymbol);
-                        window.open(`https://xch.trade/tokens/${encodedSymbol}/`, '_blank');
+                    const knownTicker = XCH_TRADE_MAP[id];
+                    if (knownTicker) {
+                        window.open(`https://xch.trade/tokens/${encodeURIComponent(knownTicker)}/`, '_blank');
                     } else {
-                        window.open(`https://www.spacescan.io/token/${id}`, '_blank');
+                        const tokenSymbol = String(symbol || '').replace(/^w/, '').trim();
+                        if (tokenSymbol) {
+                            window.open(`https://xch.trade/tokens/${encodeURIComponent(tokenSymbol)}/`, '_blank');
+                        } else {
+                            window.open(`https://www.spacescan.io/token/${id}`, '_blank');
+                        }
                     }
                 }
             } else if (chain === 'Base') {

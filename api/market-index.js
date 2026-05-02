@@ -5,7 +5,7 @@ const HEADERS = {
     'Content-Type': 'application/json'
 };
 
-const INDEX_KEY = 'caster101-index/market.json';
+const INDEX_KEY = 'caster101-index/market-v2.json';
 const MEM_TTL_MS = 60 * 1000;         // in-memory hot cache: 1 min
 const BLOB_TTL_MS = 10 * 60 * 1000;   // blob SWR threshold: 10 min — older → background rebuild
 
