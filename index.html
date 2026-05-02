@@ -5462,9 +5462,22 @@
         let displayedTokens = [];
         let currentSort = 'marketCap';
         let marketIndexSnapshot = null;
+        // Client-side displayName overrides keyed by assetId — always wins over stale blobs
+        const DISPLAY_NAME_OVERRIDES = {
+            '1653a1df583f3ae6a822ab214b74d2a08fb4309025d54f2db140e5e6bc06e9da': 'MANA',
+            '4cE68125983527D1e289a0C1c70464B4bb8932ac': 'MANA',
+        };
+        function patchTokenDisplayNames(tokens) {
+            if (!Array.isArray(tokens)) return tokens;
+            return tokens.map(t => {
+                const override = DISPLAY_NAME_OVERRIDES[t.assetId] || DISPLAY_NAME_OVERRIDES[t.contract];
+                return override ? { ...t, displayName: override } : t;
+            });
+        }
+
         let marketIndexLoadedAt = 0;
         let marketIndexPromise = null;
-        const MARKET_SNAPSHOT_LOCAL_KEY = 'caster101_market_snapshot_v1';
+        const MARKET_SNAPSHOT_LOCAL_KEY = 'caster101_market_snapshot_v2';
         const MARKET_SNAPSHOT_MAX_AGE_MS = 2 * 60 * 1000;
         let treasuryIndexSnapshot = null;
         let treasuryIndexLoadedAt = 0;
@@ -6136,7 +6149,7 @@
 
             const localSnap = loadMarketSnapshotLocal();
             if (localSnap) {
-                tokens = [...localSnap.base, ...localSnap.chia];
+                tokens = [...patchTokenDisplayNames(localSnap.base), ...patchTokenDisplayNames(localSnap.chia)];
                 refreshData();
                 marketLastUpdatedAt = localSnap.savedAt || Date.now();
                 updateMarketStatus();
@@ -6157,7 +6170,7 @@
                         // Allow a 10s window for POST propagation lag.
                         if (isFreshEnough && blobAge >= currentAge - 10000) {
                             console.log(`⚡ Market index hit (source=${idx.source || '?'}, ${idx.base.length} base + ${idx.chia.length} chia tokens)`);
-                            tokens = [...idx.base, ...idx.chia];
+                            tokens = [...patchTokenDisplayNames(idx.base), ...patchTokenDisplayNames(idx.chia)];
                             refreshData();
                             marketLastUpdatedAt = idx.savedAt || Date.now();
                             updateMarketStatus();
@@ -6212,7 +6225,7 @@
             });
             console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
-            tokens = [...baseData, ...chiaData];
+            tokens = [...patchTokenDisplayNames(baseData), ...patchTokenDisplayNames(chiaData)];
             console.log(`✅ Total tokens combined: ${tokens.length}`);
             console.log(`   Base: ${tokens.filter(t => t.chain === 'Base').length}`);
             console.log(`   Chia: ${tokens.filter(t => t.chain === 'Chia').length}\n`);
