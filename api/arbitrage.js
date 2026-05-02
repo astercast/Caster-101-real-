@@ -5,9 +5,16 @@ const HEADERS = {
     'Content-Type': 'application/json'
 };
 
-const NAME_ALIASES = {
-    'wrapped xch': 'chia'
-};
+// Strip chain suffix from token id to get a pairing key.
+// e.g. 'caster-chia' → 'caster', 'caster-base' → 'caster'
+// Falls back to normalizeName(token.name) for tokens without a structured id.
+function pairingKey(token) {
+    const id = String(token.id || '');
+    if (id.endsWith('-chia')) return id.slice(0, -5);
+    if (id.endsWith('-base')) return id.slice(0, -5);
+    // Fallback: strip non-alphanumeric from name
+    return String(token.name || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+}
 
 function getOrigin(req) {
     const proto = req.headers['x-forwarded-proto'] || 'https';
@@ -26,13 +33,6 @@ async function safeFetch(url, timeout = 25000) {
         clearTimeout(timer);
         throw e;
     }
-}
-
-function normalizeName(name) {
-    const raw = String(name || '').trim().toLowerCase();
-    if (!raw) return '';
-    const aliased = NAME_ALIASES[raw] || raw;
-    return aliased.replace(/[^a-z0-9]/g, '');
 }
 
 function asNumber(v) {
@@ -66,14 +66,14 @@ export default async function handler(req, res) {
         const chiaMap = new Map();
 
         for (const token of base) {
-            const key = normalizeName(token.name);
+            const key = pairingKey(token);
             const price = asNumber(token.price);
             if (!key || price <= 0) continue;
             baseMap.set(key, token);
         }
 
         for (const token of chia) {
-            const key = normalizeName(token.name);
+            const key = pairingKey(token);
             const price = asNumber(token.price);
             if (!key || price <= 0) continue;
             chiaMap.set(key, token);

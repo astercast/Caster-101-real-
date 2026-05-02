@@ -27,7 +27,7 @@ const TRACKED = {
         { id: 'neck-chia', symbol: '$NECK', name: 'NeckCoin', chain: 'Chia', assetId: '1ad673d21799c9a224014ca71f9fe07cbc836fa23fa97b3be275d46d0b8bd9da' },
         { id: 'chia-meme-chia', symbol: '$CHIA', name: 'VFVAPatek9000Inu', chain: 'Chia', assetId: '69326954fe16117cd6250e929748b2a1ab916347598bc8180749279cfae21ddb' },
             { id: 'hodl-chia', symbol: '💎', name: 'HODL', displayName: '$HODL', chain: 'Chia', assetId: 'e335003c6d59aaaabe27eeeaf8a7b1308765f6bc9492a0b16394f50dec6bdcb7' },
-        { id: 'mana-chia', symbol: '🧙‍♂️', name: 'MANA', displayName: '$🧙‍♂️', chain: 'Chia', assetId: '1653a1df583f3ae6a822ab214b74d2a08fb4309025d54f2db140e5e6bc06e9da' },
+        { id: 'mana-chia', symbol: '🧙‍♂️', name: 'MANA', displayName: 'MANA', chain: 'Chia', assetId: '1653a1df583f3ae6a822ab214b74d2a08fb4309025d54f2db140e5e6bc06e9da' },
         { id: 'hoa-chia', symbol: '🍊', name: 'HOA', chain: 'Chia', assetId: 'e816ee18ce2337c4128449bc539fbbe2ecfdd2098c4e7cab4667e223c3bdc23d' }
     ],
     base: [
@@ -43,7 +43,7 @@ const TRACKED = {
         { id: 'neck-base', symbol: '$NECK', name: 'NeckCoin', chain: 'Base', contract: '0x359D5BFa1bb87598e2198EC139eE44D31Bd06FaC' },
         { id: 'chia-meme-base', symbol: '$CHIA', name: 'VFVAPatek9000Inu', chain: 'Base', contract: '0x05AefaFfF978EA4F9E6ff9FA3Bc2465B90598549' },
             { id: 'hodl-base', symbol: '💎', name: 'HODL', displayName: '$HODL', chain: 'Base', contract: '0xb43ba3fD8ac8b16ED52CFBE72738967C2AD9cC03' },
-        { id: 'mana-base', symbol: '🧙‍♂️', name: 'MANA', displayName: '$🧙‍♂️', chain: 'Base', contract: '0x4cE68125983527D1e289a0C1c70464B4bb8932ac' },
+        { id: 'mana-base', symbol: '🧙‍♂️', name: 'MANA', displayName: 'MANA', chain: 'Base', contract: '0x4cE68125983527D1e289a0C1c70464B4bb8932ac' },
         { id: 'hoa-base', symbol: '🍊', name: 'HOA', chain: 'Base', contract: '0xee642384091f4bb9ab457b875E4e209b5a0BD147' }
     ]
 };
