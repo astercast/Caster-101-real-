@@ -12,7 +12,8 @@
     { "source": "/treasury", "destination": "/treasury.html" },
     { "source": "/howto", "destination": "/howto.html" },
     { "source": "/book", "destination": "/book.html" },
-    { "source": "/valley", "destination": "/caster-valley-3d.html" }
+    { "source": "/valley", "destination": "/caster-valley-3d.html" },
+    { "source": "/mint",   "destination": "/mint.html" }
   ],
   "functions": {
     "api/chia-cat-prices.js": {
@@ -61,6 +62,18 @@
       "maxDuration": 15
     },
     "api/caster-valley-leaderboard.js": {
+      "maxDuration": 15
+    },
+    "api/mint-config.js": {
+      "maxDuration": 15
+    },
+    "api/mint-allowlist.js": {
+      "maxDuration": 15
+    },
+    "api/mint-submit.js": {
+      "maxDuration": 30
+    },
+    "api/mint-status.js": {
       "maxDuration": 15
     }
   }

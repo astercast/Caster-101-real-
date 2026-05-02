@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mint | aWizard Caster NFT</title>
+    <meta name="description" content="Mint an aWizard Caster NFT on Chia blockchain.">
+    <meta name="robots" content="noindex">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        /* ── Nightspire base tokens ── */
+        :root {
+            --bg: #080810;
+            --surface: rgba(16, 16, 26, 0.95);
+            --border: rgba(255, 255, 255, 0.08);
+            --gold: #fbbf24;
+            --gold-dim: rgba(251, 191, 36, 0.18);
+            --gold-border: rgba(251, 191, 36, 0.35);
+            --green: #4ade80;
+            --red: #ef4444;
+            --blue: #60a5fa;
+            --text: rgba(255, 255, 255, 0.88);
+            --text-dim: rgba(255, 255, 255, 0.45);
+            --radius: 14px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Space Grotesk', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* background gradient */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(251,191,36,0.08), transparent 70%),
+                        radial-gradient(ellipse 60% 50% at 80% 80%, rgba(168,85,247,0.05), transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-wrap {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 520px;
+            padding: 40px 20px 80px;
+        }
+
+        /* ── Back link ── */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-dim);
+            font-size: 13px;
+            font-weight: 500;
+            text-decoration: none;
+            margin-bottom: 32px;
+            transition: color 0.15s;
+        }
+        .back-link:hover { color: var(--gold); }
+
+        /* ── Header ── */
+        .mint-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .mint-logo {
+            font-size: 52px;
+            margin-bottom: 12px;
+            line-height: 1;
+        }
+        .mint-title {
+            font-family: 'Cinzel', serif;
+            font-size: 28px;
+            font-weight: 900;
+            color: white;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+        .mint-subtitle {
+            font-size: 14px;
+            color: var(--text-dim);
+        }
+
+        /* ── Card ── */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+        .card-label {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-bottom: 14px;
+        }
+
+        /* ── NFT Preview placeholder ── */
+        .nft-preview {
+            aspect-ratio: 1;
+            background: rgba(251, 191, 36, 0.04);
+            border: 2px dashed rgba(251, 191, 36, 0.2);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: var(--text-dim);
+        }
+        .nft-preview-icon { font-size: 40px; opacity: 0.5; }
+        .nft-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+
+        /* ── Mint info rows ── */
+        .mint-info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 9px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 13px;
+        }
+        .mint-info-row:last-child { border-bottom: none; }
+        .mint-info-row .label { color: var(--text-dim); }
+        .mint-info-row .value { font-weight: 700; color: var(--text); }
+        .mint-info-row .value.gold { color: var(--gold); }
+        .mint-info-row .value.green { color: var(--green); }
+        .mint-info-row .value.red { color: var(--red); }
+
+        /* ── Status badge ── */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+        }
+        .status-badge.open { background: rgba(74,222,128,0.12); color: var(--green); border: 1px solid rgba(74,222,128,0.3); }
+        .status-badge.allowlist { background: rgba(251,191,36,0.12); color: var(--gold); border: 1px solid var(--gold-border); }
+        .status-badge.closed { background: rgba(239,68,68,0.12); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+        .status-badge.loading { background: rgba(255,255,255,0.06); color: var(--text-dim); border: 1px solid var(--border); }
+
+        /* ── Wallet section ── */
+        .wallet-btn {
+            width: 100%;
+            padding: 13px;
+            background: var(--gold-dim);
+            border: 1px solid var(--gold-border);
+            border-radius: 10px;
+            color: var(--gold);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s;
+            letter-spacing: 0.03em;
+        }
+        .wallet-btn:hover {
+            background: rgba(251,191,36,0.26);
+            border-color: rgba(251,191,36,0.6);
+        }
+        .wallet-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .wallet-connected {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 10px 14px;
+            background: rgba(74,222,128,0.07);
+            border: 1px solid rgba(74,222,128,0.2);
+            border-radius: 10px;
+            font-size: 12px;
+        }
+        .wallet-connected .addr {
+            font-family: 'Inter', monospace;
+            color: var(--green);
+            font-weight: 600;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .wallet-disconnect {
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            font-size: 11px;
+            cursor: pointer;
+            white-space: nowrap;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: color 0.1s;
+            flex-shrink: 0;
+        }
+        .wallet-disconnect:hover { color: var(--red); }
+
+        /* ── Allowlist check ── */
+        .allowlist-banner {
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .allowlist-banner.approved {
+            background: rgba(74,222,128,0.08);
+            border: 1px solid rgba(74,222,128,0.25);
+            color: var(--green);
+        }
+        .allowlist-banner.denied {
+            background: rgba(239,68,68,0.08);
+            border: 1px solid rgba(239,68,68,0.25);
+            color: var(--red);
+        }
+        .allowlist-banner.checking {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+        }
+
+        /* ── Mint button ── */
+        .mint-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            border: none;
+            border-radius: 12px;
+            color: #000;
+            font-family: 'Cinzel', serif;
+            font-size: 16px;
+            font-weight: 900;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: opacity 0.15s, transform 0.1s;
+        }
+        .mint-btn:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
+        .mint-btn:disabled {
+            background: rgba(255,255,255,0.08);
+            color: var(--text-dim);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* ── Progress steps ── */
+        .progress-wrap {
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .progress-wrap.visible { display: flex; }
+        .progress-step {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+        }
+        .step-icon {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+        .step-icon.done { background: rgba(74,222,128,0.15); color: var(--green); }
+        .step-icon.active { background: var(--gold-dim); color: var(--gold); animation: pulse 1.2s ease-in-out infinite; }
+        .step-icon.waiting { background: rgba(255,255,255,0.05); color: var(--text-dim); }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+        .step-label { color: var(--text); }
+        .step-label.dim { color: var(--text-dim); }
+
+        /* ── Success ── */
+        .success-box {
+            display: none;
+            text-align: center;
+            padding: 32px 20px;
+        }
+        .success-box.visible { display: block; }
+        .success-icon { font-size: 52px; margin-bottom: 12px; }
+        .success-title {
+            font-family: 'Cinzel', serif;
+            font-size: 22px;
+            font-weight: 900;
+            color: var(--gold);
+            margin-bottom: 8px;
+        }
+        .success-sub { font-size: 13px; color: var(--text-dim); margin-bottom: 24px; }
+        .success-link {
+            display: inline-block;
+            padding: 10px 24px;
+            background: var(--gold-dim);
+            border: 1px solid var(--gold-border);
+            border-radius: 10px;
+            color: var(--gold);
+            font-weight: 700;
+            font-size: 13px;
+            text-decoration: none;
+        }
+
+        /* ── WalletConnect modal overlay ── */
+        #wc-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.75);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        #wc-modal.open { display: flex; }
+        .wc-modal-box {
+            background: rgba(16, 16, 28, 0.98);
+            border: 1px solid var(--gold-border);
+            border-radius: 18px;
+            padding: 28px 24px;
+            width: 340px;
+            max-width: calc(100vw - 40px);
+        }
+        .wc-modal-title {
+            font-family: 'Cinzel', serif;
+            font-size: 16px;
+            font-weight: 900;
+            color: white;
+            margin-bottom: 6px;
+        }
+        .wc-modal-sub { font-size: 12px; color: var(--text-dim); margin-bottom: 18px; }
+        #wc-uri-input {
+            width: 100%;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 9px 12px;
+            font-size: 10px;
+            font-family: monospace;
+            color: var(--text-dim);
+            outline: none;
+            margin-bottom: 12px;
+        }
+        .wc-copy-btn {
+            width: 100%;
+            padding: 10px;
+            background: var(--gold-dim);
+            border: 1px solid var(--gold-border);
+            border-radius: 8px;
+            color: var(--gold);
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-bottom: 8px;
+        }
+        .wc-cancel-btn {
+            width: 100%;
+            padding: 10px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-dim);
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        /* ── Footer ── */
+        .page-footer {
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-dim);
+            margin-top: 32px;
+            line-height: 1.7;
+        }
+        .page-footer a { color: var(--text-dim); text-decoration: underline; }
+    </style>
+</head>
+<body>
+<div class="page-wrap">
+
+    <a href="/" class="back-link">← back to caster101</a>
+
+    <div class="mint-header">
+        <div class="mint-logo">✨❤️‍🔥🧙‍♂️</div>
+        <div class="mint-title">MINT A CASTER</div>
+        <div class="mint-subtitle" id="mint-subtitle">Loading mint info…</div>
+    </div>
+
+    <!-- Mint Info Card -->
+    <div class="card" id="info-card">
+        <div class="card-label">Collection Info</div>
+        <div class="mint-info-row">
+            <span class="label">Status</span>
+            <span class="status-badge loading" id="mint-status-badge">⏳ Loading…</span>
+        </div>
+        <div class="mint-info-row">
+            <span class="label">Phase</span>
+            <span class="value" id="mint-phase">—</span>
+        </div>
+        <div class="mint-info-row">
+            <span class="label">Price</span>
+            <span class="value gold" id="mint-price">—</span>
+        </div>
+        <div class="mint-info-row">
+            <span class="label">Supply</span>
+            <span class="value" id="mint-supply">—</span>
+        </div>
+        <div class="mint-info-row">
+            <span class="label">Minted</span>
+            <span class="value" id="mint-count">—</span>
+        </div>
+    </div>
+
+    <!-- NFT Preview Card -->
+    <div class="card">
+        <div class="card-label">NFT Preview</div>
+        <div class="nft-preview" id="nft-preview">
+            <div class="nft-preview-icon">🖼️</div>
+            <span>Art coming soon</span>
+        </div>
+    </div>
+
+    <!-- Wallet + Mint Card -->
+    <div class="card" id="action-card">
+        <div class="card-label">Connect &amp; Mint</div>
+
+        <!-- Not connected -->
+        <div id="wallet-disconnected">
+            <button class="wallet-btn" id="connect-btn" onclick="connectWallet()">
+                🔗 Connect Sage Wallet
+            </button>
+        </div>
+
+        <!-- Connected -->
+        <div id="wallet-connected-row" style="display:none;">
+            <div class="wallet-connected">
+                <span class="addr" id="wallet-addr-display">xch1…</span>
+                <button class="wallet-disconnect" onclick="disconnectWallet()">disconnect</button>
+            </div>
+        </div>
+
+        <!-- Allowlist status (shown when connected) -->
+        <div id="allowlist-status" style="display:none; margin-top:12px;"></div>
+
+        <!-- Mint button area (shown when connected) -->
+        <div id="mint-action" style="display:none; margin-top:16px;">
+            <!-- Progress -->
+            <div class="progress-wrap" id="mint-progress">
+                <div class="progress-step" id="step-validate">
+                    <div class="step-icon waiting" id="step-validate-icon">1</div>
+                    <span class="step-label dim" id="step-validate-label">Validate request</span>
+                </div>
+                <div class="progress-step" id="step-upload">
+                    <div class="step-icon waiting" id="step-upload-icon">2</div>
+                    <span class="step-label dim" id="step-upload-label">Upload metadata to IPFS</span>
+                </div>
+                <div class="progress-step" id="step-offer">
+                    <div class="step-icon waiting" id="step-offer-icon">3</div>
+                    <span class="step-label dim" id="step-offer-label">Generate mint offer</span>
+                </div>
+                <div class="progress-step" id="step-confirm">
+                    <div class="step-icon waiting" id="step-confirm-icon">4</div>
+                    <span class="step-label dim" id="step-confirm-label">Accept offer in wallet</span>
+                </div>
+            </div>
+
+            <!-- Success -->
+            <div class="success-box" id="mint-success">
+                <div class="success-icon">🎉</div>
+                <div class="success-title">SPELL CAST!</div>
+                <div class="success-sub" id="success-sub">Your Caster NFT has been minted.</div>
+                <a href="#" id="mintgarden-link" target="_blank" rel="noopener" class="success-link">View on MintGarden ↗</a>
+            </div>
+
+            <!-- Mint button -->
+            <button class="mint-btn" id="mint-btn" onclick="startMint()" disabled>
+                ✨ MINT
+            </button>
+            <div style="text-align:center;margin-top:10px;font-size:11px;color:var(--text-dim);" id="mint-hint">Connect wallet to mint</div>
+        </div>
+    </div>
+
+    <div class="page-footer">
+        NFTs are minted on the <strong style="color:var(--text)">Chia blockchain</strong> via MintGarden.<br>
+        Requires <a href="https://sagewalletapp.com" target="_blank">Sage Wallet</a> with WalletConnect.<br>
+        <br>
+        <a href="/">← Back to Caster101</a>
+    </div>
+
+</div>
+
+<!-- WalletConnect Modal -->
+<div id="wc-modal">
+    <div class="wc-modal-box">
+        <div class="wc-modal-title">Connect Sage Wallet</div>
+        <div class="wc-modal-sub">Open Sage Wallet → WalletConnect → Scan or paste this URI</div>
+        <input type="text" id="wc-uri-input" readonly placeholder="wc:…" />
+        <button class="wc-copy-btn" onclick="copyWcUri()">📋 Copy URI</button>
+        <button class="wc-cancel-btn" onclick="closeWcModal()">Cancel</button>
+    </div>
+</div>
+
+<!-- WalletConnect SDK (UMD build) -->
+<script src="https://cdn.jsdelivr.net/npm/@walletconnect/sign-client@2.17.0/dist/index.umd.js"></script>
+
+<script>
+// ────────────────────────────────────────────────────────
+// CONFIGURATION
+// ────────────────────────────────────────────────────────
+const WC_PROJECT_ID = 'b1b5e8e87891e7efc8d7afc1d71987c1'; // replace with your WC project ID
+const CHIA_CHAIN    = 'chia:mainnet';
+const REQUIRED_METHODS = [
+    'chip0002_getPublicKeys',
+    'chia_getAddress',
+    'chia_takeOffer',
+    'chia_signMessageByAddress',
+];
+
+// ────────────────────────────────────────────────────────
+// STATE
+// ────────────────────────────────────────────────────────
+let wcClient   = null;
+let wcSession  = null;
+let walletAddr = null;
+let mintConfig = null;
+let mintJobId  = null;
+let pollTimer  = null;
+
+// ────────────────────────────────────────────────────────
+// INIT
+// ────────────────────────────────────────────────────────
+async function init() {
+    await loadConfig();
+    await initWalletConnect();
+}
+
+async function loadConfig() {
+    try {
+        const r = await fetch('/api/mint-config');
+        if (!r.ok) throw new Error('config fetch failed');
+        mintConfig = await r.json();
+        renderConfig(mintConfig);
+    } catch (e) {
+        console.error('[mint] config load failed', e);
+        document.getElementById('mint-subtitle').textContent = 'Could not load mint config.';
+    }
+}
+
+function renderConfig(cfg) {
+    document.getElementById('mint-subtitle').textContent = cfg.collectionName || 'aWizard Caster Collection';
+    document.getElementById('mint-phase').textContent   = cfg.phase          || '—';
+    document.getElementById('mint-price').textContent   = cfg.price          || '—';
+    document.getElementById('mint-supply').textContent  = cfg.maxSupply != null ? cfg.maxSupply : '—';
+    document.getElementById('mint-count').textContent   = cfg.minted != null  ? cfg.minted  : '—';
+
+    const badge = document.getElementById('mint-status-badge');
+    badge.className = 'status-badge';
+    if (cfg.phase === 'allowlist') {
+        badge.classList.add('allowlist');
+        badge.textContent = '🔒 Allowlist';
+    } else if (cfg.phase === 'public') {
+        badge.classList.add('open');
+        badge.textContent = '🟢 Public Mint';
+    } else if (cfg.phase === 'closed') {
+        badge.classList.add('closed');
+        badge.textContent = '🔴 Closed';
+    } else {
+        badge.classList.add('loading');
+        badge.textContent = '⏳ ' + (cfg.phase || 'Soon');
+    }
+}
+
+// ────────────────────────────────────────────────────────
+// WALLETCONNECT
+// ────────────────────────────────────────────────────────
+async function initWalletConnect() {
+    try {
+        wcClient = await window.SignClient.init({
+            projectId: WC_PROJECT_ID,
+            metadata: {
+                name: 'Caster101 Mint',
+                description: 'Mint an aWizard Caster NFT',
+                url: 'https://caster101.xyz/mint',
+                icons: ['https://caster101.xyz/images/logo.png'],
+            },
+        });
+
+        // Restore existing session
+        const sessions = wcClient.session.getAll();
+        if (sessions.length > 0) {
+            wcSession = sessions[sessions.length - 1];
+            await resolveAddress();
+        }
+
+        wcClient.on('session_delete', () => {
+            wcSession  = null;
+            walletAddr = null;
+            updateWalletUI();
+        });
+    } catch (e) {
+        console.error('[mint] WalletConnect init failed', e);
+    }
+}
+
+async function connectWallet() {
+    if (!wcClient) {
+        alert('WalletConnect not ready. Please refresh.');
+        return;
+    }
+    document.getElementById('connect-btn').disabled = true;
+    document.getElementById('connect-btn').textContent = '⏳ Connecting…';
+    try {
+        const { uri, approval } = await wcClient.connect({
+            requiredNamespaces: {
+                chia: {
+                    methods: REQUIRED_METHODS,
+                    chains: [CHIA_CHAIN],
+                    events: ['chainChanged', 'accountsChanged'],
+                },
+            },
+        });
+
+        if (uri) {
+            document.getElementById('wc-uri-input').value = uri;
+            document.getElementById('wc-modal').classList.add('open');
+        }
+
+        wcSession = await approval();
+        closeWcModal();
+        await resolveAddress();
+    } catch (e) {
+        console.error('[mint] connect error', e);
+        document.getElementById('connect-btn').disabled = false;
+        document.getElementById('connect-btn').textContent = '🔗 Connect Sage Wallet';
+    }
+}
+
+async function resolveAddress() {
+    try {
+        const result = await wcClient.request({
+            topic: wcSession.topic,
+            chainId: CHIA_CHAIN,
+            request: { method: 'chia_getAddress', params: {} },
+        });
+        walletAddr = result.address || result;
+    } catch (e) {
+        // Fallback: parse from session accounts
+        const accounts = wcSession.namespaces?.chia?.accounts || [];
+        if (accounts.length > 0) {
+            walletAddr = accounts[0].split(':')[2] || null;
+        }
+    }
+    updateWalletUI();
+    if (walletAddr) checkAllowlist(walletAddr);
+}
+
+async function disconnectWallet() {
+    if (wcClient && wcSession) {
+        try { await wcClient.disconnect({ topic: wcSession.topic, reason: { code: 6000, message: 'User disconnected' } }); } catch {}
+    }
+    wcSession  = null;
+    walletAddr = null;
+    updateWalletUI();
+}
+
+function updateWalletUI() {
+    const isConnected = !!walletAddr;
+    document.getElementById('wallet-disconnected').style.display     = isConnected ? 'none' : 'block';
+    document.getElementById('wallet-connected-row').style.display    = isConnected ? 'block' : 'none';
+    document.getElementById('allowlist-status').style.display        = isConnected ? 'block' : 'none';
+    document.getElementById('mint-action').style.display             = isConnected ? 'block' : 'none';
+    document.getElementById('connect-btn').disabled = false;
+    document.getElementById('connect-btn').textContent = '🔗 Connect Sage Wallet';
+
+    if (walletAddr) {
+        const short = walletAddr.slice(0, 10) + '…' + walletAddr.slice(-6);
+        document.getElementById('wallet-addr-display').textContent = short;
+        document.getElementById('mint-hint').textContent = 'Ready to mint';
+    }
+}
+
+function closeWcModal() {
+    document.getElementById('wc-modal').classList.remove('open');
+}
+
+function copyWcUri() {
+    const val = document.getElementById('wc-uri-input').value;
+    navigator.clipboard.writeText(val).then(() => {
+        const btn = document.querySelector('.wc-copy-btn');
+        btn.textContent = '✅ Copied!';
+        setTimeout(() => { btn.textContent = '📋 Copy URI'; }, 2000);
+    });
+}
+
+// ────────────────────────────────────────────────────────
+// ALLOWLIST CHECK
+// ────────────────────────────────────────────────────────
+async function checkAllowlist(address) {
+    const el = document.getElementById('allowlist-status');
+    el.innerHTML = '<div class="allowlist-banner checking">⏳ Checking allowlist…</div>';
+
+    // If phase is public, no allowlist needed
+    if (mintConfig?.phase === 'public') {
+        el.innerHTML = '<div class="allowlist-banner approved">✅ Public mint is open</div>';
+        enableMintBtn();
+        return;
+    }
+
+    if (mintConfig?.phase === 'closed') {
+        el.innerHTML = '<div class="allowlist-banner denied">🔴 Mint is not open yet</div>';
+        return;
+    }
+
+    try {
+        const r = await fetch(`/api/mint-allowlist?address=${encodeURIComponent(address)}`);
+        const data = await r.json();
+        if (data.approved) {
+            el.innerHTML = '<div class="allowlist-banner approved">✅ You\'re on the allowlist</div>';
+            enableMintBtn();
+        } else {
+            el.innerHTML = '<div class="allowlist-banner denied">❌ Not on the allowlist</div>';
+        }
+    } catch (e) {
+        el.innerHTML = '<div class="allowlist-banner checking">⚠️ Could not verify allowlist</div>';
+    }
+}
+
+function enableMintBtn() {
+    const btn = document.getElementById('mint-btn');
+    btn.disabled = false;
+    document.getElementById('mint-hint').textContent = `Price: ${mintConfig?.price || '?'}`;
+}
+
+// ────────────────────────────────────────────────────────
+// MINT FLOW
+// ────────────────────────────────────────────────────────
+async function startMint() {
+    if (!walletAddr) return;
+    const btn = document.getElementById('mint-btn');
+    btn.disabled = true;
+
+    // Show progress
+    document.getElementById('mint-progress').classList.add('visible');
+    setStep('validate', 'active', 'Validating…');
+
+    try {
+        const r = await fetch('/api/mint-submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                walletAddress: walletAddr,
+                idempotencyKey: crypto.randomUUID(),
+            }),
+        });
+        const data = await r.json();
+        if (!r.ok || data.error) throw new Error(data.error || 'Mint submit failed');
+
+        mintJobId = data.jobId;
+        setStep('validate', 'done', 'Validated');
+        setStep('upload', 'active', 'Uploading metadata…');
+        pollJobStatus();
+    } catch (e) {
+        console.error('[mint] submit error', e);
+        setStep('validate', 'waiting', 'Validate request');
+        document.getElementById('mint-progress').classList.remove('visible');
+        btn.disabled = false;
+        alert('Mint failed: ' + e.message);
+    }
+}
+
+function pollJobStatus() {
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = setInterval(async () => {
+        if (!mintJobId) return;
+        try {
+            const r = await fetch(`/api/mint-status?jobId=${mintJobId}&address=${encodeURIComponent(walletAddr)}`);
+            const data = await r.json();
+            handleJobStatus(data);
+        } catch (e) {
+            console.error('[mint] poll error', e);
+        }
+    }, 3000);
+}
+
+async function handleJobStatus(data) {
+    const step = data.step;
+
+    if (step === 'validating') {
+        setStep('validate', 'active', 'Validating…');
+    } else if (step === 'uploading_ipfs') {
+        setStep('validate', 'done', 'Validated');
+        setStep('upload', 'active', 'Uploading to IPFS…');
+    } else if (step === 'generating_offer') {
+        setStep('validate', 'done', 'Validated');
+        setStep('upload', 'done', 'Uploaded to IPFS');
+        setStep('offer', 'active', 'Generating offer…');
+    } else if (step === 'awaiting_payment') {
+        setStep('validate', 'done', 'Validated');
+        setStep('upload', 'done', 'Uploaded to IPFS');
+        setStep('offer', 'done', 'Offer ready');
+        setStep('confirm', 'active', 'Accept offer in Sage Wallet…');
+
+        // Auto-present offer to wallet if available
+        if (data.offerFile && wcClient && wcSession) {
+            try {
+                await wcClient.request({
+                    topic: wcSession.topic,
+                    chainId: CHIA_CHAIN,
+                    request: { method: 'chia_takeOffer', params: { offer: data.offerFile } },
+                });
+            } catch (e) {
+                console.warn('[mint] takeOffer RPC error (user may need to accept manually)', e.message);
+            }
+        }
+    } else if (step === 'completed') {
+        clearInterval(pollTimer);
+        mintJobId = null;
+        setStep('confirm', 'done', 'Payment confirmed');
+        showSuccess(data.mintgardenUrl, data.mintNumber);
+    } else if (step === 'failed') {
+        clearInterval(pollTimer);
+        mintJobId = null;
+        document.getElementById('mint-progress').classList.remove('visible');
+        document.getElementById('mint-btn').disabled = false;
+        alert('Mint failed: ' + (data.error || 'Unknown error'));
+    }
+}
+
+function setStep(stepId, state, label) {
+    const icon  = document.getElementById(`step-${stepId}-icon`);
+    const lbl   = document.getElementById(`step-${stepId}-label`);
+    icon.className = `step-icon ${state}`;
+    icon.textContent = state === 'done' ? '✓' : { validate:1, upload:2, offer:3, confirm:4 }[stepId];
+    lbl.textContent = label;
+    lbl.className = state === 'waiting' ? 'step-label dim' : 'step-label';
+}
+
+function showSuccess(mintgardenUrl, mintNumber) {
+    document.getElementById('mint-progress').classList.remove('visible');
+    document.getElementById('mint-success').classList.add('visible');
+    document.getElementById('mint-btn').style.display = 'none';
+    document.getElementById('mint-hint').style.display = 'none';
+    if (mintNumber) {
+        document.getElementById('success-sub').textContent = `Caster #${mintNumber} is yours!`;
+    }
+    if (mintgardenUrl) {
+        document.getElementById('mintgarden-link').href = mintgardenUrl;
+    }
+}
+
+// ────────────────────────────────────────────────────────
+// BOOT
+// ────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
