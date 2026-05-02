@@ -808,20 +808,6 @@
                 padding: 14px 16px;
             }
 
-            /* Left trend accent bar — instant ↑/↓ signal */
-            .token-card::before {
-                content: '';
-                position: absolute;
-                left: 0; top: 8px; bottom: 8px;
-                width: 3px;
-                border-radius: 0 3px 3px 0;
-                background: rgba(255, 255, 255, 0.06);
-                transition: background 0.15s;
-            }
-            .token-card[data-trend="up"]::before    { background: rgba(74, 222, 128, 0.65); }
-            .token-card[data-trend="down"]::before  { background: rgba(239, 68, 68, 0.55); }
-            .token-card[data-trend="neutral"]::before { background: rgba(255, 255, 255, 0.1); }
-
             /* Hover */
             .token-card:hover {
                 background: rgba(22, 22, 36, 0.95);
@@ -7451,7 +7437,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                     </div>
                     <div class="tc-footer">
                         <span class="tc-mcap-label">Market Cap</span>
-                        <span class="tc-mcap-value">${mcapStr}</span>
+                        <span class="tc-mcap-value" style="color:${mcap > 0 ? '#fbbf24' : 'rgba(255,255,255,0.3)'}">${mcapStr}</span>
                     </div>
                 </div>`;
             };
