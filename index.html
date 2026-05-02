@@ -798,23 +798,71 @@
         .tang-ticker { display: none !important; }
         .show-tang .tang-ticker { display: flex !important; }
 
-        /* Desktop hover */
+        /* ── Desktop enhancements ── */
         @media (min-width: 769px) {
-            .token-card:hover {
-                background: rgba(26, 26, 38, 0.88);
-                border-color: rgba(251, 191, 36, 0.28);
-                box-shadow: 0 6px 22px rgba(0, 0, 0, 0.38);
-                cursor: pointer;
+
+            /* Card: taller, more breathing room */
+            .token-card {
+                min-height: 100px;
+                max-height: 100px;
+                padding: 14px 16px;
             }
 
+            /* Left trend accent bar — instant ↑/↓ signal */
+            .token-card::before {
+                content: '';
+                position: absolute;
+                left: 0; top: 8px; bottom: 8px;
+                width: 3px;
+                border-radius: 0 3px 3px 0;
+                background: rgba(255, 255, 255, 0.06);
+                transition: background 0.15s;
+            }
+            .token-card[data-trend="up"]::before    { background: rgba(74, 222, 128, 0.65); }
+            .token-card[data-trend="down"]::before  { background: rgba(239, 68, 68, 0.55); }
+            .token-card[data-trend="neutral"]::before { background: rgba(255, 255, 255, 0.1); }
+
+            /* Hover */
+            .token-card:hover {
+                background: rgba(22, 22, 36, 0.95);
+                border-color: rgba(251, 191, 36, 0.28);
+                box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+            }
             .token-card[data-trend="up"]:hover {
                 border-color: rgba(74, 222, 128, 0.38);
-                box-shadow: 0 6px 22px rgba(0, 0, 0, 0.38), 0 0 0 1px rgba(74, 222, 128, 0.1);
+                box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(74, 222, 128, 0.1);
             }
-
             .token-card[data-trend="down"]:hover {
                 border-color: rgba(239, 68, 68, 0.38);
-                box-shadow: 0 6px 22px rgba(0, 0, 0, 0.38), 0 0 0 1px rgba(239, 68, 68, 0.1);
+                box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(239, 68, 68, 0.1);
+            }
+
+            /* Bigger emoji — the visual anchor */
+            .tc-emoji { font-size: 26px; }
+
+            /* Name — slightly bigger, more readable */
+            .tc-name { font-size: 13px; letter-spacing: 0.06em; }
+
+            /* Price — the hero element */
+            .tc-price {
+                font-size: 18px;
+                letter-spacing: -0.02em;
+                font-weight: 800;
+            }
+
+            /* Change row — left-align so it doesn't float in empty space */
+            .tc-mid { justify-content: flex-start; gap: 8px; margin-top: 5px; }
+            .tc-change { font-size: 12px; }
+
+            /* Footer — slightly more visible mcap */
+            .tc-mcap-label { font-size: 9px; letter-spacing: 0.8px; }
+            .tc-mcap-value { font-size: 12px; color: rgba(255, 255, 255, 0.62); font-weight: 700; }
+
+            /* Column headers — taller, slightly more presence */
+            .column-header {
+                padding: 11px 16px;
+                font-size: 13px;
+                letter-spacing: 0.1em;
             }
         }
 
@@ -11829,6 +11877,160 @@ document.addEventListener('DOMContentLoaded', () => {
         updateChiaPortfolioAction();
     }
     </script>
+
+<!-- ══════════════════════════════════════════════════════════
+     BEPE LOVE POPUP — shows once per session on landing
+══════════════════════════════════════════════════════════ -->
+<div id="bepe-popup-overlay" style="
+    display: none;
+    position: fixed; inset: 0; z-index: 99999;
+    background: rgba(0,0,0,0.82);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+">
+    <div id="bepe-popup-box" style="
+        position: relative;
+        max-width: 540px; width: 100%;
+        background: linear-gradient(145deg, #0a0a18, #130d24, #0a0a18);
+        border: 1px solid rgba(251,191,36,0.35);
+        border-radius: 22px;
+        padding: 44px 36px 36px;
+        text-align: center;
+        box-shadow: 0 0 80px rgba(251,191,36,0.18), 0 0 160px rgba(168,85,247,0.12), 0 32px 64px rgba(0,0,0,0.7);
+        animation: bepe-rise 0.45s cubic-bezier(0.16,1,0.3,1) both;
+    ">
+        <!-- Close -->
+        <button onclick="closeBepePop()" style="
+            position: absolute; top: 14px; right: 16px;
+            background: none; border: none; color: rgba(255,255,255,0.3);
+            font-size: 20px; cursor: pointer; line-height: 1;
+            transition: color 0.15s;
+        " onmouseover="this.style.color='rgba(255,255,255,0.8)'" onmouseout="this.style.color='rgba(255,255,255,0.3)'">✕</button>
+
+        <!-- Top glow orb -->
+        <div style="
+            width: 72px; height: 72px;
+            margin: 0 auto 20px;
+            background: radial-gradient(circle, rgba(251,191,36,0.9) 0%, rgba(168,85,247,0.5) 55%, transparent 75%);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 38px;
+            box-shadow: 0 0 32px rgba(251,191,36,0.45), 0 0 64px rgba(168,85,247,0.25);
+            animation: bepe-pulse 2.2s ease-in-out infinite;
+        ">❤️</div>
+
+        <!-- Headline -->
+        <div style="
+            font-family: 'Cinzel', serif;
+            font-size: clamp(22px, 5vw, 34px);
+            font-weight: 900;
+            letter-spacing: 2px;
+            line-height: 1.1;
+            margin-bottom: 6px;
+            background: linear-gradient(135deg, #fbbf24 0%, #f9a8d4 45%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        ">BEPE LOVE<br>MINTING NOW</div>
+
+        <!-- Sub label -->
+        <div style="
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.5);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 28px;
+        ">Support the Wizards Treasury</div>
+
+        <!-- Divider -->
+        <div style="height: 1px; background: linear-gradient(90deg, transparent, rgba(251,191,36,0.3), transparent); margin-bottom: 22px;"></div>
+
+        <!-- Description -->
+        <div style="
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            color: rgba(255,255,255,0.7);
+            line-height: 1.65;
+            margin-bottom: 28px;
+        ">Future Plans For This Art — mint yours and become part of the aWizard story.</div>
+
+        <!-- CTA -->
+        <a href="https://bepe.love" target="_blank" rel="noopener" onclick="closeBepePop()" style="
+            display: inline-block;
+            padding: 14px 36px;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            border-radius: 50px;
+            font-family: 'Cinzel', serif;
+            font-size: 15px;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            color: #000;
+            text-decoration: none;
+            box-shadow: 0 4px 24px rgba(251,191,36,0.4), 0 0 0 0 rgba(251,191,36,0.4);
+            transition: transform 0.15s, box-shadow 0.15s;
+            animation: bepe-cta-pulse 2.5s ease-in-out infinite;
+        " onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 32px rgba(251,191,36,0.55)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 24px rgba(251,191,36,0.4)'">✨ Visit bepe.love ✨</a>
+
+        <!-- Dismiss -->
+        <div style="margin-top: 18px;">
+            <button onclick="closeBepePop()" style="
+                background: none; border: none;
+                font-family: 'Space Grotesk', sans-serif;
+                font-size: 11px; color: rgba(255,255,255,0.28);
+                cursor: pointer; letter-spacing: 0.05em;
+                transition: color 0.15s;
+            " onmouseover="this.style.color='rgba(255,255,255,0.6)'" onmouseout="this.style.color='rgba(255,255,255,0.28)'">dismiss</button>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes bepe-rise {
+    from { opacity: 0; transform: translateY(32px) scale(0.96); }
+    to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+@keyframes bepe-pulse {
+    0%,100% { box-shadow: 0 0 32px rgba(251,191,36,0.45), 0 0 64px rgba(168,85,247,0.25); }
+    50%      { box-shadow: 0 0 52px rgba(251,191,36,0.65), 0 0 96px rgba(168,85,247,0.4); }
+}
+@keyframes bepe-cta-pulse {
+    0%,100% { box-shadow: 0 4px 24px rgba(251,191,36,0.4), 0 0 0 0 rgba(251,191,36,0); }
+    50%      { box-shadow: 0 4px 24px rgba(251,191,36,0.5), 0 0 0 8px rgba(251,191,36,0); }
+}
+</style>
+
+<script>
+(function() {
+    // Show once per session (not once per day — every new tab/session sees it)
+    if (!sessionStorage.getItem('bepe_pop_seen')) {
+        const overlay = document.getElementById('bepe-popup-overlay');
+        if (overlay) {
+            // Small delay so the page renders first
+            setTimeout(function() {
+                overlay.style.display = 'flex';
+            }, 800);
+        }
+    }
+})();
+function closeBepePop() {
+    sessionStorage.setItem('bepe_pop_seen', '1');
+    var el = document.getElementById('bepe-popup-overlay');
+    if (el) {
+        el.style.opacity = '0';
+        el.style.transition = 'opacity 0.25s';
+        setTimeout(function() { el.style.display = 'none'; }, 260);
+    }
+}
+// Close on overlay click (outside box)
+document.getElementById('bepe-popup-overlay').addEventListener('click', function(e) {
+    if (e.target === this) closeBepePop();
+});
+</script>
 
 </body>
 
