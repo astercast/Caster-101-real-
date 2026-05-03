@@ -11907,14 +11907,14 @@ document.addEventListener('DOMContentLoaded', () => {
 ">
     <div id="bepe-popup-box" style="
         position: relative;
-        max-width: 540px; width: 100%;
+        max-width: 440px; width: min(100%, 440px);
         background: linear-gradient(145deg, #0a0a18, #130d24, #0a0a18);
         border: 1px solid rgba(251,191,36,0.35);
-        border-radius: 22px;
-        padding: 44px 36px 36px;
+        border-radius: 20px;
+        padding: 30px 28px 28px;
         text-align: center;
-        box-shadow: 0 0 80px rgba(251,191,36,0.18), 0 0 160px rgba(168,85,247,0.12), 0 32px 64px rgba(0,0,0,0.7);
-        animation: bepe-rise 0.45s cubic-bezier(0.16,1,0.3,1) both;
+        box-shadow: 0 0 64px rgba(251,191,36,0.16), 0 0 120px rgba(168,85,247,0.1), 0 24px 50px rgba(0,0,0,0.55);
+        animation: bepe-rise 0.35s cubic-bezier(0.16,1,0.3,1) both;
     ">
         <!-- Close -->
         <button onclick="closeBepePop()" style="
@@ -11926,13 +11926,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         <!-- Top glow orb -->
         <div style="
-            width: 72px; height: 72px;
-            margin: 0 auto 20px;
+            width: 56px; height: 56px;
+            margin: 0 auto 16px;
             background: radial-gradient(circle, rgba(251,191,36,0.9) 0%, rgba(168,85,247,0.5) 55%, transparent 75%);
             border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            font-size: 38px;
-            box-shadow: 0 0 32px rgba(251,191,36,0.45), 0 0 64px rgba(168,85,247,0.25);
+            font-size: 30px;
+            box-shadow: 0 0 26px rgba(251,191,36,0.45), 0 0 54px rgba(168,85,247,0.25);
             animation: bepe-pulse 2.2s ease-in-out infinite;
         ">❤️</div>
 
@@ -11965,41 +11965,43 @@ document.addEventListener('DOMContentLoaded', () => {
         <div style="height: 1px; background: linear-gradient(90deg, transparent, rgba(251,191,36,0.3), transparent); margin-bottom: 22px;"></div>
 
         <!-- Art preview -->
-        <div style="margin-bottom: 20px;">
-            <img src="/images/Screenshot%202026-05-02%20012945.png" alt="BEPE LOVE art preview" style="
-                width: 100%; max-width: 380px;
+        <div style="margin-bottom: 18px;">
+            <img src="images/Screenshot 2026-05-02 012945.png" alt="BEPE LOVE art preview" style="
+                width: 100%; max-width: 340px; max-height: 220px;
+                height: auto;
+                object-fit: contain;
                 border-radius: 14px;
                 border: 1px solid rgba(251,191,36,0.22);
-                box-shadow: 0 0 32px rgba(251,191,36,0.12), 0 8px 24px rgba(0,0,0,0.5);
+                box-shadow: 0 0 24px rgba(251,191,36,0.12), 0 6px 18px rgba(0,0,0,0.45);
                 display: block; margin: 0 auto;
+                background: rgba(255,255,255,0.04);
             ">
         </div>
 
         <!-- Description -->
         <div style="
             font-family: 'Space Grotesk', sans-serif;
-            font-size: 14px;
-            color: rgba(255,255,255,0.7);
-            line-height: 1.65;
-            margin-bottom: 28px;
+            font-size: 13px;
+            color: rgba(255,255,255,0.78);
+            line-height: 1.55;
+            margin-bottom: 22px;
         ">Future Plans For This Art, mint yours and become part of the aWizard story.</div>
 
         <!-- CTA -->
         <a href="https://bepe.love" target="_blank" rel="noopener" onclick="closeBepePop()" style="
             display: inline-block;
-            padding: 14px 36px;
+            padding: 12px 30px;
             background: linear-gradient(135deg, #fbbf24, #f59e0b);
-            border-radius: 50px;
+            border-radius: 40px;
             font-family: 'Cinzel', serif;
-            font-size: 15px;
-            font-weight: 900;
-            letter-spacing: 1.5px;
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: 1.2px;
             color: #000;
             text-decoration: none;
-            box-shadow: 0 4px 24px rgba(251,191,36,0.4), 0 0 0 0 rgba(251,191,36,0.4);
+            box-shadow: 0 3px 18px rgba(251,191,36,0.35);
             transition: transform 0.15s, box-shadow 0.15s;
-            animation: bepe-cta-pulse 2.5s ease-in-out infinite;
-        " onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 32px rgba(251,191,36,0.55)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 24px rgba(251,191,36,0.4)'">✨ Visit bepe.love ✨</a>
+        " onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 6px 24px rgba(251,191,36,0.45)'" onmouseout="this.style.transform='';this.style.boxShadow='0 3px 18px rgba(251,191,36,0.35)'">✨ Visit bepe.love ✨</a>
 
         <!-- Dismiss -->
         <div style="margin-top: 18px;">
