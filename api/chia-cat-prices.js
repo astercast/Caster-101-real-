@@ -17,7 +17,10 @@ const CAT_IDS = [
         'e335003c6d59aaaabe27eeeaf8a7b1308765f6bc9492a0b16394f50dec6bdcb7', // HODL
     '1653a1df583f3ae6a822ab214b74d2a08fb4309025d54f2db140e5e6bc06e9da', // MANA
     'e816ee18ce2337c4128449bc539fbbe2ecfdd2098c4e7cab4667e223c3bdc23d', // HOA
+    'c0eb7cc73ef2e789a7b9cf7c8c27185beb2ff5fdf2997da28a6b9b3714e4034d', // NI (No Idea)
     '1efff18fedcdb63818a1b41ab3e977707bc314a090e7ea5db396a56095290604', // HORSE
+    '95430751e3894b48820b7da497f04abd0e46fe6d982fa98daf174ff1e35159bd', // Tiger Blood
+    '8df67763ad273f4a08f8f19f8a172d80b38ad940f32fe20b0b2ed3d665edf575', // Choco Taco
 ];
 
 const STATIC_SUPPLY_FALLBACKS = {
