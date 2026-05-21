@@ -4274,7 +4274,7 @@
             </style>
             
             <script>
-                const TANG_NAMES = new Set(['HonK','NeckCoin','VFVAPatek9000Inu','BEPE','HOA']);
+                const TANG_NAMES = new Set(['HonK','NeckCoin','VFVAPatek9000Inu','BEPE','HOA','HORSE']);
                 function toggleTangTickers(show) {
                     document.getElementById('chiaTokenList').classList.toggle('show-tang', show);
                     document.getElementById('baseTokenList').classList.toggle('show-tang', show);
@@ -5440,6 +5440,7 @@
                 { id: 'hodl-chia', symbol: '💎', name: 'HODL', displayName: '$HODL', chain: 'Chia', assetId: 'e335003c6d59aaaabe27eeeaf8a7b1308765f6bc9492a0b16394f50dec6bdcb7' },
             { id: 'mana-chia', symbol: '🧙‍♂️', name: 'MANA', displayName: '$🧙‍♂️', chain: 'Chia', assetId: '1653a1df583f3ae6a822ab214b74d2a08fb4309025d54f2db140e5e6bc06e9da' },
             { id: 'hoa-chia', symbol: '🍊', name: 'HOA', chain: 'Chia', assetId: 'e816ee18ce2337c4128449bc539fbbe2ecfdd2098c4e7cab4667e223c3bdc23d' },
+            { id: 'horse-chia', symbol: '♞', name: 'HORSE', chain: 'Chia', assetId: 'c0eb7cc73ef2e789a7b9cf7c8c27185beb2ff5fdf2997da28a6b9b3714e4034d' },
             
             // Base Network
             { id: 'wxch-base', symbol: 'wXCH', name: 'Wrapped XCH', chain: 'Base', contract: '0x36be1d329444aef5d28df3662ec5b4f965cd93e9' },
@@ -5455,7 +5456,8 @@
             { id: 'chia-meme-base', symbol: '$CHIA', name: 'VFVAPatek9000Inu', chain: 'Base', contract: '0x05AefaFfF978EA4F9E6ff9FA3Bc2465B90598549' },
                 { id: 'hodl-base', symbol: '💎', name: 'HODL', displayName: '$HODL', chain: 'Base', contract: '0xb43ba3fD8ac8b16ED52CFBE72738967C2AD9cC03' },
             { id: 'mana-base', symbol: '🧙‍♂️', name: 'MANA', displayName: '$🧙‍♂️', chain: 'Base', contract: '0x4cE68125983527D1e289a0C1c70464B4bb8932ac' },
-            { id: 'hoa-base', symbol: '🍊', name: 'HOA', chain: 'Base', contract: '0xee642384091f4bb9ab457b875E4e209b5a0BD147' }
+            { id: 'hoa-base', symbol: '🍊', name: 'HOA', chain: 'Base', contract: '0xee642384091f4bb9ab457b875E4e209b5a0BD147' },
+            { id: 'horse-base', symbol: '♞', name: 'HORSE', chain: 'Base', contract: '0xf628fD48BB4A4903DdCdBb89b814B5484456fc4E' }
         ];
 
         let tokens = []; // Will be populated with live data
@@ -7179,6 +7181,8 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
         'wHONK': '🪿',
         'HOA': '🍊',
         'wHOA': '🍊',
+        'HORSE': '♞',
+        'wHORSE': '♞',
         'NECK': '$NECK',
         'wNECK': '$NECK',
         'CHIA': '$CHIA',
@@ -7407,7 +7411,9 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                 'HONK':       '🪿',
                 'wHONK':      '🪿',
                 'HOA':        '🍊',
-                'wHOA':       '🍊'
+                'wHOA':       '🍊',
+                'HORSE':      '♞',
+                'wHORSE':     '♞'
             };
             const getEmoji = (sym) => {
                 // If already emoji/non-ASCII (trackedTokens store emoji as symbol), use as-is
@@ -7530,6 +7536,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
             'eb2155a177b6060535dd8e72e98ddb0c77aea21fab53737de1c1ced3cb38e4c4': '\uD83E\uDE84\u26A1\uFE0F', // SpellPower
             'ae1536f56760e471ad85ead45f00d680ff9cca73b8cc3407be778f1c0c606eac': 'BYC',
             'e816ee18ce2337c4128449bc539fbbe2ecfdd2098c4e7cab4667e223c3bdc23d': 'HOA',
+            'c0eb7cc73ef2e789a7b9cf7c8c27185beb2ff5fdf2997da28a6b9b3714e4034d': '$HORSE',
             'ab558b1b841365a24d1ff2264c55982e55664a8b6e45bc107446b7e667bb463b': 'SPROUT',
             'ccda69ff6c44d687994efdbee30689be51d2347f739287ab4bb7b52344f8bf1d': 'BEPE',
             '048b1358f3b55a70c4db22114c2f52569c0398ba19e8212b8daf1cb25c90a641': 'HonK',
