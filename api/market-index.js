@@ -29,7 +29,7 @@ const TRACKED = {
             { id: 'hodl-chia', symbol: '💎', name: 'HODL', displayName: '$HODL', chain: 'Chia', assetId: 'e335003c6d59aaaabe27eeeaf8a7b1308765f6bc9492a0b16394f50dec6bdcb7' },
         { id: 'mana-chia', symbol: '🧙‍♂️', name: 'MANA', displayName: 'MANA', chain: 'Chia', assetId: '1653a1df583f3ae6a822ab214b74d2a08fb4309025d54f2db140e5e6bc06e9da' },
         { id: 'hoa-chia', symbol: '🍊', name: 'HOA', chain: 'Chia', assetId: 'e816ee18ce2337c4128449bc539fbbe2ecfdd2098c4e7cab4667e223c3bdc23d' },
-        { id: 'horse-chia', symbol: '♞', name: 'HORSE', chain: 'Chia', assetId: 'c0eb7cc73ef2e789a7b9cf7c8c27185beb2ff5fdf2997da28a6b9b3714e4034d' }
+        { id: 'horse-chia', symbol: '🐴', name: 'HORSE', chain: 'Chia', assetId: 'c0eb7cc73ef2e789a7b9cf7c8c27185beb2ff5fdf2997da28a6b9b3714e4034d' }
     ],
     base: [
         { id: 'wxch-base', symbol: 'wXCH', name: 'Wrapped XCH', chain: 'Base', contract: '0x36be1d329444aef5d28df3662ec5b4f965cd93e9' },
@@ -46,7 +46,7 @@ const TRACKED = {
             { id: 'hodl-base', symbol: '💎', name: 'HODL', displayName: '$HODL', chain: 'Base', contract: '0xb43ba3fD8ac8b16ED52CFBE72738967C2AD9cC03' },
         { id: 'mana-base', symbol: '🧙‍♂️', name: 'MANA', displayName: 'MANA', chain: 'Base', contract: '0x4cE68125983527D1e289a0C1c70464B4bb8932ac' },
         { id: 'hoa-base', symbol: '🍊', name: 'HOA', chain: 'Base', contract: '0xee642384091f4bb9ab457b875E4e209b5a0BD147' },
-        { id: 'horse-base', symbol: '♞', name: 'HORSE', chain: 'Base', contract: '0xf628fD48BB4A4903DdCdBb89b814B5484456fc4E' }
+        { id: 'horse-base', symbol: '🐴', name: 'HORSE', chain: 'Base', contract: '0xf628fD48BB4A4903DdCdBb89b814B5484456fc4E' }
     ]
 };
 
