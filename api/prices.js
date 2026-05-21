@@ -20,7 +20,7 @@ const TOKEN_ALIASES = {
     hodl: ['hodl', '$hodl', '💎'],
     mana: ['mana', '$🧙‍♂️', '🧙‍♂️'],
     hoa: ['hoa', '🍊'],
-    noidea: ['noidea', 'ni', '♞', '$ni'],
+    noidea: ['noidea', 'ni', '$ni'],
     horse: ['horse', '$horse', 'horseregardedschizoequestrians'],
     tigerblood: ['tigerblood', 'tiger blood', '🐯🩸'],
     chocotaco: ['chocotaco', 'choco taco', '🍫🌮'],

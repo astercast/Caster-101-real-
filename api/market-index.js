@@ -31,7 +31,7 @@ const TRACKED = {
             { id: 'hodl-chia', symbol: '💎', name: 'HODL', displayName: '$HODL', chain: 'Chia', assetId: 'e335003c6d59aaaabe27eeeaf8a7b1308765f6bc9492a0b16394f50dec6bdcb7' },
         { id: 'mana-chia', symbol: '🧙‍♂️', name: 'MANA', displayName: 'MANA', chain: 'Chia', assetId: '1653a1df583f3ae6a822ab214b74d2a08fb4309025d54f2db140e5e6bc06e9da' },
         { id: 'hoa-chia', symbol: '🍊', name: 'HOA', chain: 'Chia', assetId: 'e816ee18ce2337c4128449bc539fbbe2ecfdd2098c4e7cab4667e223c3bdc23d' },
-        { id: 'ni-chia', symbol: '♞', name: 'No Idea', displayName: 'NI', chain: 'Chia', assetId: 'c0eb7cc73ef2e789a7b9cf7c8c27185beb2ff5fdf2997da28a6b9b3714e4034d' },
+        { id: 'ni-chia', symbol: '$NI', name: 'No Idea', chain: 'Chia', assetId: 'c0eb7cc73ef2e789a7b9cf7c8c27185beb2ff5fdf2997da28a6b9b3714e4034d' },
         { id: 'horse-chia', symbol: '$HORSE', name: 'House of Regarded Schizo Equestrians', displayName: '$HORSE', chain: 'Chia', assetId: '1efff18fedcdb63818a1b41ab3e977707bc314a090e7ea5db396a56095290604' },
         { id: 'tigerblood-chia', symbol: '🐯🩸', name: 'Tiger Blood', chain: 'Chia', assetId: '95430751e3894b48820b7da497f04abd0e46fe6d982fa98daf174ff1e35159bd' },
         { id: 'chocotaco-chia', symbol: '🍫🌮', name: 'Choco Taco', chain: 'Chia', assetId: '8df67763ad273f4a08f8f19f8a172d80b38ad940f32fe20b0b2ed3d665edf575' }
@@ -51,7 +51,7 @@ const TRACKED = {
             { id: 'hodl-base', symbol: '💎', name: 'HODL', displayName: '$HODL', chain: 'Base', contract: '0xb43ba3fD8ac8b16ED52CFBE72738967C2AD9cC03' },
         { id: 'mana-base', symbol: '🧙‍♂️', name: 'MANA', displayName: 'MANA', chain: 'Base', contract: '0x4cE68125983527D1e289a0C1c70464B4bb8932ac' },
         { id: 'hoa-base', symbol: '🍊', name: 'HOA', chain: 'Base', contract: '0xee642384091f4bb9ab457b875E4e209b5a0BD147' },
-        { id: 'ni-base', symbol: '♞', name: 'No Idea', displayName: 'NI', chain: 'Base', contract: '0xf628fD48BB4A4903DdCdBb89b814B5484456fc4E' },
+        { id: 'ni-base', symbol: '$NI', name: 'No Idea', chain: 'Base', contract: '0xf628fD48BB4A4903DdCdBb89b814B5484456fc4E' },
         { id: 'horse-base', symbol: '$HORSE', name: 'House of Regarded Schizo Equestrians', displayName: '$HORSE', chain: 'Base', contract: '0x827fc57Bc514578E8280cEE73f5e948D306aF074' },
         { id: 'tigerblood-base', symbol: '🐯🩸', name: 'Tiger Blood', chain: 'Base', contract: '0xD999c5E89018a28deA05607837DD5DD6de26d907' },
         { id: 'chocotaco-base', symbol: '🍫🌮', name: 'Choco Taco', chain: 'Base', contract: '0xBaB8a1AD71710d62e7E4c2F56c299422C6187c38' }
