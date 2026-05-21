@@ -1,3 +1,5 @@
+import { mergeBasePairsIntoMap } from './base-dex-pairs.js';
+
 const HEADERS = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
@@ -87,19 +89,15 @@ export default async function handler(req, res) {
             if (aid && lp > 0) dexiePriceMap[aid] = lp * xchUsd;
         }
 
-        // DexScreener: contract (lowercase) → liveUsd (best-volume pair)
+        // DexScreener: all Base pairs (incl. ecosystem quotes) → best liquidity per contract
         const dexPriceMap = {};
         const pairs = Array.isArray(dexscreenerRaw) ? dexscreenerRaw : (dexscreenerRaw?.pairs || []);
-        for (const p of pairs) {
-            if (p.chainId && p.chainId !== 'base') continue;
-            const quote = (p.quoteToken?.symbol || '').toUpperCase();
-            if (!['WETH', 'USDC', 'ETH', 'USDT', 'WXCH', 'XCH'].includes(quote)) continue;
-            const ca = (p.baseToken?.address || '').toLowerCase();
-            const price = asNumber(p.priceUsd);
-            const vol = asNumber(p.volume?.h24);
-            if (ca && price > 0 && (!dexPriceMap[ca] || vol > (dexPriceMap[ca].vol || 0))) {
-                dexPriceMap[ca] = { price, vol, change24h: asNumber(p.priceChange?.h24) };
-            }
+        const baseContracts = new Set(
+            baseTokens.map(t => String(t.contract || '').toLowerCase()).filter(Boolean)
+        );
+        const merged = mergeBasePairsIntoMap(pairs, baseContracts, {});
+        for (const [ca, row] of Object.entries(merged)) {
+            dexPriceMap[ca] = { price: row.price, vol: row.liq, change24h: asNumber(row.change24h) };
         }
 
         // ── 4. Merge live prices into token records (fall back to snapshot price if live missed) ──

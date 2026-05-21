@@ -5440,7 +5440,7 @@
                 { id: 'hodl-chia', symbol: '💎', name: 'HODL', displayName: '$HODL', chain: 'Chia', assetId: 'e335003c6d59aaaabe27eeeaf8a7b1308765f6bc9492a0b16394f50dec6bdcb7' },
             { id: 'mana-chia', symbol: '🧙‍♂️', name: 'MANA', displayName: 'MANA', chain: 'Chia', assetId: '1653a1df583f3ae6a822ab214b74d2a08fb4309025d54f2db140e5e6bc06e9da' },
             { id: 'hoa-chia', symbol: '🍊', name: 'HOA', chain: 'Chia', assetId: 'e816ee18ce2337c4128449bc539fbbe2ecfdd2098c4e7cab4667e223c3bdc23d' },
-            { id: 'horse-chia', symbol: '🐴', name: 'HORSE', chain: 'Chia', assetId: 'c0eb7cc73ef2e789a7b9cf7c8c27185beb2ff5fdf2997da28a6b9b3714e4034d' },
+            { id: 'horse-chia', symbol: '♞', name: 'HORSE', displayName: '$HORSE', chain: 'Chia', assetId: '1efff18fedcdb63818a1b41ab3e977707bc314a090e7ea5db396a56095290604' },
             
             // Base Network
             { id: 'wxch-base', symbol: 'wXCH', name: 'Wrapped XCH', chain: 'Base', contract: '0x36be1d329444aef5d28df3662ec5b4f965cd93e9' },
@@ -5457,7 +5457,7 @@
                 { id: 'hodl-base', symbol: '💎', name: 'HODL', displayName: '$HODL', chain: 'Base', contract: '0xb43ba3fD8ac8b16ED52CFBE72738967C2AD9cC03' },
             { id: 'mana-base', symbol: '🧙‍♂️', name: 'MANA', displayName: 'MANA', chain: 'Base', contract: '0x4cE68125983527D1e289a0C1c70464B4bb8932ac' },
             { id: 'hoa-base', symbol: '🍊', name: 'HOA', chain: 'Base', contract: '0xee642384091f4bb9ab457b875E4e209b5a0BD147' },
-            { id: 'horse-base', symbol: '🐴', name: 'HORSE', chain: 'Base', contract: '0xf628fD48BB4A4903DdCdBb89b814B5484456fc4E' }
+            { id: 'horse-base', symbol: '♞', name: 'HORSE', chain: 'Base', contract: '0xf628fD48BB4A4903DdCdBb89b814B5484456fc4E' }
         ];
 
         let tokens = []; // Will be populated with live data
@@ -5468,12 +5468,14 @@
         const DISPLAY_NAME_OVERRIDES = {
             '1653a1df583f3ae6a822ab214b74d2a08fb4309025d54f2db140e5e6bc06e9da': 'MANA',
             '0x4ce68125983527d1e289a0c1c70464b4bb8932ac': 'MANA',
+            '1efff18fedcdb63818a1b41ab3e977707bc314a090e7ea5db396a56095290604': 'HORSE',
         };
         const BASE_TOKEN_OVERRIDES = {
             '0x4ce68125983527d1e289a0c1c70464b4bb8932ac': { name: 'MANA', symbol: '🧙‍♂️' },
         };
         const CHIA_BAG_OVERRIDES = {
             '1653a1df583f3ae6a822ab214b74d2a08fb4309025d54f2db140e5e6bc06e9da': { name: 'MANA', symbol: '🧙‍♂️' },
+            '1efff18fedcdb63818a1b41ab3e977707bc314a090e7ea5db396a56095290604': { name: 'HORSE', symbol: '♞' },
         };
         function patchTokenDisplayNames(tokens) {
             if (!Array.isArray(tokens)) return tokens;
@@ -5817,10 +5819,10 @@
             const batchPrices  = catPriceData.prices  || {};
             const batchChanges = catPriceData.changes || {};
             const batchSources = catPriceData.sources || {};
-            const batchMcaps   = catPriceData.mcaps   || {};
+            const batchSupplies = catPriceData.supplies || {};
 
             // ── Phase 2: Assign best price for each token ──
-            // Priority: Spacescan (from serverless) > Dexie tickers > TibetSwap
+            // Priority: Dexie tickers > serverless batch > TibetSwap
             const tokenPrices = {}; // assetId → { price, change, src }
             for (const t of catTargets) {
                 const aid = t.assetId.toLowerCase();
@@ -5915,8 +5917,8 @@
                 let src      = tp.src;
 
                 const supply = supplyResults[t.assetId] || 0;
-                    const staticSupply = STATIC_SUPPLY_FALLBACKS[t.assetId] || 0;
-                const batchMcap = parseFloat(batchMcaps[t.assetId] || 0);
+                const staticSupply = STATIC_SUPPLY_FALLBACKS[t.assetId] || 0;
+                const batchSupply = parseFloat(batchSupplies[t.assetId] || 0);
                 const fallback = fallbackMcapMap[t.assetId] || null;
                 let mcap = 0;
                 let mcapStatus = 'ok'; // 'ok' | 'no_supply' | 'no_price'
@@ -5924,12 +5926,12 @@
                 if (supply > 0 && price > 0) {
                     mcap = supply * price;
                     src += '+supply';
-                    } else if (price > 0 && staticSupply > 0) {
-                        mcap = staticSupply * price;
-                        src += '+staticSupply';
-                } else if (price > 0 && batchMcap > 0) {
-                    mcap = batchMcap;
-                    src += '+batchMcap';
+                } else if (price > 0 && staticSupply > 0) {
+                    mcap = staticSupply * price;
+                    src += '+staticSupply';
+                } else if (price > 0 && batchSupply > 0) {
+                    mcap = batchSupply * price;
+                    src += '+batchSupply';
                 } else if (price > 0 && fallback && fallback.marketCap > 0) {
                     const priorPrice = parseFloat(fallback.price || 0);
                     if (priorPrice > 0) {
@@ -5966,8 +5968,52 @@
             return results;
         }
 
+        // Base DexScreener: any quote pair (USDC, WETH, ecosystem tokens, etc.) — deepest liquidity wins
+        const BASE_DEX_MIN_LIQ = 50;
+        function basePairLiquidityUsd(p) {
+            const liq = parseFloat(p?.liquidity?.usd || 0);
+            if (liq > 0) return liq;
+            const vol = parseFloat(p?.volume?.h24 || 0);
+            return vol > 0 ? vol * 0.15 : 0;
+        }
+        function baseTokenUsdFromPair(p, contract) {
+            const target = String(contract || '').toLowerCase();
+            if (!target) return 0;
+            const baseAddr = (p.baseToken?.address || '').toLowerCase();
+            const quoteAddr = (p.quoteToken?.address || '').toLowerCase();
+            const priceUsd = parseFloat(p.priceUsd || 0);
+            const priceNative = parseFloat(p.priceNative || 0);
+            if (baseAddr === target) return priceUsd > 0 ? priceUsd : 0;
+            if (quoteAddr === target && priceUsd > 0 && priceNative > 0) return priceUsd / priceNative;
+            return 0;
+        }
+        function mergeBaseDexPairs(pairs, contractSet, out) {
+            for (const p of (pairs || [])) {
+                if ((p.chainId || '').toLowerCase() !== 'base') continue;
+                const liq = basePairLiquidityUsd(p);
+                if (liq < BASE_DEX_MIN_LIQ) continue;
+                for (const ca of [
+                    (p.baseToken?.address || '').toLowerCase(),
+                    (p.quoteToken?.address || '').toLowerCase()
+                ]) {
+                    if (!contractSet.has(ca)) continue;
+                    const price = baseTokenUsdFromPair(p, ca);
+                    if (price <= 0) continue;
+                    if (!out[ca] || liq > (out[ca].liq || 0)) {
+                        out[ca] = {
+                            price,
+                            change24h: parseFloat(p.priceChange?.h24 || 0),
+                            marketCap: 0,
+                            liq
+                        };
+                    }
+                }
+            }
+            return out;
+        }
+
         async function fetchBaseData() {
-            console.log('--- BASE PRICES: DexScreener batch + GeckoTerminal fallback ---');
+            console.log('--- BASE PRICES: DexScreener (all pairs) + GeckoTerminal supply ---');
 
             const baseTargets     = trackedTokens.filter(t => t.chain === 'Base');
             const withContract    = baseTargets.filter(t => t.contract);
@@ -5975,66 +6021,47 @@
                 .map(t => ({...t, price: 0, change24h: 0, marketCap: 0}));
 
             const results = [];
+            const contracts = withContract.map(t => t.contract.toLowerCase());
+            const contractSet = new Set(contracts);
 
-            // ── 1. Batch DexScreener (all contracts in one call) ──
-            const dexData = {};  // contract → { price, change24h, marketCap }
+            // ── 1. Batch DexScreener — all Base liquidity pairs per token ──
+            const dexData = {};
             try {
-                const contracts = withContract.map(t => t.contract.toLowerCase());
                 const r = await fetch(`https://api.dexscreener.com/tokens/v1/base/${contracts.join(',')}`);
                 if (r.ok) {
                     const d = await r.json();
                     const pairs = Array.isArray(d) ? d : (d.pairs || []);
-                    for (const p of pairs) {
-                        if (p.chainId && p.chainId !== 'base') continue;
-                        const quote = (p.quoteToken?.symbol || '').toUpperCase();
-                        if (!['WETH','USDC','ETH','USDT','WXCH','XCH'].includes(quote)) continue;
-                        const ca = (p.baseToken?.address || '').toLowerCase();
-                        const price = parseFloat(p.priceUsd || 0);
-                        const vol = parseFloat(p.volume?.h24 || 0);
-                        if (ca && price > 0 && (!dexData[ca] || vol > (dexData[ca].vol || 0))) {
-                            dexData[ca] = {
-                                price,
-                                change24h: parseFloat(p.priceChange?.h24 || 0),
-                                marketCap: parseFloat(p.marketCap || p.fdv || 0),
-                                vol
-                            };
-                        }
-                    }
+                    mergeBaseDexPairs(pairs, contractSet, dexData);
                 }
-                console.log(`  DexScreener batch: ${Object.keys(dexData).length}/${contracts.length} tokens priced`);
+                console.log(`  DexScreener batch: ${Object.keys(dexData).length}/${contracts.length} tokens priced (all quote pairs)`);
             } catch (e) { console.warn('  DexScreener batch error:', e.message); }
 
-            // ── 2. Also try legacy endpoint for tokens missed by batch ──
-            const missed = withContract.filter(t => !dexData[t.contract.toLowerCase()]);
+            // ── 2. Per-token fallback for contracts still missing a price ──
+            const missed = withContract.filter(t => !dexData[t.contract.toLowerCase()]?.price);
             if (missed.length > 0) {
                 for (const t of missed) {
                     try {
                         const r = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${t.contract.toLowerCase()}`);
                         if (r.ok) {
                             const d = await r.json();
-                            const pairs = d.pairs || [];
-                            const valid = pairs.filter(p => p.chainId === 'base' && ['WETH','USDC','ETH','USDT','WXCH','XCH'].includes((p.quoteToken?.symbol||'').toUpperCase()));
-                            const best = valid.sort((a,b) => parseFloat(b.volume?.h24||0) - parseFloat(a.volume?.h24||0))[0];
-                            if (best) {
-                                dexData[t.contract.toLowerCase()] = {
-                                    price: parseFloat(best.priceUsd || 0),
-                                    change24h: parseFloat(best.priceChange?.h24 || 0),
-                                    marketCap: parseFloat(best.marketCap || best.fdv || 0),
-                                };
-                            }
+                            mergeBaseDexPairs(d.pairs || [], new Set([t.contract.toLowerCase()]), dexData);
                         }
                     } catch {}
                     await new Promise(res => setTimeout(res, 100));
                 }
             }
 
-            // ── 3. GeckoTerminal for tokens still missing price OR missing mcap ──
+            // ── 3. GeckoTerminal — supply × price for mcap (not DexScreener quoted mcap) ──
             const needsGT = withContract.filter(t => {
                 const d = dexData[t.contract.toLowerCase()];
-                return !d || d.price === 0 || !d.marketCap;
+                return !d || d.price === 0;
+            });
+            const needsMcap = withContract.filter(t => {
+                const d = dexData[t.contract.toLowerCase()];
+                return d && d.price > 0;
             });
             if (needsGT.length > 0) {
-                console.log(`  Checking GeckoTerminal for ${needsGT.length} tokens (price/mcap fallback)...`);
+                console.log(`  Checking GeckoTerminal for ${needsGT.length} tokens (price fallback)...`);
                 for (const t of needsGT) {
                     try {
                         const gtR = await fetch(
@@ -6044,7 +6071,6 @@
                             const gtD = await gtR.json();
                             const attr = gtD?.data?.attributes || {};
                             let gtP = parseFloat(attr.price_usd || 0);
-                            let gtMcap = parseFloat(attr.market_cap_usd || attr.fdv_usd || 0);
                             const gtSupply = parseFloat(attr.normalized_total_supply || 0);
 
                             if (gtP === 0) {
@@ -6065,25 +6091,43 @@
                                 } catch {}
                             }
 
-                            if (gtMcap === 0 && gtSupply > 0 && gtP > 0) {
-                                gtMcap = gtSupply * gtP;
-                            }
                             const ca = t.contract.toLowerCase();
-                            const existing = dexData[ca];
-                            if (!existing || existing.price === 0) {
-                                // No DexScreener data at all — use GeckoTerminal fully
-                                if (gtP > 0) {
-                                    dexData[ca] = {
-                                        price: gtP,
-                                        change24h: existing?.change24h || 0,
-                                        marketCap: gtMcap,
-                                    };
-                                    console.log(`  ✅ ${t.name} price via GeckoTerminal: $${gtP.toFixed(10)}`);
-                                }
-                            } else if (!existing.marketCap && gtMcap > 0) {
-                                // DexScreener has price but no mcap — fill in from GT
-                                existing.marketCap = gtMcap;
-                                console.log(`  ✅ ${t.name} mcap via GeckoTerminal: $${gtMcap.toFixed(0)}`);
+                            if (gtP > 0) {
+                                const mcap = gtSupply > 0 ? gtSupply * gtP : 0;
+                                dexData[ca] = {
+                                    price: gtP,
+                                    change24h: dexData[ca]?.change24h || 0,
+                                    marketCap: mcap,
+                                    gtSupply
+                                };
+                                console.log(`  ✅ ${t.name} price via GeckoTerminal: $${gtP.toFixed(10)}`);
+                            }
+                        }
+                    } catch {}
+                    await new Promise(res => setTimeout(res, 80));
+                }
+            }
+            if (needsMcap.length > 0) {
+                console.log(`  Computing Base mcaps (supply × price) for ${needsMcap.length} tokens...`);
+                for (const t of needsMcap) {
+                    const ca = t.contract.toLowerCase();
+                    const existing = dexData[ca];
+                    if (!existing || existing.price === 0) continue;
+                    if (existing.gtSupply > 0) {
+                        existing.marketCap = existing.gtSupply * existing.price;
+                        continue;
+                    }
+                    try {
+                        const gtR = await fetch(
+                            `https://api.geckoterminal.com/api/v2/networks/base/tokens/${ca}`
+                        );
+                        if (gtR.ok) {
+                            const attr = (await gtR.json())?.data?.attributes || {};
+                            const gtSupply = parseFloat(attr.normalized_total_supply || 0);
+                            if (gtSupply > 0) {
+                                existing.gtSupply = gtSupply;
+                                existing.marketCap = gtSupply * existing.price;
+                                console.log(`  ✅ ${t.name} mcap = supply × price: $${existing.marketCap.toFixed(0)}`);
                             }
                         }
                     } catch {}
@@ -6096,7 +6140,7 @@
                 const d = dexData[t.contract.toLowerCase()] || {};
                 const price = d.price || 0;
                 const change24h = d.change24h || 0;
-                const marketCap = d.marketCap || 0;
+                const marketCap = (d.gtSupply > 0 && price > 0) ? d.gtSupply * price : (d.marketCap || 0);
                 if (price > 0) console.log(`  ✅ ${t.name}: $${price.toFixed(10)} mcap:$${marketCap.toFixed(0)}`);
                 else           console.warn(`  ⚠️  ${t.name}: no price from DexScreener or GeckoTerminal`);
                 results.push({...t, price, change24h, marketCap});
@@ -6138,6 +6182,17 @@
                 else if (src && Array.isArray(src.chia)) ingest(src.chia);
             }
             return out;
+        }
+
+        let _marketBgRefreshTimer = null;
+        function scheduleBackgroundMarketRefresh() {
+            if (_marketBgRefreshTimer) return;
+            _marketBgRefreshTimer = setTimeout(async () => {
+                _marketBgRefreshTimer = null;
+                if (marketRefreshLocked) return;
+                console.log('[market] Background refresh — recomputing mcaps (supply × Dexie price)...');
+                try { await updateData(true); } catch (e) { console.warn('[market] Background refresh failed:', e.message); }
+            }, 800);
         }
 
         async function updateData(force) {
@@ -6185,6 +6240,7 @@
                             updateMarketStatus();
                             saveMarketSnapshotLocal(idx);
                             fetchMerklPools();
+                            scheduleBackgroundMarketRefresh();
                             // Stop loading spinner
                             if (refreshIcon) refreshIcon.classList.remove('spinning');
                             if (refreshBtn) refreshBtn.disabled = false;
@@ -7188,8 +7244,8 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
         'wHONK': '🪿',
         'HOA': '🍊',
         'wHOA': '🍊',
-        'HORSE': '🐴',
-        'wHORSE': '🐴',
+        'HORSE': '♞',
+        'wHORSE': '♞',
         'NECK': '$NECK',
         'wNECK': '$NECK',
         'CHIA': '$CHIA',
@@ -7419,8 +7475,8 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                 'wHONK':      '🪿',
                 'HOA':        '🍊',
                 'wHOA':       '🍊',
-                'HORSE':      '🐴',
-                'wHORSE':     '🐴'
+                'HORSE':      '♞',
+                'wHORSE':     '♞'
             };
             const getEmoji = (sym) => {
                 // If already emoji/non-ASCII (trackedTokens store emoji as symbol), use as-is
@@ -7543,7 +7599,7 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
             'eb2155a177b6060535dd8e72e98ddb0c77aea21fab53737de1c1ced3cb38e4c4': '\uD83E\uDE84\u26A1\uFE0F', // SpellPower
             'ae1536f56760e471ad85ead45f00d680ff9cca73b8cc3407be778f1c0c606eac': 'BYC',
             'e816ee18ce2337c4128449bc539fbbe2ecfdd2098c4e7cab4667e223c3bdc23d': 'HOA',
-            'c0eb7cc73ef2e789a7b9cf7c8c27185beb2ff5fdf2997da28a6b9b3714e4034d': '$HORSE',
+            '1efff18fedcdb63818a1b41ab3e977707bc314a090e7ea5db396a56095290604': '$HORSE',
             'ab558b1b841365a24d1ff2264c55982e55664a8b6e45bc107446b7e667bb463b': 'SPROUT',
             'ccda69ff6c44d687994efdbee30689be51d2347f739287ab4bb7b52344f8bf1d': 'BEPE',
             '048b1358f3b55a70c4db22114c2f52569c0398ba19e8212b8daf1cb25c90a641': 'HonK',
@@ -8552,6 +8608,7 @@ async function loadComprehensiveTreasury(force = false) {
             'ab558b1b841365a24d1ff2264c55982e55664a8b6e45bc107446b7e667bb463b': { name: 'Sprout', symbol: '🌱' },
             'dd37f678dda586fad9b1daeae1f7c5c137ffa6d947e1ed5c7b4f3c430da80638': { name: 'Pizza', symbol: '🍕' },
             '1653a1df583f3ae6a822ab214b74d2a08fb4309025d54f2db140e5e6bc06e9da': { name: 'MANA', symbol: '🧙‍♂️' },
+            '1efff18fedcdb63818a1b41ab3e977707bc314a090e7ea5db396a56095290604': { name: 'HORSE', symbol: '♞' },
         };
 
         let mergedChiaTokens = [], mergedChiaTotal = 0, mergedNFTCols = [], mergedNFTCount = 0;

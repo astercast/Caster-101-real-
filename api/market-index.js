@@ -1,3 +1,5 @@
+import { mergeBasePairsIntoMap, selectBestPairForContract } from './base-dex-pairs.js';
+
 const HEADERS = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
@@ -29,7 +31,7 @@ const TRACKED = {
             { id: 'hodl-chia', symbol: '💎', name: 'HODL', displayName: '$HODL', chain: 'Chia', assetId: 'e335003c6d59aaaabe27eeeaf8a7b1308765f6bc9492a0b16394f50dec6bdcb7' },
         { id: 'mana-chia', symbol: '🧙‍♂️', name: 'MANA', displayName: 'MANA', chain: 'Chia', assetId: '1653a1df583f3ae6a822ab214b74d2a08fb4309025d54f2db140e5e6bc06e9da' },
         { id: 'hoa-chia', symbol: '🍊', name: 'HOA', chain: 'Chia', assetId: 'e816ee18ce2337c4128449bc539fbbe2ecfdd2098c4e7cab4667e223c3bdc23d' },
-        { id: 'horse-chia', symbol: '🐴', name: 'HORSE', chain: 'Chia', assetId: 'c0eb7cc73ef2e789a7b9cf7c8c27185beb2ff5fdf2997da28a6b9b3714e4034d' }
+        { id: 'horse-chia', symbol: '♞', name: 'HORSE', displayName: '$HORSE', chain: 'Chia', assetId: '1efff18fedcdb63818a1b41ab3e977707bc314a090e7ea5db396a56095290604' }
     ],
     base: [
         { id: 'wxch-base', symbol: 'wXCH', name: 'Wrapped XCH', chain: 'Base', contract: '0x36be1d329444aef5d28df3662ec5b4f965cd93e9' },
@@ -46,7 +48,7 @@ const TRACKED = {
             { id: 'hodl-base', symbol: '💎', name: 'HODL', displayName: '$HODL', chain: 'Base', contract: '0xb43ba3fD8ac8b16ED52CFBE72738967C2AD9cC03' },
         { id: 'mana-base', symbol: '🧙‍♂️', name: 'MANA', displayName: 'MANA', chain: 'Base', contract: '0x4cE68125983527D1e289a0C1c70464B4bb8932ac' },
         { id: 'hoa-base', symbol: '🍊', name: 'HOA', chain: 'Base', contract: '0xee642384091f4bb9ab457b875E4e209b5a0BD147' },
-        { id: 'horse-base', symbol: '🐴', name: 'HORSE', chain: 'Base', contract: '0xf628fD48BB4A4903DdCdBb89b814B5484456fc4E' }
+        { id: 'horse-base', symbol: '♞', name: 'HORSE', chain: 'Base', contract: '0xf628fD48BB4A4903DdCdBb89b814B5484456fc4E' }
     ]
 };
 
@@ -109,68 +111,54 @@ async function saveBlobSnapshot(snapshot) {
 }
 
 async function fetchBestBaseToken(contract) {
+    let price = 0;
+    let change24h = 0;
+
     try {
         const response = await safeFetch(`https://api.dexscreener.com/latest/dex/tokens/${contract.toLowerCase()}`, 12000);
         if (response.ok) {
             const data = await response.json();
             const pairs = Array.isArray(data?.pairs) ? data.pairs : [];
-            const valid = pairs.filter(p => {
-                if ((p.chainId || '').toLowerCase() !== 'base') return false;
-                const quote = (p.quoteToken?.symbol || '').toUpperCase();
-                return quote === 'WETH' || quote === 'USDC' || quote === 'ETH' || quote === 'USDT' || quote === 'WXCH' || quote === 'XCH';
-            });
-            const best = valid.sort((a, b) => parseFloat(b.volume?.h24 || 0) - parseFloat(a.volume?.h24 || 0))[0];
+            const best = selectBestPairForContract(pairs, contract);
             if (best) {
-                const price = parseFloat(best.priceUsd || 0);
-                const marketCap = parseFloat(best.marketCap || best.fdv || 0);
-                if (price > 0) {
-                    return {
-                        price,
-                        change24h: parseFloat(best.priceChange?.h24 || 0),
-                        marketCap
-                    };
-                }
+                price = best.price;
+                change24h = best.change24h;
             }
         }
     } catch {}
 
-    // GeckoTerminal fallback
+    // Supply + mcap from GeckoTerminal; mcap = normalized_supply × price (not quoted DEX mcap)
     try {
         const gt = await safeFetch(`https://api.geckoterminal.com/api/v2/networks/base/tokens/${contract.toLowerCase()}`, 12000);
-        if (!gt.ok) return { price: 0, change24h: 0, marketCap: 0 };
+        if (!gt.ok) return price > 0 ? { price, change24h, marketCap: 0 } : { price: 0, change24h: 0, marketCap: 0 };
         const data = await gt.json();
         const attr = data?.data?.attributes || {};
-        let price = parseFloat(attr.price_usd || 0);
-        let marketCap = parseFloat(attr.market_cap_usd || attr.fdv_usd || 0);
+        const gtPrice = parseFloat(attr.price_usd || 0);
         const normalizedSupply = parseFloat(attr.normalized_total_supply || 0);
 
         if (price === 0) {
-            const poolsRes = await safeFetch(`https://api.geckoterminal.com/api/v2/networks/base/tokens/${contract.toLowerCase()}/pools`, 12000);
-            if (poolsRes.ok) {
-                const poolsData = await poolsRes.json();
-                const pools = Array.isArray(poolsData?.data) ? poolsData.data : [];
-                const bestPool = pools
-                    .map(p => p?.attributes || {})
-                    .sort((a, b) => parseFloat(b.reserve_in_usd || 0) - parseFloat(a.reserve_in_usd || 0))[0];
-                if (bestPool) {
-                    price = parseFloat(bestPool.base_token_price_usd || 0);
+            price = gtPrice;
+            if (price === 0) {
+                const poolsRes = await safeFetch(`https://api.geckoterminal.com/api/v2/networks/base/tokens/${contract.toLowerCase()}/pools`, 12000);
+                if (poolsRes.ok) {
+                    const poolsData = await poolsRes.json();
+                    const pools = Array.isArray(poolsData?.data) ? poolsData.data : [];
+                    const bestPool = pools
+                        .map(p => p?.attributes || {})
+                        .sort((a, b) => parseFloat(b.reserve_in_usd || 0) - parseFloat(a.reserve_in_usd || 0))[0];
+                    if (bestPool) price = parseFloat(bestPool.base_token_price_usd || 0);
                 }
             }
         }
 
-        if (marketCap === 0 && normalizedSupply > 0 && price > 0) {
+        let marketCap = 0;
+        if (normalizedSupply > 0 && price > 0) {
             marketCap = normalizedSupply * price;
         }
-        if (price > 0) {
-            return {
-                price,
-                change24h: 0,
-                marketCap
-            };
-        }
+        if (price > 0) return { price, change24h, marketCap };
     } catch {}
 
-    return { price: 0, change24h: 0, marketCap: 0 };
+    return price > 0 ? { price, change24h, marketCap: 0 } : { price: 0, change24h: 0, marketCap: 0 };
 }
 
 async function buildSnapshot(req) {
@@ -192,7 +180,7 @@ async function buildSnapshot(req) {
 
     const prices = catResponse?.prices || {};
     const changes = catResponse?.changes || {};
-    const mcaps = catResponse?.mcaps || {};
+    const supplies = catResponse?.supplies || {};
 
     const chia = TRACKED.chia.map(token => {
         if (token.assetId === 'Native') {
@@ -203,11 +191,14 @@ async function buildSnapshot(req) {
                 marketCap: xchMcap
             };
         }
+        const price = parseFloat(prices[token.assetId] || 0);
+        const supply = parseFloat(supplies[token.assetId] || 0);
+        const marketCap = supply > 0 && price > 0 ? supply * price : 0;
         return {
             ...token,
-            price: parseFloat(prices[token.assetId] || 0),
+            price,
             change24h: parseFloat(changes[token.assetId] || 0),
-            marketCap: parseFloat(mcaps[token.assetId] || 0)
+            marketCap
         };
     });
 

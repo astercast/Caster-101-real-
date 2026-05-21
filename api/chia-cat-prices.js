@@ -17,7 +17,7 @@ const CAT_IDS = [
         'e335003c6d59aaaabe27eeeaf8a7b1308765f6bc9492a0b16394f50dec6bdcb7', // HODL
     '1653a1df583f3ae6a822ab214b74d2a08fb4309025d54f2db140e5e6bc06e9da', // MANA
     'e816ee18ce2337c4128449bc539fbbe2ecfdd2098c4e7cab4667e223c3bdc23d', // HOA
-    'c0eb7cc73ef2e789a7b9cf7c8c27185beb2ff5fdf2997da28a6b9b3714e4034d', // HORSE
+    '1efff18fedcdb63818a1b41ab3e977707bc314a090e7ea5db396a56095290604', // HORSE
 ];
 
 const STATIC_SUPPLY_FALLBACKS = {
@@ -165,7 +165,7 @@ export default async function handler(req, res) {
             if (bid && lp > 0) tickerMap[bid] = lp * xchUsd;
         }
 
-        const prices = {}, changes = {}, mcaps = {}, sources = {};
+        const prices = {}, changes = {}, mcaps = {}, supplies = {}, sources = {};
 
         for (let i = 0; i < CAT_IDS.length; i++) {
             const id = CAT_IDS[i];
@@ -173,26 +173,24 @@ export default async function handler(req, res) {
             const dexiePrice = tickerMap[id.toLowerCase()] || 0;
 
             let price = 0, change = 0, src = 'none';
+            const ssSupply = (ss && ss.supply > 0) ? ss.supply : 0;
+            const staticSupply = STATIC_SUPPLY_FALLBACKS[id] || 0;
+            const supply = ssSupply > 0 ? ssSupply : staticSupply;
+            if (supply > 0) supplies[id] = supply;
 
-            // Priority 1: Spacescan (has price + 24h change + supply)
-            if (ss && ss.price > 0) {
-                price = ss.price;
-                change = ss.change || 0;
-                src = 'spacescan';
-                if (ss.supply > 0) mcaps[id] = ss.supply * price;
-            }
-            // Priority 2: Dexie tickers (reliable, always works from Vercel)
-            else if (dexiePrice > 0) {
+            // Price: Dexie tickers first (DEX truth), Spacescan amount_price only as fallback
+            if (dexiePrice > 0) {
                 price = dexiePrice;
                 src = 'dexie';
                 if (ss && ss.change) change = ss.change;
-                    const staticSupply = STATIC_SUPPLY_FALLBACKS[id] || 0;
-                    if (staticSupply > 0) mcaps[id] = staticSupply * price;
+            } else if (ss && ss.price > 0) {
+                price = ss.price;
+                change = ss.change || 0;
+                src = 'spacescan';
             }
 
             prices[id] = price;
             changes[id] = change;
-            if (!mcaps[id]) mcaps[id] = 0;
             sources[id] = src;
         }
 
@@ -209,10 +207,17 @@ export default async function handler(req, res) {
             }
         }
 
+        // Market cap = circulating supply × price (never Spacescan/xch.trade quoted mcap alone)
+        for (const id of CAT_IDS) {
+            const supply = supplies[id] || 0;
+            const price = prices[id] || 0;
+            mcaps[id] = supply > 0 && price > 0 ? supply * price : 0;
+        }
+
         console.log(`[emoji-market] ${CAT_IDS.filter(id => prices[id] > 0).length}/${CAT_IDS.length} priced in ${Date.now()-t0}ms`);
-        return res.status(200).json({ prices, changes, mcaps, xch_usd: xchUsd, sources, success: true, elapsed_ms: Date.now() - t0 });
+        return res.status(200).json({ prices, changes, mcaps, supplies, xch_usd: xchUsd, sources, success: true, elapsed_ms: Date.now() - t0 });
     } catch (e) {
         console.error(`[emoji-market] Error: ${e.message}`);
-        return res.status(200).json({ prices: {}, changes: {}, mcaps: {}, xch_usd: 2.20, success: false, error: e.message });
+        return res.status(200).json({ prices: {}, changes: {}, mcaps: {}, supplies: {}, xch_usd: 2.20, success: false, error: e.message });
     }
 }
