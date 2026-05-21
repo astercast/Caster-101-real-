@@ -84,3 +84,29 @@ export function selectBestPairForContract(pairs, contract) {
     const map = mergeBasePairsIntoMap(pairs, new Set([ca]), {});
     return map[ca] || null;
 }
+
+/** GeckoTerminal token attributes → circulating supply (tokens, not raw units). */
+export function parseGeckoTokenSupply(attr = {}) {
+    const normalized = parseFloat(attr.normalized_total_supply || 0);
+    if (normalized > 0) return normalized;
+
+    const total = parseFloat(attr.total_supply || 0);
+    if (total > 0) return total;
+
+    const price = parseFloat(attr.price_usd || 0);
+    const mcapUsd = parseFloat(attr.market_cap_usd || attr.fdv_usd || 0);
+    if (mcapUsd > 0 && price > 0) return mcapUsd / price;
+
+    return 0;
+}
+
+/**
+ * Base market cap: prefer supply × price; fall back to DexScreener fdv only when
+ * the token is the pair base (dexMcap set by mergeBasePairsIntoMap).
+ */
+export function resolveBaseMarketCap({ gtSupply = 0, price = 0, dexMcap = 0 } = {}) {
+    if (!price || price <= 0) return 0;
+    if (gtSupply > 0) return gtSupply * price;
+    if (dexMcap > 0) return dexMcap;
+    return 0;
+}

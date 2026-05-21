@@ -1,4 +1,8 @@
-import { mergeBasePairsIntoMap, selectBestPairForContract } from './base-dex-pairs.js';
+import {
+    mergeBasePairsIntoMap,
+    parseGeckoTokenSupply,
+    resolveBaseMarketCap
+} from './base-dex-pairs.js';
 
 const HEADERS = {
     'Access-Control-Allow-Origin': '*',
@@ -32,7 +36,7 @@ const TRACKED = {
         { id: 'mana-chia', symbol: '🧙‍♂️', name: 'MANA', displayName: 'MANA', chain: 'Chia', assetId: '1653a1df583f3ae6a822ab214b74d2a08fb4309025d54f2db140e5e6bc06e9da' },
         { id: 'hoa-chia', symbol: '🍊', name: 'HOA', chain: 'Chia', assetId: 'e816ee18ce2337c4128449bc539fbbe2ecfdd2098c4e7cab4667e223c3bdc23d' },
         { id: 'ni-chia', symbol: '$NI', name: 'No Idea', chain: 'Chia', assetId: 'c0eb7cc73ef2e789a7b9cf7c8c27185beb2ff5fdf2997da28a6b9b3714e4034d' },
-        { id: 'horse-chia', symbol: '$HORSE', name: 'House of Regarded Schizo Equestrians', displayName: '$HORSE', chain: 'Chia', assetId: '1efff18fedcdb63818a1b41ab3e977707bc314a090e7ea5db396a56095290604' },
+        { id: 'horse-chia', symbol: '$HORSE', name: 'HouseofRegardedSchizoEquestrians', displayName: '$HORSE', chain: 'Chia', assetId: '1efff18fedcdb63818a1b41ab3e977707bc314a090e7ea5db396a56095290604' },
         { id: 'tigerblood-chia', symbol: '🐯🩸', name: 'Tiger Blood', chain: 'Chia', assetId: '95430751e3894b48820b7da497f04abd0e46fe6d982fa98daf174ff1e35159bd' },
         { id: 'chocotaco-chia', symbol: '🍫🌮', name: 'Choco Taco', chain: 'Chia', assetId: '8df67763ad273f4a08f8f19f8a172d80b38ad940f32fe20b0b2ed3d665edf575' }
     ],
@@ -52,7 +56,7 @@ const TRACKED = {
         { id: 'mana-base', symbol: '🧙‍♂️', name: 'MANA', displayName: 'MANA', chain: 'Base', contract: '0x4cE68125983527D1e289a0C1c70464B4bb8932ac' },
         { id: 'hoa-base', symbol: '🍊', name: 'HOA', chain: 'Base', contract: '0xee642384091f4bb9ab457b875E4e209b5a0BD147' },
         { id: 'ni-base', symbol: '$NI', name: 'No Idea', chain: 'Base', contract: '0xf628fD48BB4A4903DdCdBb89b814B5484456fc4E' },
-        { id: 'horse-base', symbol: '$HORSE', name: 'House of Regarded Schizo Equestrians', displayName: '$HORSE', chain: 'Base', contract: '0x827fc57Bc514578E8280cEE73f5e948D306aF074' },
+        { id: 'horse-base', symbol: '$HORSE', name: 'HouseofRegardedSchizoEquestrians', displayName: '$HORSE', chain: 'Base', contract: '0x827fc57Bc514578E8280cEE73f5e948D306aF074' },
         { id: 'tigerblood-base', symbol: '🐯🩸', name: 'Tiger Blood', chain: 'Base', contract: '0xD999c5E89018a28deA05607837DD5DD6de26d907' },
         { id: 'chocotaco-base', symbol: '🍫🌮', name: 'Choco Taco', chain: 'Base', contract: '0xBaB8a1AD71710d62e7E4c2F56c299422C6187c38' }
     ]
@@ -116,55 +120,85 @@ async function saveBlobSnapshot(snapshot) {
     }
 }
 
-async function fetchBestBaseToken(contract) {
-    let price = 0;
-    let change24h = 0;
-
+async function fetchGeckoBaseMeta(contract) {
+    const ca = contract.toLowerCase();
     try {
-        const response = await safeFetch(`https://api.dexscreener.com/latest/dex/tokens/${contract.toLowerCase()}`, 12000);
-        if (response.ok) {
-            const data = await response.json();
-            const pairs = Array.isArray(data?.pairs) ? data.pairs : [];
-            const best = selectBestPairForContract(pairs, contract);
-            if (best) {
-                price = best.price;
-                change24h = best.change24h;
-            }
-        }
-    } catch {}
-
-    // Supply + mcap from GeckoTerminal; mcap = normalized_supply × price (not quoted DEX mcap)
-    try {
-        const gt = await safeFetch(`https://api.geckoterminal.com/api/v2/networks/base/tokens/${contract.toLowerCase()}`, 12000);
-        if (!gt.ok) return price > 0 ? { price, change24h, marketCap: 0 } : { price: 0, change24h: 0, marketCap: 0 };
-        const data = await gt.json();
-        const attr = data?.data?.attributes || {};
-        const gtPrice = parseFloat(attr.price_usd || 0);
-        const normalizedSupply = parseFloat(attr.normalized_total_supply || 0);
+        const gt = await safeFetch(`https://api.geckoterminal.com/api/v2/networks/base/tokens/${ca}`, 12000);
+        if (!gt.ok) return { price: 0, gtSupply: 0 };
+        const attr = (await gt.json())?.data?.attributes || {};
+        let price = parseFloat(attr.price_usd || 0);
+        const gtSupply = parseGeckoTokenSupply(attr);
 
         if (price === 0) {
-            price = gtPrice;
-            if (price === 0) {
-                const poolsRes = await safeFetch(`https://api.geckoterminal.com/api/v2/networks/base/tokens/${contract.toLowerCase()}/pools`, 12000);
-                if (poolsRes.ok) {
-                    const poolsData = await poolsRes.json();
-                    const pools = Array.isArray(poolsData?.data) ? poolsData.data : [];
-                    const bestPool = pools
-                        .map(p => p?.attributes || {})
-                        .sort((a, b) => parseFloat(b.reserve_in_usd || 0) - parseFloat(a.reserve_in_usd || 0))[0];
-                    if (bestPool) price = parseFloat(bestPool.base_token_price_usd || 0);
-                }
+            const poolsRes = await safeFetch(`https://api.geckoterminal.com/api/v2/networks/base/tokens/${ca}/pools`, 12000);
+            if (poolsRes.ok) {
+                const poolsData = await poolsRes.json();
+                const pools = Array.isArray(poolsData?.data) ? poolsData.data : [];
+                const bestPool = pools
+                    .map(p => p?.attributes || {})
+                    .sort((a, b) => parseFloat(b.reserve_in_usd || 0) - parseFloat(a.reserve_in_usd || 0))[0];
+                price = parseFloat(bestPool?.base_token_price_usd || 0) || 0;
             }
         }
 
-        let marketCap = 0;
-        if (normalizedSupply > 0 && price > 0) {
-            marketCap = normalizedSupply * price;
+        return { price, gtSupply };
+    } catch {
+        return { price: 0, gtSupply: 0 };
+    }
+}
+
+/** Batch DexScreener (all quote pairs) + per-token Gecko supply for mcaps. */
+async function fetchAllBaseTokens(tokens) {
+    const contracts = tokens.map(t => String(t.contract || '').toLowerCase()).filter(Boolean);
+    const contractSet = new Set(contracts);
+    const dexMap = {};
+
+    try {
+        const response = await safeFetch(
+            `https://api.dexscreener.com/tokens/v1/base/${contracts.join(',')}`,
+            15000
+        );
+        if (response.ok) {
+            const data = await response.json();
+            const pairs = Array.isArray(data) ? data : (data?.pairs || []);
+            mergeBasePairsIntoMap(pairs, contractSet, dexMap);
         }
-        if (price > 0) return { price, change24h, marketCap };
     } catch {}
 
-    return price > 0 ? { price, change24h, marketCap: 0 } : { price: 0, change24h: 0, marketCap: 0 };
+    const missed = tokens.filter(t => !dexMap[t.contract.toLowerCase()]?.price);
+    for (const t of missed) {
+        try {
+            const response = await safeFetch(
+                `https://api.dexscreener.com/latest/dex/tokens/${t.contract.toLowerCase()}`,
+                12000
+            );
+            if (response.ok) {
+                const data = await response.json();
+                mergeBasePairsIntoMap(data?.pairs || [], contractSet, dexMap);
+            }
+        } catch {}
+    }
+
+    const rows = [];
+    for (const token of tokens) {
+        const ca = token.contract.toLowerCase();
+        const dex = dexMap[ca] || {};
+        let price = dex.price || 0;
+        let change24h = dex.change24h || 0;
+        const dexMcap = dex.dexMcap || 0;
+
+        const meta = await fetchGeckoBaseMeta(token.contract);
+        if (price === 0 && meta.price > 0) price = meta.price;
+
+        const marketCap = resolveBaseMarketCap({
+            gtSupply: meta.gtSupply,
+            price,
+            dexMcap
+        });
+        rows.push({ token, data: { price, change24h, marketCap } });
+    }
+
+    return rows;
 }
 
 async function buildSnapshot(req) {
@@ -177,7 +211,7 @@ async function buildSnapshot(req) {
         safeFetch(`${origin}/api/chia-cat-prices?t=${Date.now()}`, 20000)
             .then(r => r.ok ? r.json() : {})
             .catch(() => ({})),
-        Promise.all(TRACKED.base.map(async t => ({ token: t, data: await fetchBestBaseToken(t.contract) })))
+        fetchAllBaseTokens(TRACKED.base)
     ]);
 
     const xchPrice = parseFloat(coingeckoResponse?.chia?.usd || 0);

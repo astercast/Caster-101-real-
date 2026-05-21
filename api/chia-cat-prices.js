@@ -1,4 +1,5 @@
 // chia-cat-prices.js — Vercel API route
+import { parseChiaCatSupply } from './chia-supply.js';
 // MODE 1: emoji market prices (default) - Dexie tickers (reliable) + Spacescan (best effort)
 //   Browser handles supply fetching directly via Spacescan (Vercel IPs often blocked)
 // MODE 2: treasury wallets (?mode=treasury&wallets=...)
@@ -50,7 +51,7 @@ async function getSpacescanPrice(assetId) {
         return {
             price: parseFloat(data.amount_price || 0),
             change: parseFloat(data.pricepercentage || 0),
-            supply: parseFloat(data.circulating_supply || data.total_supply || 0),
+            supply: parseChiaCatSupply(data),
             source: 'spacescan'
         };
     } catch (_) { return null; }

@@ -4274,7 +4274,7 @@
             </style>
             
             <script>
-                const TANG_NAMES = new Set(['HonK','NeckCoin','VFVAPatek9000Inu','BEPE','HOA','No Idea','House of Regarded Schizo Equestrians']);
+                const TANG_NAMES = new Set(['HonK','NeckCoin','VFVAPatek9000Inu','BEPE','HOA','No Idea','HouseofRegardedSchizoEquestrians']);
                 function toggleTangTickers(show) {
                     document.getElementById('chiaTokenList').classList.toggle('show-tang', show);
                     document.getElementById('baseTokenList').classList.toggle('show-tang', show);
@@ -5441,7 +5441,7 @@
             { id: 'mana-chia', symbol: '🧙‍♂️', name: 'MANA', displayName: 'MANA', chain: 'Chia', assetId: '1653a1df583f3ae6a822ab214b74d2a08fb4309025d54f2db140e5e6bc06e9da' },
             { id: 'hoa-chia', symbol: '🍊', name: 'HOA', chain: 'Chia', assetId: 'e816ee18ce2337c4128449bc539fbbe2ecfdd2098c4e7cab4667e223c3bdc23d' },
             { id: 'ni-chia', symbol: '$NI', name: 'No Idea', chain: 'Chia', assetId: 'c0eb7cc73ef2e789a7b9cf7c8c27185beb2ff5fdf2997da28a6b9b3714e4034d' },
-            { id: 'horse-chia', symbol: '$HORSE', name: 'House of Regarded Schizo Equestrians', displayName: '$HORSE', chain: 'Chia', assetId: '1efff18fedcdb63818a1b41ab3e977707bc314a090e7ea5db396a56095290604' },
+            { id: 'horse-chia', symbol: '$HORSE', name: 'HouseofRegardedSchizoEquestrians', displayName: '$HORSE', chain: 'Chia', assetId: '1efff18fedcdb63818a1b41ab3e977707bc314a090e7ea5db396a56095290604' },
             { id: 'tigerblood-chia', symbol: '🐯🩸', name: 'Tiger Blood', chain: 'Chia', assetId: '95430751e3894b48820b7da497f04abd0e46fe6d982fa98daf174ff1e35159bd' },
             { id: 'chocotaco-chia', symbol: '🍫🌮', name: 'Choco Taco', chain: 'Chia', assetId: '8df67763ad273f4a08f8f19f8a172d80b38ad940f32fe20b0b2ed3d665edf575' },
             
@@ -5461,7 +5461,7 @@
             { id: 'mana-base', symbol: '🧙‍♂️', name: 'MANA', displayName: 'MANA', chain: 'Base', contract: '0x4cE68125983527D1e289a0C1c70464B4bb8932ac' },
             { id: 'hoa-base', symbol: '🍊', name: 'HOA', chain: 'Base', contract: '0xee642384091f4bb9ab457b875E4e209b5a0BD147' },
             { id: 'ni-base', symbol: '$NI', name: 'No Idea', chain: 'Base', contract: '0xf628fD48BB4A4903DdCdBb89b814B5484456fc4E' },
-            { id: 'horse-base', symbol: '$HORSE', name: 'House of Regarded Schizo Equestrians', displayName: '$HORSE', chain: 'Base', contract: '0x827fc57Bc514578E8280cEE73f5e948D306aF074' },
+            { id: 'horse-base', symbol: '$HORSE', name: 'HouseofRegardedSchizoEquestrians', displayName: '$HORSE', chain: 'Base', contract: '0x827fc57Bc514578E8280cEE73f5e948D306aF074' },
             { id: 'tigerblood-base', symbol: '🐯🩸', name: 'Tiger Blood', chain: 'Base', contract: '0xD999c5E89018a28deA05607837DD5DD6de26d907' },
             { id: 'chocotaco-base', symbol: '🍫🌮', name: 'Choco Taco', chain: 'Base', contract: '0xBaB8a1AD71710d62e7E4c2F56c299422C6187c38' }
         ];
@@ -5481,21 +5481,21 @@
         const BASE_TOKEN_OVERRIDES = {
             '0x4ce68125983527d1e289a0c1c70464b4bb8932ac': { name: 'MANA', symbol: '🧙‍♂️' },
             '0xf628fd48bb4a4903ddcdbb89b814b5484456fc4e': { name: 'No Idea', symbol: '$NI' },
-            '0x827fc57bc514578e8280cee73f5e948d306af074': { name: 'House of Regarded Schizo Equestrians', symbol: '$HORSE' },
+            '0x827fc57bc514578e8280cee73f5e948d306af074': { name: 'HouseofRegardedSchizoEquestrians', symbol: '$HORSE' },
             '0xd999c5e89018a28dea05607837dd5dd6de26d907': { name: 'Tiger Blood', symbol: '🐯🩸' },
             '0xbab8a1ad71710d62e7e4c2f56c299422c6187c38': { name: 'Choco Taco', symbol: '🍫🌮' },
         };
         const CHIA_BAG_OVERRIDES = {
             '1653a1df583f3ae6a822ab214b74d2a08fb4309025d54f2db140e5e6bc06e9da': { name: 'MANA', symbol: '🧙‍♂️' },
             'c0eb7cc73ef2e789a7b9cf7c8c27185beb2ff5fdf2997da28a6b9b3714e4034d': { name: 'No Idea', symbol: '$NI' },
-            '1efff18fedcdb63818a1b41ab3e977707bc314a090e7ea5db396a56095290604': { name: 'House of Regarded Schizo Equestrians', symbol: '$HORSE' },
+            '1efff18fedcdb63818a1b41ab3e977707bc314a090e7ea5db396a56095290604': { name: 'HouseofRegardedSchizoEquestrians', symbol: '$HORSE' },
         };
         function patchTokenDisplayNames(tokens) {
             if (!Array.isArray(tokens)) return tokens;
             return tokens.map(t => {
                 const contractKey = (t.contract || '').toLowerCase();
                 const override = DISPLAY_NAME_OVERRIDES[t.assetId] || DISPLAY_NAME_OVERRIDES[contractKey];
-                return override ? { ...t, displayName: override, name: override } : t;
+                return override ? { ...t, displayName: override } : t;
             });
         }
 
@@ -5689,6 +5689,40 @@
             try { localStorage.setItem('chia_supply_cache', JSON.stringify(supplyCache)); } catch (_) {}
         }
 
+        function parseChiaCatSupply(data) {
+            const d = data || {};
+            const circ = parseFloat(d.circulating_supply || 0);
+            if (circ > 0) return circ;
+            const total = parseFloat(d.total_supply || 0);
+            if (total > 0) return total;
+            const issued = d.issued || d.issued_coins;
+            if (Array.isArray(issued) && issued.length) {
+                const sum = issued.reduce((s, c) => s + parseFloat(c?.amount || c?.value || 0), 0);
+                if (sum > 0) return sum;
+            }
+            return 0;
+        }
+
+        function parseGeckoTokenSupply(attr) {
+            const normalized = parseFloat(attr?.normalized_total_supply || 0);
+            if (normalized > 0) return normalized;
+            const total = parseFloat(attr?.total_supply || 0);
+            if (total > 0) return total;
+            const price = parseFloat(attr?.price_usd || 0);
+            const mcapUsd = parseFloat(attr?.market_cap_usd || attr?.fdv_usd || 0);
+            if (mcapUsd > 0 && price > 0) return mcapUsd / price;
+            return 0;
+        }
+
+        function resolveBaseMarketCap(d, price) {
+            if (!price || price <= 0) return 0;
+            const gtSupply = parseFloat(d?.gtSupply || 0);
+            const dexMcap = parseFloat(d?.dexMcap || 0);
+            if (gtSupply > 0) return gtSupply * price;
+            if (dexMcap > 0) return dexMcap;
+            return 0;
+        }
+
         // Fetch circulating supply for a Chia CAT via direct browser call to Spacescan
         // Uses the spacescanQueue to respect rate limits
         window.getSupplyForChiaToken = async function(assetId) {
@@ -5702,15 +5736,14 @@
                 const data = await spacescanFetch(`https://api.spacescan.io/cat/info/${assetId}`, 10000, 2);
                 if (!data || !data.data) return 0;
 
-                const d = data.data;
-                const circ = parseFloat(d.circulating_supply || 0);
-                const total = parseFloat(d.total_supply || 0);
-                const supply = circ > 0 ? circ : total;
+                const supply = parseChiaCatSupply(data.data);
+                const circ = parseFloat(data.data.circulating_supply || 0);
+                const total = parseFloat(data.data.total_supply || 0);
 
                 if (supply > 0) {
                     supplyCache[assetId] = { supply: circ, total, ts: Date.now() };
                     saveSupplyCache();
-                    console.log(`[supply] ${(d.asset_name || assetId.slice(0,8))}: circ=${circ}, total=${total}, using=${supply}`);
+                    console.log(`[supply] ${(data.data.asset_name || assetId.slice(0, 8))}: circ=${circ}, total=${total}, using=${supply}`);
                 }
                 return supply;
             } catch (e) {
@@ -5901,7 +5934,7 @@
                         const d = data?.data || {};
                         const circ = parseFloat(d.circulating_supply || 0);
                         const total = parseFloat(d.total_supply || 0);
-                        const supply = circ > 0 ? circ : total;
+                        const supply = parseChiaCatSupply(d);
                         supplyResults[t.assetId] = supply;
                         if (supply > 0) {
                             supplyCache[t.assetId] = { supply: circ, total, ts: Date.now() };
@@ -5922,6 +5955,16 @@
                 }
             }
 
+            // Spacescan fallback: server batch supplies (Vercel may succeed when browser is rate-limited)
+            for (const t of catTargets) {
+                if ((supplyResults[t.assetId] || 0) > 0) continue;
+                const bs = parseFloat(batchSupplies[t.assetId] || 0);
+                if (bs > 0) {
+                    supplyResults[t.assetId] = bs;
+                    console.log(`  [batch-supply] ${t.displayName||t.name}: ${bs.toLocaleString()}`);
+                }
+            }
+
             // ── Phase 4: Assemble final results — mcap = circulating_supply × price ──
             for (const t of catTargets) {
                 const tp = tokenPrices[t.assetId];
@@ -5932,7 +5975,6 @@
                 const supply = supplyResults[t.assetId] || 0;
                 const staticSupply = STATIC_SUPPLY_FALLBACKS[t.assetId] || 0;
                 const batchSupply = parseFloat(batchSupplies[t.assetId] || 0);
-                const fallback = fallbackMcapMap[t.assetId] || null;
                 let mcap = 0;
                 let mcapStatus = 'ok'; // 'ok' | 'no_supply' | 'no_price'
 
@@ -5945,21 +5987,8 @@
                 } else if (price > 0 && batchSupply > 0) {
                     mcap = batchSupply * price;
                     src += '+batchSupply';
-                } else if (price > 0 && fallback && fallback.marketCap > 0) {
-                    const priorPrice = parseFloat(fallback.price || 0);
-                    if (priorPrice > 0) {
-                        mcap = fallback.marketCap * (price / priorPrice);
-                    } else {
-                        mcap = fallback.marketCap;
-                    }
-                    src += '+cachedMcap';
-                } else if (price > 0 && mcapCache[t.assetId] && mcapCache[t.assetId].mcap > 0) {
-                    // Persistent cache fallback — adjust for price movement
-                    const cached = mcapCache[t.assetId];
-                    mcap = cached.price > 0 ? cached.mcap * (price / cached.price) : cached.mcap;
-                    src += '+persistCache';
-                } else if (price > 0 && supply === 0) {
-                    mcapStatus = 'no_supply'; // Has price but supply fetch failed (rate limit)
+                } else if (price > 0) {
+                    mcapStatus = 'no_supply'; // Has price but no circulating supply from any source
                 } else {
                     mcapStatus = 'no_price';
                 }
@@ -6012,11 +6041,16 @@
                     if (!contractSet.has(ca)) continue;
                     const price = baseTokenUsdFromPair(p, ca);
                     if (price <= 0) continue;
+                    const baseAddr = (p.baseToken?.address || '').toLowerCase();
+                    const dexMcap = baseAddr === ca
+                        ? parseFloat(p.marketCap || p.fdv || 0) || 0
+                        : 0;
                     if (!out[ca] || liq > (out[ca].liq || 0)) {
                         out[ca] = {
                             price,
                             change24h: parseFloat(p.priceChange?.h24 || 0),
-                            marketCap: 0,
+                            dexMcap,
+                            gtSupply: out[ca]?.gtSupply || 0,
                             liq
                         };
                     }
@@ -6084,7 +6118,7 @@
                             const gtD = await gtR.json();
                             const attr = gtD?.data?.attributes || {};
                             let gtP = parseFloat(attr.price_usd || 0);
-                            const gtSupply = parseFloat(attr.normalized_total_supply || 0);
+                            const gtSupply = parseGeckoTokenSupply(attr);
 
                             if (gtP === 0) {
                                 try {
@@ -6106,11 +6140,10 @@
 
                             const ca = t.contract.toLowerCase();
                             if (gtP > 0) {
-                                const mcap = gtSupply > 0 ? gtSupply * gtP : 0;
                                 dexData[ca] = {
                                     price: gtP,
                                     change24h: dexData[ca]?.change24h || 0,
-                                    marketCap: mcap,
+                                    dexMcap: dexData[ca]?.dexMcap || 0,
                                     gtSupply
                                 };
                                 console.log(`  ✅ ${t.name} price via GeckoTerminal: $${gtP.toFixed(10)}`);
@@ -6126,21 +6159,17 @@
                     const ca = t.contract.toLowerCase();
                     const existing = dexData[ca];
                     if (!existing || existing.price === 0) continue;
-                    if (existing.gtSupply > 0) {
-                        existing.marketCap = existing.gtSupply * existing.price;
-                        continue;
-                    }
+                    if (existing.gtSupply > 0) continue;
                     try {
                         const gtR = await fetch(
                             `https://api.geckoterminal.com/api/v2/networks/base/tokens/${ca}`
                         );
                         if (gtR.ok) {
                             const attr = (await gtR.json())?.data?.attributes || {};
-                            const gtSupply = parseFloat(attr.normalized_total_supply || 0);
+                            const gtSupply = parseGeckoTokenSupply(attr);
                             if (gtSupply > 0) {
                                 existing.gtSupply = gtSupply;
-                                existing.marketCap = gtSupply * existing.price;
-                                console.log(`  ✅ ${t.name} mcap = supply × price: $${existing.marketCap.toFixed(0)}`);
+                                console.log(`  ✅ ${t.name} supply for mcap: ${gtSupply.toLocaleString()}`);
                             }
                         }
                     } catch {}
@@ -6153,7 +6182,7 @@
                 const d = dexData[t.contract.toLowerCase()] || {};
                 const price = d.price || 0;
                 const change24h = d.change24h || 0;
-                const marketCap = (d.gtSupply > 0 && price > 0) ? d.gtSupply * price : (d.marketCap || 0);
+                const marketCap = resolveBaseMarketCap(d, price);
                 if (price > 0) console.log(`  ✅ ${t.name}: $${price.toFixed(10)} mcap:$${marketCap.toFixed(0)}`);
                 else           console.warn(`  ⚠️  ${t.name}: no price from DexScreener or GeckoTerminal`);
                 results.push({...t, price, change24h, marketCap});
@@ -8635,7 +8664,7 @@ async function loadComprehensiveTreasury(force = false) {
             'dd37f678dda586fad9b1daeae1f7c5c137ffa6d947e1ed5c7b4f3c430da80638': { name: 'Pizza', symbol: '🍕' },
             '1653a1df583f3ae6a822ab214b74d2a08fb4309025d54f2db140e5e6bc06e9da': { name: 'MANA', symbol: '🧙‍♂️' },
             'c0eb7cc73ef2e789a7b9cf7c8c27185beb2ff5fdf2997da28a6b9b3714e4034d': { name: 'No Idea', symbol: '$NI' },
-            '1efff18fedcdb63818a1b41ab3e977707bc314a090e7ea5db396a56095290604': { name: 'House of Regarded Schizo Equestrians', symbol: '$HORSE' },
+            '1efff18fedcdb63818a1b41ab3e977707bc314a090e7ea5db396a56095290604': { name: 'HouseofRegardedSchizoEquestrians', symbol: '$HORSE' },
             '95430751e3894b48820b7da497f04abd0e46fe6d982fa98daf174ff1e35159bd': { name: 'Tiger Blood', symbol: '🐯🩸' },
             '8df67763ad273f4a08f8f19f8a172d80b38ad940f32fe20b0b2ed3d665edf575': { name: 'Choco Taco', symbol: '🍫🌮' },
         };
