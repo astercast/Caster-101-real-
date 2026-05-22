@@ -42,7 +42,7 @@ const contracts = TRACKED_BASE.map(([, c]) => c.toLowerCase());
 const contractSet = new Set(contracts);
 const nameByAddr = Object.fromEntries(TRACKED_BASE.map(([n, c]) => [c.toLowerCase(), n]));
 
-// Batch DexScreener
+// ── DexScreener batch ──
 const r = await fetch(`https://api.dexscreener.com/tokens/v1/base/${contracts.join(',')}`);
 const allPairs = r.ok ? (await r.json()) : [];
 const basePairs = (Array.isArray(allPairs) ? allPairs : allPairs.pairs || [])
@@ -50,30 +50,76 @@ const basePairs = (Array.isArray(allPairs) ? allPairs : allPairs.pairs || [])
 
 const dexMap = mergeBasePairsIntoMap(basePairs, contractSet, {});
 
-for (let pass = 0; pass < 2; pass++) {
-    const peerPrices = {};
-    for (const [addr, row] of Object.entries(dexMap)) {
-        if (row?.price > 0) peerPrices[addr] = row.price;
+console.log(`DexScreener: ${basePairs.length} Base pairs, ${Object.keys(dexMap).length} tokens priced`);
+
+// ── GeckoTerminal: batch token attributes ──
+let geckoAttrs = {};
+try {
+    const gtUrl = `https://api.geckoterminal.com/api/v2/networks/base/tokens/multi/${contracts.join(',')}`;
+    const gt = await fetch(gtUrl);
+    if (gt.ok) {
+        const data = (await gt.json())?.data || [];
+        for (const token of data) {
+            const addr = (token?.attributes?.address || '').toLowerCase();
+            if (addr) geckoAttrs[addr] = token.attributes;
+        }
     }
-    for (const [, ca] of TRACKED_BASE) {
+    console.log(`GeckoTerminal batch: ${Object.keys(geckoAttrs).length} tokens returned`);
+} catch (e) {
+    console.log('GeckoTerminal batch failed:', e.message);
+}
+
+// Enrich all tokens from batch attrs
+const peerPrices = {};
+for (const [addr, row] of Object.entries(dexMap)) {
+    if (row?.price > 0) peerPrices[addr] = row.price;
+}
+
+for (const [, ca] of TRACKED_BASE) {
+    const key = ca.toLowerCase();
+    const attr = geckoAttrs[key] || {};
+    const meta = enrichBaseTokenFromGecko(attr, [], ca, peerPrices);
+    const dex = dexMap[key] || {};
+    dexMap[key] = {
+        price: dex.price > 0 ? dex.price : meta.price,
+        dexMcap: dex.dexMcap || 0,
+        geckoMcap: Math.max(dex.geckoMcap || 0, meta.geckoMcap || 0),
+        impliedSupply: Math.max(dex.impliedSupply || 0, meta.impliedSupply || 0),
+        gtSupply: meta.gtSupply > 0 ? meta.gtSupply : (dex.gtSupply || 0),
+        liq: dex.liq || 0
+    };
+    if (dexMap[key].price > 0) peerPrices[key] = dexMap[key].price;
+}
+
+// ── GeckoTerminal: pool calls only for tokens still missing price ──
+const needsPools = TRACKED_BASE.filter(([, ca]) => {
+    const dex = dexMap[ca.toLowerCase()];
+    return !dex?.price || dex.price <= 0;
+});
+
+if (needsPools.length > 0) {
+    console.log(`\nFetching pools for ${needsPools.length} unpriced tokens...`);
+    for (const [name, ca] of needsPools) {
         const key = ca.toLowerCase();
+        const attr = geckoAttrs[key] || {};
+        let pools = [];
         try {
-            const gt = await fetch(`https://api.geckoterminal.com/api/v2/networks/base/tokens/${key}`);
-            if (!gt.ok) continue;
-            const attr = (await gt.json())?.data?.attributes || {};
+            await new Promise(res => setTimeout(res, 2000));
             const poolsR = await fetch(`https://api.geckoterminal.com/api/v2/networks/base/tokens/${key}/pools`);
-            const pools = poolsR.ok ? ((await poolsR.json())?.data || []) : [];
-            const meta = enrichBaseTokenFromGecko(attr, pools, ca, peerPrices);
-            const dex = dexMap[key] || {};
-            dexMap[key] = {
-                price: dex.price > 0 ? dex.price : meta.price,
-                dexMcap: Math.max(dex.dexMcap || 0, meta.geckoMcap || 0),
-                impliedSupply: Math.max(dex.impliedSupply || 0, meta.impliedSupply || 0),
-                gtSupply: meta.gtSupply > 0 ? meta.gtSupply : (dex.gtSupply || 0),
-                liq: dex.liq || 0
-            };
+            if (poolsR.ok) pools = (await poolsR.json())?.data || [];
         } catch {}
-        await new Promise(res => setTimeout(res, 60));
+        const meta = enrichBaseTokenFromGecko(attr, pools, ca, peerPrices);
+        const dex = dexMap[key] || {};
+        dexMap[key] = {
+            price: dex.price > 0 ? dex.price : meta.price,
+            dexMcap: dex.dexMcap || 0,
+            geckoMcap: Math.max(dex.geckoMcap || 0, meta.geckoMcap || 0),
+            impliedSupply: Math.max(dex.impliedSupply || 0, meta.impliedSupply || 0),
+            gtSupply: meta.gtSupply > 0 ? meta.gtSupply : (dex.gtSupply || 0),
+            liq: dex.liq || 0
+        };
+        if (dexMap[key].price > 0) peerPrices[key] = dexMap[key].price;
+        console.log(`  ${name}: price=$${dexMap[key].price?.toFixed(8) || '-'} pools=${pools.length}`);
     }
 }
 
@@ -86,16 +132,18 @@ for (const [name, ca] of TRACKED_BASE) {
         gtSupply: row.gtSupply || 0,
         price: row.price || 0,
         dexMcap: row.dexMcap || 0,
-        impliedSupply: row.impliedSupply || 0
+        impliedSupply: row.impliedSupply || 0,
+        geckoMcap: row.geckoMcap || 0
     });
-    rows.push({ name, price: row.price, dexMcap: row.dexMcap, gtSupply: row.gtSupply, mcap, liq: row.liq });
+    rows.push({ name, price: row.price, dexMcap: row.dexMcap, geckoMcap: row.geckoMcap, gtSupply: row.gtSupply, mcap, liq: row.liq });
 }
 
 rows.sort((a, b) => (b.mcap || 0) - (a.mcap || 0));
 for (const x of rows) {
-    const m = x.mcap > 0 ? `$${(x.mcap / 1e3).toFixed(1)}K` : '-';
-    const p = x.price > 0 ? `$${x.price.toFixed(6)}` : '-';
-    console.log(`${x.name.padEnd(12)} price=${p.padEnd(14)} mcap=${m.padEnd(10)} gtSup=${x.gtSupply ? Math.round(x.gtSupply).toLocaleString() : '-'} dexFdv=${x.dexMcap ? Math.round(x.dexMcap).toLocaleString() : '-'}`);
+    const m = x.mcap > 0 ? `$${(x.mcap / 1e3).toFixed(2)}K` : '-';
+    const p = x.price > 0 ? `$${x.price.toFixed(8)}` : '-';
+    const src = x.dexMcap > 0 ? 'dex' : (x.geckoMcap > 0 ? 'gecko' : (x.gtSupply > 0 ? 'supply' : '-'));
+    console.log(`${x.name.padEnd(12)} price=${p.padEnd(16)} mcap=${m.padEnd(12)} src=${src.padEnd(6)} gtSup=${x.gtSupply ? Math.round(x.gtSupply).toLocaleString() : '-'} dexFdv=${x.dexMcap ? Math.round(x.dexMcap).toLocaleString() : '-'} geckoFdv=${x.geckoMcap ? Math.round(x.geckoMcap).toLocaleString() : '-'}`);
 }
 
 // Ecosystem pairs (both sides tracked, non-stable quote)

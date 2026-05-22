@@ -181,8 +181,12 @@ export function parseGeckoTokenSupply(attr = {}) {
     const normalized = parseFloat(attr.normalized_total_supply || 0);
     if (normalized > 0) return normalized;
 
-    const total = parseFloat(attr.total_supply || 0);
-    if (total > 0) return total;
+    const rawTotal = parseFloat(attr.total_supply || 0);
+    const decimals = parseInt(attr.decimals || 0);
+    if (rawTotal > 0 && decimals > 0) {
+        const supply = rawTotal / Math.pow(10, decimals);
+        if (supply > 0 && supply < 1e15) return supply;
+    }
 
     const price = parseFloat(attr.price_usd || 0);
     const mcapUsd = parseFloat(attr.market_cap_usd || attr.fdv_usd || 0);
