@@ -1,4 +1,5 @@
 // treasury-comprehensive.js v6.1
+import { mergeBasePairsIntoMap } from './base-dex-pairs.js';
 // Chia tokens: ?address=ADDR&chain=chia&type=tokens
 //   - XCH balance fast endpoint first
 //   - token-balance with up to 3 retries (0s / 7s / 14s backoff), 23s timeout each
@@ -113,51 +114,42 @@ async function getDexPrices(tokenAddresses) {
     const pm = {};
     const unique = [...new Set(tokenAddresses.filter(Boolean).map(a => a.toLowerCase()))];
     if (unique.length === 0) return pm;
-    
-    // First pass: try to get prices from all tokens in batches of 30
+
+    const ingestPairs = (pairs, wanted) => {
+        const dexMap = mergeBasePairsIntoMap(pairs, wanted, {});
+        for (const [ca, row] of Object.entries(dexMap)) {
+            if (!row?.price || row.price <= 0) continue;
+            const prev = pm[ca];
+            if (!prev || (row.liq || 0) > (prev.liq || 0)) {
+                pm[ca] = { price: row.price, liq: row.liq || 0, sym: '' };
+            }
+        }
+    };
+
+    // Batch DexScreener — any quote pair; token may be base or quote (wXCH, wNECK, etc.)
     for (let i = 0; i < unique.length; i += 30) {
         const batch = unique.slice(i, i + 30);
+        const wanted = new Set(batch);
         try {
-            // Try DexScreener v1 endpoint with all tokens
-            let found = 0;
             const r = await safeFetch(`https://api.dexscreener.com/tokens/v1/base/${batch.join(',')}`, {}, 12000);
             if (r.ok) {
                 const d = await r.json();
                 const pairs = Array.isArray(d) ? d : (d.pairs || []);
-                for (const pair of pairs) {
-                    if (pair.chainId && pair.chainId !== 'base') continue;
-                    const ca = (pair.baseToken?.address || '').toLowerCase();
-                    const price = parseFloat(pair.priceUsd || 0);
-                    const liq = parseFloat(pair.liquidity?.usd || 0);
-                    if (ca && price > 0) {
-                        if (!pm[ca] || liq > (pm[ca].liq || 0)) {
-                            pm[ca] = { price, liq, sym: pair.baseToken?.symbol || '' };
-                            found++;
-                        }
-                    }
-                }
-            }
-            
-            // If DexScreener didn't get everything, try legacy endpoint for missing tokens
-            if (found < batch.length) {
-                const missing = batch.filter(addr => !pm[addr]);
-                if (missing.length > 0) {
-                    const r2 = await safeFetch(`https://api.dexscreener.com/latest/dex/tokens/${missing.join(',')}`, {}, 12000);
-                    if (r2.ok) {
-                        const d = await r2.json();
-                        const pairs = d.pairs || [];
-                        for (const pair of pairs) {
-                            if (pair.chainId && pair.chainId !== 'base') continue;
-                            const ca = (pair.baseToken?.address || '').toLowerCase();
-                            const price = parseFloat(pair.priceUsd || 0);
-                            if (ca && price > 0 && !pm[ca]) {
-                                pm[ca] = { price, liq: 0, sym: pair.baseToken?.symbol || '' };
-                            }
-                        }
-                    }
-                }
+                ingestPairs(pairs, wanted);
             }
         } catch (e) { console.warn('[BASE] getDexPrices batch', i, ':', e.message); }
+
+        const missing = batch.filter(addr => !pm[addr]);
+        for (const addr of missing) {
+            try {
+                const r2 = await safeFetch(`https://api.dexscreener.com/latest/dex/tokens/${addr}`, {}, 12000);
+                if (r2.ok) {
+                    const d = await r2.json();
+                    ingestPairs(d.pairs || [], new Set([addr]));
+                }
+            } catch {}
+        }
+
         if (i + 30 < unique.length) await sleep(200);
     }
     return pm;
