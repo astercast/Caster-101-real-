@@ -192,15 +192,46 @@ async function fetchAllBaseTokens(tokens) {
         } catch {}
     }
 
-    // Two passes: Gecko fills Dex gaps + token↔token pairs for every tracked asset
-    for (let pass = 0; pass < 2; pass++) {
-        const peerPrices = buildPeerPrices(dexMap);
-        for (const token of tokens) {
-            const ca = token.contract.toLowerCase();
-            const meta = await fetchGeckoBaseMeta(token.contract, peerPrices);
-            dexMap[ca] = mergeGeckoIntoDexRow(dexMap[ca] || {}, meta);
-            await new Promise(res => setTimeout(res, 60));
+    // GeckoTerminal batch: 1 call for all token attributes instead of 36 individual calls
+    const geckoAttrMap = {};
+    try {
+        const batchUrl = `https://api.geckoterminal.com/api/v2/networks/base/tokens/multi/${contracts.join(',')}`;
+        const batchRes = await safeFetch(batchUrl, 15000);
+        if (batchRes.ok) {
+            const batchData = await batchRes.json();
+            for (const item of (batchData?.data || [])) {
+                const attrs = item?.attributes || {};
+                const addr = String(attrs?.address || '').toLowerCase();
+                if (addr) geckoAttrMap[addr] = attrs;
+            }
         }
+    } catch {}
+
+    // GeckoTerminal pools: only for tokens needing price or supply enrichment
+    const peerPrices = buildPeerPrices(dexMap);
+    for (const token of tokens) {
+        const ca = token.contract.toLowerCase();
+        const attr = geckoAttrMap[ca] || {};
+        const dex = dexMap[ca] || {};
+
+        let pools = [];
+        // Only fetch pools if missing price or mcap data
+        if (!dex.price || dex.dexMcap <= 0) {
+            try {
+                const poolsRes = await safeFetch(
+                    `https://api.geckoterminal.com/api/v2/networks/base/tokens/${ca}/pools`,
+                    12000
+                );
+                if (poolsRes.ok) {
+                    const poolsData = await poolsRes.json();
+                    pools = Array.isArray(poolsData?.data) ? poolsData.data : [];
+                }
+            } catch {}
+            await new Promise(res => setTimeout(res, 250));
+        }
+
+        const meta = enrichBaseTokenFromGecko(attr, pools, token.contract, peerPrices);
+        dexMap[ca] = mergeGeckoIntoDexRow(dexMap[ca] || {}, meta);
     }
 
     const rows = [];

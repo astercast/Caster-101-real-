@@ -3,7 +3,7 @@
  * Uses deepest liquidity pool; supports token as base or quote side of the pair.
  */
 
-const MIN_LIQ_USD = 50;
+const MIN_LIQ_USD = 5;
 
 export function pairLiquidityUsd(pair) {
     const liq = parseFloat(pair?.liquidity?.usd || 0);

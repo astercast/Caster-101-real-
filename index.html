@@ -6074,7 +6074,7 @@
         }
 
         // Base DexScreener: any quote pair (USDC, WETH, ecosystem tokens, etc.) — deepest liquidity wins
-        const BASE_DEX_MIN_LIQ = 50;
+        const BASE_DEX_MIN_LIQ = 5;
         function basePairLiquidityUsd(p) {
             const liq = parseFloat(p?.liquidity?.usd || 0);
             if (liq > 0) return liq;
@@ -6181,32 +6181,46 @@
                 }
             }
 
-            // ── 3. GeckoTerminal — every Base asset (token↔token pairs + supply/mcap) ──
-            console.log(`  GeckoTerminal: enriching all ${withContract.length} Base tokens (2 passes)...`);
-            for (let pass = 0; pass < 2; pass++) {
-                const peerPrices = {};
-                for (const [addr, row] of Object.entries(dexData)) {
-                    if (row?.price > 0) peerPrices[addr] = row.price;
+            // ── 3. GeckoTerminal batch: 1 call for all token attributes ──
+            const geckoAttrMap = {};
+            try {
+                const geckoContracts = withContract.map(t => t.contract.toLowerCase()).join(',');
+                const batchR = await fetch(`https://api.geckoterminal.com/api/v2/networks/base/tokens/multi/${geckoContracts}`);
+                if (batchR.ok) {
+                    const batchD = await batchR.json();
+                    for (const item of (batchD?.data || [])) {
+                        const attrs = item?.attributes || {};
+                        const addr = String(attrs?.address || '').toLowerCase();
+                        if (addr) geckoAttrMap[addr] = attrs;
+                    }
                 }
-                for (const t of withContract) {
-                    const ca = t.contract.toLowerCase();
+                console.log(`  GeckoTerminal batch: ${Object.keys(geckoAttrMap).length}/${withContract.length} token attrs`);
+            } catch (e) { console.warn('  GeckoTerminal batch error:', e.message); }
+
+            // ── 3b. GeckoTerminal pools: only for tokens needing price or supply enrichment ──
+            const peerPrices = {};
+            for (const [addr, row] of Object.entries(dexData)) {
+                if (row?.price > 0) peerPrices[addr] = row.price;
+            }
+            for (const t of withContract) {
+                const ca = t.contract.toLowerCase();
+                const attr = geckoAttrMap[ca] || {};
+                const dex = dexData[ca] || {};
+
+                let pools = [];
+                if (!dex.price || dex.dexMcap <= 0) {
                     try {
-                        const gtR = await fetch(`https://api.geckoterminal.com/api/v2/networks/base/tokens/${ca}`);
-                        if (!gtR.ok) continue;
-                        const attr = (await gtR.json())?.data?.attributes || {};
-                        let pools = [];
-                        try {
-                            const poolsR = await fetch(`https://api.geckoterminal.com/api/v2/networks/base/tokens/${ca}/pools`);
-                            if (poolsR.ok) {
-                                const poolsD = await poolsR.json();
-                                pools = Array.isArray(poolsD?.data) ? poolsD.data : [];
-                            }
-                        } catch {}
-                        const meta = enrichBaseTokenFromGecko(attr, pools, t.contract, peerPrices);
-                        dexData[ca] = mergeGeckoIntoDexRow(dexData[ca] || {}, meta);
+                        const poolsR = await fetch(`https://api.geckoterminal.com/api/v2/networks/base/tokens/${ca}/pools`);
+                        if (poolsR.ok) {
+                            const poolsD = await poolsR.json();
+                            pools = Array.isArray(poolsD?.data) ? poolsD.data : [];
+                        }
                     } catch {}
-                    await new Promise(res => setTimeout(res, 60));
+                    await new Promise(res => setTimeout(res, 250));
                 }
+
+                const meta = enrichBaseTokenFromGecko(attr, pools, t.contract, peerPrices);
+                dexData[ca] = mergeGeckoIntoDexRow(dexData[ca] || {}, meta);
             }
 
             // ── 4. Build results ──
