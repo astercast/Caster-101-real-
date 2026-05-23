@@ -1,4 +1,10 @@
-import { mergeBasePairsIntoMap } from './base-dex-pairs.js';
+import { fetchLiveBasePriceMap } from './live-base-prices.js';
+import { fetchLiveChiaPriceData } from './live-chia-prices.js';
+import {
+    computeArbitrageSpread,
+    findPairedBaseToken,
+    pairingKey
+} from './token-pairing.js';
 
 const HEADERS = {
     'Access-Control-Allow-Origin': '*',
@@ -6,17 +12,6 @@ const HEADERS = {
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
     'Content-Type': 'application/json'
 };
-
-// Strip chain suffix from token id to get a pairing key.
-// e.g. 'caster-chia' → 'caster', 'caster-base' → 'caster'
-// Falls back to normalizeName(token.name) for tokens without a structured id.
-function pairingKey(token) {
-    const id = String(token.id || '');
-    if (id.endsWith('-chia')) return id.slice(0, -5);
-    if (id.endsWith('-base')) return id.slice(0, -5);
-    // Fallback: strip non-alphanumeric from name
-    return String(token.name || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-}
 
 function getOrigin(req) {
     const proto = req.headers['x-forwarded-proto'] || 'https';
@@ -53,7 +48,6 @@ export default async function handler(req, res) {
         const minSpreadPct = Math.max(0, asNumber(req.query?.minSpreadPct || 0));
         const origin = getOrigin(req);
 
-        // ── 1. Get token registry from blob cache (fast, just need ids/contracts/assetIds) ──
         const snapshotResp = await safeFetch(`${origin}/api/market-index`, 12000);
         if (!snapshotResp.ok) {
             return res.status(502).json({ ok: false, error: `market_index_${snapshotResp.status}` });
@@ -62,113 +56,73 @@ export default async function handler(req, res) {
         const baseTokens = Array.isArray(snapshot.base) ? snapshot.base : [];
         const chiaTokens = Array.isArray(snapshot.chia) ? snapshot.chia : [];
 
-        // ── 2. Fetch LIVE prices in parallel — Dexie (Chia) + DexScreener (Base) + XCH/USD ──
-        const baseContracts = baseTokens.filter(t => t.contract).map(t => t.contract.toLowerCase());
-        const [xchResp, dexieTickers, dexscreenerRaw] = await Promise.all([
-            // XCH/USD from CoinGecko proxy
-            safeFetch(`${origin}/api/coingecko-proxy?ids=chia&vs_currencies=usd`, 8000)
-                .then(r => r.ok ? r.json() : {}).catch(() => ({})),
-            // All Chia CAT prices in one call — last_price is price-in-XCH
-            fetch('https://dexie.space/v2/prices/tickers', { headers: { Accept: 'application/json' } })
-                .then(r => r.ok ? r.json() : {}).catch(() => ({})),
-            // All Base token prices in one batch call
-            baseContracts.length > 0
-                ? fetch(`https://api.dexscreener.com/tokens/v1/base/${baseContracts.join(',')}`, { headers: { Accept: 'application/json' } })
-                    .then(r => r.ok ? r.json() : []).catch(() => [])
-                : Promise.resolve([]),
+        const baseWithContract = baseTokens.filter(t => t.contract);
+        const [chiaLive, baseLive] = await Promise.all([
+            fetchLiveChiaPriceData(origin),
+            fetchLiveBasePriceMap(baseWithContract)
         ]);
 
-        // ── 3. Build live price maps ──
-        const xchUsd = asNumber(xchResp?.chia?.usd) || 2.20;
+        const { xchUsd, prices: chiaPrices, changes: chiaChanges } = chiaLive;
 
-        // Dexie: assetId → liveUsd
-        const dexiePriceMap = {};
-        for (const tick of (dexieTickers.tickers || [])) {
-            const aid = (tick.base_id || '').toLowerCase();
-            const lp = asNumber(tick.last_price);
-            if (aid && lp > 0) dexiePriceMap[aid] = lp * xchUsd;
+        function liveChiaPrice(token) {
+            if (token.assetId === 'Native') return xchUsd;
+            const aid = (token.assetId || '').toLowerCase();
+            return chiaPrices[aid] || asNumber(token.price);
         }
 
-        // DexScreener: all Base pairs (incl. ecosystem quotes) → best liquidity per contract
-        const dexPriceMap = {};
-        const pairs = Array.isArray(dexscreenerRaw) ? dexscreenerRaw : (dexscreenerRaw?.pairs || []);
-        const baseContracts = new Set(
-            baseTokens.map(t => String(t.contract || '').toLowerCase()).filter(Boolean)
-        );
-        const merged = mergeBasePairsIntoMap(pairs, baseContracts, {});
-        for (const [ca, row] of Object.entries(merged)) {
-            dexPriceMap[ca] = { price: row.price, vol: row.liq, change24h: asNumber(row.change24h) };
+        function liveBasePrice(token) {
+            const ca = (token.contract || '').toLowerCase();
+            return baseLive[ca]?.price || asNumber(token.price);
         }
 
-        // ── 4. Merge live prices into token records (fall back to snapshot price if live missed) ──
-        function livePrice(token) {
-            if (token.chain === 'Chia' && token.assetId && token.assetId !== 'Native') {
-                return dexiePriceMap[token.assetId.toLowerCase()] || asNumber(token.price);
-            }
-            if (token.chain === 'Base' && token.contract) {
-                return dexPriceMap[token.contract.toLowerCase()]?.price || asNumber(token.price);
-            }
-            if (token.chain === 'Chia' && token.assetId === 'Native') return xchUsd;
-            return asNumber(token.price);
+        function liveChiaChange(token) {
+            const aid = (token.assetId || '').toLowerCase();
+            return chiaChanges[aid] ?? asNumber(token.change24h);
         }
 
-        // ── 5. Build pairing maps with live prices ──
-        const baseMap = new Map();
-        const chiaMap = new Map();
-
-        for (const token of baseTokens) {
-            const key = pairingKey(token);
-            const price = livePrice(token);
-            if (!key || price <= 0) continue;
-            baseMap.set(key, { ...token, price });
+        function liveBaseChange(token) {
+            const ca = (token.contract || '').toLowerCase();
+            return baseLive[ca]?.change24h ?? asNumber(token.change24h);
         }
 
-        for (const token of chiaTokens) {
-            const key = pairingKey(token);
-            const price = livePrice(token);
-            if (!key || price <= 0) continue;
-            chiaMap.set(key, { ...token, price });
-        }
-
-        // ── 6. Compute spreads ──
         const opportunities = [];
-        for (const [key, b] of baseMap.entries()) {
-            const c = chiaMap.get(key);
-            if (!c) continue;
 
-            const basePrice = asNumber(b.price);
-            const chiaPrice = asNumber(c.price);
-            if (basePrice <= 0 || chiaPrice <= 0) continue;
+        for (const chiaToken of chiaTokens) {
+            if (chiaToken.assetId === 'Native') continue;
 
-            const spreadAbs = basePrice - chiaPrice;
-            const spreadPct = (spreadAbs / chiaPrice) * 100;
-            const absSpreadPct = Math.abs(spreadPct);
-            if (absSpreadPct < minSpreadPct) continue;
+            const baseToken = findPairedBaseToken(chiaToken, baseTokens);
+            if (!baseToken) continue;
 
-            const direction = spreadPct >= 0
-                ? 'buy_chia_sell_base'
-                : 'buy_base_sell_chia';
+            const chiaPrice = liveChiaPrice(chiaToken);
+            const basePrice = liveBasePrice(baseToken);
+            const spread = computeArbitrageSpread(chiaPrice, basePrice);
+
+            if (!spread.ok || spread.absSpreadPct < minSpreadPct) continue;
+
+            const key = pairingKey(chiaToken);
 
             opportunities.push({
                 key,
-                name: c.displayName || c.name || b.displayName || b.name || key,
-                symbol: c.symbol || b.symbol || null,
+                name: chiaToken.displayName || chiaToken.name || baseToken.displayName || baseToken.name || key,
+                symbol: chiaToken.symbol || baseToken.symbol || null,
                 base: {
-                    price: basePrice,
-                    contract: b.contract || null,
-                    change24h: asNumber(b.change24h),
-                    marketCap: asNumber(b.marketCap),
+                    price: spread.basePrice,
+                    contract: baseToken.contract || null,
+                    change24h: liveBaseChange(baseToken),
+                    marketCap: asNumber(baseToken.marketCap),
+                    live: baseLive[(baseToken.contract || '').toLowerCase()]?.price > 0
                 },
                 chia: {
-                    price: chiaPrice,
-                    assetId: c.assetId || null,
-                    change24h: asNumber(c.change24h),
-                    marketCap: asNumber(c.marketCap),
+                    price: spread.chiaPrice,
+                    assetId: chiaToken.assetId || null,
+                    change24h: liveChiaChange(chiaToken),
+                    marketCap: asNumber(chiaToken.marketCap),
+                    live: chiaPrices[(chiaToken.assetId || '').toLowerCase()] > 0
                 },
-                spreadAbs,
-                spreadPct,
-                absSpreadPct,
-                direction,
+                spreadAbs: spread.spreadAbs,
+                spreadPct: spread.spreadPct,
+                absSpreadPct: spread.absSpreadPct,
+                direction: spread.direction
             });
         }
 
@@ -181,7 +135,8 @@ export default async function handler(req, res) {
             snapshotAge: snapshot.savedAt ? Date.now() - snapshot.savedAt : null,
             xchUsd,
             minSpreadPct,
-            opportunities,
+            pairCount: opportunities.length,
+            opportunities
         });
     } catch (e) {
         return res.status(500).json({ ok: false, error: e.message || 'arbitrage_failed' });

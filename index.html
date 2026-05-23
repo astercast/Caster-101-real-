@@ -5466,6 +5466,39 @@
             { id: 'chocotaco-base', symbol: '🍫🌮', name: 'Choco Taco', chain: 'Base', contract: '0xBaB8a1AD71710d62e7E4c2F56c299422C6187c38' }
         ];
 
+        // Chia ↔ Base bridge pairing (BYC on Chia = Wizard Bucks on Base)
+        const ARB_PAIR_ALIASES = { byc: 'wiz', wiz: 'wiz' };
+        function arbPairingKey(token) {
+            const id = String(token.id || '');
+            let raw = '';
+            if (id.endsWith('-chia')) raw = id.slice(0, -5);
+            else if (id.endsWith('-base')) raw = id.slice(0, -5);
+            else raw = String(token.name || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+            return ARB_PAIR_ALIASES[raw] || raw;
+        }
+        function findPairedBaseForChia(chiaToken, baseList) {
+            const key = arbPairingKey(chiaToken);
+            return (baseList || []).find(t => arbPairingKey(t) === key) || null;
+        }
+        function computeArbSpread(chiaPrice, basePrice) {
+            const chia = parseFloat(chiaPrice || 0);
+            const base = parseFloat(basePrice || 0);
+            if (chia <= 0 || base <= 0) return { ok: false, spreadPct: 0, absSpreadPct: 0 };
+            const spreadAbs = base - chia;
+            const spreadPct = (spreadAbs / chia) * 100;
+            return { ok: true, spreadAbs, spreadPct, absSpreadPct: Math.abs(spreadPct) };
+        }
+        function arbUiFromSpread(spread) {
+            if (!spread.ok) return { color: 'rgba(255,255,255,0.35)', icon: '⚠️', label: 'cannot fetch' };
+            if (spread.spreadPct > 0.05) {
+                return { color: '#4ade80', icon: '🟢', label: `${spread.absSpreadPct.toFixed(1)}% cheaper on Chia` };
+            }
+            if (spread.spreadPct < -0.05) {
+                return { color: '#ef4444', icon: '🔴', label: `${spread.absSpreadPct.toFixed(1)}% premium on Chia` };
+            }
+            return { color: 'rgba(255,255,255,0.3)', icon: '⚪', label: '0.0% diff' };
+        }
+
         let tokens = []; // Will be populated with live data
         let displayedTokens = [];
         let currentSort = 'marketCap';
@@ -7354,18 +7387,9 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
             'wMANA': '🧙‍♂️'
     };
     
-    // Create price maps for easy lookup
-    const chiaPriceMap = {};
-    const basePriceMap = {};
-    
-    chiaTokens.forEach(t => {
-        const key = t.symbol.replace(/^w/, ''); // Remove 'w' prefix
-        chiaPriceMap[key] = t.price || 0;
-    });
-    
+    const baseByPairKey = {};
     baseTokens.forEach(t => {
-        const key = t.symbol.replace(/^w/, ''); // Remove 'w' prefix
-        basePriceMap[key] = {
+        baseByPairKey[arbPairingKey(t)] = {
             price: t.price || 0,
             change24h: t.change24h || 0
         };
@@ -7418,37 +7442,17 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
     const chiaList = document.getElementById('chiaTokenList');
     if (chiaList) {
         const chiaHTML = chiaTokens.map(token => {
-            const key = token.symbol.replace(/^w/, '');
             const emoji = EMOJI_MAP[token.symbol] || token.symbol;
             const isDimmed = token.symbol.startsWith('$') || token.symbol.startsWith('w$');
             const chiaPrice = token.price || 0;
             let chiaMarketCap = token.marketCap || 0;
-            const basePrice = basePriceMap[key]?.price || 0;
-            // Calculate arbitrage
-            const diff = basePrice - chiaPrice;
-            const diffPercent = basePrice > 0 ? (diff / basePrice) * 100 : 0;
-            const diffDollars = Math.abs(diff);
-            // Determine color and label — always show actual %, no suppression
-            let arbColor = '#888';
-            let arbLabel;
-            let arbIcon;
-            if (basePrice === 0 || chiaPrice === 0) {
-                arbColor = 'rgba(255,255,255,0.3)';
-                arbLabel = 'cannot fetch';
-                arbIcon = '⚠️';
-            } else if (diff > 0) {
-                arbColor = '#4ade80';
-                arbLabel = `${Math.abs(diffPercent).toFixed(1)}% cheaper`;
-                arbIcon = '🟢';
-            } else if (diff < 0) {
-                arbColor = '#ef4444';
-                arbLabel = `${Math.abs(diffPercent).toFixed(1)}% premium`;
-                arbIcon = '🔴';
-            } else {
-                arbColor = 'rgba(255,255,255,0.3)';
-                arbLabel = '0.0% diff';
-                arbIcon = '⚪';
-            }
+            const pairedBase = baseByPairKey[arbPairingKey(token)];
+            const basePrice = pairedBase?.price || 0;
+            const spread = computeArbSpread(chiaPrice, basePrice);
+            const arb = arbUiFromSpread(spread);
+            const arbColor = arb.color;
+            const arbLabel = arb.label;
+            const arbIcon = arb.icon;
             // Format market cap display
             let marketCapDisplay, marketCapColor;
             if (chiaMarketCap > 0) {
@@ -7629,29 +7633,13 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
             };
 
             // Helper to create Chia token card HTML (shows arbitrage vs Base)
-            const BYC_ASSET_ID = 'ae1536f56760e471ad85ead45f00d680ff9cca73b8cc3407be778f1c0c606eac';
             const createChiaCard = (token) => {
                 const isTang = TANG_NAMES.has(token.name);
-                const BYC_ASSET_ID_LC = BYC_ASSET_ID.toLowerCase();
-                let baseToken;
-                if (token.assetId === BYC_ASSET_ID) {
-                    baseToken = baseTokens.find(b => b.name === 'Wizard Bucks');
-                } else {
-                    baseToken = baseTokens.find(b => b.symbol === token.symbol);
-                }
-
-                // Arb calculation
-                let arbDisplay = '', arbColor = '#888';
-                if (baseToken && baseToken.price > 0 && token.price > 0) {
-                    const diff = baseToken.price - token.price;
-                    const diffPercent = (diff / baseToken.price) * 100;
-                    if (diff > 0) { arbColor = '#4ade80'; arbDisplay = `🟢 ${Math.abs(diffPercent).toFixed(1)}% cheaper`; }
-                    else if (diff < 0) { arbColor = '#ef4444'; arbDisplay = `🔴 ${Math.abs(diffPercent).toFixed(1)}% premium`; }
-                    else { arbColor = 'rgba(255,255,255,0.3)'; arbDisplay = '⚪ 0.0% diff'; }
-                } else {
-                    arbColor = 'rgba(255,255,255,0.25)';
-                    arbDisplay = '⚠️ cannot fetch';
-                }
+                const baseToken = findPairedBaseForChia(token, baseTokens);
+                const spread = computeArbSpread(token.price, baseToken?.price);
+                const arb = arbUiFromSpread(spread);
+                const arbColor = arb.color;
+                const arbDisplay = `${arb.icon} ${arb.label}`;
 
                 // Mcap
                 const mcap = token.marketCap || 0;
@@ -7803,25 +7791,18 @@ function updateEmojiMarket(chiaTokens, baseTokens) {
                     sorted.sort((a, b) => (b.change24h || 0) - (a.change24h || 0));
                     break;
                 case 'arbitrage': {
-                    // Group tokens into pairs and sort by arbitrage opportunity
-                    // BYC (ae1536... on Chia) bridges to Wizard Bucks on Base
-                    const BYC_ID = 'ae1536f56760e471ad85ead45f00d680ff9cca73b8cc3407be778f1c0c606eac';
                     const pairs = [];
                     const chiaTokensArb = sorted.filter(t => t.chain === 'Chia' && t.assetId !== 'Native');
-                    
+                    const baseListArb = sorted.filter(t => t.chain === 'Base');
+
                     chiaTokensArb.forEach(chiaToken => {
-                        // BYC pairs with Wizard Bucks by name, all others by symbol
-                        const baseToken = (chiaToken.assetId === BYC_ID)
-                            ? sorted.find(t => t.chain === 'Base' && t.name === 'Wizard Bucks')
-                            : sorted.find(t => t.chain === 'Base' && t.symbol === chiaToken.symbol);
-                        
-                        let arbitragePercent = 0;
-                        if (baseToken && baseToken.price > 0 && chiaToken.price > 0) {
-                            const diff = baseToken.price - chiaToken.price;
-                            arbitragePercent = Math.abs((diff / baseToken.price) * 100);
-                        }
-                        
-                        pairs.push({ chiaToken, baseToken, arbitragePercent });
+                        const baseToken = findPairedBaseForChia(chiaToken, baseListArb);
+                        const spread = computeArbSpread(chiaToken.price, baseToken?.price);
+                        pairs.push({
+                            chiaToken,
+                            baseToken,
+                            arbitragePercent: spread.ok ? spread.absSpreadPct : 0
+                        });
                     });
                     
                     // Sort pairs by arbitrage percentage (highest opportunity first)
