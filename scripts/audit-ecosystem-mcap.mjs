@@ -1,11 +1,10 @@
 /**
- * Audit Base emoji market pricing — mirrors production pipeline.
+ * Audit Base ecosystem token-token pairs + mcap pipeline.
  * Run: node scripts/audit-ecosystem-mcap.mjs
  */
 import {
     enrichBaseTokenFromGecko,
     mergeBasePairsIntoMap,
-    mergeGeckoIntoDexRow,
     resolveBaseMarketCap,
     tokenUsdFromPair,
     pairLiquidityUsd
@@ -32,87 +31,95 @@ const TRACKED_BASE = [
     ['ChocoTaco', '0xBaB8a1AD71710d62e7E4c2F56c299422C6187c38']
 ];
 
+const STABLE = new Set(['usdc', 'usdt', 'dai', 'usd', 'usdbc', 'weth', 'eth', 'cbeth', 'wxch']);
+
+function isEcosystemQuote(sym) {
+    const s = (sym || '').toLowerCase().replace(/^\$/, '').replace(/^w/, '');
+    return !STABLE.has(s) && s.length > 0;
+}
+
 const contracts = TRACKED_BASE.map(([, c]) => c.toLowerCase());
 const contractSet = new Set(contracts);
 const nameByAddr = Object.fromEntries(TRACKED_BASE.map(([n, c]) => [c.toLowerCase(), n]));
-const dexMap = {};
 
-const batch = await fetch(`https://api.dexscreener.com/tokens/v1/base/${contracts.join(',')}`);
-if (batch.ok) {
-    const data = await batch.json();
-    mergeBasePairsIntoMap(Array.isArray(data) ? data : (data.pairs || []), contractSet, dexMap);
-}
+// Batch DexScreener
+const r = await fetch(`https://api.dexscreener.com/tokens/v1/base/${contracts.join(',')}`);
+const allPairs = r.ok ? (await r.json()) : [];
+const basePairs = (Array.isArray(allPairs) ? allPairs : allPairs.pairs || [])
+    .filter(p => (p.chainId || '').toLowerCase() === 'base');
 
-for (const [, ca] of TRACKED_BASE) {
-    const r = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${ca.toLowerCase()}`);
-    if (r.ok) mergeBasePairsIntoMap((await r.json()).pairs || [], contractSet, dexMap);
-    await new Promise(res => setTimeout(res, 80));
-}
+const dexMap = mergeBasePairsIntoMap(basePairs, contractSet, {});
 
-let geckoAttrs = {};
-const gt = await fetch(`https://api.geckoterminal.com/api/v2/networks/base/tokens/multi/${contracts.join(',')}`);
-if (gt.ok) {
-    for (const token of ((await gt.json())?.data || [])) {
-        const addr = (token?.attributes?.address || '').toLowerCase();
-        if (addr) geckoAttrs[addr] = token.attributes;
+for (let pass = 0; pass < 2; pass++) {
+    const peerPrices = {};
+    for (const [addr, row] of Object.entries(dexMap)) {
+        if (row?.price > 0) peerPrices[addr] = row.price;
+    }
+    for (const [, ca] of TRACKED_BASE) {
+        const key = ca.toLowerCase();
+        try {
+            const gt = await fetch(`https://api.geckoterminal.com/api/v2/networks/base/tokens/${key}`);
+            if (!gt.ok) continue;
+            const attr = (await gt.json())?.data?.attributes || {};
+            const poolsR = await fetch(`https://api.geckoterminal.com/api/v2/networks/base/tokens/${key}/pools`);
+            const pools = poolsR.ok ? ((await poolsR.json())?.data || []) : [];
+            const meta = enrichBaseTokenFromGecko(attr, pools, ca, peerPrices);
+            const dex = dexMap[key] || {};
+            dexMap[key] = {
+                price: dex.price > 0 ? dex.price : meta.price,
+                dexMcap: Math.max(dex.dexMcap || 0, meta.geckoMcap || 0),
+                impliedSupply: Math.max(dex.impliedSupply || 0, meta.impliedSupply || 0),
+                gtSupply: meta.gtSupply > 0 ? meta.gtSupply : (dex.gtSupply || 0),
+                liq: dex.liq || 0
+            };
+        } catch {}
+        await new Promise(res => setTimeout(res, 60));
     }
 }
 
-const peerPrices = {};
-for (const [addr, row] of Object.entries(dexMap)) {
-    if (row?.price > 0) peerPrices[addr] = row.price;
-}
-
-for (const [, ca] of TRACKED_BASE) {
-    const key = ca.toLowerCase();
-    const dex = dexMap[key] || {};
-    const meta = enrichBaseTokenFromGecko(geckoAttrs[key] || {}, [], ca, peerPrices, dex.price > 0);
-    dexMap[key] = mergeGeckoIntoDexRow(dex, meta);
-}
-
-const needsPools = TRACKED_BASE.filter(([, ca]) => !dexMap[ca.toLowerCase()]?.price);
-for (const [name, ca] of needsPools) {
-    await new Promise(res => setTimeout(res, 120));
-    let pools = [];
-    try {
-        const poolsR = await fetch(`https://api.geckoterminal.com/api/v2/networks/base/tokens/${ca.toLowerCase()}/pools`);
-        if (poolsR.ok) pools = (await poolsR.json())?.data || [];
-    } catch {}
-    const key = ca.toLowerCase();
-    const meta = enrichBaseTokenFromGecko(geckoAttrs[key] || {}, pools, ca, peerPrices, false);
-    dexMap[key] = mergeGeckoIntoDexRow(dexMap[key] || {}, meta);
-    console.log(`  Gecko pools: ${name} price=${dexMap[key]?.price || '-'}`);
-}
-
-console.log('\n=== Base emoji market (fixed pipeline) ===\n');
+console.log('\n=== Per-token (Dex + Gecko, all assets) ===\n');
 const rows = [];
 for (const [name, ca] of TRACKED_BASE) {
-    const row = dexMap[ca.toLowerCase()] || {};
+    const key = ca.toLowerCase();
+    const row = dexMap[key] || {};
     const mcap = resolveBaseMarketCap({
         gtSupply: row.gtSupply || 0,
         price: row.price || 0,
         dexMcap: row.dexMcap || 0,
-        impliedSupply: row.impliedSupply || 0,
-        geckoMcap: row.geckoMcap || 0
+        impliedSupply: row.impliedSupply || 0
     });
-    rows.push({ name, ...row, mcap });
+    rows.push({ name, price: row.price, dexMcap: row.dexMcap, gtSupply: row.gtSupply, mcap, liq: row.liq });
 }
 
 rows.sort((a, b) => (b.mcap || 0) - (a.mcap || 0));
 for (const x of rows) {
-    const p = x.price > 0 ? `$${x.price.toFixed(6)}` : '-';
     const m = x.mcap > 0 ? `$${(x.mcap / 1e3).toFixed(1)}K` : '-';
-    const src = x.dexMcap > 0 ? 'dex' : (x.geckoMcap > 0 ? 'gecko' : '-');
-    console.log(`${x.name.padEnd(12)} price=${p.padEnd(14)} mcap=${m.padEnd(10)} [${src}]`);
+    const p = x.price > 0 ? `$${x.price.toFixed(6)}` : '-';
+    console.log(`${x.name.padEnd(12)} price=${p.padEnd(14)} mcap=${m.padEnd(10)} gtSup=${x.gtSupply ? Math.round(x.gtSupply).toLocaleString() : '-'} dexFdv=${x.dexMcap ? Math.round(x.dexMcap).toLocaleString() : '-'}`);
 }
 
-console.log('\n=== Tracked ↔ tracked pairs ===\n');
-const caster = '0x09aa909eea859f712f2ae3dd1872671d2363f6f4';
-const dr = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${caster}`);
-for (const p of ((await dr.json()).pairs || []).filter(x => (x.chainId || '').toLowerCase() === 'base')) {
+// Ecosystem pairs (both sides tracked, non-stable quote)
+console.log('\n=== Ecosystem pairs (tracked ↔ tracked) ===\n');
+const ecoPairs = [];
+for (const p of basePairs) {
     const ba = (p.baseToken?.address || '').toLowerCase();
     const qa = (p.quoteToken?.address || '').toLowerCase();
-    if (contractSet.has(ba) && contractSet.has(qa)) {
-        console.log(`${p.baseToken?.symbol}/${p.quoteToken?.symbol} liq=$${Math.round(pairLiquidityUsd(p))} caster=$${tokenUsdFromPair(p, caster)?.toFixed(2)}`);
+    const bs = p.baseToken?.symbol || '';
+    const qs = p.quoteToken?.symbol || '';
+    const bTracked = contractSet.has(ba);
+    const qTracked = contractSet.has(qa);
+    if (!bTracked && !qTracked) continue;
+    if (bTracked && qTracked) {
+        ecoPairs.push(p);
+        const pB = dexMap[ba]?.price || 0;
+        const pQ = dexMap[qa]?.price || 0;
+        const derivedQ = tokenUsdFromPair(p, qa);
+        const derivedB = tokenUsdFromPair(p, ba);
+        const driftQ = pQ > 0 && derivedQ > 0 ? Math.abs(derivedQ - pQ) / pQ : null;
+        const driftB = pB > 0 && derivedB > 0 ? Math.abs(derivedB - pB) / pB : null;
+        console.log(`${bs}/${qs} liq=$${Math.round(pairLiquidityUsd(p))} | ${nameByAddr[ba]} merged=$${pB?.toFixed(4)} pair=$${derivedB?.toFixed(4)} | ${nameByAddr[qa]} merged=$${pQ?.toFixed(4)} pair=$${derivedQ?.toFixed(4)} drift=${((driftQ || driftB || 0) * 100).toFixed(1)}%`);
+    } else if (bTracked && isEcosystemQuote(qs)) {
+        // tracked base vs unknown ecosystem
     }
 }
+console.log(`\nTracked↔tracked pairs: ${ecoPairs.length}`);
