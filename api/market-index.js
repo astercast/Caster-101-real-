@@ -1,6 +1,7 @@
 import {
     enrichBaseTokenFromGecko,
     mergeBasePairsIntoMap,
+    mergeGeckoIntoDexRow,
     resolveBaseMarketCap
 } from './base-dex-pairs.js';
 
@@ -149,19 +150,6 @@ async function fetchGeckoPools(contract) {
     }
 }
 
-function mergeGeckoIntoDexRow(dex = {}, meta = {}) {
-    const price = dex.price > 0 ? dex.price : (meta.price || 0);
-    return {
-        price,
-        change24h: dex.change24h || 0,
-        liq: dex.liq || 0,
-        dexMcap: dex.dexMcap || 0,
-        geckoMcap: Math.max(dex.geckoMcap || 0, meta.geckoMcap || 0),
-        impliedSupply: Math.max(dex.impliedSupply || 0, meta.impliedSupply || 0),
-        gtSupply: meta.gtSupply > 0 ? meta.gtSupply : (dex.gtSupply || 0)
-    };
-}
-
 function buildPeerPrices(dexMap) {
     const peerPrices = {};
     for (const [addr, row] of Object.entries(dexMap)) {
@@ -189,11 +177,11 @@ async function fetchAllBaseTokens(tokens) {
         }
     } catch {}
 
-    const missed = tokens.filter(t => !dexMap[t.contract.toLowerCase()]?.price);
-    for (const t of missed) {
+    // Per-token DexScreener — batch API often omits pools (e.g. Caster/wXCH vs only wBEPE)
+    for (const token of tokens) {
         try {
             const response = await safeFetch(
-                `https://api.dexscreener.com/latest/dex/tokens/${t.contract.toLowerCase()}`,
+                `https://api.dexscreener.com/latest/dex/tokens/${token.contract.toLowerCase()}`,
                 12000
             );
             if (response.ok) {
@@ -201,36 +189,32 @@ async function fetchAllBaseTokens(tokens) {
                 mergeBasePairsIntoMap(data?.pairs || [], contractSet, dexMap);
             }
         } catch {}
+        await new Promise(res => setTimeout(res, 80));
     }
 
-    // ── GeckoTerminal: batch all token attributes in one call ──
     const geckoAttrs = await fetchGeckoTokenAttrs(contracts);
-
-    // Enrich every token from batch attrs (no pool calls needed here)
     const peerPrices = buildPeerPrices(dexMap);
+
     for (const token of tokens) {
         const ca = token.contract.toLowerCase();
+        const dex = dexMap[ca] || {};
+        const hasDexPrice = dex.price > 0;
         const attr = geckoAttrs[ca] || {};
-        const meta = enrichBaseTokenFromGecko(attr, [], token.contract, peerPrices);
-        dexMap[ca] = mergeGeckoIntoDexRow(dexMap[ca] || {}, meta);
+        const meta = enrichBaseTokenFromGecko(attr, [], token.contract, peerPrices, hasDexPrice);
+        dexMap[ca] = mergeGeckoIntoDexRow(dex, meta);
     }
 
-    // ── GeckoTerminal: individual pool calls only for tokens still missing price ──
-    const needsPools = tokens.filter(t => {
-        const dex = dexMap[t.contract.toLowerCase()];
-        return !dex?.price || dex.price <= 0;
-    });
-
+    const needsPools = tokens.filter(t => !dexMap[t.contract.toLowerCase()]?.price);
     if (needsPools.length > 0) {
         const updatedPeers = buildPeerPrices(dexMap);
         for (const token of needsPools) {
             const ca = token.contract.toLowerCase();
             const attr = geckoAttrs[ca] || {};
             const pools = await fetchGeckoPools(token.contract);
-            const meta = enrichBaseTokenFromGecko(attr, pools, token.contract, updatedPeers);
+            const meta = enrichBaseTokenFromGecko(attr, pools, token.contract, updatedPeers, false);
             dexMap[ca] = mergeGeckoIntoDexRow(dexMap[ca] || {}, meta);
             if (dexMap[ca]?.price > 0) updatedPeers[ca] = dexMap[ca].price;
-            await new Promise(res => setTimeout(res, 2000));
+            await new Promise(res => setTimeout(res, 120));
         }
     }
 

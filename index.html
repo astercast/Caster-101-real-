@@ -5705,85 +5705,24 @@
 
         function parseGeckoTokenSupply(attr) {
             const normalized = parseFloat(attr?.normalized_total_supply || 0);
-            if (normalized > 0) return normalized;
-            const total = parseFloat(attr?.total_supply || 0);
-            if (total > 0) return total;
+            if (normalized > 0 && normalized < 1e15) return normalized;
+            const rawTotal = parseFloat(attr?.total_supply || 0);
+            const decimals = parseInt(attr?.decimals || 0, 10);
+            if (rawTotal > 0 && decimals > 0) {
+                const supply = rawTotal / Math.pow(10, decimals);
+                if (supply > 0 && supply < 1e15) return supply;
+            }
             const price = parseFloat(attr?.price_usd || 0);
             const mcapUsd = parseFloat(attr?.market_cap_usd || attr?.fdv_usd || 0);
-            if (mcapUsd > 0 && price > 0) return mcapUsd / price;
+            if (mcapUsd > 0 && price > 0) {
+                const supply = mcapUsd / price;
+                if (supply > 0 && supply < 1e15) return supply;
+            }
             return 0;
         }
 
         function geckoAddrFromRelId(id) {
             return String(id || '').toLowerCase().replace(/^base_/, '');
-        }
-        function enrichBaseTokenFromGecko(attr, pools, contract, peerPrices) {
-            const ca = String(contract || '').toLowerCase();
-            let price = parseFloat(attr?.price_usd || 0);
-            const gtSupply = parseGeckoTokenSupply(attr || {});
-            const geckoMcap = parseFloat(attr?.market_cap_usd || attr?.fdv_usd || 0) || 0;
-            if (price <= 0 && pools.length) price = geckoTokenUsdFromPools(pools, contract);
-            for (const p of pools) {
-                const a = p?.attributes || {};
-                const baseId = String(p?.relationships?.base_token?.data?.id || '').toLowerCase();
-                const quoteId = String(p?.relationships?.quote_token?.data?.id || '').toLowerCase();
-                const basePx = parseFloat(a.base_token_price_usd || 0);
-                const quotePx = parseFloat(a.quote_token_price_usd || 0);
-                if (baseId.includes(ca) && quotePx > 0 && basePx > 0) {
-                    const peerPx = peerPrices[geckoAddrFromRelId(quoteId)];
-                    if (peerPx > 0) {
-                        const implied = peerPx * (basePx / quotePx);
-                        if (implied > 0) price = price > 0 ? (price + implied) / 2 : implied;
-                    }
-                } else if (quoteId.includes(ca) && quotePx > 0 && basePx > 0) {
-                    const peerPx = peerPrices[geckoAddrFromRelId(baseId)];
-                    if (peerPx > 0) {
-                        const implied = peerPx * (quotePx / basePx);
-                        if (implied > 0) price = price > 0 ? (price + implied) / 2 : implied;
-                    }
-                }
-            }
-            const impliedSupply = price > 0 && geckoMcap > 0 ? geckoMcap / price : 0;
-            return { price, gtSupply, geckoMcap, impliedSupply };
-        }
-        function mergeGeckoIntoDexRow(dex, meta) {
-            const price = (dex.price > 0) ? dex.price : (meta.price || 0);
-            return {
-                price,
-                change24h: dex.change24h || 0,
-                liq: dex.liq || 0,
-                dexMcap: Math.max(dex.dexMcap || 0, meta.geckoMcap || 0),
-                impliedSupply: Math.max(dex.impliedSupply || 0, meta.impliedSupply || 0),
-                gtSupply: meta.gtSupply > 0 ? meta.gtSupply : (dex.gtSupply || 0)
-            };
-        }
-        function resolveBaseMarketCap(d, price) {
-            if (!price || price <= 0) return 0;
-            const gtSupply = parseFloat(d?.gtSupply || 0);
-            const dexMcap = parseFloat(d?.dexMcap || 0);
-            const impliedSupply = parseFloat(d?.impliedSupply || 0);
-            const geckoCalcMcap = gtSupply > 0 ? gtSupply * price : 0;
-            const impliedMcap = impliedSupply > 0 ? impliedSupply * price : 0;
-            const candidates = [
-                { mcap: dexMcap },
-                { mcap: impliedMcap },
-                { mcap: geckoCalcMcap }
-            ].filter(c => c.mcap > 0 && Number.isFinite(c.mcap));
-            if (!candidates.length) return 0;
-            if (candidates.length === 1) return candidates[0].mcap;
-            const anchor = dexMcap > 0 ? dexMcap : (impliedMcap > 0 ? impliedMcap : 0);
-            if (anchor > 0) {
-                const inBand = candidates.filter(c => {
-                    const r = c.mcap / anchor;
-                    return r >= 0.25 && r <= 4;
-                });
-                if (inBand.length) {
-                    inBand.sort((a, b) => Math.abs(a.mcap - anchor) - Math.abs(b.mcap - anchor));
-                    return inBand[0].mcap;
-                }
-                return anchor;
-            }
-            return Math.min(...candidates.map(c => c.mcap));
         }
 
         // Fetch circulating supply for a Chia CAT via direct browser call to Spacescan
@@ -6073,13 +6012,29 @@
             return results;
         }
 
-        // Base DexScreener: any quote pair (USDC, WETH, ecosystem tokens, etc.) — deepest liquidity wins
+        // Base: DexScreener (all pair sides) + Gecko only for gaps — mirrors api/base-dex-pairs.js
         const BASE_DEX_MIN_LIQ = 50;
+        const BASE_ANCHOR_QUOTES = new Set(['usdc','usdt','dai','usd','usdbc','weth','eth','cbeth','wxch']);
         function basePairLiquidityUsd(p) {
             const liq = parseFloat(p?.liquidity?.usd || 0);
             if (liq > 0) return liq;
             const vol = parseFloat(p?.volume?.h24 || 0);
             return vol > 0 ? vol * 0.15 : 0;
+        }
+        function baseIsAnchorQuote(sym) {
+            const s = String(sym || '').toLowerCase().replace(/^\$/, '').replace(/^w/, '');
+            return BASE_ANCHOR_QUOTES.has(s);
+        }
+        function basePairPriceScore(p, contract) {
+            const target = String(contract || '').toLowerCase();
+            const baseAddr = (p.baseToken?.address || '').toLowerCase();
+            const quoteAddr = (p.quoteToken?.address || '').toLowerCase();
+            const liq = basePairLiquidityUsd(p);
+            if (liq < BASE_DEX_MIN_LIQ) return 0;
+            let score = liq;
+            if (baseAddr === target && baseIsAnchorQuote(p.quoteToken?.symbol)) score += 8000;
+            if (quoteAddr === target && baseIsAnchorQuote(p.baseToken?.symbol)) score += 8000;
+            return score;
         }
         function baseTokenUsdFromPair(p, contract) {
             const target = String(contract || '').toLowerCase();
@@ -6114,36 +6069,98 @@
         function mergeBaseDexPairs(pairs, contractSet, out) {
             for (const p of (pairs || [])) {
                 if ((p.chainId || '').toLowerCase() !== 'base') continue;
-                const liq = basePairLiquidityUsd(p);
-                if (liq < BASE_DEX_MIN_LIQ) continue;
                 const baseAddr = (p.baseToken?.address || '').toLowerCase();
-                for (const ca of [
-                    baseAddr,
-                    (p.quoteToken?.address || '').toLowerCase()
-                ]) {
+                for (const ca of [baseAddr, (p.quoteToken?.address || '').toLowerCase()]) {
                     if (!contractSet.has(ca)) continue;
                     const price = baseTokenUsdFromPair(p, ca);
                     if (price <= 0) continue;
+                    const score = basePairPriceScore(p, ca);
                     const isBase = baseAddr === ca;
                     const pairMcap = isBase ? (parseFloat(p.marketCap || p.fdv || 0) || 0) : 0;
                     const pairImpliedSupply = isBase && pairMcap > 0 ? pairMcap / price : 0;
                     const prev = out[ca] || {};
-                    const bestLiq = liq > (prev.liq || 0);
+                    const bestScore = score > (prev.priceScore || 0);
                     out[ca] = {
-                        price: bestLiq ? price : (prev.price || price),
-                        change24h: bestLiq ? parseFloat(p.priceChange?.h24 || 0) : (prev.change24h || 0),
-                        liq: Math.max(prev.liq || 0, liq),
+                        price: bestScore ? price : (prev.price || price),
+                        priceScore: Math.max(prev.priceScore || 0, score),
+                        change24h: bestScore ? parseFloat(p.priceChange?.h24 || 0) : (prev.change24h || 0),
+                        liq: Math.max(prev.liq || 0, basePairLiquidityUsd(p)),
                         dexMcap: Math.max(prev.dexMcap || 0, pairMcap),
                         impliedSupply: Math.max(prev.impliedSupply || 0, pairImpliedSupply),
-                        gtSupply: prev.gtSupply || 0
+                        gtSupply: prev.gtSupply || 0,
+                        geckoMcap: prev.geckoMcap || 0
                     };
                 }
             }
             return out;
         }
+        function sanitizeBaseGtSupply(gtSupply, price, anchorMcap) {
+            const supply = parseFloat(gtSupply || 0);
+            const px = parseFloat(price || 0);
+            if (supply <= 0 || px <= 0 || supply > 1e12) return 0;
+            const anchor = parseFloat(anchorMcap || 0);
+            if (anchor > 0) {
+                const ratio = (supply * px) / anchor;
+                if (ratio < 0.2 || ratio > 5) return 0;
+            }
+            return supply;
+        }
+        function enrichBaseTokenFromGecko(attr, pools, contract, peerPrices, dexHasPrice) {
+            const ca = String(contract || '').toLowerCase();
+            const geckoMcap = parseFloat(attr?.market_cap_usd || attr?.fdv_usd || 0) || 0;
+            const gtSupplyRaw = parseGeckoTokenSupply(attr || {});
+            let price = 0;
+            if (!dexHasPrice) {
+                price = parseFloat(attr?.price_usd || 0);
+                if (price <= 0 && pools.length) price = geckoTokenUsdFromPools(pools, contract);
+                if (price <= 0 && pools.length) {
+                    for (const p of pools) {
+                        const a = p?.attributes || {};
+                        const baseId = String(p?.relationships?.base_token?.data?.id || '').toLowerCase();
+                        const quoteId = String(p?.relationships?.quote_token?.data?.id || '').toLowerCase();
+                        const basePx = parseFloat(a.base_token_price_usd || 0);
+                        const quotePx = parseFloat(a.quote_token_price_usd || 0);
+                        if (baseId.includes(ca) && quotePx > 0 && basePx > 0) {
+                            const peerPx = peerPrices[geckoAddrFromRelId(quoteId)];
+                            if (peerPx > 0) { price = peerPx * (basePx / quotePx); break; }
+                        } else if (quoteId.includes(ca) && quotePx > 0 && basePx > 0) {
+                            const peerPx = peerPrices[geckoAddrFromRelId(baseId)];
+                            if (peerPx > 0) { price = peerPx * (quotePx / basePx); break; }
+                        }
+                    }
+                }
+            }
+            const gtSupply = sanitizeBaseGtSupply(gtSupplyRaw, price || parseFloat(attr?.price_usd || 0), geckoMcap);
+            return { price, gtSupply, geckoMcap, impliedSupply: price > 0 && geckoMcap > 0 ? geckoMcap / price : 0 };
+        }
+        function mergeGeckoIntoDexRow(dex, meta) {
+            const price = dex.price > 0 ? dex.price : (meta.price || 0);
+            const anchor = Math.max(dex.dexMcap || 0, meta.geckoMcap || 0);
+            return {
+                price,
+                change24h: dex.change24h || 0,
+                liq: dex.liq || 0,
+                dexMcap: dex.dexMcap || 0,
+                geckoMcap: meta.geckoMcap || 0,
+                impliedSupply: Math.max(dex.impliedSupply || 0, meta.impliedSupply || 0),
+                gtSupply: sanitizeBaseGtSupply(meta.gtSupply > 0 ? meta.gtSupply : (dex.gtSupply || 0), price, anchor)
+            };
+        }
+        function resolveBaseMarketCap(d, price) {
+            if (!price || price <= 0) return 0;
+            const dexMcap = parseFloat(d?.dexMcap || 0);
+            if (dexMcap > 0) return dexMcap;
+            const geckoMcap = parseFloat(d?.geckoMcap || 0);
+            if (geckoMcap > 0) return geckoMcap;
+            const implied = parseFloat(d?.impliedSupply || 0);
+            if (implied > 0) return implied * price;
+            const gtSupply = sanitizeBaseGtSupply(d?.gtSupply, price, geckoMcap);
+            if (gtSupply > 0) return gtSupply * price;
+            return 0;
+        }
 
         async function fetchBaseData() {
-            console.log('--- BASE PRICES: DexScreener (all pairs) + GeckoTerminal supply ---');
+            console.log('--- BASE: DexScreener (full pairs) + Gecko (gaps only) ---');
 
             const baseTargets     = trackedTokens.filter(t => t.chain === 'Base');
             const withContract    = baseTargets.filter(t => t.contract);
@@ -6153,71 +6170,72 @@
             const results = [];
             const contracts = withContract.map(t => t.contract.toLowerCase());
             const contractSet = new Set(contracts);
-
-            // ── 1. Batch DexScreener — all Base liquidity pairs per token ──
             const dexData = {};
+
             try {
                 const r = await fetch(`https://api.dexscreener.com/tokens/v1/base/${contracts.join(',')}`);
                 if (r.ok) {
                     const d = await r.json();
-                    const pairs = Array.isArray(d) ? d : (d.pairs || []);
-                    mergeBaseDexPairs(pairs, contractSet, dexData);
+                    mergeBaseDexPairs(Array.isArray(d) ? d : (d.pairs || []), contractSet, dexData);
                 }
-                console.log(`  DexScreener batch: ${Object.keys(dexData).length}/${contracts.length} tokens priced (all quote pairs)`);
             } catch (e) { console.warn('  DexScreener batch error:', e.message); }
 
-            // ── 2. Per-token fallback for contracts still missing a price ──
-            const missed = withContract.filter(t => !dexData[t.contract.toLowerCase()]?.price);
-            if (missed.length > 0) {
-                for (const t of missed) {
-                    try {
-                        const r = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${t.contract.toLowerCase()}`);
-                        if (r.ok) {
-                            const d = await r.json();
-                            mergeBaseDexPairs(d.pairs || [], new Set([t.contract.toLowerCase()]), dexData);
-                        }
-                    } catch {}
-                    await new Promise(res => setTimeout(res, 100));
+            console.log(`  DexScreener per-token (${withContract.length})...`);
+            for (const t of withContract) {
+                try {
+                    const r = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${t.contract.toLowerCase()}`);
+                    if (r.ok) mergeBaseDexPairs((await r.json()).pairs || [], contractSet, dexData);
+                } catch {}
+                await new Promise(res => setTimeout(res, 80));
+            }
+            console.log(`  Dex priced: ${Object.values(dexData).filter(r => r.price > 0).length}/${contracts.length}`);
+
+            let geckoAttrs = {};
+            try {
+                const gtR = await fetch(`https://api.geckoterminal.com/api/v2/networks/base/tokens/multi/${contracts.join(',')}`);
+                if (gtR.ok) {
+                    for (const token of ((await gtR.json())?.data || [])) {
+                        const addr = (token?.attributes?.address || '').toLowerCase();
+                        if (addr) geckoAttrs[addr] = token.attributes;
+                    }
                 }
+            } catch (e) { console.warn('  Gecko batch error:', e.message); }
+
+            const peerPrices = {};
+            for (const [addr, row] of Object.entries(dexData)) {
+                if (row?.price > 0) peerPrices[addr] = row.price;
+            }
+            for (const t of withContract) {
+                const ca = t.contract.toLowerCase();
+                const dex = dexData[ca] || {};
+                const meta = enrichBaseTokenFromGecko(geckoAttrs[ca] || {}, [], t.contract, peerPrices, dex.price > 0);
+                dexData[ca] = mergeGeckoIntoDexRow(dex, meta);
             }
 
-            // ── 3. GeckoTerminal — every Base asset (token↔token pairs + supply/mcap) ──
-            console.log(`  GeckoTerminal: enriching all ${withContract.length} Base tokens (2 passes)...`);
-            for (let pass = 0; pass < 2; pass++) {
-                const peerPrices = {};
-                for (const [addr, row] of Object.entries(dexData)) {
-                    if (row?.price > 0) peerPrices[addr] = row.price;
-                }
-                for (const t of withContract) {
+            const needsPools = withContract.filter(t => !dexData[t.contract.toLowerCase()]?.price);
+            if (needsPools.length) {
+                console.log(`  Gecko pools for ${needsPools.length} unpriced...`);
+                for (const t of needsPools) {
                     const ca = t.contract.toLowerCase();
                     try {
-                        const gtR = await fetch(`https://api.geckoterminal.com/api/v2/networks/base/tokens/${ca}`);
-                        if (!gtR.ok) continue;
-                        const attr = (await gtR.json())?.data?.attributes || {};
                         let pools = [];
-                        try {
-                            const poolsR = await fetch(`https://api.geckoterminal.com/api/v2/networks/base/tokens/${ca}/pools`);
-                            if (poolsR.ok) {
-                                const poolsD = await poolsR.json();
-                                pools = Array.isArray(poolsD?.data) ? poolsD.data : [];
-                            }
-                        } catch {}
-                        const meta = enrichBaseTokenFromGecko(attr, pools, t.contract, peerPrices);
+                        const poolsR = await fetch(`https://api.geckoterminal.com/api/v2/networks/base/tokens/${ca}/pools`);
+                        if (poolsR.ok) pools = (await poolsR.json())?.data || [];
+                        const meta = enrichBaseTokenFromGecko(geckoAttrs[ca] || {}, pools, t.contract, peerPrices, false);
                         dexData[ca] = mergeGeckoIntoDexRow(dexData[ca] || {}, meta);
+                        if (dexData[ca]?.price > 0) peerPrices[ca] = dexData[ca].price;
                     } catch {}
-                    await new Promise(res => setTimeout(res, 60));
+                    await new Promise(res => setTimeout(res, 120));
                 }
             }
 
-            // ── 4. Build results ──
             for (const t of withContract) {
                 const d = dexData[t.contract.toLowerCase()] || {};
                 const price = d.price || 0;
-                const change24h = d.change24h || 0;
                 const marketCap = resolveBaseMarketCap(d, price);
-                if (price > 0) console.log(`  ✅ ${t.name}: $${price.toFixed(10)} mcap:$${marketCap.toFixed(0)}`);
-                else           console.warn(`  ⚠️  ${t.name}: no price from DexScreener or GeckoTerminal`);
-                results.push({...t, price, change24h, marketCap});
+                if (price > 0) console.log(`  ✅ ${t.name}: $${price.toFixed(8)} mcap $${marketCap.toFixed(0)} (dex:${d.dexMcap||0})`);
+                else console.warn(`  ⚠️  ${t.name}: no Base price`);
+                results.push({...t, price, change24h: d.change24h || 0, marketCap});
             }
 
             return [...results, ...withoutContract];
