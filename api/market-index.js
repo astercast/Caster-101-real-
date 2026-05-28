@@ -1,8 +1,5 @@
-import {
-    enrichBaseTokenFromGecko,
-    mergeBasePairsIntoMap,
-    resolveBaseMarketCap
-} from './base-dex-pairs.js';
+// Simple pricing: DexScreener (standard quotes, volume-sorted) + GeckoTerminal fallback
+// No import of base-dex-pairs.js — that module is only used by arbitrage.js
 
 const HEADERS = {
     'Access-Control-Allow-Origin': '*',
@@ -19,6 +16,9 @@ let _memSnapshot = null;
 let _memAt = 0;
 let _inflight = null;
 
+// Standard quote tokens — only these are trusted for pricing
+const STANDARD_QUOTES = new Set(['weth', 'usdc', 'eth', 'usdt', 'wxch', 'xch', 'usd coin', 'wrapped ether']);
+
 const TRACKED = {
     chia: [
         { id: 'xch', symbol: 'XCH', name: 'Chia', chain: 'Chia', assetId: 'Native' },
@@ -32,7 +32,7 @@ const TRACKED = {
         { id: 'honk-chia', symbol: '🪿', name: 'HonK', displayName: '$HONK', chain: 'Chia', assetId: '048b1358f3b55a70c4db22114c2f52569c0398ba19e8212b8daf1cb25c90a641' },
         { id: 'neck-chia', symbol: '$NECK', name: 'NeckCoin', chain: 'Chia', assetId: '1ad673d21799c9a224014ca71f9fe07cbc836fa23fa97b3be275d46d0b8bd9da' },
         { id: 'chia-meme-chia', symbol: '$CHIA', name: 'VFVAPatek9000Inu', chain: 'Chia', assetId: '69326954fe16117cd6250e929748b2a1ab916347598bc8180749279cfae21ddb' },
-            { id: 'hodl-chia', symbol: '💎', name: 'HODL', displayName: '$HODL', chain: 'Chia', assetId: 'e335003c6d59aaaabe27eeeaf8a7b1308765f6bc9492a0b16394f50dec6bdcb7' },
+        { id: 'hodl-chia', symbol: '💎', name: 'HODL', displayName: '$HODL', chain: 'Chia', assetId: 'e335003c6d59aaaabe27eeeaf8a7b1308765f6bc9492a0b16394f50dec6bdcb7' },
         { id: 'mana-chia', symbol: '🧙‍♂️', name: 'MANA', displayName: 'MANA', chain: 'Chia', assetId: '1653a1df583f3ae6a822ab214b74d2a08fb4309025d54f2db140e5e6bc06e9da' },
         { id: 'hoa-chia', symbol: '🍊', name: 'HOA', chain: 'Chia', assetId: 'e816ee18ce2337c4128449bc539fbbe2ecfdd2098c4e7cab4667e223c3bdc23d' },
         { id: 'ni-chia', symbol: '$NI', name: 'No Idea', chain: 'Chia', assetId: 'c0eb7cc73ef2e789a7b9cf7c8c27185beb2ff5fdf2997da28a6b9b3714e4034d' },
@@ -52,7 +52,7 @@ const TRACKED = {
         { id: 'honk-base', symbol: '🪿', name: 'HonK', displayName: '$HONK', chain: 'Base', contract: '0xF6C04947A13481daAf4E8756B04f3D6bB7C30efF' },
         { id: 'neck-base', symbol: '$NECK', name: 'NeckCoin', chain: 'Base', contract: '0x359D5BFa1bb87598e2198EC139eE44D31Bd06FaC' },
         { id: 'chia-meme-base', symbol: '$CHIA', name: 'VFVAPatek9000Inu', chain: 'Base', contract: '0x05AefaFfF978EA4F9E6ff9FA3Bc2465B90598549' },
-            { id: 'hodl-base', symbol: '💎', name: 'HODL', displayName: '$HODL', chain: 'Base', contract: '0xb43ba3fD8ac8b16ED52CFBE72738967C2AD9cC03' },
+        { id: 'hodl-base', symbol: '💎', name: 'HODL', displayName: '$HODL', chain: 'Base', contract: '0xb43ba3fD8ac8b16ED52CFBE72738967C2AD9cC03' },
         { id: 'mana-base', symbol: '🧙‍♂️', name: 'MANA', displayName: 'MANA', chain: 'Base', contract: '0x4cE68125983527D1e289a0C1c70464B4bb8932ac' },
         { id: 'hoa-base', symbol: '🍊', name: 'HOA', chain: 'Base', contract: '0xee642384091f4bb9ab457b875E4e209b5a0BD147' },
         { id: 'ni-base', symbol: '$NI', name: 'No Idea', chain: 'Base', contract: '0xf628fD48BB4A4903DdCdBb89b814B5484456fc4E' },
@@ -120,53 +120,97 @@ async function saveBlobSnapshot(snapshot) {
     }
 }
 
-async function fetchGeckoBaseMeta(contract, peerPrices = {}) {
+/** Is this a standard quote token? (WETH, USDC, ETH, USDT, wXCH, XCH) */
+function isStandardQuote(pair) {
+    const sym = (pair?.quoteToken?.symbol || '').toLowerCase();
+    const name = (pair?.quoteToken?.name || '').toLowerCase();
+    return STANDARD_QUOTES.has(sym) || STANDARD_QUOTES.has(name);
+}
+
+/**
+ * Old-style per-token pricing: DexScreener standard-quote pairs (volume-sorted)
+ * + GeckoTerminal fallback for price/mcap.
+ */
+async function fetchBestBaseToken(contract) {
     const ca = contract.toLowerCase();
+    let price = 0, change24h = 0, marketCap = 0;
+
+    // ── DexScreener: filter to standard quotes, sort by volume ──
     try {
-        const gt = await safeFetch(`https://api.geckoterminal.com/api/v2/networks/base/tokens/${ca}`, 12000);
-        if (!gt.ok) return { price: 0, gtSupply: 0, geckoMcap: 0, impliedSupply: 0 };
-        const attr = (await gt.json())?.data?.attributes || {};
+        const response = await safeFetch(`https://api.dexscreener.com/latest/dex/tokens/${ca}`, 12000);
+        if (response.ok) {
+            const data = await response.json();
+            const pairs = (data?.pairs || [])
+                .filter(p => (p.chainId || '').toLowerCase() === 'base' && isStandardQuote(p))
+                .sort((a, b) => parseFloat(b?.volume?.h24 || 0) - parseFloat(a?.volume?.h24 || 0));
 
-        let pools = [];
-        const poolsRes = await safeFetch(`https://api.geckoterminal.com/api/v2/networks/base/tokens/${ca}/pools`, 12000);
-        if (poolsRes.ok) {
-            const poolsData = await poolsRes.json();
-            pools = Array.isArray(poolsData?.data) ? poolsData.data : [];
+            if (pairs.length > 0) {
+                const best = pairs[0];
+                price = parseFloat(best.priceUsd || 0);
+                change24h = parseFloat(best.priceChange?.h24 || 0);
+                marketCap = parseFloat(best.marketCap || best.fdv || 0);
+            }
         }
+    } catch {}
 
-        return enrichBaseTokenFromGecko(attr, pools, contract, peerPrices);
-    } catch {
-        return { price: 0, gtSupply: 0, geckoMcap: 0, impliedSupply: 0 };
+    // ── GeckoTerminal fallback: price + mcap if DexScreener missed ──
+    if (price <= 0 || marketCap <= 0) {
+        try {
+            const gt = await safeFetch(`https://api.geckoterminal.com/api/v2/networks/base/tokens/${ca}`, 12000);
+            if (gt.ok) {
+                const attr = (await gt.json())?.data?.attributes || {};
+                const gtPrice = parseFloat(attr.price_usd || 0);
+                const gtMcap = parseFloat(attr.market_cap_usd || attr.fdv_usd || 0);
+                const normalizedSupply = parseFloat(attr.normalized_total_supply || 0);
+
+                if (price <= 0 && gtPrice > 0) price = gtPrice;
+
+                if (marketCap <= 0) {
+                    if (gtMcap > 0) {
+                        marketCap = gtMcap;
+                    } else if (normalizedSupply > 0 && price > 0) {
+                        marketCap = normalizedSupply * price;
+                    }
+                }
+
+                // If still no price, try pools
+                if (price <= 0) {
+                    const poolsRes = await safeFetch(`https://api.geckoterminal.com/api/v2/networks/base/tokens/${ca}/pools`, 12000);
+                    if (poolsRes.ok) {
+                        const poolsData = await poolsRes.json();
+                        const pools = Array.isArray(poolsData?.data) ? poolsData.data : [];
+                        for (const p of pools) {
+                            const pAttr = p?.attributes || {};
+                            const baseId = String(p?.relationships?.base_token?.data?.id || '').toLowerCase();
+                            if (baseId.includes(ca)) {
+                                const bp = parseFloat(pAttr.base_token_price_usd || 0);
+                                if (bp > 0) { price = bp; break; }
+                            }
+                            const quoteId = String(p?.relationships?.quote_token?.data?.id || '').toLowerCase();
+                            if (quoteId.includes(ca)) {
+                                const qp = parseFloat(pAttr.quote_token_price_usd || 0);
+                                if (qp > 0) { price = qp; break; }
+                            }
+                        }
+                        // Derive mcap from supply if needed
+                        if (marketCap <= 0 && normalizedSupply > 0 && price > 0) {
+                            marketCap = normalizedSupply * price;
+                        }
+                    }
+                }
+            }
+        } catch {}
     }
+
+    return { price, change24h, marketCap };
 }
 
-function mergeGeckoIntoDexRow(dex = {}, meta = {}) {
-    const price = dex.price > 0 ? dex.price : (meta.price || 0);
-    return {
-        price,
-        change24h: dex.change24h || 0,
-        liq: dex.liq || 0,
-        dexMcap: dex.dexMcap || 0,
-        geckoMcap: meta.geckoMcap || 0,
-        impliedSupply: Math.max(dex.impliedSupply || 0, meta.impliedSupply || 0),
-        gtSupply: meta.gtSupply > 0 ? meta.gtSupply : (dex.gtSupply || 0)
-    };
-}
-
-function buildPeerPrices(dexMap) {
-    const peerPrices = {};
-    for (const [addr, row] of Object.entries(dexMap)) {
-        if (row?.price > 0) peerPrices[addr] = row.price;
-    }
-    return peerPrices;
-}
-
-/** Batch DexScreener (all quote pairs) + per-token Gecko supply for mcaps. */
+/** Fetch all Base tokens: batch DexScreener first for speed, then per-token fallback. */
 async function fetchAllBaseTokens(tokens) {
     const contracts = tokens.map(t => String(t.contract || '').toLowerCase()).filter(Boolean);
-    const contractSet = new Set(contracts);
-    const dexMap = {};
+    const results = {};
 
+    // ── Batch DexScreener: get all pairs in one call, filter to standard quotes ──
     try {
         const response = await safeFetch(
             `https://api.dexscreener.com/tokens/v1/base/${contracts.join(',')}`,
@@ -174,86 +218,77 @@ async function fetchAllBaseTokens(tokens) {
         );
         if (response.ok) {
             const data = await response.json();
-            const pairs = Array.isArray(data) ? data : (data?.pairs || []);
-            mergeBasePairsIntoMap(pairs, contractSet, dexMap);
+            const allPairs = Array.isArray(data) ? data : (data?.pairs || []);
+
+            for (const ca of contracts) {
+                const pairs = allPairs
+                    .filter(p =>
+                        (p.chainId || '').toLowerCase() === 'base' &&
+                        isStandardQuote(p) &&
+                        (p.baseToken?.address || '').toLowerCase() === ca
+                    )
+                    .sort((a, b) => parseFloat(b?.volume?.h24 || 0) - parseFloat(a?.volume?.h24 || 0));
+
+                if (pairs.length > 0) {
+                    const best = pairs[0];
+                    results[ca] = {
+                        price: parseFloat(best.priceUsd || 0),
+                        change24h: parseFloat(best.priceChange?.h24 || 0),
+                        marketCap: parseFloat(best.marketCap || best.fdv || 0)
+                    };
+                }
+            }
         }
     } catch {}
 
-    const missed = tokens.filter(t => !dexMap[t.contract.toLowerCase()]?.price);
+    // ── Per-token fallback for tokens that batch missed ──
+    const missed = tokens.filter(t => {
+        const d = results[t.contract.toLowerCase()];
+        return !d || d.price <= 0;
+    });
+
     for (const t of missed) {
+        const data = await fetchBestBaseToken(t.contract);
+        results[t.contract.toLowerCase()] = data;
+    }
+
+    // ── GeckoTerminal batch for mcap fallback (tokens with price but no mcap) ──
+    const needMcap = tokens.filter(t => {
+        const d = results[t.contract.toLowerCase()];
+        return d && d.price > 0 && (!d.marketCap || d.marketCap <= 0);
+    });
+
+    if (needMcap.length > 0) {
         try {
-            const response = await safeFetch(
-                `https://api.dexscreener.com/latest/dex/tokens/${t.contract.toLowerCase()}`,
-                12000
+            const mcapContracts = needMcap.map(t => t.contract.toLowerCase()).join(',');
+            const batchRes = await safeFetch(
+                `https://api.geckoterminal.com/api/v2/networks/base/tokens/multi/${mcapContracts}`,
+                15000
             );
-            if (response.ok) {
-                const data = await response.json();
-                mergeBasePairsIntoMap(data?.pairs || [], contractSet, dexMap);
+            if (batchRes.ok) {
+                const batchData = await batchRes.json();
+                for (const item of (batchData?.data || [])) {
+                    const attrs = item?.attributes || {};
+                    const addr = String(attrs?.address || '').toLowerCase();
+                    if (!addr || !results[addr]) continue;
+                    const d = results[addr];
+                    if (d.marketCap > 0) continue;
+                    const gtMcap = parseFloat(attrs.market_cap_usd || attrs.fdv_usd || 0);
+                    const supply = parseFloat(attrs.normalized_total_supply || 0);
+                    if (gtMcap > 0) {
+                        d.marketCap = gtMcap;
+                    } else if (supply > 0 && d.price > 0) {
+                        d.marketCap = supply * d.price;
+                    }
+                }
             }
         } catch {}
     }
 
-    // GeckoTerminal batch: 1 call for all token attributes instead of 36 individual calls
-    const geckoAttrMap = {};
-    try {
-        const batchUrl = `https://api.geckoterminal.com/api/v2/networks/base/tokens/multi/${contracts.join(',')}`;
-        const batchRes = await safeFetch(batchUrl, 15000);
-        if (batchRes.ok) {
-            const batchData = await batchRes.json();
-            for (const item of (batchData?.data || [])) {
-                const attrs = item?.attributes || {};
-                const addr = String(attrs?.address || '').toLowerCase();
-                if (addr) geckoAttrMap[addr] = attrs;
-            }
-        }
-    } catch {}
-
-    // GeckoTerminal pools: only for tokens needing price or supply enrichment
-    const peerPrices = buildPeerPrices(dexMap);
-    for (const token of tokens) {
-        const ca = token.contract.toLowerCase();
-        const attr = geckoAttrMap[ca] || {};
-        const dex = dexMap[ca] || {};
-
-        let pools = [];
-        // Only fetch pools if missing price or mcap data
-        if (!dex.price || dex.dexMcap <= 0) {
-            try {
-                const poolsRes = await safeFetch(
-                    `https://api.geckoterminal.com/api/v2/networks/base/tokens/${ca}/pools`,
-                    12000
-                );
-                if (poolsRes.ok) {
-                    const poolsData = await poolsRes.json();
-                    pools = Array.isArray(poolsData?.data) ? poolsData.data : [];
-                }
-            } catch {}
-            await new Promise(res => setTimeout(res, 250));
-        }
-
-        const meta = enrichBaseTokenFromGecko(attr, pools, token.contract, peerPrices);
-        dexMap[ca] = mergeGeckoIntoDexRow(dexMap[ca] || {}, meta);
-    }
-
-    const rows = [];
-    for (const token of tokens) {
-        const ca = token.contract.toLowerCase();
-        const dex = dexMap[ca] || {};
-        const price = dex.price || 0;
-        const marketCap = resolveBaseMarketCap({
-            gtSupply: dex.gtSupply || 0,
-            price,
-            dexMcap: dex.dexMcap || 0,
-            impliedSupply: dex.impliedSupply || 0,
-            geckoMcap: dex.geckoMcap || 0
-        });
-        rows.push({
-            token,
-            data: { price, change24h: dex.change24h || 0, marketCap }
-        });
-    }
-
-    return rows;
+    return tokens.map(token => ({
+        token,
+        data: results[token.contract.toLowerCase()] || { price: 0, change24h: 0, marketCap: 0 }
+    }));
 }
 
 async function buildSnapshot(req) {
@@ -275,7 +310,7 @@ async function buildSnapshot(req) {
 
     const prices = catResponse?.prices || {};
     const changes = catResponse?.changes || {};
-    const supplies = catResponse?.supplies || {};
+    const mcaps = catResponse?.mcaps || {};
 
     const chia = TRACKED.chia.map(token => {
         if (token.assetId === 'Native') {
@@ -287,8 +322,7 @@ async function buildSnapshot(req) {
             };
         }
         const price = parseFloat(prices[token.assetId] || 0);
-        const supply = parseFloat(supplies[token.assetId] || 0);
-        const marketCap = supply > 0 && price > 0 ? supply * price : 0;
+        const marketCap = parseFloat(mcaps[token.assetId] || 0);
         return {
             ...token,
             price,
