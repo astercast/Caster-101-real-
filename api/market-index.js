@@ -146,7 +146,8 @@ function mergeGeckoIntoDexRow(dex = {}, meta = {}) {
         price,
         change24h: dex.change24h || 0,
         liq: dex.liq || 0,
-        dexMcap: Math.max(dex.dexMcap || 0, meta.geckoMcap || 0),
+        dexMcap: dex.dexMcap || 0,
+        geckoMcap: meta.geckoMcap || 0,
         impliedSupply: Math.max(dex.impliedSupply || 0, meta.impliedSupply || 0),
         gtSupply: meta.gtSupply > 0 ? meta.gtSupply : (dex.gtSupply || 0)
     };
@@ -244,7 +245,7 @@ async function fetchAllBaseTokens(tokens) {
             price,
             dexMcap: dex.dexMcap || 0,
             impliedSupply: dex.impliedSupply || 0,
-            geckoMcap: 0
+            geckoMcap: dex.geckoMcap || 0
         });
         rows.push({
             token,

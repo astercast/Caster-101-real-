@@ -92,10 +92,10 @@ export default async function handler(req, res) {
         // DexScreener: all Base pairs (incl. ecosystem quotes) → best liquidity per contract
         const dexPriceMap = {};
         const pairs = Array.isArray(dexscreenerRaw) ? dexscreenerRaw : (dexscreenerRaw?.pairs || []);
-        const baseContracts = new Set(
+        const contractSet = new Set(
             baseTokens.map(t => String(t.contract || '').toLowerCase()).filter(Boolean)
         );
-        const merged = mergeBasePairsIntoMap(pairs, baseContracts, {});
+        const merged = mergeBasePairsIntoMap(pairs, contractSet, {});
         for (const [ca, row] of Object.entries(merged)) {
             dexPriceMap[ca] = { price: row.price, vol: row.liq, change24h: asNumber(row.change24h) };
         }

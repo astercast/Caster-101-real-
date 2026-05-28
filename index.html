@@ -5752,7 +5752,8 @@
                 price,
                 change24h: dex.change24h || 0,
                 liq: dex.liq || 0,
-                dexMcap: Math.max(dex.dexMcap || 0, meta.geckoMcap || 0),
+                dexMcap: dex.dexMcap || 0,
+                geckoMcap: meta.geckoMcap || 0,
                 impliedSupply: Math.max(dex.impliedSupply || 0, meta.impliedSupply || 0),
                 gtSupply: meta.gtSupply > 0 ? meta.gtSupply : (dex.gtSupply || 0)
             };
@@ -5761,11 +5762,13 @@
             if (!price || price <= 0) return 0;
             const gtSupply = parseFloat(d?.gtSupply || 0);
             const dexMcap = parseFloat(d?.dexMcap || 0);
+            const geckoMcap = parseFloat(d?.geckoMcap || 0);
             const impliedSupply = parseFloat(d?.impliedSupply || 0);
             const geckoCalcMcap = gtSupply > 0 ? gtSupply * price : 0;
             const impliedMcap = impliedSupply > 0 ? impliedSupply * price : 0;
             const candidates = [
                 { mcap: dexMcap },
+                { mcap: geckoMcap },
                 { mcap: impliedMcap },
                 { mcap: geckoCalcMcap }
             ].filter(c => c.mcap > 0 && Number.isFinite(c.mcap));
