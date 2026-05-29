@@ -1,4 +1,5 @@
-import { mergeBasePairsIntoMap } from './base-dex-pairs.js';
+// Arbitrage: same standard-quote pricing as market-index and frontend
+// No import of base-dex-pairs.js — consistent pricing across all endpoints
 
 const HEADERS = {
     'Access-Control-Allow-Origin': '*',
@@ -6,6 +7,9 @@ const HEADERS = {
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
     'Content-Type': 'application/json'
 };
+
+// Standard quote tokens — must match market-index.js and frontend
+const STANDARD_QUOTES = new Set(['weth', 'usdc', 'eth', 'usdt', 'wxch', 'xch', 'usd coin', 'wrapped ether']);
 
 // Strip chain suffix from token id to get a pairing key.
 // e.g. 'caster-chia' → 'caster', 'caster-base' → 'caster'
@@ -40,6 +44,13 @@ async function safeFetch(url, timeout = 25000) {
 function asNumber(v) {
     const n = parseFloat(v || 0);
     return Number.isFinite(n) ? n : 0;
+}
+
+/** Is this a standard quote token? (WETH, USDC, ETH, USDT, wXCH, XCH) */
+function isStandardQuote(pair) {
+    const sym = (pair?.quoteToken?.symbol || '').toLowerCase();
+    const name = (pair?.quoteToken?.name || '').toLowerCase();
+    return STANDARD_QUOTES.has(sym) || STANDARD_QUOTES.has(name);
 }
 
 export default async function handler(req, res) {
@@ -89,15 +100,26 @@ export default async function handler(req, res) {
             if (aid && lp > 0) dexiePriceMap[aid] = lp * xchUsd;
         }
 
-        // DexScreener: all Base pairs (incl. ecosystem quotes) → best liquidity per contract
+        // DexScreener: standard-quote pairs only, best by volume (matches market-index pricing)
         const dexPriceMap = {};
-        const pairs = Array.isArray(dexscreenerRaw) ? dexscreenerRaw : (dexscreenerRaw?.pairs || []);
-        const contractSet = new Set(
-            baseTokens.map(t => String(t.contract || '').toLowerCase()).filter(Boolean)
-        );
-        const merged = mergeBasePairsIntoMap(pairs, contractSet, {});
-        for (const [ca, row] of Object.entries(merged)) {
-            dexPriceMap[ca] = { price: row.price, vol: row.liq, change24h: asNumber(row.change24h) };
+        const allPairs = Array.isArray(dexscreenerRaw) ? dexscreenerRaw : (dexscreenerRaw?.pairs || []);
+
+        for (const ca of baseContracts) {
+            const pairs = allPairs
+                .filter(p =>
+                    (p.chainId || '').toLowerCase() === 'base' &&
+                    isStandardQuote(p) &&
+                    (p.baseToken?.address || '').toLowerCase() === ca
+                )
+                .sort((a, b) => parseFloat(b?.volume?.h24 || 0) - parseFloat(a?.volume?.h24 || 0));
+
+            if (pairs.length > 0) {
+                const best = pairs[0];
+                dexPriceMap[ca] = {
+                    price: parseFloat(best.priceUsd || 0),
+                    change24h: parseFloat(best.priceChange?.h24 || 0),
+                };
+            }
         }
 
         // ── 4. Merge live prices into token records (fall back to snapshot price if live missed) ──

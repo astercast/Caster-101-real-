@@ -1,5 +1,5 @@
 // Simple pricing: DexScreener (standard quotes, volume-sorted) + GeckoTerminal fallback
-// No import of base-dex-pairs.js — that module is only used by arbitrage.js
+// No import of base-dex-pairs.js — that module is only used by treasury-comprehensive.js
 
 const HEADERS = {
     'Access-Control-Allow-Origin': '*',
