@@ -106,13 +106,17 @@ export default async function handler(req, res) {
             }
         }
 
-        // ── 4. Merge live prices into token records (fall back to snapshot price if live missed) ──
+        // ── 4. Merge live prices into token records ──
+        // Base: DexScreener live price ONLY — no snapshot fallback. GT can return stale
+        // prices from zero-volume pools (e.g. Pizza), and any stale snapshot price would
+        // produce bogus arb opportunities. If DexScreener doesn't have the token, price = 0.
+        // Chia: Dexie live price with snapshot fallback (Dexie best-ask already handles stale).
         function livePrice(token) {
             if (token.chain === 'Chia' && token.assetId && token.assetId !== 'Native') {
                 return dexiePriceMap[token.assetId.toLowerCase()] || asNumber(token.price);
             }
             if (token.chain === 'Base' && token.contract) {
-                return dexPriceMap[token.contract.toLowerCase()]?.price || asNumber(token.price);
+                return dexPriceMap[token.contract.toLowerCase()]?.price || 0;
             }
             if (token.chain === 'Chia' && token.assetId === 'Native') return xchUsd;
             return asNumber(token.price);
