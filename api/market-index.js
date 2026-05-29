@@ -150,18 +150,32 @@ async function fetchBestBaseToken(contract) {
         let marketCap = parseFloat(attr.market_cap_usd || attr.fdv_usd || 0);
         const normalizedSupply = parseFloat(attr.normalized_total_supply || 0);
 
-        if (price === 0) {
-            const poolsRes = await safeFetch(`https://api.geckoterminal.com/api/v2/networks/base/tokens/${contract.toLowerCase()}/pools`, 12000);
-            if (poolsRes.ok) {
-                const poolsData = await poolsRes.json();
-                const pools = Array.isArray(poolsData?.data) ? poolsData.data : [];
-                const bestPool = pools
+        // Always check pools to validate the price — GT token endpoint can return
+        // stale prices for tokens with 0 active pools (e.g. Pizza on Base)
+        const poolsRes = await safeFetch(`https://api.geckoterminal.com/api/v2/networks/base/tokens/${contract.toLowerCase()}/pools`, 12000);
+        if (poolsRes.ok) {
+            const poolsData = await poolsRes.json();
+            const pools = Array.isArray(poolsData?.data) ? poolsData.data : [];
+            const activePools = pools.filter(p => parseFloat(p?.attributes?.reserve_in_usd || 0) > 0);
+            if (activePools.length === 0) {
+                // No active pools — token-level price is stale, discard it
+                console.log(`[market-index] GT stale: ${contract.slice(0,10)}… has 0 active pools, ignoring price $${price}`);
+                return { price: 0, change24h: 0, marketCap: 0 };
+            }
+            // If token endpoint had no price, use best pool's price
+            if (price === 0) {
+                const bestPool = activePools
                     .map(p => p?.attributes || {})
                     .sort((a, b) => parseFloat(b.reserve_in_usd || 0) - parseFloat(a.reserve_in_usd || 0))[0];
                 if (bestPool) {
                     price = parseFloat(bestPool.base_token_price_usd || 0);
                 }
             }
+        } else if (price > 0) {
+            // Pools endpoint failed but token endpoint returned a price —
+            // can't validate, treat as potentially stale
+            console.log(`[market-index] GT pools fetch failed for ${contract.slice(0,10)}…, discarding unverified price`);
+            return { price: 0, change24h: 0, marketCap: 0 };
         }
 
         if (marketCap === 0 && normalizedSupply > 0 && price > 0) {

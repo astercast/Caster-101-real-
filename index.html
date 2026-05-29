@@ -6073,22 +6073,40 @@
                             let gtMcap = parseFloat(attr.market_cap_usd || attr.fdv_usd || 0);
                             const gtSupply = parseFloat(attr.normalized_total_supply || 0);
 
-                            if (gtP === 0) {
-                                try {
-                                    const poolsR = await fetch(
-                                        `https://api.geckoterminal.com/api/v2/networks/base/tokens/${t.contract.toLowerCase()}/pools`
-                                    );
-                                    if (poolsR.ok) {
-                                        const poolsD = await poolsR.json();
-                                        const pools = Array.isArray(poolsD?.data) ? poolsD.data : [];
-                                        const bestPool = pools
+                            // Always check pools to validate — GT token endpoint can return
+                            // stale prices for tokens with 0 active pools (e.g. Pizza on Base)
+                            try {
+                                const poolsR = await fetch(
+                                    `https://api.geckoterminal.com/api/v2/networks/base/tokens/${t.contract.toLowerCase()}/pools`
+                                );
+                                if (poolsR.ok) {
+                                    const poolsD = await poolsR.json();
+                                    const pools = Array.isArray(poolsD?.data) ? poolsD.data : [];
+                                    const activePools = pools.filter(p => parseFloat(p?.attributes?.reserve_in_usd || 0) > 0);
+                                    if (activePools.length === 0) {
+                                        // No active pools — token-level price is stale
+                                        console.log(`  ⚠️  ${t.name}: GT reports $${gtP.toFixed(10)} but 0 active pools — stale, skipping`);
+                                        gtP = 0;
+                                        gtMcap = 0;
+                                    } else if (gtP === 0) {
+                                        // Token endpoint had no price, use best active pool
+                                        const bestPool = activePools
                                             .map(p => p?.attributes || {})
                                             .sort((a, b) => parseFloat(b.reserve_in_usd || 0) - parseFloat(a.reserve_in_usd || 0))[0];
                                         if (bestPool) {
                                             gtP = parseFloat(bestPool.base_token_price_usd || 0);
                                         }
                                     }
-                                } catch {}
+                                } else if (gtP > 0) {
+                                    // Pools endpoint failed, can't validate — discard unverified price
+                                    console.log(`  ⚠️  ${t.name}: GT pools fetch failed, discarding unverified price`);
+                                    gtP = 0;
+                                }
+                            } catch {
+                                if (gtP > 0) {
+                                    console.log(`  ⚠️  ${t.name}: GT pools check errored, discarding unverified price`);
+                                    gtP = 0;
+                                }
                             }
 
                             if (gtMcap === 0 && gtSupply > 0 && gtP > 0) {
