@@ -5703,14 +5703,6 @@
             return 0;
         }
 
-        // Standard quote tokens for DexScreener pair filtering
-        const BASE_STANDARD_QUOTES = new Set(['weth', 'usdc', 'eth', 'usdt', 'wxch', 'xch', 'usd coin', 'wrapped ether']);
-        function isBaseStandardQuote(pair) {
-            const sym = (pair?.quoteToken?.symbol || '').toLowerCase();
-            const name = (pair?.quoteToken?.name || '').toLowerCase();
-            return BASE_STANDARD_QUOTES.has(sym) || BASE_STANDARD_QUOTES.has(name);
-        }
-
         // Fetch circulating supply for a Chia CAT via direct browser call to Spacescan
         // Uses the spacescanQueue to respect rate limits
         window.getSupplyForChiaToken = async function(assetId) {
@@ -5999,7 +5991,7 @@
         }
 
         async function fetchBaseData() {
-            console.log('--- BASE PRICES: DexScreener (standard quotes, volume-sorted) + GeckoTerminal fallback ---');
+            console.log('--- BASE PRICES: DexScreener batch + GeckoTerminal fallback ---');
 
             const baseTargets     = trackedTokens.filter(t => t.chain === 'Base');
             const withContract    = baseTargets.filter(t => t.contract);
@@ -6007,95 +5999,120 @@
                 .map(t => ({...t, price: 0, change24h: 0, marketCap: 0}));
 
             const results = [];
-            const contracts = withContract.map(t => t.contract.toLowerCase());
-            const dexData = {}; // ca → { price, change24h, marketCap }
 
-            // ── 1. Batch DexScreener — filter to standard quotes, sort by volume ──
+            // ── 1. Batch DexScreener (all contracts in one call) ──
+            const dexData = {};  // contract → { price, change24h, marketCap }
             try {
+                const contracts = withContract.map(t => t.contract.toLowerCase());
                 const r = await fetch(`https://api.dexscreener.com/tokens/v1/base/${contracts.join(',')}`);
                 if (r.ok) {
                     const d = await r.json();
-                    const allPairs = Array.isArray(d) ? d : (d.pairs || []);
-
-                    for (const ca of contracts) {
-                        const pairs = allPairs
-                            .filter(p =>
-                                (p.chainId || '').toLowerCase() === 'base' &&
-                                isBaseStandardQuote(p) &&
-                                (p.baseToken?.address || '').toLowerCase() === ca
-                            )
-                            .sort((a, b) => parseFloat(b?.volume?.h24 || 0) - parseFloat(a?.volume?.h24 || 0));
-
-                        if (pairs.length > 0) {
-                            const best = pairs[0];
+                    const pairs = Array.isArray(d) ? d : (d.pairs || []);
+                    for (const p of pairs) {
+                        if (p.chainId && p.chainId !== 'base') continue;
+                        const quote = (p.quoteToken?.symbol || '').toUpperCase();
+                        if (!['WETH','USDC','ETH','USDT','WXCH','XCH'].includes(quote)) continue;
+                        const ca = (p.baseToken?.address || '').toLowerCase();
+                        const price = parseFloat(p.priceUsd || 0);
+                        const vol = parseFloat(p.volume?.h24 || 0);
+                        if (ca && price > 0 && (!dexData[ca] || vol > (dexData[ca].vol || 0))) {
                             dexData[ca] = {
-                                price: parseFloat(best.priceUsd || 0),
-                                change24h: parseFloat(best.priceChange?.h24 || 0),
-                                marketCap: parseFloat(best.marketCap || best.fdv || 0)
+                                price,
+                                change24h: parseFloat(p.priceChange?.h24 || 0),
+                                marketCap: parseFloat(p.marketCap || p.fdv || 0),
+                                vol
                             };
                         }
                     }
                 }
-                console.log(`  DexScreener batch: ${Object.keys(dexData).length}/${contracts.length} tokens priced (standard quotes)`);
+                console.log(`  DexScreener batch: ${Object.keys(dexData).length}/${contracts.length} tokens priced`);
             } catch (e) { console.warn('  DexScreener batch error:', e.message); }
 
-            // ── 2. Per-token DexScreener fallback for contracts still missing ──
-            const missed = withContract.filter(t => !dexData[t.contract.toLowerCase()]?.price);
+            // ── 2. Also try legacy endpoint for tokens missed by batch ──
+            const missed = withContract.filter(t => !dexData[t.contract.toLowerCase()]);
             if (missed.length > 0) {
-                console.log(`  Per-token DexScreener fallback for ${missed.length} tokens...`);
                 for (const t of missed) {
-                    const ca = t.contract.toLowerCase();
                     try {
-                        const r = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${ca}`);
+                        const r = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${t.contract.toLowerCase()}`);
                         if (r.ok) {
                             const d = await r.json();
-                            const pairs = (d?.pairs || [])
-                                .filter(p => (p.chainId || '').toLowerCase() === 'base' && isBaseStandardQuote(p))
-                                .sort((a, b) => parseFloat(b?.volume?.h24 || 0) - parseFloat(a?.volume?.h24 || 0));
-                            if (pairs.length > 0) {
-                                const best = pairs[0];
-                                dexData[ca] = {
+                            const pairs = d.pairs || [];
+                            const valid = pairs.filter(p => p.chainId === 'base' && ['WETH','USDC','ETH','USDT','WXCH','XCH'].includes((p.quoteToken?.symbol||'').toUpperCase()));
+                            const best = valid.sort((a,b) => parseFloat(b.volume?.h24||0) - parseFloat(a.volume?.h24||0))[0];
+                            if (best) {
+                                dexData[t.contract.toLowerCase()] = {
                                     price: parseFloat(best.priceUsd || 0),
                                     change24h: parseFloat(best.priceChange?.h24 || 0),
-                                    marketCap: parseFloat(best.marketCap || best.fdv || 0)
+                                    marketCap: parseFloat(best.marketCap || best.fdv || 0),
                                 };
+                            }
+                        }
+                    } catch {}
+                    await new Promise(res => setTimeout(res, 100));
+                }
+            }
+
+            // ── 3. GeckoTerminal for tokens still missing price OR missing mcap ──
+            const needsGT = withContract.filter(t => {
+                const d = dexData[t.contract.toLowerCase()];
+                return !d || d.price === 0 || !d.marketCap;
+            });
+            if (needsGT.length > 0) {
+                console.log(`  Checking GeckoTerminal for ${needsGT.length} tokens (price/mcap fallback)...`);
+                for (const t of needsGT) {
+                    try {
+                        const gtR = await fetch(
+                            `https://api.geckoterminal.com/api/v2/networks/base/tokens/${t.contract.toLowerCase()}`
+                        );
+                        if (gtR.ok) {
+                            const gtD = await gtR.json();
+                            const attr = gtD?.data?.attributes || {};
+                            let gtP = parseFloat(attr.price_usd || 0);
+                            let gtMcap = parseFloat(attr.market_cap_usd || attr.fdv_usd || 0);
+                            const gtSupply = parseFloat(attr.normalized_total_supply || 0);
+
+                            if (gtP === 0) {
+                                try {
+                                    const poolsR = await fetch(
+                                        `https://api.geckoterminal.com/api/v2/networks/base/tokens/${t.contract.toLowerCase()}/pools`
+                                    );
+                                    if (poolsR.ok) {
+                                        const poolsD = await poolsR.json();
+                                        const pools = Array.isArray(poolsD?.data) ? poolsD.data : [];
+                                        const bestPool = pools
+                                            .map(p => p?.attributes || {})
+                                            .sort((a, b) => parseFloat(b.reserve_in_usd || 0) - parseFloat(a.reserve_in_usd || 0))[0];
+                                        if (bestPool) {
+                                            gtP = parseFloat(bestPool.base_token_price_usd || 0);
+                                        }
+                                    }
+                                } catch {}
+                            }
+
+                            if (gtMcap === 0 && gtSupply > 0 && gtP > 0) {
+                                gtMcap = gtSupply * gtP;
+                            }
+                            const ca = t.contract.toLowerCase();
+                            const existing = dexData[ca];
+                            if (!existing || existing.price === 0) {
+                                // No DexScreener data at all — use GeckoTerminal fully
+                                if (gtP > 0) {
+                                    dexData[ca] = {
+                                        price: gtP,
+                                        change24h: existing?.change24h || 0,
+                                        marketCap: gtMcap,
+                                    };
+                                    console.log(`  ✅ ${t.name} price via GeckoTerminal: $${gtP.toFixed(10)}`);
+                                }
+                            } else if (!existing.marketCap && gtMcap > 0) {
+                                // DexScreener has price but no mcap — fill in from GT
+                                existing.marketCap = gtMcap;
+                                console.log(`  ✅ ${t.name} mcap via GeckoTerminal: $${gtMcap.toFixed(0)}`);
                             }
                         }
                     } catch {}
                     await new Promise(res => setTimeout(res, 80));
                 }
-            }
-
-            // ── 3. GeckoTerminal batch for tokens missing price OR mcap ──
-            const needGecko = withContract.filter(t => {
-                const d = dexData[t.contract.toLowerCase()];
-                return !d || d.price <= 0 || !d.marketCap || d.marketCap <= 0;
-            });
-
-            if (needGecko.length > 0) {
-                try {
-                    const geckoContracts = needGecko.map(t => t.contract.toLowerCase()).join(',');
-                    const batchR = await fetch(`https://api.geckoterminal.com/api/v2/networks/base/tokens/multi/${geckoContracts}`);
-                    if (batchR.ok) {
-                        const batchD = await batchR.json();
-                        for (const item of (batchD?.data || [])) {
-                            const attrs = item?.attributes || {};
-                            const addr = String(attrs?.address || '').toLowerCase();
-                            if (!addr) continue;
-                            const d = dexData[addr] || { price: 0, change24h: 0, marketCap: 0 };
-                            const gtPrice = parseFloat(attrs.price_usd || 0);
-                            const gtMcap = parseFloat(attrs.market_cap_usd || attrs.fdv_usd || 0);
-                            const supply = parseFloat(attrs.normalized_total_supply || 0);
-
-                            if (d.price <= 0 && gtPrice > 0) d.price = gtPrice;
-                            if (d.marketCap <= 0 && gtMcap > 0) d.marketCap = gtMcap;
-                            if (d.marketCap <= 0 && supply > 0 && d.price > 0) d.marketCap = supply * d.price;
-
-                            dexData[addr] = d;
-                        }
-                    }
-                    console.log(`  GeckoTerminal batch: enriched ${needGecko.length} tokens`);
-                } catch (e) { console.warn('  GeckoTerminal batch error:', e.message); }
             }
 
             // ── 4. Build results ──

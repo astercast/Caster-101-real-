@@ -8,9 +8,6 @@ const HEADERS = {
     'Content-Type': 'application/json'
 };
 
-// Standard quote tokens — must match market-index.js and frontend
-const STANDARD_QUOTES = new Set(['weth', 'usdc', 'eth', 'usdt', 'wxch', 'xch', 'usd coin', 'wrapped ether']);
-
 // Strip chain suffix from token id to get a pairing key.
 // e.g. 'caster-chia' → 'caster', 'caster-base' → 'caster'
 // Falls back to normalizeName(token.name) for tokens without a structured id.
@@ -44,13 +41,6 @@ async function safeFetch(url, timeout = 25000) {
 function asNumber(v) {
     const n = parseFloat(v || 0);
     return Number.isFinite(n) ? n : 0;
-}
-
-/** Is this a standard quote token? (WETH, USDC, ETH, USDT, wXCH, XCH) */
-function isStandardQuote(pair) {
-    const sym = (pair?.quoteToken?.symbol || '').toLowerCase();
-    const name = (pair?.quoteToken?.name || '').toLowerCase();
-    return STANDARD_QUOTES.has(sym) || STANDARD_QUOTES.has(name);
 }
 
 export default async function handler(req, res) {
@@ -100,25 +90,18 @@ export default async function handler(req, res) {
             if (aid && lp > 0) dexiePriceMap[aid] = lp * xchUsd;
         }
 
-        // DexScreener: standard-quote pairs only, best by volume (matches market-index pricing)
+        // DexScreener: contract (lowercase) → liveUsd (best-volume pair)
         const dexPriceMap = {};
-        const allPairs = Array.isArray(dexscreenerRaw) ? dexscreenerRaw : (dexscreenerRaw?.pairs || []);
-
-        for (const ca of baseContracts) {
-            const pairs = allPairs
-                .filter(p =>
-                    (p.chainId || '').toLowerCase() === 'base' &&
-                    isStandardQuote(p) &&
-                    (p.baseToken?.address || '').toLowerCase() === ca
-                )
-                .sort((a, b) => parseFloat(b?.volume?.h24 || 0) - parseFloat(a?.volume?.h24 || 0));
-
-            if (pairs.length > 0) {
-                const best = pairs[0];
-                dexPriceMap[ca] = {
-                    price: parseFloat(best.priceUsd || 0),
-                    change24h: parseFloat(best.priceChange?.h24 || 0),
-                };
+        const pairs = Array.isArray(dexscreenerRaw) ? dexscreenerRaw : (dexscreenerRaw?.pairs || []);
+        for (const p of pairs) {
+            if (p.chainId && p.chainId !== 'base') continue;
+            const quote = (p.quoteToken?.symbol || '').toUpperCase();
+            if (!['WETH', 'USDC', 'ETH', 'USDT', 'WXCH', 'XCH'].includes(quote)) continue;
+            const ca = (p.baseToken?.address || '').toLowerCase();
+            const price = asNumber(p.priceUsd);
+            const vol = asNumber(p.volume?.h24);
+            if (ca && price > 0 && (!dexPriceMap[ca] || vol > (dexPriceMap[ca].vol || 0))) {
+                dexPriceMap[ca] = { price, vol, change24h: asNumber(p.priceChange?.h24) };
             }
         }
 
