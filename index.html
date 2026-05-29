@@ -4100,6 +4100,13 @@
                                 <span class="ul-item-desc">Web3 minting experience on Chia</span>
                             </div>
                         </a>
+                        <a href="https://bepe.love" target="_blank" class="ul-item">
+                            <span class="ul-item-emoji">❤️</span>
+                            <div class="ul-item-text">
+                                <span class="ul-item-name">bepe.love</span>
+                                <span class="ul-item-desc">BEPE LOVE NFT — support the Wizards Treasury</span>
+                            </div>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -6054,14 +6061,17 @@
                 }
             }
 
-            // ── 3. GeckoTerminal for tokens still missing price OR missing mcap ──
-            const needsGT = withContract.filter(t => {
+            // ── 3. GeckoTerminal for market cap ONLY (never price) ──
+            // DexScreener is the sole price source. GT can return stale prices from
+            // zero-volume pools (e.g. Pizza has 4 pools with reserves but 0 volume).
+            // We only use GT to fill missing market cap on tokens DexScreener already priced.
+            const needsGTMcap = withContract.filter(t => {
                 const d = dexData[t.contract.toLowerCase()];
-                return !d || d.price === 0 || !d.marketCap;
+                return d && d.price > 0 && !d.marketCap;
             });
-            if (needsGT.length > 0) {
-                console.log(`  Checking GeckoTerminal for ${needsGT.length} tokens (price/mcap fallback)...`);
-                for (const t of needsGT) {
+            if (needsGTMcap.length > 0) {
+                console.log(`  Checking GeckoTerminal mcap for ${needsGTMcap.length} tokens...`);
+                for (const t of needsGTMcap) {
                     try {
                         const gtR = await fetch(
                             `https://api.geckoterminal.com/api/v2/networks/base/tokens/${t.contract.toLowerCase()}`
@@ -6069,63 +6079,14 @@
                         if (gtR.ok) {
                             const gtD = await gtR.json();
                             const attr = gtD?.data?.attributes || {};
-                            let gtP = parseFloat(attr.price_usd || 0);
                             let gtMcap = parseFloat(attr.market_cap_usd || attr.fdv_usd || 0);
                             const gtSupply = parseFloat(attr.normalized_total_supply || 0);
-
-                            // Always check pools to validate — GT token endpoint can return
-                            // stale prices for tokens with 0 active pools (e.g. Pizza on Base)
-                            try {
-                                const poolsR = await fetch(
-                                    `https://api.geckoterminal.com/api/v2/networks/base/tokens/${t.contract.toLowerCase()}/pools`
-                                );
-                                if (poolsR.ok) {
-                                    const poolsD = await poolsR.json();
-                                    const pools = Array.isArray(poolsD?.data) ? poolsD.data : [];
-                                    const activePools = pools.filter(p => parseFloat(p?.attributes?.reserve_in_usd || 0) > 0);
-                                    if (activePools.length === 0) {
-                                        // No active pools — token-level price is stale
-                                        console.log(`  ⚠️  ${t.name}: GT reports $${gtP.toFixed(10)} but 0 active pools — stale, skipping`);
-                                        gtP = 0;
-                                        gtMcap = 0;
-                                    } else if (gtP === 0) {
-                                        // Token endpoint had no price, use best active pool
-                                        const bestPool = activePools
-                                            .map(p => p?.attributes || {})
-                                            .sort((a, b) => parseFloat(b.reserve_in_usd || 0) - parseFloat(a.reserve_in_usd || 0))[0];
-                                        if (bestPool) {
-                                            gtP = parseFloat(bestPool.base_token_price_usd || 0);
-                                        }
-                                    }
-                                } else if (gtP > 0) {
-                                    // Pools endpoint failed, can't validate — discard unverified price
-                                    console.log(`  ⚠️  ${t.name}: GT pools fetch failed, discarding unverified price`);
-                                    gtP = 0;
-                                }
-                            } catch {
-                                if (gtP > 0) {
-                                    console.log(`  ⚠️  ${t.name}: GT pools check errored, discarding unverified price`);
-                                    gtP = 0;
-                                }
-                            }
-
-                            if (gtMcap === 0 && gtSupply > 0 && gtP > 0) {
-                                gtMcap = gtSupply * gtP;
-                            }
                             const ca = t.contract.toLowerCase();
                             const existing = dexData[ca];
-                            if (!existing || existing.price === 0) {
-                                // No DexScreener data at all — use GeckoTerminal fully
-                                if (gtP > 0) {
-                                    dexData[ca] = {
-                                        price: gtP,
-                                        change24h: existing?.change24h || 0,
-                                        marketCap: gtMcap,
-                                    };
-                                    console.log(`  ✅ ${t.name} price via GeckoTerminal: $${gtP.toFixed(10)}`);
-                                }
-                            } else if (!existing.marketCap && gtMcap > 0) {
-                                // DexScreener has price but no mcap — fill in from GT
+                            if (gtMcap === 0 && gtSupply > 0 && existing?.price > 0) {
+                                gtMcap = gtSupply * existing.price;
+                            }
+                            if (gtMcap > 0 && existing) {
                                 existing.marketCap = gtMcap;
                                 console.log(`  ✅ ${t.name} mcap via GeckoTerminal: $${gtMcap.toFixed(0)}`);
                             }
@@ -11988,172 +11949,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     </script>
 
-<!-- ══════════════════════════════════════════════════════════
-     BEPE LOVE POPUP — shows once per session on landing
-══════════════════════════════════════════════════════════ -->
-<div id="bepe-popup-overlay" style="
-    display: none;
-    position: fixed; inset: 0; z-index: 99999;
-    background: rgba(0,0,0,0.82);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-">
-    <div id="bepe-popup-box" style="
-        position: relative;
-        max-width: 440px; width: min(100%, 440px);
-        background: linear-gradient(145deg, #0a0a18, #130d24, #0a0a18);
-        border: 1px solid rgba(251,191,36,0.35);
-        border-radius: 20px;
-        padding: 30px 28px 28px;
-        text-align: center;
-        box-shadow: 0 0 64px rgba(251,191,36,0.16), 0 0 120px rgba(168,85,247,0.1), 0 24px 50px rgba(0,0,0,0.55);
-        animation: bepe-rise 0.35s cubic-bezier(0.16,1,0.3,1) both;
-    ">
-        <!-- Close -->
-        <button onclick="closeBepePop()" style="
-            position: absolute; top: 14px; right: 16px;
-            background: none; border: none; color: rgba(255,255,255,0.3);
-            font-size: 20px; cursor: pointer; line-height: 1;
-            transition: color 0.15s;
-        " onmouseover="this.style.color='rgba(255,255,255,0.8)'" onmouseout="this.style.color='rgba(255,255,255,0.3)'">✕</button>
-
-        <!-- Top glow orb -->
-        <div style="
-            width: 56px; height: 56px;
-            margin: 0 auto 16px;
-            background: radial-gradient(circle, rgba(251,191,36,0.9) 0%, rgba(168,85,247,0.5) 55%, transparent 75%);
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 30px;
-            box-shadow: 0 0 26px rgba(251,191,36,0.45), 0 0 54px rgba(168,85,247,0.25);
-            animation: bepe-pulse 2.2s ease-in-out infinite;
-        ">❤️</div>
-
-        <!-- Headline -->
-        <div style="
-            font-family: 'Cinzel', serif;
-            font-size: clamp(22px, 5vw, 34px);
-            font-weight: 900;
-            letter-spacing: 2px;
-            line-height: 1.1;
-            margin-bottom: 6px;
-            background: linear-gradient(135deg, #fbbf24 0%, #f9a8d4 45%, #a78bfa 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        ">BEPE LOVE<br>MINTING NOW</div>
-
-        <!-- Sub label -->
-        <div style="
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 13px;
-            font-weight: 600;
-            color: rgba(255,255,255,0.5);
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            margin-bottom: 28px;
-        ">Support the Wizards Treasury</div>
-
-        <!-- Divider -->
-        <div style="height: 1px; background: linear-gradient(90deg, transparent, rgba(251,191,36,0.3), transparent); margin-bottom: 22px;"></div>
-
-        <!-- Art preview -->
-        <div style="margin-bottom: 18px;">
-            <img src="images/Screenshot 2026-05-02 012945.png" alt="BEPE LOVE art preview" style="
-                width: 100%; max-width: 340px; max-height: 220px;
-                height: auto;
-                object-fit: contain;
-                border-radius: 14px;
-                border: 1px solid rgba(251,191,36,0.22);
-                box-shadow: 0 0 24px rgba(251,191,36,0.12), 0 6px 18px rgba(0,0,0,0.45);
-                display: block; margin: 0 auto;
-                background: rgba(255,255,255,0.04);
-            ">
-        </div>
-
-        <!-- Description -->
-        <div style="
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 13px;
-            color: rgba(255,255,255,0.78);
-            line-height: 1.55;
-            margin-bottom: 22px;
-        ">Future Plans For This Art, mint yours and become part of the aWizard story.</div>
-
-        <!-- CTA -->
-        <a href="https://bepe.love" target="_blank" rel="noopener" onclick="closeBepePop()" style="
-            display: inline-block;
-            padding: 12px 30px;
-            background: linear-gradient(135deg, #fbbf24, #f59e0b);
-            border-radius: 40px;
-            font-family: 'Cinzel', serif;
-            font-size: 14px;
-            font-weight: 800;
-            letter-spacing: 1.2px;
-            color: #000;
-            text-decoration: none;
-            box-shadow: 0 3px 18px rgba(251,191,36,0.35);
-            transition: transform 0.15s, box-shadow 0.15s;
-        " onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 6px 24px rgba(251,191,36,0.45)'" onmouseout="this.style.transform='';this.style.boxShadow='0 3px 18px rgba(251,191,36,0.35)'">✨ Visit bepe.love ✨</a>
-
-        <!-- Dismiss -->
-        <div style="margin-top: 18px;">
-            <button onclick="closeBepePop()" style="
-                background: none; border: none;
-                font-family: 'Space Grotesk', sans-serif;
-                font-size: 11px; color: rgba(255,255,255,0.28);
-                cursor: pointer; letter-spacing: 0.05em;
-                transition: color 0.15s;
-            " onmouseover="this.style.color='rgba(255,255,255,0.6)'" onmouseout="this.style.color='rgba(255,255,255,0.28)'">dismiss</button>
-        </div>
-    </div>
-</div>
-
-<style>
-@keyframes bepe-rise {
-    from { opacity: 0; transform: translateY(32px) scale(0.96); }
-    to   { opacity: 1; transform: translateY(0)   scale(1); }
-}
-@keyframes bepe-pulse {
-    0%,100% { box-shadow: 0 0 32px rgba(251,191,36,0.45), 0 0 64px rgba(168,85,247,0.25); }
-    50%      { box-shadow: 0 0 52px rgba(251,191,36,0.65), 0 0 96px rgba(168,85,247,0.4); }
-}
-@keyframes bepe-cta-pulse {
-    0%,100% { box-shadow: 0 4px 24px rgba(251,191,36,0.4), 0 0 0 0 rgba(251,191,36,0); }
-    50%      { box-shadow: 0 4px 24px rgba(251,191,36,0.5), 0 0 0 8px rgba(251,191,36,0); }
-}
-</style>
-
-<script>
-(function() {
-    // Show once per session (not once per day — every new tab/session sees it)
-    if (!sessionStorage.getItem('bepe_pop_seen')) {
-        const overlay = document.getElementById('bepe-popup-overlay');
-        if (overlay) {
-            // Small delay so the page renders first
-            setTimeout(function() {
-                overlay.style.display = 'flex';
-            }, 800);
-        }
-    }
-})();
-function closeBepePop() {
-    sessionStorage.setItem('bepe_pop_seen', '1');
-    var el = document.getElementById('bepe-popup-overlay');
-    if (el) {
-        el.style.opacity = '0';
-        el.style.transition = 'opacity 0.25s';
-        setTimeout(function() { el.style.display = 'none'; }, 260);
-    }
-}
-// Close on overlay click (outside box)
-document.getElementById('bepe-popup-overlay').addEventListener('click', function(e) {
-    if (e.target === this) closeBepePop();
-});
-</script>
 
 </body>
 

@@ -115,6 +115,12 @@ async function saveBlobSnapshot(snapshot) {
 }
 
 async function fetchBestBaseToken(contract) {
+    let price = 0, change24h = 0, marketCap = 0;
+
+    // ── Price: DexScreener only (authoritative DEX source) ──
+    // If a token has no standard-quote pairs on DexScreener it has no active
+    // trading on Base and we report price = 0. GeckoTerminal can return stale
+    // prices from zero-volume pools (e.g. Pizza), so we never use it for price.
     try {
         const response = await safeFetch(`https://api.dexscreener.com/latest/dex/tokens/${contract.toLowerCase()}`, 12000);
         if (response.ok) {
@@ -127,70 +133,32 @@ async function fetchBestBaseToken(contract) {
             });
             const best = valid.sort((a, b) => parseFloat(b.volume?.h24 || 0) - parseFloat(a.volume?.h24 || 0))[0];
             if (best) {
-                const price = parseFloat(best.priceUsd || 0);
-                const marketCap = parseFloat(best.marketCap || best.fdv || 0);
-                if (price > 0) {
-                    return {
-                        price,
-                        change24h: parseFloat(best.priceChange?.h24 || 0),
-                        marketCap
-                    };
-                }
+                price = parseFloat(best.priceUsd || 0);
+                change24h = parseFloat(best.priceChange?.h24 || 0);
+                marketCap = parseFloat(best.marketCap || best.fdv || 0);
             }
         }
     } catch {}
 
-    // GeckoTerminal fallback
-    try {
-        const gt = await safeFetch(`https://api.geckoterminal.com/api/v2/networks/base/tokens/${contract.toLowerCase()}`, 12000);
-        if (!gt.ok) return { price: 0, change24h: 0, marketCap: 0 };
-        const data = await gt.json();
-        const attr = data?.data?.attributes || {};
-        let price = parseFloat(attr.price_usd || 0);
-        let marketCap = parseFloat(attr.market_cap_usd || attr.fdv_usd || 0);
-        const normalizedSupply = parseFloat(attr.normalized_total_supply || 0);
+    // No price from DexScreener → token has no active standard-quote trading
+    if (price === 0) return { price: 0, change24h: 0, marketCap: 0 };
 
-        // Always check pools to validate the price — GT token endpoint can return
-        // stale prices for tokens with 0 active pools (e.g. Pizza on Base)
-        const poolsRes = await safeFetch(`https://api.geckoterminal.com/api/v2/networks/base/tokens/${contract.toLowerCase()}/pools`, 12000);
-        if (poolsRes.ok) {
-            const poolsData = await poolsRes.json();
-            const pools = Array.isArray(poolsData?.data) ? poolsData.data : [];
-            const activePools = pools.filter(p => parseFloat(p?.attributes?.reserve_in_usd || 0) > 0);
-            if (activePools.length === 0) {
-                // No active pools — token-level price is stale, discard it
-                console.log(`[market-index] GT stale: ${contract.slice(0,10)}… has 0 active pools, ignoring price $${price}`);
-                return { price: 0, change24h: 0, marketCap: 0 };
+    // ── Market cap: GeckoTerminal fallback only when DexScreener has price but no mcap ──
+    if (marketCap === 0) {
+        try {
+            const gt = await safeFetch(`https://api.geckoterminal.com/api/v2/networks/base/tokens/${contract.toLowerCase()}`, 8000);
+            if (gt.ok) {
+                const data = await gt.json();
+                const attr = data?.data?.attributes || {};
+                let gtMcap = parseFloat(attr.market_cap_usd || attr.fdv_usd || 0);
+                const normalizedSupply = parseFloat(attr.normalized_total_supply || 0);
+                if (gtMcap === 0 && normalizedSupply > 0) gtMcap = normalizedSupply * price;
+                if (gtMcap > 0) marketCap = gtMcap;
             }
-            // If token endpoint had no price, use best pool's price
-            if (price === 0) {
-                const bestPool = activePools
-                    .map(p => p?.attributes || {})
-                    .sort((a, b) => parseFloat(b.reserve_in_usd || 0) - parseFloat(a.reserve_in_usd || 0))[0];
-                if (bestPool) {
-                    price = parseFloat(bestPool.base_token_price_usd || 0);
-                }
-            }
-        } else if (price > 0) {
-            // Pools endpoint failed but token endpoint returned a price —
-            // can't validate, treat as potentially stale
-            console.log(`[market-index] GT pools fetch failed for ${contract.slice(0,10)}…, discarding unverified price`);
-            return { price: 0, change24h: 0, marketCap: 0 };
-        }
+        } catch {}
+    }
 
-        if (marketCap === 0 && normalizedSupply > 0 && price > 0) {
-            marketCap = normalizedSupply * price;
-        }
-        if (price > 0) {
-            return {
-                price,
-                change24h: 0,
-                marketCap
-            };
-        }
-    } catch {}
-
-    return { price: 0, change24h: 0, marketCap: 0 };
+    return { price, change24h, marketCap };
 }
 
 async function buildSnapshot(req) {
