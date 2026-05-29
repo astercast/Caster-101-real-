@@ -161,12 +161,13 @@ export default async function handler(req, res) {
 
         const xchUsd = xchResp?.chia?.usd || 2.20;
 
-        // Build Dexie ticker map: assetId -> priceUsd
+        // Build Dexie ticker map: assetId -> { priceUsd, vol }
         const tickerMap = {};
         for (const tick of (dexieTickers.tickers || [])) {
             const bid = (tick.base_id || '').toLowerCase();
             const lp = parseFloat(tick.last_price || 0);
-            if (bid && lp > 0) tickerMap[bid] = lp * xchUsd;
+            const vol = parseFloat(tick.base_volume || 0);
+            if (bid && lp > 0) tickerMap[bid] = { priceUsd: lp * xchUsd, vol };
         }
 
         const prices = {}, changes = {}, mcaps = {}, supplies = {}, sources = {};
@@ -174,7 +175,9 @@ export default async function handler(req, res) {
         for (let i = 0; i < CAT_IDS.length; i++) {
             const id = CAT_IDS[i];
             const ss = catResults[i];
-            const dexiePrice = tickerMap[id.toLowerCase()] || 0;
+            const dexieTick = tickerMap[id.toLowerCase()];
+            // Only trust Dexie last_price if there's been recent trading volume
+            const dexiePrice = (dexieTick && dexieTick.vol > 0) ? dexieTick.priceUsd : 0;
 
             let price = 0, change = 0, src = 'none';
             const ssSupply = (ss && ss.supply > 0) ? ss.supply : 0;
@@ -198,15 +201,32 @@ export default async function handler(req, res) {
             sources[id] = src;
         }
 
-        // Fallback: individual Dexie offers for tokens still missing a price
-        const missing = CAT_IDS.filter(id => !prices[id] || prices[id] === 0);
-        if (missing.length > 0) {
-            const dr = await Promise.all(missing.map(id => getDexieBestAsk(id, xchUsd)));
-            for (let i = 0; i < missing.length; i++) {
-                const id = missing[i], r = dr[i];
+        // Fallback: Dexie best ask for tokens with zero price OR stale price (zero volume)
+        const needsBestAsk = CAT_IDS.filter(id => {
+            if (!prices[id] || prices[id] === 0) return true; // no price at all
+            const tick = tickerMap[id.toLowerCase()];
+            return tick && tick.vol <= 0 && sources[id] === 'dexie'; // stale last_price
+        });
+        // Also include tokens that got a stale last_price but no volume
+        const staleIds = CAT_IDS.filter(id => {
+            const tick = tickerMap[id.toLowerCase()];
+            return tick && tick.vol <= 0 && tick.priceUsd > 0 && prices[id] === 0;
+        });
+        const allNeedAsk = [...new Set([...needsBestAsk, ...staleIds])];
+        if (allNeedAsk.length > 0) {
+            const dr = await Promise.all(allNeedAsk.map(id => getDexieBestAsk(id, xchUsd)));
+            for (let i = 0; i < allNeedAsk.length; i++) {
+                const id = allNeedAsk[i], r = dr[i];
                 if (r && r.price > 0) {
                     prices[id] = r.price;
                     sources[id] = 'dexie-offer';
+                } else if (prices[id] === 0) {
+                    // No best ask available — fall back to stale last_price as last resort
+                    const tick = tickerMap[id.toLowerCase()];
+                    if (tick && tick.priceUsd > 0) {
+                        prices[id] = tick.priceUsd;
+                        sources[id] = 'dexie-stale';
+                    }
                 }
             }
         }

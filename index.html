@@ -5813,19 +5813,21 @@
             const xchTarget = chiaTargets.find(t => t.assetId === 'Native');
             if (xchTarget) results.push({...xchTarget, price: xchPriceUSD, change24h: xchChange, marketCap: xchMarketCap});
 
-            // ── Build Dexie ticker map: assetId → { priceXch, priceUsd } ──
+            // ── Build Dexie ticker map: assetId → { priceXch, priceUsd, vol } ──
+            // Only trust last_price from tickers with recent trading volume (vol > 0)
             const dexieMap = {};
             for (const tick of (dexieTickerData.tickers || [])) {
                 const bid = (tick.base_id || '').toLowerCase();
                 const lastPriceXch = parseFloat(tick.last_price || 0);
-                if (bid && lastPriceXch > 0) {
+                const vol = parseFloat(tick.base_volume || 0);
+                if (bid && lastPriceXch > 0 && vol > 0) {
                     dexieMap[bid] = {
                         priceXch: lastPriceXch,
                         priceUsd: lastPriceXch * xchPriceUSD
                     };
                 }
             }
-            console.log(`Dexie tickers: ${Object.keys(dexieMap).length} tokens`);
+            console.log(`Dexie tickers: ${Object.keys(dexieMap).length} tokens (with volume)`);
 
             // ── Build TibetSwap map for fallback prices ──
             const tibetArr = Array.isArray(tibetRaw) ? tibetRaw : (tibetRaw.results || tibetRaw.pairs || []);
@@ -11520,8 +11522,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         for (var tick of (d.tickers || [])) {
                             var bid = (tick.base_id || '').toLowerCase();
                             var lp = parseFloat(tick.last_price || 0);
+                            var vol = parseFloat(tick.base_volume || 0);
                             var name = (tick.base_name || tick.base_currency || '').trim();
-                            if (bid && lp > 0) map[bid] = { priceXch: lp, name: name };
+                            if (bid && lp > 0 && vol > 0) map[bid] = { priceXch: lp, name: name };
                         }
                         window._sagePortfolioDexieMap = map; window._sagePortfolioDexieTs = Date.now();
                         return map;

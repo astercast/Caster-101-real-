@@ -82,12 +82,13 @@ export default async function handler(req, res) {
         // ── 3. Build live price maps ──
         const xchUsd = asNumber(xchResp?.chia?.usd) || 2.20;
 
-        // Dexie: assetId → liveUsd
+        // Dexie: assetId → liveUsd (only tickers with recent volume — stale last_price is unreliable)
         const dexiePriceMap = {};
         for (const tick of (dexieTickers.tickers || [])) {
             const aid = (tick.base_id || '').toLowerCase();
             const lp = asNumber(tick.last_price);
-            if (aid && lp > 0) dexiePriceMap[aid] = lp * xchUsd;
+            const vol = asNumber(tick.base_volume);
+            if (aid && lp > 0 && vol > 0) dexiePriceMap[aid] = lp * xchUsd;
         }
 
         // DexScreener: contract (lowercase) → liveUsd (best-volume pair)
