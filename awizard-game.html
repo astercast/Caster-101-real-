@@ -6,7 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#0a0a0a">
-    <title>✨ aWizard: The Arcane Ascension ✨</title>
+    <title>aWizard: The Arcane Ascension</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Press+Start+2P&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -18,22 +18,20 @@
             --gold-light: #fcd34d;
             --red: #dc2626;
             --red-light: #ef4444;
+            --green: #4ade80;
+            --blue: #60a5fa;
+            --purple: #c084fc;
             --text-primary: #ffffff;
             --text-secondary: #d1d5db;
-            --glow-gold: 0 0 30px rgba(251, 191, 36, 0.6);
-            --glow-red: 0 0 25px rgba(220, 38, 38, 0.7);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        html {
-            scrollbar-width: thin;
-            scrollbar-color: var(--gold) var(--dark-bg);
-        }
+        html { scrollbar-width: thin; scrollbar-color: var(--gold) var(--dark-bg); }
 
         body {
             font-family: 'Cinzel', serif;
-            background: linear-gradient(180deg, #0a0a0a 0%, #1a0000 50%, #0a0a0a 100%);
+            background: linear-gradient(180deg, #0a0a0a 0%, #15010f 45%, #1a0000 100%);
             background-attachment: fixed;
             color: var(--text-primary);
             min-height: 100vh;
@@ -46,9 +44,10 @@
             content: '';
             position: fixed;
             inset: 0;
-            background: 
+            background:
                 radial-gradient(circle at 20% 80%, rgba(220, 38, 38, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(251, 191, 36, 0.08) 0%, transparent 50%);
+                radial-gradient(circle at 80% 20%, rgba(251, 191, 36, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(168, 85, 247, 0.06) 0%, transparent 60%);
             animation: auraShift 25s ease-in-out infinite;
             z-index: -2;
             pointer-events: none;
@@ -56,79 +55,55 @@
 
         @keyframes auraShift {
             0%, 100% { filter: brightness(1) hue-rotate(0deg); }
-            50% { filter: brightness(1.05) hue-rotate(5deg); }
+            50% { filter: brightness(1.08) hue-rotate(14deg); }
         }
 
         .version-badge {
-            position: fixed;
-            top: 1rem;
-            left: 1rem;
+            position: fixed; top: 1rem; left: 1rem;
             background: rgba(220, 38, 38, 0.6);
             border: 1px solid var(--gold);
             color: var(--text-secondary);
-            padding: 0.4rem 0.8rem;
-            border-radius: 0.3rem;
+            padding: 0.35rem 0.7rem; border-radius: 0.3rem;
             font-family: 'Space Grotesk', sans-serif;
-            font-size: 0.65rem;
-            z-index: 100;
-            letter-spacing: 1px;
-            text-shadow: 0 0 5px rgba(220, 38, 38, 0.8);
+            font-size: 0.6rem; z-index: 100; letter-spacing: 1px;
         }
 
         #game-container {
-            max-width: 1000px;
-            margin: 0.8rem auto;
-            background: rgba(26, 0, 0, 0.95);
+            max-width: 1000px; margin: 0.8rem auto;
+            background: rgba(20, 0, 6, 0.95);
             backdrop-filter: blur(20px);
-            border-radius: 1.2rem;
-            overflow: hidden;
-            box-shadow: 
-                0 0 50px rgba(220, 38, 38, 0.4),
-                0 30px 60px rgba(0, 0, 0, 0.8),
-                inset 0 0 60px rgba(251, 191, 36, 0.08);
+            border-radius: 1.2rem; overflow: hidden;
+            box-shadow: 0 0 50px rgba(220, 38, 38, 0.35), 0 30px 60px rgba(0, 0, 0, 0.8), inset 0 0 60px rgba(251, 191, 36, 0.07);
             border: 2px solid rgba(251, 191, 36, 0.4);
-            position: relative;
-            z-index: 1;
+            position: relative; z-index: 1;
         }
 
         header {
-            background: linear-gradient(135deg, rgba(220, 38, 38, 0.7) 0%, rgba(251, 191, 36, 0.5) 50%, rgba(220, 38, 38, 0.7) 100%);
-            padding: 1.5rem 1.2rem;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
+            background: linear-gradient(135deg, rgba(220, 38, 38, 0.7) 0%, rgba(251, 191, 36, 0.5) 50%, rgba(168, 85, 247, 0.5) 100%);
+            padding: 1.3rem 1.2rem; text-align: center;
+            position: relative; overflow: hidden;
             border-bottom: 2px solid rgba(251, 191, 36, 0.3);
         }
 
         header::before {
-            content: '';
-            position: absolute;
-            inset: -100%;
+            content: ''; position: absolute; inset: -100%;
             background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
             animation: shimmerShift 12s infinite linear;
         }
 
-        @keyframes shimmerShift { 
+        @keyframes shimmerShift {
             0% { transform: translate(-50%, -50%); }
             100% { transform: translate(50%, 50%); }
         }
 
         h1 {
-            font-family: 'Cinzel', serif;
-            font-size: 2rem;
-            line-height: 1.2;
-            text-shadow: 
-                0 4px 20px rgba(0, 0, 0, 0.8),
-                0 0 40px rgba(220, 38, 38, 0.8),
-                0 0 60px rgba(251, 191, 36, 0.4);
-            background: linear-gradient(90deg, #fcd34d, #dc2626, #fcd34d);
+            font-family: 'Cinzel', serif; font-size: 1.9rem; line-height: 1.2;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.8), 0 0 40px rgba(220, 38, 38, 0.8);
+            background: linear-gradient(90deg, #fcd34d, #dc2626, #c084fc, #fcd34d);
             background-size: 300% 100%;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: titleShimmer 6s ease-in-out infinite;
-            position: relative;
-            z-index: 1;
-            letter-spacing: 2px;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            animation: titleShimmer 7s ease-in-out infinite;
+            position: relative; z-index: 1; letter-spacing: 2px;
         }
 
         @keyframes titleShimmer {
@@ -137,276 +112,229 @@
         }
 
         #realm-indicator {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 0.75rem;
-            color: var(--gold-light);
-            text-shadow: 0 0 10px rgba(251, 191, 36, 0.8);
-            margin-top: 0.4rem;
-            letter-spacing: 1px;
-            font-weight: 600;
+            font-family: 'Space Grotesk', sans-serif; font-size: 0.72rem;
+            color: #fff; text-shadow: 0 0 10px rgba(0, 0, 0, 0.9);
+            margin-top: 0.35rem; letter-spacing: 1px; font-weight: 600;
+            position: relative; z-index: 1;
         }
 
         #status {
-            background: rgba(10, 10, 10, 0.8);
-            padding: 1rem;
+            background: rgba(10, 10, 10, 0.85); padding: 0.85rem;
             border-bottom: 1px solid rgba(251, 191, 36, 0.3);
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-            gap: 0.8rem;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 0.6rem;
         }
 
         .stat-group {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 0.8rem;
-            border-radius: 0.6rem;
-            background: linear-gradient(135deg, rgba(220, 38, 38, 0.15) 0%, rgba(251, 191, 36, 0.05) 100%);
+            display: flex; flex-direction: column; align-items: center;
+            padding: 0.6rem 0.4rem; border-radius: 0.6rem;
+            background: linear-gradient(135deg, rgba(220, 38, 38, 0.14) 0%, rgba(251, 191, 36, 0.05) 100%);
             border: 1px solid rgba(251, 191, 36, 0.3);
-            box-shadow: inset 0 0 15px rgba(220, 38, 38, 0.1);
         }
 
         .stat-label {
-            color: var(--text-secondary);
-            font-size: 0.65rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-family: 'Space Grotesk', sans-serif;
-            font-weight: 600;
+            color: var(--text-secondary); font-size: 0.6rem; text-transform: uppercase;
+            letter-spacing: 1px; font-family: 'Space Grotesk', sans-serif; font-weight: 600; text-align: center;
         }
 
         .stat-value {
-            font-weight: 700;
-            font-size: 1.3rem;
-            color: var(--gold-light);
-            text-shadow: 0 0 12px rgba(251, 191, 36, 0.6);
-            margin-top: 0.2rem;
+            font-weight: 700; font-size: 1.15rem; color: var(--gold-light);
+            text-shadow: 0 0 12px rgba(251, 191, 36, 0.5); margin-top: 0.15rem;
         }
 
-        .health-bar {
-            width: 100%;
-            height: 12px;
-            background: rgba(0, 0, 0, 0.6);
-            border-radius: 999px;
-            margin-top: 0.4rem;
-            overflow: hidden;
-            border: 1px solid rgba(251, 191, 36, 0.3);
-        }
+        .bar { width: 100%; height: 10px; background: rgba(0, 0, 0, 0.6); border-radius: 999px; margin-top: 0.35rem; overflow: hidden; border: 1px solid rgba(251, 191, 36, 0.25); }
+        .health-fill { height: 100%; background: linear-gradient(90deg, #ef4444, #fcd34d); transition: width 0.4s cubic-bezier(0.25,0.46,0.45,0.94); }
+        .focus-fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #60a5fa); transition: width 0.4s ease; }
 
-        .health-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #ef4444, #fcd34d);
-            transition: width 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            box-shadow: inset 0 0 8px rgba(255, 255, 255, 0.3);
+        #menu-bar {
+            display: flex; gap: 0.5rem; padding: 0.6rem 0.85rem; flex-wrap: wrap;
+            background: rgba(0,0,0,0.4); border-bottom: 1px solid rgba(251,191,36,0.2);
         }
+        .menu-btn {
+            flex: 1; min-width: 84px; padding: 0.5rem 0.4rem; border-radius: 0.45rem;
+            border: 1px solid rgba(251,191,36,0.35); background: rgba(251,191,36,0.06);
+            color: var(--gold-light); font-family: 'Space Grotesk', sans-serif; font-size: 0.72rem;
+            font-weight: 700; cursor: pointer; transition: all 0.18s; letter-spacing: 0.4px;
+        }
+        .menu-btn:hover { background: rgba(251,191,36,0.16); transform: translateY(-1px); }
 
         #allies-display {
-            padding: 0.8rem 1.2rem;
-            background: rgba(10, 10, 10, 0.6);
+            padding: 0.6rem 1.1rem; background: rgba(10, 10, 10, 0.55);
             border-bottom: 1px solid rgba(251, 191, 36, 0.2);
-            display: flex;
-            gap: 0.8rem;
-            flex-wrap: wrap;
-            min-height: 2rem;
+            display: flex; gap: 0.6rem; flex-wrap: wrap; min-height: 1.6rem;
         }
 
         .ally-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.3rem;
-            background: rgba(220, 38, 38, 0.3);
-            border: 1px solid var(--gold);
-            padding: 0.3rem 0.6rem;
-            border-radius: 999px;
-            font-size: 0.75rem;
-            color: var(--gold-light);
-            font-family: 'Space Grotesk', sans-serif;
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            background: rgba(74, 222, 128, 0.16); border: 1px solid rgba(74,222,128,0.5);
+            padding: 0.28rem 0.6rem; border-radius: 999px; font-size: 0.72rem;
+            color: var(--green); font-family: 'Space Grotesk', sans-serif;
         }
+
+        #enemy-panel {
+            display: none; padding: 1rem 1.2rem 0.4rem;
+            background: rgba(30, 0, 0, 0.6); border-bottom: 1px solid rgba(220,38,38,0.3);
+        }
+        #enemy-panel.active { display: block; }
+        .enemy-top { display: flex; align-items: center; gap: 0.7rem; }
+        .enemy-emoji { font-size: 2.2rem; filter: drop-shadow(0 0 12px rgba(220,38,38,0.6)); }
+        .enemy-name { font-family: 'Cinzel', serif; font-size: 1.1rem; color: var(--red-light); text-shadow: 0 0 10px rgba(220,38,38,0.5); }
+        .enemy-sub { font-family: 'Space Grotesk', sans-serif; font-size: 0.68rem; color: var(--text-secondary); }
+        .enemy-hp-row { display:flex; align-items:center; gap:0.5rem; margin-top:0.5rem; }
+        .enemy-hp-bar { flex:1; height: 14px; background: rgba(0,0,0,0.6); border-radius: 999px; overflow:hidden; border:1px solid rgba(220,38,38,0.4); }
+        .enemy-hp-fill { height:100%; background: linear-gradient(90deg, #7f1d1d, #ef4444); transition: width 0.35s ease; }
+        .enemy-hp-text { font-family:'Space Grotesk',sans-serif; font-size:0.72rem; color:var(--gold-light); min-width: 78px; text-align:right; }
+        .status-chips { display:flex; gap:0.35rem; flex-wrap:wrap; margin-top:0.5rem; min-height: 0.5rem; }
+        .chip {
+            font-family:'Space Grotesk',sans-serif; font-size:0.6rem; font-weight:700;
+            padding:0.15rem 0.45rem; border-radius:999px; letter-spacing:0.3px;
+        }
+        .chip.burn { background: rgba(239,68,68,0.2); color:#fca5a5; border:1px solid rgba(239,68,68,0.5); }
+        .chip.poison { background: rgba(132,204,22,0.18); color:#bef264; border:1px solid rgba(132,204,22,0.5); }
+        .chip.freeze { background: rgba(96,165,250,0.2); color:#bfdbfe; border:1px solid rgba(96,165,250,0.5); }
+        .chip.stun { background: rgba(168,85,247,0.2); color:#e9d5ff; border:1px solid rgba(168,85,247,0.5); }
+        .chip.shield { background: rgba(251,191,36,0.18); color:#fde68a; border:1px solid rgba(251,191,36,0.5); }
+        .chip.regen { background: rgba(74,222,128,0.18); color:#bbf7d0; border:1px solid rgba(74,222,128,0.5); }
+        .chip.curse { background: rgba(120,113,108,0.25); color:#d6d3d1; border:1px solid rgba(120,113,108,0.6); }
+        .chip.mark { background: rgba(244,114,182,0.18); color:#fbcfe8; border:1px solid rgba(244,114,182,0.5); }
+        .chip.power { background: rgba(251,146,60,0.18); color:#fed7aa; border:1px solid rgba(251,146,60,0.5); }
 
         #story-text {
-            padding: 1.5rem 1.2rem;
-            font-size: 0.95rem;
-            line-height: 1.7;
-            background: rgba(10, 10, 10, 0.6);
-            min-height: 140px;
-            position: relative;
+            padding: 1.3rem 1.2rem; font-size: 0.94rem; line-height: 1.7;
+            background: rgba(10, 10, 10, 0.6); min-height: 120px; position: relative;
             border-bottom: 1px solid rgba(251, 191, 36, 0.2);
-            color: var(--text-secondary);
-            font-family: 'Space Grotesk', sans-serif;
-            font-weight: 400;
+            color: var(--text-secondary); font-family: 'Space Grotesk', sans-serif;
         }
-
-        #story-text strong {
-            color: var(--gold-light);
-            font-family: 'Cinzel', serif;
-            text-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
-        }
+        #story-text strong { color: var(--gold-light); font-family: 'Cinzel', serif; text-shadow: 0 0 10px rgba(251,191,36,0.5); }
+        #story-text em { color: var(--purple); font-style: italic; }
+        .speaker { color: var(--green); font-weight: 700; }
+        .villain { color: var(--red-light); font-weight: 700; }
 
         #spell-info {
-            padding: 1rem 1.2rem;
-            background: rgba(10, 10, 10, 0.8);
-            border-bottom: 1px solid rgba(251, 191, 36, 0.2);
-            min-height: 60px;
-            font-size: 0.85rem;
-            line-height: 1.5;
-            color: var(--text-secondary);
-            font-family: 'Space Grotesk', sans-serif;
-            display: none;
+            padding: 0.9rem 1.2rem; background: rgba(10, 10, 10, 0.8);
+            border-bottom: 1px solid rgba(251, 191, 36, 0.2); min-height: 40px;
+            font-size: 0.82rem; line-height: 1.5; color: var(--text-secondary);
+            font-family: 'Space Grotesk', sans-serif; display: none;
         }
-
-        #spell-info.active {
-            display: block;
-        }
+        #spell-info.active { display: block; }
 
         #combat-log {
-            max-height: 160px;
-            overflow-y: auto;
-            padding: 1rem 1.2rem;
-            background: rgba(0, 0, 0, 0.5);
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 0.8rem;
-            border-top: 1px solid rgba(251, 191, 36, 0.25);
-            border-bottom: 1px solid rgba(251, 191, 36, 0.25);
-            color: var(--text-secondary);
-            line-height: 1.4;
+            max-height: 150px; overflow-y: auto; padding: 0.9rem 1.2rem;
+            background: rgba(0, 0, 0, 0.5); font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.78rem; border-top: 1px solid rgba(251, 191, 36, 0.22);
+            border-bottom: 1px solid rgba(251, 191, 36, 0.22); color: var(--text-secondary); line-height: 1.45;
         }
+        #combat-log div { margin-bottom: 0.35rem; animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
 
-        #combat-log div {
-            margin-bottom: 0.4rem;
-            animation: fadeIn 0.3s ease-in;
-        }
+        #options { padding: 1.1rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.7rem; }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(3px); }
-            to { opacity: 1; transform: translateY(0); }
+        button.choice {
+            padding: 0.85rem 1.1rem; border: 2px solid var(--gold); border-radius: 0.45rem;
+            background: linear-gradient(135deg, rgba(220, 38, 38, 0.28) 0%, rgba(251, 191, 36, 0.1) 100%);
+            color: var(--gold-light); font-weight: 700; font-size: 0.82rem; font-family: 'Cinzel', serif;
+            cursor: pointer; min-height: 46px; transition: all 0.22s cubic-bezier(0.175,0.885,0.32,1.275);
+            letter-spacing: 0.4px; position: relative; overflow: hidden;
+            touch-action: manipulation; -webkit-tap-highlight-color: transparent;
         }
+        button.choice:hover { transform: translateY(-2px); box-shadow: 0 0 26px rgba(220, 38, 38, 0.6); border-color: var(--gold-light); }
+        button.choice:active { transform: scale(0.98); }
+        button.choice:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow:none; }
 
-        #options {
-            padding: 1.2rem;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 0.8rem;
-        }
+        button.choice.atk { border-color: var(--red); color: #fca5a5; background: linear-gradient(135deg, rgba(220,38,38,0.32), rgba(220,38,38,0.08)); }
+        button.choice.spell { border-color: var(--purple); color: var(--purple); background: linear-gradient(135deg, rgba(168,85,247,0.22), rgba(168,85,247,0.05)); }
+        button.choice.heal { border-color: var(--green); color: var(--green); background: linear-gradient(135deg, rgba(74,222,128,0.2), rgba(74,222,128,0.05)); }
+        button.choice.item { border-color: var(--blue); color: #bfdbfe; background: linear-gradient(135deg, rgba(96,165,250,0.2), rgba(96,165,250,0.05)); }
+        button.choice.back { border-color: rgba(255,255,255,0.3); color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.04); }
 
-        button {
-            padding: 0.9rem 1.2rem;
-            border: 2px solid var(--gold);
-            border-radius: 0.4rem;
-            background: linear-gradient(135deg, rgba(220, 38, 38, 0.3) 0%, rgba(251, 191, 36, 0.1) 100%);
-            color: var(--gold-light);
-            font-weight: 700;
-            font-size: 0.85rem;
-            font-family: 'Cinzel', serif;
-            cursor: pointer;
-            min-height: 48px;
-            box-shadow: 
-                0 0 15px rgba(220, 38, 38, 0.3),
-                inset 0 0 12px rgba(255, 255, 255, 0.08);
-            transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            letter-spacing: 0.5px;
-            position: relative;
-            overflow: hidden;
-            touch-action: manipulation;
-            -webkit-tap-highlight-color: transparent;
+        .panel-row {
+            display:flex; justify-content:space-between; align-items:center; gap:0.6rem;
+            padding:0.7rem 0.9rem; margin:0.4rem 0; border-radius:0.5rem;
+            background: rgba(255,255,255,0.03); border:1px solid rgba(251,191,36,0.18);
+            font-family:'Space Grotesk',sans-serif;
         }
+        .panel-row .pr-name { font-weight:700; color:#fff; font-size:0.85rem; }
+        .panel-row .pr-desc { font-size:0.7rem; color:var(--text-secondary); margin-top:0.15rem; }
+        .panel-row .pr-meta { font-size:0.72rem; color:var(--gold-light); white-space:nowrap; }
+        .rarity-common { color:#d1d5db; }
+        .rarity-rare { color:#60a5fa; }
+        .rarity-epic { color:#c084fc; }
+        .rarity-legendary { color:#fcd34d; text-shadow:0 0 8px rgba(251,191,36,0.6); }
 
-        button::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, transparent 50%);
-            opacity: 0;
-            transition: opacity 0.25s;
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 
-                0 0 30px rgba(220, 38, 38, 0.7),
-                0 8px 20px rgba(0, 0, 0, 0.5),
-                inset 0 0 15px rgba(251, 191, 36, 0.2);
-            border-color: var(--gold-light);
-        }
-
-        button:active {
-            transform: scale(0.98);
-        }
-
-        button:disabled {
-            opacity: 0.45;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        button.spell-ability {
-            background: linear-gradient(135deg, rgba(102, 255, 153, 0.2) 0%, rgba(102, 255, 153, 0.05) 100%);
-            border-color: #66ff99;
-            color: #66ff99;
-        }
-
-        button.spell-ability:hover {
-            box-shadow: 
-                0 0 30px rgba(102, 255, 153, 0.7),
-                0 8px 20px rgba(0, 0, 0, 0.5);
-            border-color: #88ffaa;
-        }
+        .scene-title { display:block; font-family:'Cinzel',serif; color:var(--gold-light); font-size:1.05rem; margin-bottom:0.5rem; text-shadow:0 0 12px rgba(251,191,36,0.4); }
+        .toast { color: var(--gold-light); font-weight:700; }
 
         @media (max-width: 768px) {
-            body { padding: 0.6rem; }
-            #game-container { margin: 0.6rem auto; border-radius: 0.8rem; }
-            h1 { font-size: 1.4rem; }
-            #status { padding: 0.8rem; gap: 0.6rem; grid-template-columns: repeat(3, 1fr); }
-            .stat-group { padding: 0.6rem; }
-            .stat-value { font-size: 1rem; }
-            #story-text { padding: 1.2rem; font-size: 0.9rem; min-height: 120px; }
-            #spell-info { padding: 0.8rem 1rem; font-size: 0.8rem; }
-            #combat-log { padding: 0.8rem 1rem; max-height: 140px; font-size: 0.75rem; }
-            #options { padding: 1rem; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.6rem; }
-            button { padding: 0.8rem 1rem; font-size: 0.75rem; min-height: 44px; }
-            .version-badge { top: 0.5rem; left: 0.5rem; font-size: 0.6rem; }
+            body { padding: 0.5rem; }
+            #game-container { margin: 0.5rem auto; border-radius: 0.8rem; }
+            h1 { font-size: 1.3rem; }
+            #status { padding: 0.7rem; gap: 0.5rem; grid-template-columns: repeat(3, 1fr); }
+            .stat-group { padding: 0.5rem 0.3rem; }
+            .stat-value { font-size: 0.95rem; }
+            #menu-bar { padding: 0.5rem 0.6rem; gap: 0.4rem; }
+            .menu-btn { min-width: 0; font-size: 0.64rem; padding: 0.45rem 0.3rem; }
+            #story-text { padding: 1.1rem; font-size: 0.88rem; min-height: 110px; }
+            #combat-log { padding: 0.7rem 1rem; max-height: 130px; font-size: 0.72rem; }
+            #options { padding: 0.9rem; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.5rem; }
+            button.choice { padding: 0.75rem 0.9rem; font-size: 0.74rem; min-height: 44px; }
+            .version-badge { top: 0.5rem; left: 0.5rem; font-size: 0.55rem; }
+            .enemy-emoji { font-size: 1.8rem; }
         }
     </style>
 </head>
 <body>
 
-<div class="version-badge">v4.0</div>
+<div class="version-badge">v5.0</div>
 
 <div id="game-container">
     <header>
-        <h1>✨ aWizard ✨<br>The Arcane Ascension</h1>
-        <div id="realm-indicator">🌙 Bridging Astral & Earthly Realms 🌍</div>
+        <h1>aWizard<br>The Arcane Ascension</h1>
+        <div id="realm-indicator">A Caster walks between the worlds</div>
     </header>
 
     <div id="status">
         <div class="stat-group">
-            <div class="stat-label">Vitality ❤️</div>
-            <div class="stat-value" id="health-text">100/100</div>
-            <div class="health-bar"><div class="health-fill" id="health-fill" style="width:100%"></div></div>
+            <div class="stat-label">Vitality</div>
+            <div class="stat-value" id="health-text">100</div>
+            <div class="bar"><div class="health-fill" id="health-fill" style="width:100%"></div></div>
         </div>
         <div class="stat-group">
-            <div class="stat-label">Power 🔮</div>
+            <div class="stat-label">Focus</div>
+            <div class="stat-value" id="focus-text">6</div>
+            <div class="bar"><div class="focus-fill" id="focus-fill" style="width:100%"></div></div>
+        </div>
+        <div class="stat-group">
+            <div class="stat-label">Power</div>
             <div class="stat-value" id="power-text">10</div>
         </div>
         <div class="stat-group">
-            <div class="stat-label">Ground 🌱</div>
+            <div class="stat-label">Ground</div>
             <div class="stat-value" id="grounding-text">7</div>
         </div>
         <div class="stat-group">
-            <div class="stat-label">Love 💗</div>
+            <div class="stat-label">Love</div>
             <div class="stat-value" id="love-text">5</div>
         </div>
         <div class="stat-group">
-            <div class="stat-label">Ascend ⭐</div>
-            <div class="stat-value" id="level-text">1</div>
+            <div class="stat-label">Gold</div>
+            <div class="stat-value" id="gold-text">0</div>
         </div>
         <div class="stat-group">
-            <div class="stat-label">Spells 📖</div>
-            <div class="stat-value" id="sp-text">0</div>
+            <div class="stat-label">Level</div>
+            <div class="stat-value" id="level-text">1</div>
         </div>
     </div>
 
+    <div id="menu-bar">
+        <button class="menu-btn" onclick="openSpellbook()">Spellbook</button>
+        <button class="menu-btn" onclick="openBag()">Bag</button>
+        <button class="menu-btn" onclick="openCodex()">Codex</button>
+        <button class="menu-btn" onclick="manualSave()">Save</button>
+        <button class="menu-btn" onclick="confirmReset()">Reset</button>
+    </div>
+
     <div id="allies-display"></div>
-    <div id="story-text">The veil between worlds grows thin. You sense ancient magic stirring within, waiting for a Caster brave enough to weave the threads of Love, Growth, and Astral power together.</div>
+    <div id="enemy-panel"></div>
+    <div id="story-text"></div>
     <div id="spell-info"></div>
     <div id="combat-log"></div>
     <div id="options"></div>
@@ -417,957 +345,1092 @@
 <audio id="sfx-heal" preload="auto" style="display:none;"><source src="https://assets.mixkit.co/sfx/preview/mixkit-magical-confirmation-downwards-1-125.mp3" type="audio/mpeg"></audio>
 <audio id="sfx-victory" preload="auto" style="display:none;"><source src="https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-2054.mp3" type="audio/mpeg"></audio>
 <audio id="sfx-damage" preload="auto" style="display:none;"><source src="https://assets.mixkit.co/sfx/preview/mixkit-laser-impact-4670.mp3" type="audio/mpeg"></audio>
-<audio id="sfx-power-up" preload="auto" style="display:none;"><source src="https://assets.mixkit.co/sfx/preview/mixkit-powerup-impact-2656.mp3" type="audio/mpeg"></audio>
+<audio id="sfx-power" preload="auto" style="display:none;"><source src="https://assets.mixkit.co/sfx/preview/mixkit-powerup-impact-2656.mp3" type="audio/mpeg"></audio>
 
 <script>
-// ====================== ENHANCED SAVE SYSTEM WITH CLOUD CACHE ======================
-const SAVE_KEY = 'awizard_game_save_v4';
+// =====================================================================
+// aWizard: The Arcane Ascension v5
+// A branching arcane RPG. No em dashes anywhere in this file.
+// =====================================================================
+
+const SAVE_KEY = 'awizard_game_save_v5';
 
 function saveGame(state) {
     try {
-        const saveData = JSON.stringify(state);
-        
-        // Save to localStorage (primary)
-        localStorage.setItem(SAVE_KEY, saveData);
-        
-        // Backup to IndexedDB if available (cloud cache compatible)
+        const data = JSON.stringify(state);
+        localStorage.setItem(SAVE_KEY, data);
         if (window.indexedDB) {
-            const request = indexedDB.open('aWizardDB', 1);
-            request.onsuccess = (e) => {
-                const db = e.target.result;
-                const transaction = db.transaction(['saves'], 'readwrite');
-                transaction.objectStore('saves').put({ id: SAVE_KEY, data: saveData, timestamp: Date.now() });
+            const req = indexedDB.open('aWizardDB', 1);
+            req.onupgradeneeded = (e) => { try { e.target.result.createObjectStore('saves', { keyPath: 'id' }); } catch (_) {} };
+            req.onsuccess = (e) => {
+                try {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains('saves')) return;
+                    db.transaction(['saves'], 'readwrite').objectStore('saves').put({ id: SAVE_KEY, data, timestamp: Date.now() });
+                } catch (_) {}
             };
         }
-    } catch (e) {
-        console.warn('Save failed:', e);
-    }
+    } catch (e) { console.warn('Save failed:', e); }
 }
 
 function loadGame() {
     try {
-        // Try localStorage first (fastest)
         const saved = localStorage.getItem(SAVE_KEY);
         if (saved) return JSON.parse(saved);
-        
-        // Fallback to IndexedDB if localStorage is empty
-        if (window.indexedDB) {
-            const request = indexedDB.open('aWizardDB', 1);
-            request.onsuccess = (e) => {
-                const db = e.target.result;
-                const transaction = db.transaction(['saves'], 'readonly');
-                const getData = transaction.objectStore('saves').get(SAVE_KEY);
-                getData.onsuccess = () => {
-                    if (getData.result) return JSON.parse(getData.result.data);
-                };
-            };
-        }
         return null;
-    } catch (e) {
-        console.warn('Load failed:', e);
-        return null;
-    }
+    } catch (e) { return null; }
 }
 
 function deleteSave() {
     try {
         localStorage.removeItem(SAVE_KEY);
         if (window.indexedDB) {
-            const request = indexedDB.open('aWizardDB', 1);
-            request.onsuccess = (e) => {
-                const db = e.target.result;
-                const transaction = db.transaction(['saves'], 'readwrite');
-                transaction.objectStore('saves').delete(SAVE_KEY);
+            const req = indexedDB.open('aWizardDB', 1);
+            req.onsuccess = (e) => {
+                try {
+                    const db = e.target.result;
+                    if (db.objectStoreNames.contains('saves')) db.transaction(['saves'], 'readwrite').objectStore('saves').delete(SAVE_KEY);
+                } catch (_) {}
             };
         }
-    } catch (e) {
-        console.warn('Delete save failed:', e);
-    }
+    } catch (e) {}
 }
 
-// ====================== GAME STATE ======================
-let gameState = {
-    stage: 0,
-    currentRealm: 'astral',
-    player: {
-        name: "Caster",
-        health: 100,
-        maxHealth: 100,
-        power: 10,
-        grounding: 7,
-        love: 5,
-        level: 1,
-        xp: 0,
-        xpToNext: 100,
-        spellsLearned: 0,
-        learnedSpells: [],
-        skillProgress: { growth: 0, love: 0, astral: 0, balance: 0, creation: 0 }
-    },
-    allies: [],
-    currentEnemy: null,
-    inCombat: false,
-    currentQuest: null,
-    endingPath: null
-};
+// ===================== HELPERS =====================
+const rand = (n) => Math.floor(Math.random() * n);
+const pick = (arr) => arr[rand(arr.length)];
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+const clone = (o) => JSON.parse(JSON.stringify(o));
 
-const savedGame = loadGame();
-if (savedGame) {
-    gameState = savedGame;
-    console.log('✅ Game loaded from save');
+function playSound(id, vol = 0.4) {
+    try { const el = document.getElementById(id); if (el) { el.volume = vol; el.currentTime = 0; el.play().catch(() => {}); } } catch (_) {}
 }
 
-// ====================== SPELL SYSTEM WITH DESCRIPTIONS & ABILITIES ======================
-const spellPaths = {
-    growth: {
-        name: "Growth",
-        progress: 0,
-        upgrades: [
-            { 
-                cost: 1, 
-                name: "Seed of Potential", 
-                description: "Plant seeds of vitality. Permanently increase max health by 20 and restore 20 health.",
-                effect: () => { gameState.player.maxHealth += 20; gameState.player.health += 20; },
-                ability: null
-            },
-            { 
-                cost: 1, 
-                name: "Root Deeper", 
-                description: "Strengthen your connection to the earth. Increase grounding by 3.",
-                effect: () => { gameState.player.grounding += 3; },
-                ability: null
-            },
-            { 
-                cost: 1, 
-                name: "Flourish", 
-                description: "Make life bloom around you. Increase love by 4 and max health by 20.",
-                effect: () => { gameState.player.love += 4; gameState.player.maxHealth += 20; },
-                ability: null
-            },
-            { 
-                cost: 2, 
-                name: "Verdant Strength", 
-                description: "Call upon ancient forests for strength. Increase max health by 35 and grounding by 5.",
-                effect: () => { gameState.player.maxHealth += 35; gameState.player.grounding += 5; },
-                ability: null
-            },
-            { 
-                cost: 2, 
-                name: "The Great Oak", 
-                description: "Become as strong as ancient oaks. Increase max health by 60 and grounding by 8. Unlocks Entangling Roots ability.",
-                effect: () => { gameState.player.maxHealth += 60; gameState.player.grounding += 8; },
-                ability: "Entangling Roots"
-            }
-        ]
-    },
-    love: {
-        name: "Love",
-        progress: 0,
-        upgrades: [
-            { 
-                cost: 1, 
-                name: "Open Heart", 
-                description: "Remove barriers around your heart. Increase love by 4.",
-                effect: () => { gameState.player.love += 4; },
-                ability: null
-            },
-            { 
-                cost: 1, 
-                name: "Resonance", 
-                description: "Align your frequency with others. Increase love by 3 and power by 2.",
-                effect: () => { gameState.player.love += 3; gameState.player.power += 2; },
-                ability: null
-            },
-            { 
-                cost: 1, 
-                name: "Compassion's Shield", 
-                description: "Let empathy protect you. Increase love by 4 and max health by 25.",
-                effect: () => { gameState.player.love += 4; gameState.player.maxHealth += 25; },
-                ability: null
-            },
-            { 
-                cost: 2, 
-                name: "Binding Light", 
-                description: "Create bonds that cannot be broken. Increase love by 6 and grounding by 3.",
-                effect: () => { gameState.player.love += 6; gameState.player.grounding += 3; },
-                ability: null
-            },
-            { 
-                cost: 2, 
-                name: "Universal Love", 
-                description: "Embrace all existence with love. Increase love by 10 and power by 4. Unlocks Heart's Embrace ability.",
-                effect: () => { gameState.player.love += 10; gameState.player.power += 4; },
-                ability: "Heart's Embrace"
-            }
-        ]
-    },
-    astral: {
-        name: "Astral",
-        progress: 0,
-        upgrades: [
-            { 
-                cost: 1, 
-                name: "Veil Sight", 
-                description: "See beyond the mundane veil. Increase power by 5.",
-                effect: () => { gameState.player.power += 5; },
-                ability: null
-            },
-            { 
-                cost: 1, 
-                name: "Dimensional Gateway", 
-                description: "Open gateways between worlds. Increase power by 4 and grounding by 1.",
-                effect: () => { gameState.player.power += 4; gameState.player.grounding += 1; },
-                ability: null
-            },
-            { 
-                cost: 1, 
-                name: "Starlight Channeling", 
-                description: "Channel the power of distant stars. Increase power by 5.",
-                effect: () => { gameState.player.power += 5; },
-                ability: null
-            },
-            { 
-                cost: 2, 
-                name: "Cosmic Anchor", 
-                description: "Root yourself in cosmic energy. Increase power by 7 and grounding by 4.",
-                effect: () => { gameState.player.power += 7; gameState.player.grounding += 4; },
-                ability: null
-            },
-            { 
-                cost: 2, 
-                name: "Infinite Cosmos", 
-                description: "Tap into infinite astral energy. Increase power by 12 and max health by 25. Unlocks Meteor Strike ability.",
-                effect: () => { gameState.player.power += 12; gameState.player.maxHealth += 25; },
-                ability: "Meteor Strike"
-            }
-        ]
-    },
-    balance: {
-        name: "Balance",
-        progress: 0,
-        upgrades: [
-            { 
-                cost: 1, 
-                name: "Equilibrium", 
-                description: "Find perfect balance within. Increase grounding by 3 and power by 2.",
-                effect: () => { gameState.player.grounding += 3; gameState.player.power += 2; },
-                ability: null
-            },
-            { 
-                cost: 1, 
-                name: "Ground the Stars", 
-                description: "Anchor cosmic power to earth. Increase grounding by 2 and power by 2.",
-                effect: () => { gameState.player.grounding += 2; gameState.player.power += 2; },
-                ability: null
-            },
-            { 
-                cost: 2, 
-                name: "Dance of Realms", 
-                description: "Move gracefully between worlds. Increase power by 4, grounding by 4, and love by 2.",
-                effect: () => { gameState.player.power += 4; gameState.player.grounding += 4; gameState.player.love += 2; },
-                ability: null
-            },
-            { 
-                cost: 2, 
-                name: "Harmonious Spirit", 
-                description: "Achieve inner harmony. Increase power by 3, grounding by 5, and love by 3.",
-                effect: () => { gameState.player.power += 3; gameState.player.grounding += 5; gameState.player.love += 3; },
-                ability: null
-            },
-            { 
-                cost: 2, 
-                name: "Perfect Symmetry", 
-                description: "Become perfectly balanced in all things. Increase power by 8, grounding by 8, and love by 5. Unlocks Equilibrium Shield ability.",
-                effect: () => { gameState.player.power += 8; gameState.player.grounding += 8; gameState.player.love += 5; },
-                ability: "Equilibrium Shield"
-            }
-        ]
-    },
-    creation: {
-        name: "Creation",
-        progress: 0,
-        upgrades: [
-            { 
-                cost: 1, 
-                name: "Spark of Will", 
-                description: "Ignite your willpower. Increase power by 4 and love by 2.",
-                effect: () => { gameState.player.power += 4; gameState.player.love += 2; },
-                ability: null
-            },
-            { 
-                cost: 1, 
-                name: "Craft Reality", 
-                description: "Shape reality with intention. Increase power by 5.",
-                effect: () => { gameState.player.power += 5; },
-                ability: null
-            },
-            { 
-                cost: 1, 
-                name: "Manifest Desire", 
-                description: "Make your desires manifest into being. Increase power by 4 and love by 2.",
-                effect: () => { gameState.player.power += 4; gameState.player.love += 2; },
-                ability: null
-            },
-            { 
-                cost: 2, 
-                name: "Weave Fate", 
-                description: "Weave threads of destiny itself. Increase power by 7 and max health by 20.",
-                effect: () => { gameState.player.power += 7; gameState.player.maxHealth += 20; },
-                ability: null
-            },
-            { 
-                cost: 2, 
-                name: "Reality Sculptor", 
-                description: "Sculpt reality like clay. Increase power by 10, love by 5, and max health by 30. Unlocks Reality Blast ability.",
-                effect: () => { gameState.player.power += 10; gameState.player.love += 5; gameState.player.maxHealth += 30; },
-                ability: "Reality Blast"
-            }
-        ]
-    }
+// ===================== DATA: ACTIVE SPELLS =====================
+// Each spell: cost (focus), cooldown (turns), kind, cast(ctx)
+const SPELLS = {
+    ember_lance: { name: 'Ember Lance', icon: '🔥', cost: 2, cd: 0, kind: 'attack',
+        desc: 'Hurl a spear of fire. Deals power based damage and sets the foe burning.',
+        cast: () => { const d = magicDamage(1.2); dealToEnemy(d); applyEnemy('burn', 3); log('🔥 Ember Lance burns for ' + d + '.'); } },
+    frost_nova: { name: 'Frost Nova', icon: '❄️', cost: 3, cd: 2, kind: 'control',
+        desc: 'A burst of killing cold. Damages and freezes the foe so it loses its next turn.',
+        cast: () => { const d = magicDamage(0.9); dealToEnemy(d); applyEnemy('freeze', 1); log('❄️ Frost Nova hits for ' + d + ' and freezes the foe.'); } },
+    verdant_surge: { name: 'Verdant Surge', icon: '🌿', cost: 2, cd: 0, kind: 'heal',
+        desc: 'Living green light closes your wounds and grants regeneration.',
+        cast: () => { const h = 14 + G.player.love * 2; heal(h); applySelf('regen', 3); log('🌿 Verdant Surge restores ' + h + ' and you begin to regenerate.'); } },
+    astral_meteor: { name: 'Astral Meteor', icon: '☄️', cost: 5, cd: 3, kind: 'attack',
+        desc: 'Call a falling star. Massive damage that ignores a portion of enemy guard.',
+        cast: () => { const d = magicDamage(2.4); dealToEnemy(d, true); log('☄️ Astral Meteor crashes down for ' + d + '.'); } },
+    hearts_embrace: { name: "Heart's Embrace", icon: '💗', cost: 4, cd: 3, kind: 'heal',
+        desc: 'Warmth floods your circle. Heal yourself greatly and shield your whole party.',
+        cast: () => { const h = 24 + G.player.love * 3; heal(h); applySelf('shield', 3); log("💗 Heart's Embrace heals " + h + ' and raises a loving shield.'); } },
+    entangling_roots: { name: 'Entangling Roots', icon: '🪢', cost: 3, cd: 2, kind: 'control',
+        desc: 'Roots erupt from the ground and stun the foe for two turns.',
+        cast: () => { const d = magicDamage(0.6); dealToEnemy(d); applyEnemy('stun', 2); log('🪢 Roots bind the foe and deal ' + d + '.'); } },
+    equilibrium_shield: { name: 'Equilibrium Shield', icon: '🛡️', cost: 3, cd: 2, kind: 'buff',
+        desc: 'Balance becomes armor. Gain a heavy shield and a surge of power.',
+        cast: () => { applySelf('shield', 4); applySelf('power', 2); log('🛡️ Equilibrium Shield hardens around you.'); } },
+    reality_blast: { name: 'Reality Blast', icon: '🌌', cost: 6, cd: 4, kind: 'attack',
+        desc: 'Unmake a piece of the world. Damage scales with all three of your gifts.',
+        cast: () => { const d = Math.floor((G.player.power + G.player.grounding + G.player.love) * 1.8) + rand(10); dealToEnemy(d, true); log('🌌 Reality Blast tears reality for ' + d + '.'); } },
+    soul_lantern: { name: 'Soul Lantern', icon: '🏮', cost: 4, cd: 5, kind: 'buff',
+        desc: 'Hang a lantern for your own soul. The next blow that would end you leaves you at one Vitality instead.',
+        cast: () => { applySelf('lantern', 99); log('🏮 A Soul Lantern flickers to life. Death will pass you once.'); } },
+    chrono_loop: { name: 'Chrono Loop', icon: '⏳', cost: 3, cd: 6, kind: 'buff',
+        desc: 'Fold a moment back on itself. Refresh all your spell cooldowns and restore focus.',
+        cast: () => { Object.keys(G.cooldowns).forEach(k => G.cooldowns[k] = 0); G.player.focus = G.player.maxFocus; log('⏳ Chrono Loop resets your magic.'); } },
+    venom_bloom: { name: 'Venom Bloom', icon: '☠️', cost: 2, cd: 1, kind: 'attack',
+        desc: 'A flower of poison opens on the foe, stacking deadly venom each turn.',
+        cast: () => { const d = magicDamage(0.7); dealToEnemy(d); applyEnemy('poison', 4); log('☠️ Venom Bloom poisons the foe and deals ' + d + '.'); } },
+    sun_brand: { name: 'Sun Brand', icon: '🌞', cost: 3, cd: 2, kind: 'attack',
+        desc: 'Mark the foe with light. The mark makes every future hit land harder.',
+        cast: () => { const d = magicDamage(1.0); dealToEnemy(d); applyEnemy('mark', 4); log('🌞 Sun Brand sears a glowing mark for ' + d + '.'); } }
 };
 
-if (savedGame && savedGame.player.skillProgress) {
-    Object.keys(spellPaths).forEach(key => {
-        spellPaths[key].progress = gameState.player.skillProgress[key] || 0;
+// ===================== DATA: SKILL TREES (passive) =====================
+const TREES = {
+    growth: { name: 'Growth', icon: '🌱', upgrades: [
+        { cost: 1, name: 'Seed of Potential', desc: 'Max Vitality plus 25 and heal 25.', eff: () => { G.player.maxHealth += 25; heal(25); } },
+        { cost: 1, name: 'Deep Roots', desc: 'Grounding plus 4.', eff: () => { G.player.grounding += 4; } },
+        { cost: 2, name: 'The Great Oak', desc: 'Max Vitality plus 50, Grounding plus 6. Learn Entangling Roots.', eff: () => { G.player.maxHealth += 50; G.player.grounding += 6; learnSpell('entangling_roots'); } },
+        { cost: 2, name: 'Bloom of Venom', desc: 'Power plus 4. Learn Venom Bloom.', eff: () => { G.player.power += 4; learnSpell('venom_bloom'); } }
+    ]},
+    love: { name: 'Love', icon: '💗', upgrades: [
+        { cost: 1, name: 'Open Heart', desc: 'Love plus 5.', eff: () => { G.player.love += 5; } },
+        { cost: 1, name: 'Warm Focus', desc: 'Max Focus plus 2 and refill focus.', eff: () => { G.player.maxFocus += 2; G.player.focus = G.player.maxFocus; } },
+        { cost: 2, name: 'Universal Love', desc: 'Love plus 8, Power plus 3. Learn Heart\'s Embrace.', eff: () => { G.player.love += 8; G.player.power += 3; learnSpell('hearts_embrace'); } },
+        { cost: 2, name: 'Verdant Heart', desc: 'Max Vitality plus 30. Learn Verdant Surge.', eff: () => { G.player.maxHealth += 30; learnSpell('verdant_surge'); } }
+    ]},
+    astral: { name: 'Astral', icon: '✨', upgrades: [
+        { cost: 1, name: 'Veil Sight', desc: 'Power plus 6.', eff: () => { G.player.power += 6; } },
+        { cost: 1, name: 'Cold Star', desc: 'Power plus 3. Learn Frost Nova.', eff: () => { G.player.power += 3; learnSpell('frost_nova'); } },
+        { cost: 2, name: 'Infinite Cosmos', desc: 'Power plus 10, Max Vitality plus 25. Learn Astral Meteor.', eff: () => { G.player.power += 10; G.player.maxHealth += 25; learnSpell('astral_meteor'); } },
+        { cost: 2, name: 'Fold of Time', desc: 'Max Focus plus 2. Learn Chrono Loop.', eff: () => { G.player.maxFocus += 2; learnSpell('chrono_loop'); } }
+    ]},
+    balance: { name: 'Balance', icon: '☯️', upgrades: [
+        { cost: 1, name: 'Equilibrium', desc: 'Grounding plus 3, Power plus 3.', eff: () => { G.player.grounding += 3; G.player.power += 3; } },
+        { cost: 1, name: 'Steady Soul', desc: 'Learn Soul Lantern.', eff: () => { learnSpell('soul_lantern'); } },
+        { cost: 2, name: 'Perfect Symmetry', desc: 'Power, Grounding, Love each plus 5. Learn Equilibrium Shield.', eff: () => { G.player.power += 5; G.player.grounding += 5; G.player.love += 5; learnSpell('equilibrium_shield'); } },
+        { cost: 2, name: 'Solar Poise', desc: 'Grounding plus 4. Learn Sun Brand.', eff: () => { G.player.grounding += 4; learnSpell('sun_brand'); } }
+    ]},
+    creation: { name: 'Creation', icon: '🔨', upgrades: [
+        { cost: 1, name: 'Spark of Will', desc: 'Power plus 5, Love plus 2.', eff: () => { G.player.power += 5; G.player.love += 2; } },
+        { cost: 1, name: 'First Flame', desc: 'Learn Ember Lance.', eff: () => { learnSpell('ember_lance'); } },
+        { cost: 2, name: 'Reality Sculptor', desc: 'Power plus 8, Max Vitality plus 35. Learn Reality Blast.', eff: () => { G.player.power += 8; G.player.maxHealth += 35; learnSpell('reality_blast'); } },
+        { cost: 2, name: 'Gild the Hours', desc: 'Gain 120 gold and Power plus 3.', eff: () => { addGold(120); G.player.power += 3; } }
+    ]}
+};
+
+// ===================== DATA: COMPANIONS =====================
+const COMPANIONS = {
+    sprout: { name: 'Sprout', emoji: '🌱', role: 'Guardian', act: () => { heal(8 + G.player.love); log('🌱 Sprout shelters you and heals 8 plus.'); } },
+    luminara: { name: 'Luminara', emoji: '✨', role: 'Starcaller', act: () => { const d = 7 + rand(6); dealToEnemy(d); log('✨ Luminara strikes with starlight for ' + d + '.'); } },
+    echoheart: { name: 'Echoheart', emoji: '💗', role: 'Amplifier', act: () => { if (rand(2) === 0) { applySelf('power', 1); log('💗 Echoheart amplifies your power.'); } else { heal(6); log('💗 Echoheart soothes you for 6.'); } } },
+    bramblefang: { name: 'Bramblefang', emoji: '🐺', role: 'Beast', act: () => { const d = 9 + rand(7); dealToEnemy(d); applyEnemy('poison', 1); log('🐺 Bramblefang savages the foe for ' + d + '.'); } },
+    quill: { name: 'Quill', emoji: '📜', role: 'Scholar', act: () => { if (G.player.focus < G.player.maxFocus) { G.player.focus = clamp(G.player.focus + 1, 0, G.player.maxFocus); log('📜 Quill restores 1 focus.'); } else { applyEnemy('mark', 1); log('📜 Quill marks the foe\'s weak point.'); } } },
+    mirrowin: { name: 'Mirrowin', emoji: '🪞', role: 'Mirror Twin', act: () => { const d = 6 + Math.floor(G.player.power * 0.4); dealToEnemy(d); log('🪞 Mirrowin echoes your magic for ' + d + '.'); } }
+};
+
+// ===================== DATA: ITEMS =====================
+const ITEMS = {
+    tonic: { name: 'Healing Tonic', icon: '🧪', type: 'consumable', price: 25, rarity: 'common', desc: 'Restore 35 Vitality.', use: () => { heal(35); log('🧪 You drink a Healing Tonic. Plus 35.'); return true; } },
+    elixir: { name: 'Greater Elixir', icon: '⚗️', type: 'consumable', price: 60, rarity: 'rare', desc: 'Restore 80 Vitality and 3 Focus.', use: () => { heal(80); G.player.focus = clamp(G.player.focus + 3, 0, G.player.maxFocus); log('⚗️ The Greater Elixir mends you fully.'); return true; } },
+    draught: { name: 'Focus Draught', icon: '🫗', type: 'consumable', price: 35, rarity: 'common', desc: 'Restore 5 Focus.', use: () => { G.player.focus = clamp(G.player.focus + 5, 0, G.player.maxFocus); log('🫗 Focus floods back. Plus 5.'); return true; } },
+    bomb: { name: 'Arcane Bomb', icon: '💣', type: 'combat', price: 45, rarity: 'common', desc: 'Deal 40 damage to the foe. Combat only.', use: () => { if (!G.inCombat) { log('💣 No foe to throw it at.'); return false; } dealToEnemy(40, true); log('💣 The Arcane Bomb bursts for 40.'); return true; } },
+    feather: { name: 'Phoenix Feather', icon: '🪶', type: 'consumable', price: 110, rarity: 'epic', desc: 'Revive to full if you fall this battle.', use: () => { applySelf('feather', 99); log('🪶 A Phoenix Feather glows in your pocket.'); return true; } },
+    smoke: { name: 'Smoke Bomb', icon: '💨', type: 'combat', price: 30, rarity: 'common', desc: 'Escape any battle instantly. Combat only.', use: () => { if (!G.inCombat) { log('💨 Nothing to flee from.'); return false; } log('💨 You vanish in smoke and escape.'); endBattle('flee'); return true; } },
+    antidote: { name: 'Clear Water', icon: '💧', type: 'consumable', price: 20, rarity: 'common', desc: 'Cleanse burn, poison and curse from yourself.', use: () => { G.selfStatus = G.selfStatus.filter(s => !['burn','poison','curse'].includes(s.type)); log('💧 Clear Water washes away your afflictions.'); return true; } }
+};
+
+// Equipment pool (found and bought). slot: weapon, relic, charm
+const GEAR = {
+    apprentice_wand: { name: 'Apprentice Wand', icon: '🪄', slot: 'weapon', rarity: 'common', price: 40, stats: { power: 3 }, desc: 'Power plus 3.' },
+    oak_staff: { name: 'Oak Staff', icon: '🌳', slot: 'weapon', rarity: 'rare', price: 90, stats: { power: 5, grounding: 3 }, desc: 'Power plus 5, Grounding plus 3.' },
+    starforged_rod: { name: 'Starforged Rod', icon: '🌟', slot: 'weapon', rarity: 'epic', price: 180, stats: { power: 9 }, desc: 'Power plus 9. On hit, small chance to mark.', onHit: () => { if (rand(4) === 0) applyEnemy('mark', 2); } },
+    worldroot_scepter: { name: 'Worldroot Scepter', icon: '🪈', slot: 'weapon', rarity: 'legendary', price: 360, stats: { power: 12, love: 4, grounding: 4 }, desc: 'Power plus 12, Love plus 4, Grounding plus 4.' },
+    river_amulet: { name: 'River Amulet', icon: '📿', slot: 'relic', rarity: 'common', price: 35, stats: { maxFocus: 1, love: 2 }, desc: 'Max Focus plus 1, Love plus 2.' },
+    ember_heart: { name: 'Ember Heart', icon: '❤️‍🔥', slot: 'relic', rarity: 'rare', price: 100, stats: { power: 4, maxHealth: 20 }, desc: 'Power plus 4, Max Vitality plus 20.' },
+    mirror_locket: { name: 'Mirror Locket', icon: '🪞', slot: 'relic', rarity: 'epic', price: 175, stats: { maxFocus: 2, power: 4 }, desc: 'Max Focus plus 2, Power plus 4.' },
+    grounding_charm: { name: 'Grounding Charm', icon: '🪨', slot: 'charm', rarity: 'common', price: 30, stats: { grounding: 5 }, desc: 'Grounding plus 5.' },
+    lovers_knot: { name: "Lover's Knot", icon: '🎗️', slot: 'charm', rarity: 'rare', price: 95, stats: { love: 6, maxHealth: 15 }, desc: 'Love plus 6, Max Vitality plus 15.' },
+    crown_of_balance: { name: 'Crown of Balance', icon: '👑', slot: 'charm', rarity: 'legendary', price: 340, stats: { power: 6, grounding: 6, love: 6, maxFocus: 1 }, desc: 'All gifts plus 6, Max Focus plus 1.' }
+};
+
+// ===================== DATA: ENEMIES =====================
+// special telegraphs handled in enemyTurn by reading enemy.special
+function E(name, emoji, hp, atk, special) { return { name, emoji, maxHealth: hp, health: hp, attack: atk, special }; }
+const ENEMY_TIERS = {
+    threshold: [ E('Doubt Echo','🌑',38,7,'weaken'), E('Drifting Wisp','💫',34,6,'drain') ],
+    verdant: [ E('Thornling','🌵',48,9,'bleed'), E('Mossback Toad','🐸',60,8,'slow'), E('Spore Shade','🍄',52,10,'poison') ],
+    market: [ E('Cutpurse Eel','🐟',55,11,'rob'), E('Tide Revenant','🌊',70,10,'slow'), E('Pearl Hoarder','🦪',64,12,'guard') ],
+    ashen: [ E('Cinder Hound','🐕‍🦺',62,13,'burn'), E('Magma Fist','🌋',85,14,'crush'), E('Ash Witch','🔥',70,15,'burn') ],
+    astral: [ E('Void Wraith','👻',68,14,'drain'), E('Comet Serpent','🐉',92,15,'pierce'), E('Star Devourer','🌠',80,16,'channel') ],
+    necropolis: [ E('Bone Choir','💀',75,15,'curse'), E('Clockwork Reaper','⚙️',100,17,'wind'), E('Grave Lantern','🕯️',72,16,'drain') ],
+    mirror: [ E('Hollow Twin','🪞',88,17,'copy'), E('Glass Stalker','🔪',82,18,'pierce'), E('Doubt Made Flesh','🌫️',95,16,'weaken') ]
+};
+const BOSSES = {
+    verdant: E('Old Bramble, the Choking Wood','🌳',180,16,'entomb'),
+    market: E('Maelstrom Baron','⚓',220,18,'whirl'),
+    ashen: E('Pyrelord Cindak','👹',260,21,'eruption'),
+    astral: E('The Hollow Star','🌟',300,23,'collapse'),
+    necropolis: E('Clockmother of Bone','🕰️',330,24,'rewind'),
+    mirror: E('Your Other Self','🪞',360,25,'mirror')
+};
+const FINAL_BOSS = E('The Unbalanced One','🌀',520,30,'chaos');
+const SECRET_BOSS = E('Caster Prime, Echo of the First','♾️',780,38,'unmake');
+
+// ===================== DATA: ZONES =====================
+const ZONES = [
+    { id: 'verdant', name: 'The Verdant Hollow', battles: 3, intro: 'Green light filters through a forest that remembers every footstep. Something old breathes beneath the roots.' },
+    { id: 'market', name: 'The Drowned Market', battles: 3, intro: 'A bazaar half sunk beneath black water. Lanterns float. Voices haggle from drowned stalls.' },
+    { id: 'ashen', name: 'The Ashen Reaches', battles: 3, intro: 'A desert of warm ash under a bruised sky. Fire walks here, and it remembers your name.' },
+    { id: 'astral', name: 'The Astral Sea', battles: 3, intro: 'You step off the edge of the world into a sea of stars. Up and down lose their meaning.' },
+    { id: 'necropolis', name: 'The Clockwork Necropolis', battles: 3, intro: 'A city of the dead that runs on gears. Bone ticks against brass. The hours here are wound by hand.' },
+    { id: 'mirror', name: 'The Mirror Court', battles: 3, intro: 'A hall of endless mirrors. Each one shows a Caster who made a different choice. None of them are happy.' }
+];
+
+// ===================== GAME STATE =====================
+function freshState() {
+    return {
+        scene: 'intro',
+        zoneIndex: -1,
+        battleInZone: 0,
+        ascension: 0,
+        player: {
+            name: 'Caster', health: 100, maxHealth: 100,
+            focus: 6, maxFocus: 6,
+            power: 10, grounding: 7, love: 5,
+            level: 1, xp: 0, xpToNext: 100,
+            gold: 0, skillPoints: 0, alignment: 0
+        },
+        baseStats: null,
+        spells: [],
+        cooldowns: {},
+        treesTaken: {},
+        inventory: [{ id: 'tonic', qty: 2 }, { id: 'draught', qty: 1 }],
+        equipment: { weapon: null, relic: null, charm: null },
+        companions: [],
+        codex: [],
+        flags: {},
+        enemy: null, inCombat: false,
+        enemyStatus: [], selfStatus: [],
+        combatCtx: null,
+        log: []
+    };
+}
+
+let G = loadGame() || freshState();
+// keep skillPoints field name aligned if loading older shape
+if (G && G.player && G.player.skillPoints === undefined) G.player.skillPoints = 0;
+
+// ===================== STAT / EQUIP HELPERS =====================
+function recomputeStats() {
+    // store base once
+    if (!G.baseStats) {
+        G.baseStats = { power: G.player.power, grounding: G.player.grounding, love: G.player.love, maxHealth: G.player.maxHealth, maxFocus: G.player.maxFocus };
+    }
+}
+function gearBonus(stat) {
+    let sum = 0;
+    ['weapon', 'relic', 'charm'].forEach(slot => {
+        const id = G.equipment[slot];
+        if (id && GEAR[id] && GEAR[id].stats[stat]) sum += GEAR[id].stats[stat];
+    });
+    return sum;
+}
+
+// ===================== UI RENDER =====================
+function refreshStatus() {
+    const p = G.player;
+    document.getElementById('health-text').textContent = Math.max(0, Math.round(p.health));
+    document.getElementById('focus-text').textContent = p.focus;
+    document.getElementById('power-text').textContent = p.power + gearBonus('power');
+    document.getElementById('grounding-text').textContent = p.grounding + gearBonus('grounding');
+    document.getElementById('love-text').textContent = p.love + gearBonus('love');
+    document.getElementById('gold-text').textContent = p.gold;
+    document.getElementById('level-text').textContent = p.level;
+    document.getElementById('health-fill').style.width = clamp((p.health / effMaxHealth()) * 100, 0, 100) + '%';
+    document.getElementById('focus-fill').style.width = clamp((p.focus / effMaxFocus()) * 100, 0, 100) + '%';
+    // allies
+    const ad = document.getElementById('allies-display');
+    if (!G.companions.length) {
+        ad.innerHTML = '<span style="font-family:Space Grotesk,sans-serif;font-size:0.7rem;color:rgba(255,255,255,0.3);">You walk alone for now.</span>';
+    } else {
+        ad.innerHTML = G.companions.map(id => '<span class="ally-badge">' + COMPANIONS[id].emoji + ' ' + COMPANIONS[id].name + '</span>').join('');
+    }
+    // realm indicator
+    const ri = document.getElementById('realm-indicator');
+    if (G.inCombat) ri.textContent = 'Battle';
+    else if (G.zoneIndex >= 0 && ZONES[G.zoneIndex]) ri.textContent = ZONES[G.zoneIndex].name;
+    else ri.textContent = 'A Caster walks between the worlds';
+}
+function effMaxHealth() { return G.player.maxHealth + gearBonus('maxHealth'); }
+function effMaxFocus() { return G.player.maxFocus + gearBonus('maxFocus'); }
+function effPower() { return G.player.power + gearBonus('power') + statusAmount(G.selfStatus, 'power'); }
+
+function story(html) { document.getElementById('story-text').innerHTML = html; }
+function clearLog() { G.log = []; document.getElementById('combat-log').innerHTML = ''; }
+function log(msg) {
+    G.log.push(msg);
+    if (G.log.length > 40) G.log.shift();
+    const el = document.getElementById('combat-log');
+    const d = document.createElement('div');
+    d.innerHTML = msg;
+    el.appendChild(d);
+    el.scrollTop = el.scrollHeight;
+}
+function setOptions(opts) {
+    const box = document.getElementById('options');
+    box.innerHTML = '';
+    opts.forEach(o => {
+        const b = document.createElement('button');
+        b.className = 'choice ' + (o.cls || '');
+        b.innerHTML = o.label;
+        if (o.disabled) b.disabled = true;
+        b.onclick = () => { try { o.fn(); } catch (e) { console.error(e); } };
+        box.appendChild(b);
     });
 }
+function spellInfo(html) {
+    const el = document.getElementById('spell-info');
+    if (!html) { el.classList.remove('active'); el.innerHTML = ''; return; }
+    el.classList.add('active'); el.innerHTML = html;
+}
 
-const alliesList = [
-    { name: "Sprout", ability: "Defender & Healer", emoji: "🌱", attack: () => 5, heal: () => 15 },
-    { name: "Luminara", ability: "Astral Striker", emoji: "✨", attack: () => 8, heal: () => 8 },
-    { name: "Echoheart", ability: "Resonance Amplifier", emoji: "💗", attack: () => 6, heal: () => 12 }
-];
+function renderEnemy() {
+    const panel = document.getElementById('enemy-panel');
+    if (!G.inCombat || !G.enemy) { panel.classList.remove('active'); panel.innerHTML = ''; return; }
+    const e = G.enemy;
+    const pct = clamp((e.health / e.maxHealth) * 100, 0, 100);
+    const chips = renderChips(G.enemyStatus);
+    panel.classList.add('active');
+    panel.innerHTML =
+        '<div class="enemy-top"><div class="enemy-emoji">' + e.emoji + '</div>' +
+        '<div><div class="enemy-name">' + e.name + '</div><div class="enemy-sub">Strikes for about ' + e.attack + ' . ' + specialHint(e.special) + '</div></div></div>' +
+        '<div class="enemy-hp-row"><div class="enemy-hp-bar"><div class="enemy-hp-fill" style="width:' + pct + '%"></div></div>' +
+        '<div class="enemy-hp-text">' + Math.max(0, Math.round(e.health)) + ' / ' + e.maxHealth + '</div></div>' +
+        '<div class="status-chips">' + chips + '<span style="flex:1"></span>' + renderChips(G.selfStatus, true) + '</div>';
+}
+function renderChips(list, self) {
+    if (!list || !list.length) return '';
+    return list.map(s => '<span class="chip ' + s.type + '">' + (self ? 'You ' : '') + chipLabel(s.type) + ' ' + (s.turns < 90 ? s.turns : '') + '</span>').join('');
+}
+function chipLabel(t) {
+    return { burn: 'Burn', poison: 'Poison', freeze: 'Freeze', stun: 'Stun', shield: 'Shield', regen: 'Regen', curse: 'Curse', mark: 'Mark', power: 'Power', feather: 'Feather', lantern: 'Lantern', weaken: 'Weak' }[t] || t;
+}
+function specialHint(s) {
+    const map = { weaken: 'Can sap your power.', drain: 'Drains your Vitality.', bleed: 'Causes bleeding.', slow: 'Slows your focus.', poison: 'Spreads poison.', rob: 'Tries to steal gold.', guard: 'Guards itself.', burn: 'Sets you alight.', crush: 'Heavy crushing blows.', pierce: 'Ignores guard.', channel: 'Charges a big hit.', curse: 'Lays curses.', wind: 'Winds up for a strike.', copy: 'Copies your last spell.', entomb: 'Can trap you in roots.', whirl: 'Whirlpool of blows.', eruption: 'Erupts for huge damage.', collapse: 'Collapses on you.', rewind: 'Heals itself.', mirror: 'Reflects damage.', chaos: 'Anything can happen.', unmake: 'Erases your buffs.' };
+    return map[s] || '';
+}
 
-const astralEnemies = [
-    { name: "Void Wraith", maxHealth: 40, health: 40, attack: 8, special: "drain", emoji: "👻" },
-    { name: "Chaos Serpent", maxHealth: 50, health: 50, attack: 10, special: "constrict", emoji: "🐍" },
-    { name: "Shadow Weaver", maxHealth: 45, health: 45, attack: 9, special: "entangle", emoji: "🕷️" },
-    { name: "Entropy Golem", maxHealth: 60, health: 60, attack: 12, special: "corrode", emoji: "⚫" }
-];
+function render() {
+    recomputeStats();
+    refreshStatus();
+    renderEnemy();
+    saveGame(G);
+}
 
-const earthlyEnemies = [
-    { name: "Doubt Echo", maxHealth: 35, health: 35, attack: 7, special: "weaken", emoji: "🌑" },
-    { name: "Apathy Shade", maxHealth: 40, health: 40, attack: 8, special: "drain", emoji: "💫" },
-    { name: "Pressure Spike", maxHealth: 50, health: 50, attack: 10, special: "pierce", emoji: "⚡" },
-    { name: "Stagnation Pool", maxHealth: 55, health: 55, attack: 9, special: "slow", emoji: "🌊" }
-];
-
-const titanEnemy = {
-    name: "The Unbalanced One",
-    maxHealth: 350,
-    health: 350,
-    attack: 25,
-    special: "chaos",
-    emoji: "🌪️"
-};
-
-const sideQuests = [
-    {
-        text: "A lost spirit appears in the astral void, desperate for guidance. Teach them the way of love, ground them in reality, or test their power through combat.",
-        options: [
-            { text: "Teach Love", action: () => { gameState.player.love += 5; awardXP(35); logMessage("💗 The spirit finds peace and inner light."); resolveQuest(); } },
-            { text: "Ground Them", action: () => { gameState.player.grounding += 4; awardXP(40); logMessage("🌍 They find solid purpose."); resolveQuest(); } },
-            { text: "Battle Them", action: () => { startCombat({ ...astralEnemies[0], health: astralEnemies[0].maxHealth }); } }
-        ]
-    },
-    {
-        text: "Deep in the earthly woods, an ancient forest cries out for a Caster's touch. The trees hold memories of forgotten magic.",
-        options: [
-            { text: "Restore Growth Magic", action: () => { gameState.player.spellsLearned += 2; gameState.player.maxHealth += 25; awardXP(50); logMessage("🌿 The forest blooms with eternal radiance!"); resolveQuest(); } },
-            { text: "Leave It Wild", action: () => { gameState.player.love += 4; gameState.player.grounding += 3; awardXP(35); logMessage("🍃 Freedom is its greatest gift."); resolveQuest(); } }
-        ]
-    },
-    {
-        text: "A lonely merchant waits at the boundary between realms. They seek passage to sell their wares in both worlds.",
-        options: [
-            { text: "Open a Portal", action: () => { if (gameState.player.power > 6) { gameState.player.power += 2; gameState.player.spellsLearned++; logMessage("🔮 A shimmering gateway appears!"); awardXP(55); } else { logMessage("⚠️ Your power is still too weak..."); gameState.player.power += 1; awardXP(20); } resolveQuest(); } },
-            { text: "Refuse & Maintain Balance", action: () => { gameState.player.grounding += 5; awardXP(30); logMessage("🌍 Boundaries protected, balance maintained."); resolveQuest(); } }
-        ]
+// ===================== PROGRESSION =====================
+function addGold(n) { G.player.gold = Math.max(0, G.player.gold + n); }
+function addXP(n) {
+    G.player.xp += n;
+    let leveled = false;
+    while (G.player.xp >= G.player.xpToNext) {
+        G.player.xp -= G.player.xpToNext;
+        G.player.level++;
+        G.player.skillPoints++;
+        G.player.maxHealth += 12;
+        G.player.maxFocus += 1;
+        G.player.health = effMaxHealth();
+        G.player.focus = effMaxFocus();
+        G.player.xpToNext = Math.floor(G.player.xpToNext * 1.35) + 40;
+        leveled = true;
     }
-];
+    if (leveled) { playSound('sfx-power', 0.4); log('<span class="toast">You ascend to Level ' + G.player.level + '. A skill point awaits in your Spellbook.</span>'); }
+}
+function learnSpell(id) { if (!G.spells.includes(id)) { G.spells.push(id); log('📖 You learn <strong>' + SPELLS[id].name + '</strong>.'); } }
+function recruit(id) { if (!G.companions.includes(id)) { G.companions.push(id); addCodex('Companion joined: ' + COMPANIONS[id].name); } }
+function addCodex(line) { if (!G.codex.includes(line)) G.codex.push(line); }
+function gainAlignment(n) { G.player.alignment = clamp(G.player.alignment + n, -10, 10); }
+function heal(n) { G.player.health = clamp(G.player.health + n, 0, effMaxHealth()); playSound('sfx-heal', 0.3); }
+function addItem(id, qty = 1) {
+    const row = G.inventory.find(r => r.id === id);
+    if (row) row.qty += qty; else G.inventory.push({ id, qty });
+}
+function removeItem(id, qty = 1) {
+    const row = G.inventory.find(r => r.id === id);
+    if (!row) return;
+    row.qty -= qty;
+    if (row.qty <= 0) G.inventory = G.inventory.filter(r => r.id !== id);
+}
 
-const storyStages = [
-    {
-        realm: "astral",
-        text: "<strong>CHAPTER I: THE AWAKENING</strong><br>You stand at the threshold where realities meet. Within you stirs a power long dormant—the ability to walk between worlds. Your journey begins here, in the Astral Realm where ancient forces dance and possibility reigns eternal.",
-        options: [{ text: "Step Forward Into Destiny", action: advanceStage }]
-    },
-    {
-        realm: "astral",
-        text: "<strong>CHAPTER II: THE FIRST ALLY</strong><br>A figure emerges from the starlight—Sprout, a young guardian rooted in the wisdom of the earth. 'You carry great potential,' they say, offering their hand. 'But without grounding, power becomes madness. Let me teach you.'",
-        options: [{ text: "Accept Sprout's Guidance", action: () => { addAlly(0); gameState.player.grounding += 4; logMessage("🌱 Sprout joins your circle, grounding your power."); advanceStage(); } }]
-    },
-    {
-        realm: "earthly",
-        text: "<strong>CHAPTER III: THE ASTRAL LIGHT</strong><br>You return to the earthly realm where Luminara awaits—a being of pure astral starlight struggling to take solid form. Her essence flickers dangerously. 'I am fading,' she whispers. 'I need an anchor to this world. Can you help me?'",
-        options: [
-            { text: "Ground Her With Love", action: () => { addAlly(1); gameState.player.love += 5; logMessage("✨ Luminara finds her anchor through your love."); advanceStage(); } },
-            { text: "Share Your Astral Power", action: () => { addAlly(1); gameState.player.power -= 2; logMessage("✨ Luminara stabilizes with shared power."); advanceStage(); } }
-        ]
-    },
-    {
-        realm: "astral",
-        text: "<strong>CHAPTER IV: THE RESONANCE</strong><br>In the spaces between heartbeats, you encounter Echoheart—a being of pure resonance and emotional harmony. Their presence amplifies the bond between you, Sprout, and Luminara. 'Three becomes one,' they declare. 'Together, you resonate with the very heartbeat of creation.'",
-        options: [{ text: "Unite Your Circle", action: () => { addAlly(2); gameState.player.love += 6; logMessage("💗 Your circle is complete. The three become one through resonance."); advanceStage(); } }]
-    },
-    {
-        realm: "both",
-        text: "<strong>CHAPTER V: THE PILLAR OF POWER</strong><br>With your circle complete, you meditate between the realms. Power flows through you—not as domination, but as balance. You understand now: Love without Power is weakness. Power without Grounding is chaos. Grounding without Love is emptiness. But the three together? Unstoppable.",
-        options: [
-            { text: "Meditate On Your Balance", action: () => { resolveBalance(); } },
-            { text: "Train Your Circle In Spellcraft", action: showSpellMenu }
-        ]
-    },
-    {
-        realm: "astral",
-        text: "<strong>CHAPTER VI: THE RIFT OPENS</strong><br>Reality tears. The fabric between worlds convulses with an unholy force. Something ancient and terrible awakens—a being born from every rejected feeling, every imbalance, every moment of despair across both realms. You sense its hunger.",
-        options: [{ text: "Prepare For The Reckoning", action: advanceStage }]
-    },
-    {
-        realm: "both",
-        text: "<strong>CHAPTER VII: THE PATH DIVERGES</strong><br>Before the final trial, you face a choice. Do you rush toward your destiny, powered by determination? Or do you seek hidden strength through the forgotten paths?",
-        options: [
-            { text: "Charge Toward The Rift", action: () => { gameState.stage = 8; updateDisplay(); } },
-            { text: "Seek Wisdom From Side Paths", action: triggerSideQuest }
-        ]
-    },
-    {
-        realm: "astral",
-        text: "<strong>CHAPTER VIII: THE UNBALANCED ONE AWAKENS</strong><br>The space between worlds convulses. A towering entity materializes—THE UNBALANCED ONE. Its form shifts between all extremes: pure power with no grounding, unbounded emotion without wisdom, rejection incarnate. 'You cannot exist in both worlds,' it roars. 'The duality will tear you apart!'",
-        options: [{ text: "Unite All Your Power And Face It", action: () => startCombat(titanEnemy) }]
-    },
-    {
-        realm: "both",
-        text: "<strong>ENDING I: THE REDEMPTION - Friends Forever</strong><br>As the Unbalanced One falls, something extraordinary happens. Looking at your circle—Sprout, Luminara, Echoheart—you realize the truth. The greatest magic was never the power you wielded. It was the love you built. The bonds you forged. The family you created from broken pieces. 'We are the magic,' Sprout whispers. Together, you seal the rift not with power, but with the warmth of pure connection.",
-        options: [{ text: "Begin Anew With Your Family", action: () => { deleteSave(); location.reload(); } }],
-        isEnding: true
-    },
-    {
-        realm: "astral",
-        text: "<strong>ENDING II: THE CORRUPTION - A New Throne</strong><br>As you unleash your final spell, the Unbalanced One doesn't die—it transforms. 'You understand now,' it says, its voice seductive. 'Power and chaos are not enemies. They are freedom.' Your allies cry out in protest, but the dark truth calls to you. Why rule just one realm? Why settle for balance? Together, you and the entity ascend beyond morality. You reshape reality itself. The realms kneel before your throne of chaos and infinite power. Your allies watch in horror as their savior becomes the new darkness.",
-        options: [{ text: "Rule The Infinite Realms", action: () => { deleteSave(); location.reload(); } }],
-        isEnding: true
-    },
-    {
-        realm: "both",
-        text: "<strong>ENDING III: THE SACRIFICE - Legacy Of A Hero</strong><br>You push too hard. Power beyond measure surges through you as you try to seal the rift single-handedly. 'Stop!' Echoheart cries. But you don't. Can't. The strain is too much. Your form begins to dissolve, caught between worlds. 'No!' Sprout and Luminara scream. As you fall, your three companions do something extraordinary. They don't grieve. They act. They take the essence of your sacrifice—the love you carried, the power you wielded, the grounding you taught them—and they plant it. A new seed. A new hope. In your honor, they vow to protect both realms with your legacy burning bright in their hearts forever.",
-        options: [{ text: "Your Legacy Lives On", action: () => { deleteSave(); location.reload(); } }],
-        isEnding: true
+// ===================== STATUS EFFECTS =====================
+function applyEnemy(type, turns) { upsertStatus(G.enemyStatus, type, turns); }
+function applySelf(type, turns) { upsertStatus(G.selfStatus, type, turns); }
+function upsertStatus(list, type, turns) {
+    const cur = list.find(s => s.type === type);
+    if (cur) { cur.turns = Math.max(cur.turns, turns); if (type === 'poison' || type === 'burn') cur.stacks = (cur.stacks || 1) + 1; }
+    else list.push({ type, turns, stacks: 1 });
+}
+function statusAmount(list, type) { const s = list.find(x => x.type === type); return s ? (s.stacks || 1) : 0; }
+function hasStatus(list, type) { return list.some(s => s.type === type); }
+
+function tickEnemyStatus() {
+    let dmg = 0;
+    G.enemyStatus.forEach(s => {
+        if (s.type === 'burn') dmg += 4 * (s.stacks || 1);
+        if (s.type === 'poison') dmg += 5 * (s.stacks || 1);
+    });
+    if (dmg > 0 && G.enemy) { G.enemy.health -= dmg; log('🩸 Lingering magic deals ' + dmg + ' to ' + G.enemy.name + '.'); }
+    G.enemyStatus.forEach(s => s.turns--);
+    G.enemyStatus = G.enemyStatus.filter(s => s.turns > 0);
+}
+function tickSelfStatus() {
+    G.selfStatus.forEach(s => {
+        if (s.type === 'regen') heal(6);
+        if (s.type === 'burn') G.player.health -= 4;
+        if (s.type === 'poison') G.player.health -= 4;
+    });
+    G.selfStatus.forEach(s => { if (s.type !== 'feather' && s.type !== 'lantern') s.turns--; });
+    G.selfStatus = G.selfStatus.filter(s => s.turns > 0);
+}
+
+// ===================== DAMAGE =====================
+function magicDamage(mult) {
+    let base = Math.floor(effPower() * mult) + rand(6) + 2;
+    if (hasStatus(G.enemyStatus, 'mark')) base = Math.floor(base * 1.4);
+    return base;
+}
+function dealToEnemy(amount, pierce) {
+    if (!G.enemy) return;
+    let dmg = amount;
+    if (!pierce && hasStatus(G.enemyStatus, 'shield')) { dmg = Math.floor(dmg * 0.5); }
+    if (G.enemy.special === 'guard' && G.enemy._guarding) { dmg = Math.floor(dmg * 0.4); }
+    G.enemy.health -= dmg;
+    playSound('sfx-spell', 0.3);
+    // weapon onHit
+    const w = G.equipment.weapon;
+    if (w && GEAR[w] && GEAR[w].onHit) GEAR[w].onHit();
+}
+function damagePlayer(amount, opts = {}) {
+    let dmg = amount;
+    const guard = G.player.grounding + gearBonus('grounding');
+    if (!opts.pierce) dmg = Math.max(1, dmg - Math.floor(guard * 0.4));
+    if (hasStatus(G.selfStatus, 'shield')) {
+        const sh = G.selfStatus.find(s => s.type === 'shield');
+        const absorbed = Math.min(dmg, 8 * sh.turns);
+        dmg -= absorbed;
+        log('🛡️ Your shield absorbs ' + absorbed + '.');
     }
+    G.player.health -= dmg;
+    if (dmg > 0) playSound('sfx-damage', 0.25);
+    if (G.player.health <= 0) {
+        if (hasStatus(G.selfStatus, 'feather')) {
+            G.selfStatus = G.selfStatus.filter(s => s.type !== 'feather');
+            G.player.health = effMaxHealth();
+            log('🪶 The Phoenix Feather burns away and revives you fully.');
+        } else if (hasStatus(G.selfStatus, 'lantern')) {
+            G.selfStatus = G.selfStatus.filter(s => s.type !== 'lantern');
+            G.player.health = 1;
+            log('🏮 The Soul Lantern keeps you at the brink of life.');
+        }
+    }
+    return dmg;
+}
+
+// ===================== COMBAT =====================
+function beginBattle(enemyDef, ctx) {
+    G.enemy = clone(enemyDef);
+    if (G.ascension > 0) {
+        const mult = 1 + G.ascension * 0.35;
+        G.enemy.maxHealth = Math.floor(G.enemy.maxHealth * mult);
+        G.enemy.health = G.enemy.maxHealth;
+        G.enemy.attack = Math.floor(G.enemy.attack * (1 + G.ascension * 0.2));
+    }
+    G.inCombat = true;
+    G.enemyStatus = [];
+    G.selfStatus = G.selfStatus.filter(s => s.type === 'feather'); // feathers persist into battle
+    G.combatCtx = ctx || {};
+    G.scene = 'combat';
+    clearLog();
+    log('A ' + G.enemy.name + ' blocks your path.');
+    renderCombat();
+    render();
+}
+function renderCombat() {
+    if (!G.inCombat) return;
+    story('<span class="scene-title">' + G.enemy.name + '</span>The air sharpens. Choose how a Caster answers.');
+    spellInfo('');
+    const lowFocus = G.player.focus <= 0;
+    setOptions([
+        { label: '⚔️ Strike', cls: 'atk', fn: playerStrike },
+        { label: '✨ Cast', cls: 'spell', fn: openCombatSpells, disabled: G.spells.length === 0 },
+        { label: '🎒 Item', cls: 'item', fn: openCombatItems },
+        { label: '🛡️ Defend', cls: 'heal', fn: playerDefend },
+        { label: '🏃 Flee', cls: 'back', fn: playerFlee, disabled: G.combatCtx.noFlee }
+    ]);
+    renderEnemy();
+}
+function playerStrike() {
+    const d = Math.floor(effPower() * 0.8) + rand(5) + 3;
+    const marked = hasStatus(G.enemyStatus, 'mark');
+    dealToEnemy(marked ? Math.floor(d * 1.4) : d);
+    log('⚔️ You strike for ' + (marked ? Math.floor(d * 1.4) : d) + '.');
+    afterPlayerAction();
+}
+function openCombatSpells() {
+    spellInfo('Your focus is ' + G.player.focus + ' of ' + effMaxFocus() + '. Spells cost focus and may need to cool down.');
+    const opts = G.spells.map(id => {
+        const s = SPELLS[id];
+        const cd = G.cooldowns[id] || 0;
+        const disabled = cd > 0 || G.player.focus < s.cost;
+        const tag = cd > 0 ? ' (cd ' + cd + ')' : ' (' + s.cost + 'f)';
+        return { label: s.icon + ' ' + s.name + tag, cls: 'spell', disabled, fn: () => castSpell(id) };
+    });
+    opts.push({ label: '↩ Back', cls: 'back', fn: renderCombat });
+    setOptions(opts);
+}
+function castSpell(id) {
+    const s = SPELLS[id];
+    if (G.player.focus < s.cost || (G.cooldowns[id] || 0) > 0) return;
+    G.player.focus -= s.cost;
+    if (s.cd > 0) G.cooldowns[id] = s.cd + 1;
+    s.cast();
+    afterPlayerAction();
+}
+function openCombatItems() {
+    const usable = G.inventory.filter(r => { const it = ITEMS[r.id]; return it && (it.type === 'consumable' || it.type === 'combat'); });
+    if (!usable.length) { log('🎒 Your bag holds nothing useful for battle.'); renderCombat(); return; }
+    const opts = usable.map(r => { const it = ITEMS[r.id]; return { label: it.icon + ' ' + it.name + ' x' + r.qty, cls: 'item', fn: () => { if (it.use()) { removeItem(r.id); afterPlayerAction(); } else { renderCombat(); render(); } } }; });
+    opts.push({ label: '↩ Back', cls: 'back', fn: renderCombat });
+    setOptions(opts);
+}
+function playerDefend() {
+    applySelf('shield', 2);
+    G.player.focus = clamp(G.player.focus + 2, 0, effMaxFocus());
+    log('🛡️ You steady yourself. Shield raised and 2 focus gathered.');
+    afterPlayerAction();
+}
+function playerFlee() {
+    if (G.combatCtx.noFlee) { log('You cannot flee from this.'); return; }
+    if (rand(100) < 55 + G.player.grounding) { log('🏃 You slip away into the between.'); endBattle('flee'); }
+    else { log('You fail to escape. The foe lashes out.'); afterPlayerAction(true); }
+}
+function companionTurn() {
+    G.companions.forEach(id => { if (G.enemy && G.enemy.health > 0) COMPANIONS[id].act(); });
+}
+function afterPlayerAction(skipCompanions) {
+    tickEnemyStatus();
+    if (checkBattleEnd()) return;
+    if (!skipCompanions) companionTurn();
+    if (checkBattleEnd()) return;
+    enemyTurn();
+    if (checkBattleEnd()) return;
+    tickSelfStatus();
+    // cool down spells
+    Object.keys(G.cooldowns).forEach(k => { if (G.cooldowns[k] > 0) G.cooldowns[k]--; });
+    // small focus regen
+    G.player.focus = clamp(G.player.focus + 1, 0, effMaxFocus());
+    if (checkBattleEnd()) return;
+    renderCombat();
+    render();
+}
+function enemyTurn() {
+    const e = G.enemy;
+    if (!e) return;
+    e._guarding = false;
+    if (hasStatus(G.enemyStatus, 'freeze')) { log('❄️ ' + e.name + ' is frozen and cannot act.'); return; }
+    if (hasStatus(G.enemyStatus, 'stun')) { log('🪢 ' + e.name + ' is bound and cannot act.'); return; }
+    let atk = e.attack;
+    if (hasStatus(G.enemyStatus, 'curse')) atk = Math.floor(atk * 0.7);
+    // special behaviors
+    switch (e.special) {
+        case 'channel': case 'eruption': case 'collapse': case 'wind':
+            if (!e._charged) { e._charged = true; log('⚠️ ' + e.name + ' is charging a devastating blow.'); return; }
+            e._charged = false; atk = Math.floor(atk * 2.2); log('💥 ' + e.name + ' unleashes its charged attack.'); break;
+        case 'guard':
+            if (rand(2) === 0) { e._guarding = true; log('🐚 ' + e.name + ' guards itself.'); }
+            break;
+        case 'rewind': case 'collapse':
+            if (rand(3) === 0) { const h = Math.floor(e.maxHealth * 0.08); e.health = Math.min(e.maxHealth, e.health + h); log('🕰️ ' + e.name + ' rewinds ' + h + ' of its wounds.'); }
+            break;
+        case 'rob':
+            if (rand(3) === 0 && G.player.gold > 0) { const stolen = Math.min(G.player.gold, 10 + rand(20)); G.player.gold -= stolen; log('🪙 ' + e.name + ' snatches ' + stolen + ' gold.'); }
+            break;
+        case 'mirror':
+            if (rand(3) === 0) { applySelf('curse', 2); log('🪞 ' + e.name + ' turns your magic against you.'); }
+            break;
+        case 'unmake': case 'chaos':
+            if (rand(3) === 0 && G.selfStatus.length) { G.selfStatus = G.selfStatus.filter(s => s.type === 'feather' || s.type === 'lantern'); log('🌀 ' + e.name + ' unmakes your blessings.'); }
+            break;
+    }
+    const dealt = damagePlayer(atk, { pierce: e.special === 'pierce' });
+    log('👊 ' + e.name + ' hits you for ' + Math.max(0, dealt) + '.');
+    // status from specials
+    if (e.special === 'burn' && rand(2) === 0) { applySelf('burn', 3); log('🔥 You are set alight.'); }
+    if (e.special === 'poison' && rand(2) === 0) { applySelf('poison', 3); log('☠️ Poison seeps into you.'); }
+    if (e.special === 'bleed' && rand(2) === 0) { applySelf('poison', 2); log('🩸 You are bleeding.'); }
+    if (e.special === 'weaken' && rand(3) === 0) { G.player.power = Math.max(1, G.player.power - 1); log('🌑 Your power is sapped.'); }
+    if (e.special === 'slow' && rand(3) === 0) { G.player.focus = Math.max(0, G.player.focus - 2); log('🌊 Your focus is dragged away.'); }
+    if (e.special === 'curse' && rand(3) === 0) { applySelf('curse', 3); log('💀 A curse settles on you.'); }
+    if ((e.special === 'entomb' || e.special === 'whirl') && rand(4) === 0) { applySelf('stun', 1); log('🪨 You are held fast for a moment.'); }
+}
+function checkBattleEnd() {
+    if (G.enemy && G.enemy.health <= 0) { endBattle('win'); return true; }
+    if (G.player.health <= 0) { endBattle('lose'); return true; }
+    return false;
+}
+function endBattle(result) {
+    const ctx = G.combatCtx || {};
+    G.inCombat = false;
+    G.enemyStatus = [];
+    renderEnemy();
+    if (result === 'win') {
+        playSound('sfx-victory', 0.4);
+        const e = G.enemy;
+        const xp = Math.floor(e.maxHealth * 0.45) + 20;
+        const gold = Math.floor(e.maxHealth * 0.2) + rand(15);
+        addXP(xp); addGold(gold);
+        log('<span class="toast">Victory. Plus ' + xp + ' experience and ' + gold + ' gold.</span>');
+        // loot
+        if (rand(100) < 30) { const drop = pick(Object.keys(ITEMS)); addItem(drop); log('🎁 You find a ' + ITEMS[drop].name + '.'); }
+        if (rand(100) < 14) { const g = pick(Object.keys(GEAR)); addItem('gear_' + g, 1); log('🗡️ You find ' + GEAR[g].name + '. Open your Bag to equip it.'); }
+        G.enemy = null;
+        render();
+        if (ctx.onWin) return ctx.onWin();
+        return zoneAfterBattle();
+    }
+    if (result === 'flee') {
+        G.enemy = null; render();
+        if (ctx.onFlee) return ctx.onFlee();
+        return zoneHub();
+    }
+    if (result === 'lose') { G.enemy = null; return gameOver(); }
+}
+
+// ===================== ZONE FLOW =====================
+function startZone(i) {
+    G.zoneIndex = i; G.battleInZone = 0; G.scene = 'zone';
+    const z = ZONES[i];
+    addCodex('Entered zone: ' + z.name);
+    story('<span class="scene-title">' + z.name + '</span>' + z.intro);
+    spellInfo('');
+    clearLog();
+    setOptions([
+        { label: '🚶 Press onward', fn: zoneStep },
+        { label: '🛌 Rest a moment', cls: 'heal', fn: zoneRest }
+    ]);
+    render();
+}
+function zoneHub() {
+    G.scene = 'zone';
+    const z = ZONES[G.zoneIndex];
+    story('<span class="scene-title">' + z.name + '</span>You catch your breath. The path ahead still calls.');
+    spellInfo('');
+    setOptions([
+        { label: '🚶 Press onward', fn: zoneStep },
+        { label: '🛌 Rest a moment', cls: 'heal', fn: zoneRest }
+    ]);
+    render();
+}
+function zoneRest() {
+    heal(Math.floor(effMaxHealth() * 0.3));
+    G.player.focus = effMaxFocus();
+    log('🛌 You rest. Some Vitality and all focus return.');
+    if (rand(100) < 35) { log('Something stirs while you rest.'); return rollEvent(zoneHub); }
+    zoneHub();
+}
+function zoneStep() {
+    const z = ZONES[G.zoneIndex];
+    // event chance between battles
+    if (rand(100) < 30 && G.battleInZone < z.battles) { return rollEvent(zoneStep); }
+    if (G.battleInZone < z.battles) {
+        G.battleInZone++;
+        const enemy = pick(ENEMY_TIERS[z.id]);
+        beginBattle(enemy, { onWin: zoneAfterBattle });
+        return;
+    }
+    // boss
+    beginBattle(BOSSES[z.id], { noFlee: true, onWin: zoneBossCleared });
+}
+function zoneAfterBattle() {
+    const z = ZONES[G.zoneIndex];
+    if (G.battleInZone < z.battles) { zoneHub(); }
+    else {
+        // ready for boss
+        story('<span class="scene-title">A Presence</span>The lesser things are gone. Something far greater waits at the heart of ' + z.name + '.');
+        spellInfo('');
+        setOptions([
+            { label: '⚔️ Face the keeper of this realm', cls: 'atk', fn: () => beginBattle(BOSSES[z.id], { noFlee: true, onWin: zoneBossCleared }) },
+            { label: '🛌 Steady yourself first', cls: 'heal', fn: () => { heal(Math.floor(effMaxHealth() * 0.4)); G.player.focus = effMaxFocus(); log('You ready yourself for the keeper.'); zoneAfterBattle(); } }
+        ]);
+        render();
+    }
+}
+function zoneBossCleared() {
+    const z = ZONES[G.zoneIndex];
+    addCodex('Cleared zone: ' + z.name);
+    G.flags['cleared_' + z.id] = true;
+    log('<span class="toast">The keeper of ' + z.name + ' falls. The realm steadies.</span>');
+    // story beat then return to story spine
+    storyBeatAfterZone(z.id);
+}
+
+// ===================== EVENTS =====================
+const EVENTS = [
+    { name: 'Wandering Merchant', run: (back) => {
+        story('<span class="scene-title">A Wandering Merchant</span>A cloaked figure unfolds a rug of curiosities. <span class="speaker">"Coin for wonders, Caster?"</span>');
+        spellInfo(''); openShop(randomStock(4), back); } },
+    { name: 'Old Shrine', run: (back) => {
+        story('<span class="scene-title">An Old Shrine</span>A worn shrine hums with forgotten power. You could pray, or take what is offered.');
+        spellInfo('');
+        setOptions([
+            { label: '🙏 Pray (random blessing)', cls: 'heal', fn: () => { const r = rand(3); if (r === 0) { G.player.maxHealth += 15; heal(15); log('🙏 The shrine grants vitality.'); } else if (r === 1) { G.player.power += 3; log('🙏 The shrine grants power.'); } else { G.player.maxFocus += 1; G.player.focus = effMaxFocus(); log('🙏 The shrine grants focus.'); } render(); back(); } },
+            { label: '🪙 Steal the offerings', cls: 'atk', fn: () => { addGold(40 + rand(40)); gainAlignment(-1); log('🪙 You pocket the offerings. Something watches.'); if (rand(2) === 0) { log('A guardian wakes.'); beginBattle(pick(ENEMY_TIERS.necropolis), { onWin: back }); } else { render(); back(); } } },
+            { label: '↩ Leave it be', cls: 'back', fn: () => { gainAlignment(1); back(); } }
+        ]); } },
+    { name: 'Gambling Imp', run: (back) => {
+        story('<span class="scene-title">A Gambling Imp</span>A tiny imp rattles a cup of dice. <span class="villain">"Double or nothing, friend. Wager forty gold."</span>');
+        spellInfo('');
+        const canBet = G.player.gold >= 40;
+        setOptions([
+            { label: '🎲 Wager 40 gold', cls: 'item', disabled: !canBet, fn: () => { G.player.gold -= 40; if (rand(2) === 0) { addGold(120); log('🎲 The dice favor you. Plus 120 gold.'); } else { log('🎲 The imp cackles and vanishes with your wager.'); } render(); back(); } },
+            { label: '↩ Decline', cls: 'back', fn: back }
+        ]); } },
+    { name: 'Trapped Spirit', run: (back) => {
+        story('<span class="scene-title">A Trapped Spirit</span>A spirit is caught in a snare of thorns. It looks at you with pleading eyes.');
+        spellInfo('');
+        setOptions([
+            { label: '💗 Free it gently', cls: 'heal', fn: () => { gainAlignment(2); G.player.love += 3; log('💗 You free the spirit. It blesses your Love.'); if (!G.companions.includes('echoheart') && rand(2) === 0) { recruit('echoheart'); log('💗 The spirit was Echoheart. It joins you.'); } render(); back(); } },
+            { label: '🔮 Bind it to your service', cls: 'spell', fn: () => { gainAlignment(-2); G.player.power += 4; log('🔮 You bind the spirit. Power surges, but coldly.'); render(); back(); } },
+            { label: '↩ Walk away', cls: 'back', fn: back }
+        ]); } },
+    { name: 'Hidden Cache', run: (back) => {
+        const gold = 30 + rand(60); addGold(gold);
+        const gotGear = rand(2) === 0;
+        if (gotGear) { const g = pick(Object.keys(GEAR)); addItem('gear_' + g); log('🗝️ A hidden cache holds ' + gold + ' gold and ' + GEAR[g].name + '.'); }
+        else { const it = pick(['tonic', 'elixir', 'draught', 'bomb']); addItem(it); log('🗝️ A hidden cache holds ' + gold + ' gold and a ' + ITEMS[it].name + '.'); }
+        story('<span class="scene-title">A Hidden Cache</span>You pry loose a stone and find a forgotten stash.');
+        spellInfo(''); setOptions([{ label: '↩ Continue', cls: 'back', fn: back }]); render(); } },
+    { name: 'The Riddle Stone', run: (back) => {
+        story('<span class="scene-title">The Riddle Stone</span>A floating stone speaks. <span class="speaker">"I am held by Love, broken by Power, and steadied by Ground. What am I?"</span>');
+        spellInfo('');
+        setOptions([
+            { label: 'A Balance', cls: 'spell', fn: () => { gainAlignment(1); G.player.skillPoints++; addXP(40); log('🪨 The stone glows. You gain a skill point.'); render(); back(); } },
+            { label: 'A Promise', cls: 'spell', fn: () => { addXP(20); log('🪨 The stone dims. Close, but not the answer.'); render(); back(); } },
+            { label: 'A Heart', cls: 'spell', fn: () => { addXP(20); log('🪨 The stone dims. A worthy guess.'); render(); back(); } }
+        ]); } },
+    { name: 'Ambush', run: (back) => {
+        story('<span class="scene-title">Ambush</span>Shapes lunge from the dark before you can react.');
+        spellInfo(''); setOptions([{ label: '⚔️ Defend yourself', cls: 'atk', fn: () => beginBattle(pick(ENEMY_TIERS[ZONES[Math.max(0, G.zoneIndex)].id] || ENEMY_TIERS.threshold), { onWin: back }) }]); render(); } }
 ];
+function rollEvent(back) { G.scene = 'event'; pick(EVENTS).run(back); render(); }
 
-// ====================== SOUND ======================
-const sounds = {
-    bgm: document.getElementById('bgm'),
-    spell: document.getElementById('sfx-spell'),
-    heal: document.getElementById('sfx-heal'),
-    victory: document.getElementById('sfx-victory'),
-    damage: document.getElementById('sfx-damage'),
-    powerUp: document.getElementById('sfx-power-up')
-};
+// ===================== SHOP =====================
+function randomStock(n) {
+    const keys = [...Object.keys(ITEMS), ...Object.keys(GEAR).map(g => 'gear_' + g)];
+    const stock = [];
+    for (let i = 0; i < n; i++) stock.push(pick(keys));
+    return [...new Set(stock)];
+}
+function shopEntry(id) {
+    if (id.startsWith('gear_')) { const g = GEAR[id.slice(5)]; return { name: g.name, icon: g.icon, price: g.price, rarity: g.rarity, desc: g.desc }; }
+    const it = ITEMS[id]; return { name: it.name, icon: it.icon, price: it.price, rarity: it.rarity, desc: it.desc };
+}
+function openShop(stock, back) {
+    G.scene = 'shop';
+    const rows = stock.map(id => {
+        const e = shopEntry(id);
+        const canBuy = G.player.gold >= e.price;
+        return { label: e.icon + ' ' + e.name + '<br><span style="font-size:0.65rem;opacity:0.8;">' + e.price + ' gold</span>', cls: 'item', disabled: !canBuy, fn: () => { G.player.gold -= e.price; if (id.startsWith('gear_')) addItem(id); else addItem(id); log('🪙 You buy ' + e.name + '.'); render(); openShop(stock, back); } };
+    });
+    rows.push({ label: '🎒 Sell from Bag', cls: 'back', fn: () => openSell(() => openShop(stock, back)) });
+    rows.push({ label: '↩ Leave', cls: 'back', fn: back });
+    spellInfo('Your gold: ' + G.player.gold + '. Tap a wonder to buy it.');
+    setOptions(rows);
+    render();
+}
+function openSell(back) {
+    const rows = G.inventory.map(r => {
+        const isGear = r.id.startsWith('gear_');
+        const e = isGear ? GEAR[r.id.slice(5)] : ITEMS[r.id];
+        const value = Math.floor((e.price || 20) * 0.5);
+        return { label: '💰 ' + e.icon + ' ' + e.name + ' (' + value + 'g)', cls: 'item', fn: () => { addGold(value); removeItem(r.id); log('💰 You sell ' + e.name + ' for ' + value + ' gold.'); render(); openSell(back); } };
+    });
+    rows.push({ label: '↩ Back', cls: 'back', fn: back });
+    spellInfo('Sell items for half value. Gold: ' + G.player.gold + '.');
+    setOptions(rows.length > 1 ? rows : [{ label: 'Bag is empty. Back', cls: 'back', fn: back }]);
+}
 
-let soundEnabled = false;
+// ===================== MENUS: SPELLBOOK / BAG / CODEX =====================
+let menuReturn = null;
+function rememberReturn() { menuReturn = { scene: G.scene }; }
+function backFromMenu() {
+    if (G.inCombat) { renderCombat(); render(); return; }
+    if (G.scene === 'zone' || (menuReturn && menuReturn.scene === 'zone')) { if (G.zoneIndex >= 0) zoneHub(); else returnToSpine(); return; }
+    returnToSpine();
+}
+function openSpellbook() {
+    rememberReturn();
+    story('<span class="scene-title">Spellbook</span>You have <strong>' + G.player.skillPoints + '</strong> skill points. Spend them along the five paths to grow stronger and learn new magic.');
+    spellInfo('Each path has gifts. Higher gifts cost more points and unlock active spells.');
+    const opts = [];
+    Object.keys(TREES).forEach(key => {
+        const t = TREES[key];
+        const taken = G.treesTaken[key] || 0;
+        const next = t.upgrades[taken];
+        if (next) {
+            const can = G.player.skillPoints >= next.cost;
+            opts.push({ label: t.icon + ' ' + next.name + ' (' + next.cost + 'p)<br><span style="font-size:0.62rem;opacity:0.8;">' + next.desc + '</span>', cls: 'spell', disabled: !can, fn: () => { G.player.skillPoints -= next.cost; next.eff(); G.treesTaken[key] = taken + 1; log('📖 You master ' + next.name + '.'); render(); openSpellbook(); } });
+        } else {
+            opts.push({ label: t.icon + ' ' + t.name + ' path mastered', cls: 'back', disabled: true, fn: () => {} });
+        }
+    });
+    opts.push({ label: '↩ Close', cls: 'back', fn: backFromMenu });
+    setOptions(opts);
+    render();
+}
+function openBag() {
+    rememberReturn();
+    const eq = G.equipment;
+    const eqLine = ['weapon', 'relic', 'charm'].map(slot => { const id = eq[slot]; return slot + ': ' + (id ? GEAR[id].icon + ' ' + GEAR[id].name : 'none'); }).join(' . ');
+    story('<span class="scene-title">Bag</span>' + eqLine);
+    spellInfo('Gold: ' + G.player.gold + '. Use consumables or equip gear.');
+    const opts = [];
+    G.inventory.forEach(r => {
+        if (r.id.startsWith('gear_')) {
+            const g = GEAR[r.id.slice(5)];
+            opts.push({ label: g.icon + ' ' + g.name + ' x' + r.qty + '<br><span style="font-size:0.62rem;opacity:0.8;" class="rarity-' + g.rarity + '">' + g.desc + '</span>', cls: 'item', fn: () => { equipGear(r.id.slice(5)); render(); openBag(); } });
+        } else {
+            const it = ITEMS[r.id];
+            const usableNow = it.type !== 'combat';
+            opts.push({ label: it.icon + ' ' + it.name + ' x' + r.qty, cls: usableNow ? 'heal' : 'item', disabled: !usableNow, fn: () => { if (it.use()) removeItem(r.id); render(); openBag(); } });
+        }
+    });
+    if (!opts.length) opts.push({ label: 'Your bag is empty', cls: 'back', disabled: true, fn: () => {} });
+    opts.push({ label: '↩ Close', cls: 'back', fn: backFromMenu });
+    setOptions(opts);
+    render();
+}
+function equipGear(key) {
+    const g = GEAR[key];
+    const slot = g.slot;
+    const prev = G.equipment[slot];
+    if (prev) addItem('gear_' + prev);
+    G.equipment[slot] = key;
+    removeItem('gear_' + key);
+    G.player.health = clamp(G.player.health, 0, effMaxHealth());
+    log('🗡️ You equip ' + g.name + '.');
+}
+function openCodex() {
+    rememberReturn();
+    story('<span class="scene-title">Codex</span>The record of your ascension so far.');
+    const lines = [];
+    lines.push('Alignment: ' + alignmentName());
+    lines.push('Ascension level: ' + G.ascension);
+    lines.push('Companions: ' + (G.companions.map(c => COMPANIONS[c].name).join(', ') || 'none'));
+    lines.push('Spells known: ' + (G.spells.map(s => SPELLS[s].name).join(', ') || 'none'));
+    const codexHtml = lines.concat(G.codex.slice(-12)).map(l => '<div class="panel-row"><span class="pr-name" style="font-size:0.78rem;font-weight:500;">' + l + '</span></div>').join('');
+    spellInfo(codexHtml);
+    setOptions([{ label: '↩ Close', cls: 'back', fn: backFromMenu }]);
+    render();
+}
+function alignmentName() {
+    if (G.player.alignment >= 4) return 'Luminous (' + G.player.alignment + ')';
+    if (G.player.alignment <= -4) return 'Shadowed (' + G.player.alignment + ')';
+    return 'Balanced (' + G.player.alignment + ')';
+}
+
+// ===================== STORY SPINE =====================
+// Nodes drive the macro narrative between zone runs.
+function returnToSpine() {
+    if (!G.flags.intro_done) return node_intro();
+    if (!G.flags.cleared_verdant) return startZone(0);
+    if (!G.flags.beat_act1) return node_act1();
+    if (!G.flags.cleared_market) return startZone(1);
+    if (!G.flags.cleared_ashen) return startZone(2);
+    if (!G.flags.beat_act2) return node_act2();
+    if (!G.flags.cleared_astral) return startZone(3);
+    if (!G.flags.cleared_necropolis) return startZone(4);
+    if (!G.flags.beat_act3) return node_act3();
+    if (!G.flags.cleared_mirror) return startZone(5);
+    if (!G.flags.beat_finale) return node_finale();
+    return node_ending();
+}
+function storyBeatAfterZone(zoneId) {
+    if (zoneId === 'verdant') return node_act1();
+    if (zoneId === 'ashen') return node_act2();
+    if (zoneId === 'necropolis') return node_act3();
+    if (zoneId === 'mirror') return node_finale();
+    // market and astral just return to spine to pick next zone
+    returnToSpine();
+}
+
+function node_intro() {
+    G.scene = 'story';
+    G.zoneIndex = -1;
+    story('<span class="scene-title">Chapter I. The Awakening</span>You wake on the seam between two worlds, where the Astral sky bleeds into Earthly soil. A voice that might be your own says, <span class="speaker">"A Caster has woken. The Unbalanced One stirs in answer."</span><br><br>You carry three gifts: Power to change, Ground to hold, and Love to mend. How will you begin?');
+    spellInfo('');
+    clearLog();
+    setOptions([
+        { label: '🔮 Trust your Power', cls: 'spell', fn: () => { G.player.power += 4; finishIntro(); } },
+        { label: '🌱 Trust your Ground', cls: 'heal', fn: () => { G.player.grounding += 4; finishIntro(); } },
+        { label: '💗 Trust your Love', cls: 'heal', fn: () => { G.player.love += 4; recruit('sprout'); log('🌱 Sprout, a young guardian, steps from the soil to walk with you.'); finishIntro(); } }
+    ]);
+    render();
+}
+function finishIntro() {
+    G.flags.intro_done = true;
+    if (!G.companions.length) { recruit('sprout'); log('🌱 Sprout, a young guardian, falls into step beside you.'); }
+    learnSpell('ember_lance');
+    G.player.skillPoints += 1;
+    story('<span class="scene-title">The First Road</span>Sprout points toward a forest of remembering. <span class="speaker">"The Verdant Hollow is sick,"</span> they say. <span class="speaker">"Heal it, and we earn the right to climb higher."</span> You feel a first spell kindle in your hands and a skill point to spend.');
+    setOptions([
+        { label: '📖 Open Spellbook', cls: 'spell', fn: openSpellbook },
+        { label: '🌲 Enter the Verdant Hollow', fn: () => startZone(0) }
+    ]);
+    render();
+}
+function node_act1() {
+    G.flags.beat_act1 = true;
+    G.scene = 'story';
+    story('<span class="scene-title">Chapter II. The Drowned and the Burning</span>With the Hollow healed, a star falls into your path and becomes <span class="speaker">Luminara</span>, a being of astral light learning to hold a shape. <span class="speaker">"Two roads open,"</span> she says. <span class="speaker">"The Drowned Market trades in secrets and gold. The Ashen Reaches burn with a lord who will not bow. We must walk both, but you choose the first."</span>');
+    spellInfo('');
+    if (!G.companions.includes('luminara')) recruit('luminara');
+    setOptions([
+        { label: '🌊 The Drowned Market first', cls: 'item', fn: () => { G.flags.order_market_first = true; node_market_gate(); } },
+        { label: '🌋 The Ashen Reaches first', cls: 'atk', fn: () => { G.flags.order_market_first = false; startZone(2); } }
+    ]);
+    render();
+}
+function node_market_gate() {
+    story('<span class="scene-title">The Drowned Market</span>Lantern light wobbles on black water. A merchant prince offers you a bargain before you enter the deeper stalls.');
+    spellInfo('');
+    setOptions([
+        { label: '🛒 Browse his wares', cls: 'item', fn: () => openShop(['tonic', 'elixir', 'draught', 'gear_oak_staff', 'gear_river_amulet', 'feather'], () => startZone(1)) },
+        { label: '🌊 Walk past into the Market', fn: () => startZone(1) }
+    ]);
+    render();
+}
+function node_act2() {
+    G.flags.beat_act2 = true;
+    G.scene = 'story';
+    // ensure both market and ashen are done before act2; if not, route back
+    if (!G.flags.cleared_market) { G.flags.beat_act2 = false; return node_market_gate(); }
+    if (!G.flags.cleared_ashen) { G.flags.beat_act2 = false; return startZone(2); }
+    story('<span class="scene-title">Chapter III. The Edge of the World</span>Water and fire are behind you. At a cliff made of dusk you meet <span class="speaker">Quill</span>, a clockwork scholar, and a half wild thing named <span class="speaker">Bramblefang</span>. Together you stare at the place where the ground simply ends and the Astral Sea begins. <span class="villain">Far out in the stars, something enormous turns toward you.</span>');
+    spellInfo('');
+    recruit('quill'); recruit('bramblefang');
+    setOptions([
+        { label: '⭐ Step off the edge into the Astral Sea', fn: () => startZone(3) },
+        { label: '📖 Prepare in your Spellbook first', cls: 'spell', fn: openSpellbook }
+    ]);
+    render();
+}
+function node_act3() {
+    G.flags.beat_act3 = true;
+    G.scene = 'story';
+    if (!G.flags.cleared_astral) { G.flags.beat_act3 = false; return startZone(3); }
+    story('<span class="scene-title">Chapter IV. The Mirror Court</span>Beyond the Necropolis stands a court of mirrors. In every pane a different Caster looks back, each having chosen differently than you. <span class="speaker">Mirrowin</span>, a reflection that learned to step free, bows. <span class="speaker">"Past the mirrors waits the version of you that the Unbalanced One wants. Beat it, and you keep your name."</span>');
+    spellInfo('');
+    recruit('mirrowin');
+    setOptions([
+        { label: '🪞 Enter the Mirror Court', fn: () => startZone(5) },
+        { label: '🛒 Trade with a mirrored merchant', cls: 'item', fn: () => openShop(randomStock(5).concat(['elixir', 'feather']), () => startZone(5)) }
+    ]);
+    render();
+}
+function node_finale() {
+    G.flags.beat_finale = true;
+    G.scene = 'story';
+    if (!G.flags.cleared_mirror) { G.flags.beat_finale = false; return startZone(5); }
+    story('<span class="scene-title">Chapter V. The Unbalanced One</span>Every realm you steadied has become a thread in your hands. They braid together into a single road that climbs to where reality frays. <span class="villain">The Unbalanced One waits there, a storm wearing a face. "You cannot be Power and Ground and Love at once," it roars. "Choose one, and let the rest tear away."</span><br><br>How do you answer it?');
+    spellInfo('You may try to redeem it, destroy it, or refuse its choice entirely. Your alignment and your circle will shape the end.');
+    setOptions([
+        { label: '⚔️ Destroy it', cls: 'atk', fn: () => { G.flags.finale_choice = 'destroy'; beginBattle(FINAL_BOSS, { noFlee: true, onWin: node_ending }); } },
+        { label: '💗 Try to redeem it', cls: 'heal', fn: () => { G.flags.finale_choice = 'redeem'; gainAlignment(2); log('💗 You reach for the storm with open hands. It strikes anyway, but softer.'); const fb = clone(FINAL_BOSS); fb.attack = Math.floor(fb.attack * 0.85); beginBattle(fb, { noFlee: true, onWin: node_ending }); } },
+        { label: '☯️ Refuse the choice', cls: 'spell', fn: () => { G.flags.finale_choice = 'refuse'; log('☯️ You refuse to be made smaller. All three gifts blaze at once.'); G.player.power += 4; G.player.grounding += 4; G.player.love += 4; beginBattle(FINAL_BOSS, { noFlee: true, onWin: node_ending }); } }
+    ]);
+    render();
+}
+
+// ===================== ENDINGS =====================
+function node_ending() {
+    G.flags.beat_game = true;
+    G.scene = 'ending';
+    G.inCombat = false; renderEnemy();
+    const choice = G.flags.finale_choice;
+    const align = G.player.alignment;
+    const allies = G.companions.length;
+    let title, body;
+    if (choice === 'redeem' && align >= 2) {
+        title = 'Ending. The Mending';
+        body = 'You do not kill the storm. You hold it until it remembers it was once a Caster too. The Unbalanced One sits down in your circle and weeps, and the two worlds breathe as one for the first time in an age. Your companions stand around you, whole. The magic was never the power. It was the holding.';
+    } else if (choice === 'refuse' && align >= -1) {
+        title = 'Ending. The Whole Caster';
+        body = 'You refuse to be only one thing. Power, Ground, and Love do not tear you apart. They braid. You become the bridge the worlds needed, and you walk it with your circle laughing beside you. The Unbalanced One unravels, not in defeat, but in relief.';
+    } else if (choice === 'destroy' && align <= -3) {
+        title = 'Ending. The New Storm';
+        body = 'You unmake the Unbalanced One and take the empty throne its death leaves behind. Power answers you now without question. Your companions reach for your hand and find only light too bright to touch. You rule both worlds, and they are very, very quiet.';
+    } else if (allies === 0) {
+        title = 'Ending. The Lonely Victory';
+        body = 'You win, but you spent your circle to do it. The storm is gone. So is everyone who would have celebrated with you. You stand at the seam of the worlds and listen to how loud silence can be.';
+    } else {
+        title = 'Ending. The Long Dawn';
+        body = 'The Unbalanced One falls and the frayed edge of reality knits closed. It is not a perfect peace, but it is a real one. You and your companions step into a sky that finally holds still, and you begin the slow work of a longer story.';
+    }
+    addCodex('Reached ending: ' + title);
+    story('<span class="scene-title">' + title + '</span>' + body + '<br><br>You completed the Arcane Ascension at Level ' + G.player.level + ' with alignment ' + alignmentName() + '.');
+    spellInfo('New Game Plus carries your level, gold, gear and companions into a harder world. Each ascension makes foes far stronger and rewards greater.');
+    setOptions([
+        { label: '♾️ Begin New Game Plus', cls: 'spell', fn: newGamePlus },
+        { label: '🗝️ Seek the Secret Vault', cls: 'atk', fn: secretVault },
+        { label: '🔁 Start Over Fresh', cls: 'back', fn: () => { deleteSave(); G = freshState(); node_intro(); } }
+    ]);
+    render();
+}
+function secretVault() {
+    story('<span class="scene-title">The Caster\'s Vault</span>A door that was not there before opens in the air. Inside waits the first Caster who ever walked between worlds, now only an echo. <span class="villain">"Prove the gift was worth giving,"</span> it says.');
+    spellInfo('This is the hardest fight in the game. Defeat earns the Crown of Balance.');
+    setOptions([
+        { label: '♾️ Face Caster Prime', cls: 'atk', fn: () => beginBattle(SECRET_BOSS, { noFlee: true, onWin: () => { addItem('gear_crown_of_balance'); addGold(500); log('<span class="toast">Caster Prime bows. The Crown of Balance is yours.</span>'); node_ending(); } }) },
+        { label: '↩ Not yet', cls: 'back', fn: node_ending }
+    ]);
+    render();
+}
+function newGamePlus() {
+    G.ascension++;
+    const keep = {
+        ascension: G.ascension,
+        player: G.player,
+        spells: G.spells,
+        treesTaken: G.treesTaken,
+        inventory: G.inventory,
+        equipment: G.equipment,
+        companions: G.companions,
+        codex: G.codex
+    };
+    G = freshState();
+    G.ascension = keep.ascension;
+    G.player = keep.player;
+    G.player.health = G.player.maxHealth;
+    G.player.focus = G.player.maxFocus;
+    G.spells = keep.spells;
+    G.treesTaken = keep.treesTaken;
+    G.inventory = keep.inventory;
+    G.equipment = keep.equipment;
+    G.companions = keep.companions;
+    G.codex = keep.codex;
+    G.flags = {};
+    G.baseStats = null;
+    log('♾️ Ascension ' + G.ascension + ' begins. The worlds grow more dangerous, and so do you.');
+    node_intro();
+}
+
+// ===================== GAME OVER =====================
+function gameOver() {
+    G.scene = 'gameover'; G.inCombat = false; renderEnemy();
+    story('<span class="scene-title">You Fall</span>The dark takes you, but a Caster is never quite gone. The seam between worlds remembers your shape and offers you back the road.');
+    spellInfo('');
+    setOptions([
+        { label: '🌅 Rise again at the last waypoint', cls: 'heal', fn: () => { G.player.health = effMaxHealth(); G.player.focus = effMaxFocus(); G.selfStatus = []; log('🌅 You rise, scarred but breathing.'); returnToSpine(); } },
+        { label: '🔁 Start Over Fresh', cls: 'back', fn: () => { deleteSave(); G = freshState(); node_intro(); } }
+    ]);
+    render();
+}
+
+// ===================== TOP MENU ACTIONS =====================
+function manualSave() { saveGame(G); log('💾 Game saved.'); }
+function confirmReset() {
+    story('<span class="scene-title">Reset Everything</span>This erases your save and starts a brand new tale. Are you sure?');
+    spellInfo('');
+    setOptions([
+        { label: '🗑️ Yes, wipe it all', cls: 'atk', fn: () => { deleteSave(); G = freshState(); node_intro(); } },
+        { label: '↩ No, keep playing', cls: 'back', fn: backFromMenu }
+    ]);
+    render();
+}
+
+// ===================== AUDIO UNLOCK =====================
+let soundOn = false;
 document.addEventListener('click', () => {
-    if (!soundEnabled) {
-        soundEnabled = true;
-        sounds.bgm.volume = 0.2;
-        sounds.bgm.play().catch(() => {});
-    }
+    if (!soundOn) { soundOn = true; try { const b = document.getElementById('bgm'); b.volume = 0.18; b.play().catch(() => {}); } catch (_) {} }
 }, { once: true });
 
-// ====================== CORE FUNCTIONS ======================
-function logMessage(msg) {
-    const log = document.getElementById('combat-log');
-    const div = document.createElement('div');
-    div.innerHTML = msg;
-    log.appendChild(div);
-    log.scrollTop = log.scrollHeight;
-}
-
-function addAlly(i) {
-    gameState.allies.push(alliesList[i]);
-    updateAlliesDisplay();
-    saveGame(gameState);
-}
-
-function updateAlliesDisplay() {
-    const display = document.getElementById('allies-display');
-    display.innerHTML = '';
-    gameState.allies.forEach(ally => {
-        const badge = document.createElement('div');
-        badge.className = 'ally-badge';
-        badge.innerHTML = `${ally.emoji} <strong>${ally.name}</strong> — ${ally.ability}`;
-        display.appendChild(badge);
-    });
-}
-
-function awardXP(amount) {
-    gameState.player.xp += amount;
-    while (gameState.player.xp >= gameState.player.xpToNext) {
-        gameState.player.xp -= gameState.player.xpToNext;
-        gameState.player.level++;
-        gameState.player.spellsLearned++;
-        gameState.player.xpToNext += 60;
-        logMessage(`⭐ <strong>Ascension ${gameState.player.level}!</strong> You have gained a spell point.`);
-        if (soundEnabled) {
-            sounds.powerUp.currentTime = 0;
-            sounds.powerUp.volume = 0.5;
-            sounds.powerUp.play().catch(() => {});
-        }
-    }
-    saveGame(gameState);
-}
-
-function healPlayer(amt) {
-    gameState.player.health = Math.min(gameState.player.maxHealth, gameState.player.health + amt);
-}
-
-function advanceStage() {
-    gameState.stage++;
-    if (gameState.stage >= storyStages.length) gameState.stage = storyStages.length - 1;
-    if (Math.random() < 0.35 && gameState.stage < 8) {
-        const enemies = gameState.currentRealm === 'astral' ? astralEnemies : earthlyEnemies;
-        const scaledEnemy = scaleEnemyToDifficulty(enemies[Math.floor(Math.random() * enemies.length)]);
-        startCombat(scaledEnemy);
+// ===================== BOOT =====================
+function boot() {
+    recomputeStats();
+    if (G.inCombat && G.enemy) {
+        // resume combat
+        renderCombat();
+    } else if (!G.flags || !G.flags.intro_done) {
+        node_intro();
     } else {
-        updateDisplay();
+        returnToSpine();
     }
-    saveGame(gameState);
+    render();
 }
-
-function scaleEnemyToDifficulty(enemy) {
-    const scaled = JSON.parse(JSON.stringify(enemy));
-    const levelScale = 1 + (gameState.player.level - 1) * 0.20;
-    scaled.maxHealth = Math.floor(scaled.maxHealth * levelScale);
-    scaled.health = scaled.maxHealth;
-    scaled.attack = Math.floor(scaled.attack * levelScale);
-    return scaled;
-}
-
-function resolveBalance() {
-    const allyBonus = gameState.allies.length * 3;
-    const skillBonus = Object.values(gameState.player.skillProgress).reduce((a, b) => a + b, 0) * 2;
-    gameState.player.grounding += allyBonus + skillBonus;
-    gameState.player.power += allyBonus;
-    gameState.player.love += allyBonus;
-    logMessage("⚖️ <strong>Perfect Balance Achieved!</strong> Your power has tripled.");
-    advanceStage();
-}
-
-function triggerSideQuest() {
-    const q = sideQuests[Math.floor(Math.random() * sideQuests.length)];
-    gameState.currentQuest = q;
-    updateDisplay();
-}
-
-function resolveQuest() {
-    gameState.currentQuest = null;
-    awardXP(25);
-    advanceStage();
-}
-
-function showSpellInfo(spell) {
-    const infoDiv = document.getElementById('spell-info');
-    infoDiv.innerHTML = `<strong>${spell.name}:</strong> ${spell.description}${spell.ability ? ` <span style="color: #66ff99;">⚡ Unlocks Ability: ${spell.ability}</span>` : ''}`;
-    infoDiv.classList.add('active');
-}
-
-function hideSpellInfo() {
-    const infoDiv = document.getElementById('spell-info');
-    infoDiv.classList.remove('active');
-    infoDiv.innerHTML = '';
-}
-
-function showSpellMenu() {
-    const clearOpts = () => document.getElementById('options').innerHTML = '';
-    clearOpts();
-    hideSpellInfo();
-
-    Object.keys(spellPaths).forEach(key => {
-        const path = spellPaths[key];
-        const next = path.progress;
-
-        if (next >= path.upgrades.length) {
-            addOption(`${path.name} — Mastered ✓`, () => {}, true);
-        } else {
-            const up = path.upgrades[next];
-            const can = gameState.player.spellsLearned >= up.cost;
-            const btn = document.createElement('button');
-            btn.textContent = `${can ? '📖' : '❌'} ${path.name} Lvl${next + 1}: ${up.name} (${up.cost} SP)`;
-            btn.disabled = !can;
-            btn.onmouseenter = () => showSpellInfo(up);
-            btn.onmouseleave = () => hideSpellInfo();
-            btn.onclick = () => {
-                if (can) {
-                    up.effect();
-                    gameState.player.spellsLearned -= up.cost;
-                    path.progress++;
-                    gameState.player.skillProgress[key] = path.progress;
-                    
-                    if (up.ability) {
-                        gameState.player.learnedSpells.push({ name: up.ability, tree: key });
-                    }
-                    
-                    logMessage(`📖 <strong>${up.name}</strong> learned! Your spells grow stronger.${up.ability ? ` ⚡ New ability available: ${up.ability}` : ''}`);
-                    if (soundEnabled) {
-                        sounds.spell.currentTime = 0;
-                        sounds.spell.volume = 0.5;
-                        sounds.spell.play().catch(() => {});
-                    }
-                    saveGame(gameState);
-                    showSpellMenu();
-                }
-            };
-            document.getElementById('options').appendChild(btn);
-        }
-    });
-
-    addOption("← Back", updateDisplay);
-}
-
-function getRandomEnemy() {
-    const enemies = gameState.currentRealm === 'astral' ? astralEnemies : earthlyEnemies;
-    const enemy = enemies[Math.floor(Math.random() * enemies.length)];
-    return scaleEnemyToDifficulty(enemy);
-}
-
-function startCombat(enemy) {
-    gameState.currentEnemy = JSON.parse(JSON.stringify(enemy));
-    gameState.inCombat = true;
-    logMessage(`⚔️ <strong>${gameState.currentEnemy.emoji} ${gameState.currentEnemy.name}</strong> emerges from the shadows!`);
-    updateDisplay();
-    saveGame(gameState);
-}
-
-// ====================== SPECIAL ABILITIES ======================
-const abilities = {
-    "Entangling Roots": () => {
-        const dmg = Math.floor(gameState.player.grounding * 3);
-        gameState.currentEnemy.health -= dmg;
-        logMessage(`🌿 <strong>Entangling Roots:</strong> Roots wrap around the enemy for ${dmg} damage! They're slowed and can't defend properly.`);
-        if (soundEnabled) {
-            sounds.spell.currentTime = 0;
-            sounds.spell.volume = 0.4;
-            sounds.spell.play().catch(() => {});
-        }
-        return dmg;
-    },
-    "Heart's Embrace": () => {
-        const heal = Math.floor(gameState.player.love * 6) + gameState.allies.length * 15;
-        healPlayer(heal);
-        logMessage(`💗 <strong>Heart's Embrace:</strong> Your love fills everyone with vitality! Healed ${heal} HP.`);
-        if (soundEnabled) {
-            sounds.heal.currentTime = 0;
-            sounds.heal.volume = 0.4;
-            sounds.heal.play().catch(() => {});
-        }
-        return heal;
-    },
-    "Meteor Strike": () => {
-        const dmg = Math.floor(gameState.player.power * 2.5);
-        gameState.currentEnemy.health -= dmg;
-        logMessage(`☄️ <strong>Meteor Strike:</strong> Meteors rain from the astral realm, hitting for ${dmg} damage!`);
-        if (soundEnabled) {
-            sounds.spell.currentTime = 0;
-            sounds.spell.volume = 0.5;
-            sounds.spell.play().catch(() => {});
-        }
-        return dmg;
-    },
-    "Equilibrium Shield": () => {
-        const reduction = gameState.player.grounding + gameState.player.power;
-        logMessage(`⚖️ <strong>Equilibrium Shield:</strong> Perfect balance creates an impenetrable shield! Reduce next ${reduction} incoming damage.`);
-        gameState.currentEnemy.attack -= Math.floor(reduction * 0.5);
-        if (soundEnabled) {
-            sounds.spell.currentTime = 0;
-            sounds.spell.volume = 0.4;
-            sounds.spell.play().catch(() => {});
-        }
-        return reduction;
-    },
-    "Reality Blast": () => {
-        const dmg = Math.floor(gameState.player.power * 2);
-        gameState.currentEnemy.health -= dmg;
-        logMessage(`✨ <strong>Reality Blast:</strong> Reality itself explodes outward for ${dmg} damage!`);
-        if (soundEnabled) {
-            sounds.spell.currentTime = 0;
-            sounds.spell.volume = 0.5;
-            sounds.spell.play().catch(() => {});
-        }
-        return dmg;
-    }
-};
-
-function playerAttack() {
-    const baseDmg = gameState.player.power * 1.2;
-    let dmg = Math.max(2, baseDmg - gameState.player.love * 0.2);
-    
-    let allyDmg = 0;
-    gameState.allies.forEach(ally => {
-        const adjDmg = ally.attack();
-        allyDmg += adjDmg;
-        logMessage(`  ${ally.emoji} ${ally.name} strikes: ${adjDmg} damage!`);
-    });
-    
-    dmg = Math.floor(dmg);
-    gameState.currentEnemy.health -= dmg + allyDmg;
-    
-    if (soundEnabled) {
-        sounds.spell.currentTime = 0;
-        sounds.spell.volume = 0.4;
-        sounds.spell.play().catch(() => {});
-    }
-    logMessage(`🔮 <strong>Spell Strike:</strong> ${dmg} damage! (Allies: ${allyDmg})`);
-    checkCombatEnd();
-}
-
-function playerHeal() {
-    let heal = gameState.player.love * 4 + gameState.player.grounding * 1.5 + gameState.allies.length * 8;
-    
-    let allyHeal = 0;
-    gameState.allies.forEach(ally => {
-        const adjHeal = ally.heal();
-        allyHeal += adjHeal;
-        logMessage(`  ${ally.emoji} ${ally.name} heals: ${adjHeal} vitality!`);
-    });
-    
-    heal = Math.floor(heal);
-    const totalHeal = heal + allyHeal;
-    healPlayer(totalHeal);
-    gameState.player.power = Math.max(0, gameState.player.power - 1);
-    
-    if (soundEnabled) {
-        sounds.heal.currentTime = 0;
-        sounds.heal.volume = 0.4;
-        sounds.heal.play().catch(() => {});
-    }
-    logMessage(`💗 <strong>Healing Light:</strong> ${totalHeal} restored!`);
-    enemyTurn();
-}
-
-function playerDefend() {
-    gameState.player.grounding += 2;
-    logMessage("🛡️ <strong>Grounded Barrier:</strong> You stand firm, allies protect you.");
-    enemyTurn();
-}
-
-function useAbility(abilityName) {
-    if (abilities[abilityName]) {
-        abilities[abilityName]();
-        checkCombatEnd();
-    }
-}
-
-function checkCombatEnd() {
-    if (gameState.currentEnemy.health <= 0) {
-        if (soundEnabled) {
-            sounds.victory.currentTime = 0;
-            sounds.victory.volume = 0.6;
-            sounds.victory.play().catch(() => {});
-        }
-        logMessage("✨ <strong>VICTORY!</strong> The creature dissolves into starlight!");
-        const xpReward = Math.floor(gameState.currentEnemy.maxHealth * 1.3);
-        awardXP(xpReward);
-        gameState.player.power += 2;
-        gameState.player.love += 1;
-        healPlayer(40);
-        gameState.inCombat = false;
-        gameState.currentRealm = Math.random() > 0.5 ? 'astral' : 'earthly';
-        
-        if (gameState.stage === 8) {
-            showEndingChoices();
-            return;
-        }
-        
-        advanceStage();
-    } else {
-        enemyTurn();
-    }
-}
-
-function showEndingChoices() {
-    const storyDiv = document.getElementById('story-text');
-    const optDiv = document.getElementById('options');
-    optDiv.innerHTML = '';
-    hideSpellInfo();
-    
-    storyDiv.innerHTML = `<strong>THE FINAL CHOICE</strong><br>As The Unbalanced One falls, you feel the raw power of victory and the weight of your choices. Your path forward defines your legacy...`;
-    
-    const endings = [
-        { 
-            text: "💗 Choose Love & Friendship (Redemption Ending)", 
-            action: () => { 
-                gameState.endingPath = 'redemption'; 
-                gameState.stage = 9; 
-                updateDisplay(); 
-            } 
-        },
-        { 
-            text: "🌪️ Embrace The Dark Power (Corruption Ending)", 
-            action: () => { 
-                gameState.endingPath = 'corruption'; 
-                gameState.stage = 10; 
-                updateDisplay(); 
-            } 
-        },
-        { 
-            text: "⭐ Sacrifice Everything (Legacy Ending)", 
-            action: () => { 
-                gameState.endingPath = 'sacrifice'; 
-                gameState.stage = 11; 
-                updateDisplay(); 
-            } 
-        }
-    ];
-    
-    endings.forEach(ending => {
-        const btn = document.createElement('button');
-        btn.textContent = ending.text;
-        btn.onclick = ending.action;
-        optDiv.appendChild(btn);
-    });
-}
-
-function enemyTurn() {
-    if (!gameState.currentEnemy) return;
-    const baseDmg = gameState.currentEnemy.attack;
-    let dmg = Math.max(3, baseDmg - gameState.player.grounding * 0.7);
-    dmg = Math.floor(dmg);
-    gameState.player.health -= dmg;
-    
-    if (soundEnabled) {
-        sounds.damage.currentTime = 0;
-        sounds.damage.volume = 0.4;
-        sounds.damage.play().catch(() => {});
-    }
-    logMessage(`💥 <strong>${gameState.currentEnemy.name}</strong> attacks: ${dmg} damage!`);
-
-    if (gameState.player.health <= 0) {
-        logMessage("💔 <strong>You have fallen...</strong> But your magic refuses to fade.");
-        gameState.player.health = Math.floor(gameState.player.maxHealth * 0.35);
-        gameState.inCombat = false;
-        gameState.stage = Math.max(0, gameState.stage - 1);
-        advanceStage();
-    } else {
-        updateDisplay();
-    }
-    saveGame(gameState);
-}
-
-// ====================== DISPLAY ======================
-function clearOptions() {
-    document.getElementById('options').innerHTML = '';
-}
-
-function addOption(text, action, disabled = false) {
-    const optDiv = document.getElementById('options');
-    const btn = document.createElement('button');
-    btn.textContent = text;
-    btn.onclick = (e) => {
-        e.preventDefault();
-        if (!disabled) action();
-    };
-    btn.disabled = disabled;
-    optDiv.appendChild(btn);
-}
-
-function updateDisplay() {
-    document.getElementById('health-text').textContent = `${gameState.player.health}/${gameState.player.maxHealth}`;
-    document.getElementById('health-fill').style.width = `${(gameState.player.health / gameState.player.maxHealth) * 100}%`;
-    document.getElementById('power-text').textContent = gameState.player.power;
-    document.getElementById('grounding-text').textContent = gameState.player.grounding;
-    document.getElementById('love-text').textContent = gameState.player.love;
-    document.getElementById('level-text').textContent = gameState.player.level;
-    document.getElementById('sp-text').textContent = gameState.player.spellsLearned;
-
-    const realmDiv = document.getElementById('realm-indicator');
-    realmDiv.textContent = gameState.currentRealm === 'astral' ? '✨ Astral Realm ✨' : '🌍 Earthly Realm 🌍';
-
-    const storyDiv = document.getElementById('story-text');
-    updateAlliesDisplay();
-    clearOptions();
-    hideSpellInfo();
-
-    if (gameState.currentQuest) {
-        storyDiv.innerHTML = gameState.currentQuest.text;
-        gameState.currentQuest.options.forEach(o => {
-            const btn = document.createElement('button');
-            btn.textContent = o.text;
-            btn.onclick = () => { o.action(); };
-            document.getElementById('options').appendChild(btn);
-        });
-        return;
-    }
-
-    if (gameState.inCombat) {
-        storyDiv.innerHTML = `<strong>⚔️ COMBAT</strong><br>${gameState.currentEnemy.emoji} <strong>${gameState.currentEnemy.name}</strong><br>Power: ${gameState.currentEnemy.health}/${gameState.currentEnemy.maxHealth}`;
-        
-        const btns = [
-            { t: "Cast Spell", f: playerAttack },
-            { t: "Channel Love", f: playerHeal },
-            { t: "Ground Yourself", f: playerDefend }
-        ];
-        
-        btns.forEach(b => {
-            const btn = document.createElement('button');
-            btn.textContent = b.t;
-            btn.onclick = b.f;
-            document.getElementById('options').appendChild(btn);
-        });
-
-        // Add learned spell abilities
-        gameState.player.learnedSpells.forEach(spell => {
-            const btn = document.createElement('button');
-            btn.className = 'spell-ability';
-            btn.textContent = `⚡ ${spell.name}`;
-            btn.onclick = () => { useAbility(spell.name); updateDisplay(); };
-            document.getElementById('options').appendChild(btn);
-        });
-        
-        return;
-    }
-
-    const stage = storyStages[gameState.stage];
-    storyDiv.innerHTML = stage.text;
-    if (stage.realm && stage.realm !== 'both') {
-        gameState.currentRealm = stage.realm;
-    }
-
-    stage.options.forEach(opt => {
-        const btn = document.createElement('button');
-        btn.textContent = opt.text;
-        btn.onclick = opt.action;
-        document.getElementById('options').appendChild(btn);
-    });
-
-    if (!stage.isEnding) {
-        const skillBtn = document.createElement('button');
-        skillBtn.textContent = "📖 Learn Spells";
-        skillBtn.onclick = showSpellMenu;
-        document.getElementById('options').appendChild(skillBtn);
-
-        if (gameState.stage < 8 && Math.random() < 0.25) {
-            const encBtn = document.createElement('button');
-            encBtn.textContent = "⚔️ Seek Challenge";
-            encBtn.onclick = () => startCombat(getRandomEnemy());
-            document.getElementById('options').appendChild(encBtn);
-        }
-    }
-}
-
-// ====================== INITIALIZATION ======================
-// Initialize IndexedDB for cloud cache support
-if (window.indexedDB) {
-    const request = indexedDB.open('aWizardDB', 1);
-    request.onupgradeneeded = (e) => {
-        const db = e.target.result;
-        if (!db.objectStoreNames.contains('saves')) {
-            db.createObjectStore('saves', { keyPath: 'id' });
-        }
-    };
-}
-
-updateDisplay();
-logMessage("🌟 <strong>Welcome, Caster.</strong> Your journey between realms begins now...");
+boot();
 </script>
 
 </body>
