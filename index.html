@@ -4376,11 +4376,7 @@
         </div>
 
         <div id="portfolio" class="content">
-            <div style="background:linear-gradient(135deg,rgba(180,80,20,0.18),rgba(120,40,10,0.12));border:1px solid rgba(251,191,36,0.25);border-radius:14px;padding:18px 22px;margin:0 auto 16px;max-width:720px;text-align:center;">
-                <div style="font-size:20px;margin-bottom:6px;">🔮</div>
-                <div style="font-family:Cinzel,serif;font-size:16px;font-weight:700;color:#fbbf24;margin-bottom:6px;">This page isn't really casting right now</div>
-                <div style="font-family:'Space Grotesk',sans-serif;font-size:13px;color:rgba(255,255,255,0.65);line-height:1.5;">You can still try it out, but things may not load correctly. Fix coming soon.</div>
-            </div>
+
             <div class="bag-page">
 
                 <!-- ── Input Card ── -->
@@ -4405,6 +4401,13 @@
                     <div class="bag-sage-row">
                         <button id="chia-portfolio-action-btn" onclick="handleChiaPortfolioAction(this)" class="bag-sage-btn">🌱 Connect Sage Wallet</button>
                         <span id="chia-action-notice" class="bag-chia-toolbar-note" aria-live="polite"></span>
+                    </div>
+                    <div class="bag-sage-row" style="margin-top:6px;">
+                        <div class="bag-input-wrap" style="flex:1;">
+                            <span class="bag-input-icon">🌱</span>
+                            <input type="text" id="chiaWalletAddress" placeholder="xch... Chia wallet address" onkeydown="if(event.key==='Enter') scanChiaManual()">
+                        </div>
+                        <button onclick="scanChiaManual()" id="scan-chia-btn" style="margin-left:8px;padding:10px 18px;background:linear-gradient(135deg,#16a34a,#15803d);border:1px solid rgba(74,222,128,0.4);border-radius:8px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;letter-spacing:0.5px;font-family:'Space Grotesk',sans-serif;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">SCAN CHIA</button>
                     </div>
                     <div id="trackedAddressDisplay"></div>
                 </section>
@@ -8423,6 +8426,7 @@ let _treasuryLastLoad = 0;
 let isRefreshingChiaTreasury = false;
 async function loadComprehensiveTreasury(force = false) {
     const now = Date.now();
+    let _fastBaseData = null; // Base data from partial fast-path — skip re-fetch below
     if (!force && now - _treasuryLastLoad < 600000) {
         console.log(`⏳ Treasury loaded ${Math.round((now - _treasuryLastLoad)/1000)}s ago, using cache (expires in ${Math.round((600000 - (now - _treasuryLastLoad))/1000)}s)`);
         // Always update display even with cached data to ensure mobile/desktop consistency
@@ -8508,6 +8512,18 @@ async function loadComprehensiveTreasury(force = false) {
                 // If the server returned a fresh-computed result it already hit all
                 // external APIs. No need for Spacescan fallback — we're done.
                 return;
+
+            } else if (idx && idx.baseData) {
+                // Partial fast-path: blob has Base data but no Chia CATs
+                // (Spacescan blocks Vercel IPs so server-side chia-cat-prices returns empty).
+                // Render Base + partial Chia immediately, then load Chia browser-direct below.
+                const src = idx.source || 'unknown';
+                console.log(`⚡ Treasury partial (source=${src}): Base=$${(idx.baseData.total||0).toFixed(2)}, no Chia CATs — showing Base, loading Chia browser-direct`);
+                _fastBaseData = idx.baseData;
+                const partChia = idx.chiaData || { tokens: [], total: 0, xchPrice: 2.20 };
+                updateTreasuryDisplay(idx.baseData, partChia, idx.nftData || { collections: [], totalNFTs: 0, totalCollections: 0, totalValue: 0, totalXch: 0 });
+                loadNFTs();
+                // Fall through to direct-call Chia loading only (Base will be skipped via _fastBaseData)
             }
         }
         console.warn('⚠️ treasury-index returned no usable data, falling back to direct calls');
@@ -8535,33 +8551,45 @@ async function loadComprehensiveTreasury(force = false) {
     document.getElementById('chia-network-total').textContent = 'Loading...';
 
     try {
-        // Fetch all three wallets — Base two in parallel, Chia sequential after
-        console.log('📡 Fetching both Base wallets in parallel...');
-        const [base1Resp, base2Resp] = await Promise.all([
-            fetch(`/api/treasury-comprehensive?address=${BASE_WALLET_1}&chain=base`),
-            fetch(`/api/treasury-comprehensive?address=${BASE_WALLET_2}&chain=base`)
-        ]);
-        const [base1Data, base2Data] = await Promise.all([base1Resp.json(), base2Resp.json()]);
-        console.log(`✅ Base #1: $${(base1Data.total||0).toFixed(2)}, ${base1Data.tokens?.length||0} tokens`);
-        console.log(`✅ Base #2: $${(base2Data.total||0).toFixed(2)}, ${base2Data.tokens?.length||0} tokens`);
-        if (base1Data.error) console.warn('⚠️ Base #1 error:', base1Data.error);
-        if (base2Data.error) console.warn('⚠️ Base #2 error:', base2Data.error);
+        // Use fast-path Base data if available, otherwise fetch fresh
+        let baseData;
+        if (_fastBaseData) {
+            baseData = _fastBaseData;
+            _fastBaseData = null;
+            console.log(`⚡ Using Base data from fast-path ($${baseData.total.toFixed(2)}) — skipping re-fetch`);
+        } else {
+            // Fetch all three wallets — Base two in parallel, Chia sequential after
+            console.log('📡 Fetching both Base wallets in parallel...');
+            const [base1Resp, base2Resp] = await Promise.all([
+                fetch(`/api/treasury-comprehensive?address=${BASE_WALLET_1}&chain=base`),
+                fetch(`/api/treasury-comprehensive?address=${BASE_WALLET_2}&chain=base`)
+            ]);
+            const [base1Data, base2Data] = await Promise.all([base1Resp.json(), base2Resp.json()]);
+            console.log(`✅ Base #1: $${(base1Data.total||0).toFixed(2)}, ${base1Data.tokens?.length||0} tokens`);
+            console.log(`✅ Base #2: $${(base2Data.total||0).toFixed(2)}, ${base2Data.tokens?.length||0} tokens`);
+            if (base1Data.error) console.warn('⚠️ Base #1 error:', base1Data.error);
+            if (base2Data.error) console.warn('⚠️ Base #2 error:', base2Data.error);
 
-        // Merge Base data — LP positions stay separate (unique per wallet), tokens merged by contract
-        const lpTokens1 = (base1Data.tokens || []).filter(t => t.type === 'lp');
-        const lpTokens2 = (base2Data.tokens || []).filter(t => t.type === 'lp');
-        const reg1 = (base1Data.tokens || []).filter(t => t.type !== 'lp');
-        const reg2 = (base2Data.tokens || []).filter(t => t.type !== 'lp');
-        const mergedTokens = [
-            ...mergeBaseTokens(reg1, reg2),   // regular tokens summed by contract
-            ...lpTokens1, ...lpTokens2         // LP positions kept separate
-        ];
-        const baseData = {
-            tokens: mergedTokens,
-            total: (base1Data.total || 0) + (base2Data.total || 0),
-            wallets: [BASE_WALLET_1, BASE_WALLET_2]
-        };
-        console.log(`✅ Base combined: $${baseData.total.toFixed(2)}, ${baseData.tokens.length} tokens (${lpTokens1.length+lpTokens2.length} LPs)`);
+            // Merge Base data — LP positions stay separate (unique per wallet), tokens merged by contract
+            const lpTokens1 = (base1Data.tokens || []).filter(t => t.type === 'lp');
+            const lpTokens2 = (base2Data.tokens || []).filter(t => t.type === 'lp');
+            const reg1 = (base1Data.tokens || []).filter(t => t.type !== 'lp');
+            const reg2 = (base2Data.tokens || []).filter(t => t.type !== 'lp');
+            const mergedTokens = [
+                ...mergeBaseTokens(reg1, reg2),   // regular tokens summed by contract
+                ...lpTokens1, ...lpTokens2         // LP positions kept separate
+            ];
+            baseData = {
+                tokens: mergedTokens,
+                total: (base1Data.total || 0) + (base2Data.total || 0),
+                wallets: [BASE_WALLET_1, BASE_WALLET_2]
+            };
+            console.log(`✅ Base combined: $${baseData.total.toFixed(2)}, ${baseData.tokens.length} tokens (${lpTokens1.length+lpTokens2.length} LPs)`);
+            // ── Show Base data immediately while Chia loads ──────────────────────
+            updateTreasuryDisplay(baseData, { tokens: [], total: 0, xchPrice: 2.20 }, { collections: [], totalNFTs: 0, totalCollections: 0, totalValue: 0, totalXch: 0 });
+            const _chiaLoadEl = document.getElementById('chia-holdings-list');
+            if (_chiaLoadEl) _chiaLoadEl.innerHTML = '<div style="text-align:center;padding:40px 20px;color:rgba(255,255,255,0.4);font-size:12px;"><div style="font-size:24px;margin-bottom:8px;">🌱</div><div>Loading Chia wallets…</div><div id="chia-cache-status" style="font-size:11px;margin-top:6px;opacity:0.5;">Fetching from Spacescan...</div></div>';
+        }
 
         // ── Chia: 100% Browser-Direct — ALL CALLS FIRE SIMULTANEOUSLY ───────────────
         // Fire all 11 requests at once upfront so token-balance is in-flight BEFORE
@@ -11245,6 +11273,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (tone === 'success') notice.classList.add('is-success');
         notice.textContent = message || '';
     }
+
+    function scanChiaManual() {
+            const addr = (document.getElementById('chiaWalletAddress').value || '').trim();
+            if (!addr || addr.length < 60) {
+                alert('Please enter a valid Chia wallet address (xch...)');
+                return;
+            }
+            loadAndRenderChiaPortfolio([addr]);
+        }
 
     function updateChiaPortfolioAction() {
         const actionBtn = document.getElementById('chia-portfolio-action-btn');
