@@ -8705,11 +8705,14 @@ async function loadComprehensiveTreasury(force = false) {
             }
 
             try {
-                const [xchData, tibetRaw] = await Promise.all([
+                const [xchData, tibetRaw, dexieRaw] = await Promise.all([
                     fetch('/api/coingecko-proxy?ids=chia&vs_currencies=usd', { cache: 'no-store' })
                         .then(r => r.ok ? r.json() : {}).catch(() => ({})),
                     fetch('https://api.v2.tibetswap.io/pairs?per_page=200')
                         .then(r => r.ok ? r.json() : []).catch(() => []),
+                    // Dexie tickers — primary CAT price source (matches the emoji market)
+                    fetch('https://dexie.space/v2/prices/tickers')
+                        .then(r => r.ok ? r.json() : {}).catch(() => ({})),
                 ]);
 
                 let xchPrice = xchData?.chia?.usd || 0;
@@ -8725,6 +8728,17 @@ async function loadComprehensiveTreasury(force = false) {
                 if (!xchPrice || xchPrice <= 0) xchPrice = 2.20;
                 chiaXchPrice = xchPrice;
                 window._chiaXchPrice = xchPrice;
+
+                // Dexie price map: assetId → USD price (only tickers with real volume).
+                // This is the same source the emoji market uses, so treasury prices match.
+                const dexieMap = {};
+                for (const tick of (dexieRaw?.tickers || [])) {
+                    const bid = (tick.base_id || '').toLowerCase();
+                    const lp = parseFloat(tick.last_price || 0);
+                    const vol = parseFloat(tick.base_volume || 0);
+                    if (bid && lp > 0 && vol > 0) dexieMap[bid] = lp * xchPrice;
+                }
+                console.log(`  ✅ Dexie price map: ${Object.keys(dexieMap).length} CATs`);
 
                 const tibetMap = {};
                 const lpTokenMap = {}; // keyed by liquidity_asset_id = the LP token you actually hold
@@ -8831,9 +8845,13 @@ async function loadComprehensiveTreasury(force = false) {
 
                                     const balance = parseFloat(t.balance || 0);
                                     const priceRaw = parseFloat(t.price || 0);
-                                    const price = priceRaw > 0 ? priceRaw : (tibet?.priceUsd || 0);
+                                    // Price priority: Dexie (emoji-market truth) → Spacescan → TibetSwap
+                                    const dexiePrice = dexieMap[aid] || 0;
+                                    const price = dexiePrice > 0 ? dexiePrice : (priceRaw > 0 ? priceRaw : (tibet?.priceUsd || 0));
                                     const rawValue = parseFloat(t.total_value || 0);
-                                    const totalValue = rawValue > 0 ? rawValue : (price > 0 ? balance * price : 0);
+                                    // Recompute value from our resolved price when we have one, so Dexie-priced
+                                    // CATs don't show $0 just because Spacescan's total_value was missing.
+                                    const totalValue = price > 0 ? balance * price : rawValue;
 
                                     return {
                                         asset_id: t.asset_id || '',
@@ -11547,42 +11565,53 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
             })();
 
-            // All wallet fetches in parallel — AND within each wallet, XCH + tokens + NFTs are parallel
+            // All wallet fetches — XCH via xchscan (no rate limit), tokens+NFTs via the
+            // shared Spacescan queue (2s gaps site-wide) so they don't 429 each other.
+            // Firing them raw and simultaneously is what caused XCH/CATs to show $0 while
+            // NFTs loaded — the parallel calls rate-limited each other on Spacescan.
             console.log('[Chia] Querying ' + addrList.length + ' address(es):', addrList.map(function(a) { return a.slice(0,10) + '…'; }));
             const addressPromise = Promise.all(addrList.map(function(addr) {
-                // XCH balance — xchscan (8s timeout), fallback to spacescan on ANY failure
-                var spacescanXchP = fetch('https://api.spacescan.io/address/xch-balance/' + addr)
-                    .then(function(r) { return r.ok ? r.json() : {}; })
-                    .then(function(d) { return d && d.balance ? parseFloat(d.balance) / 1e12 : 0; })
-                    .catch(function() { return 0; });
+                // XCH balance — xchscan primary (fast, no rate limit), Spacescan fallback (rate-limited queue)
+                var spacescanXchP = function() {
+                    return spacescanFetch('https://api.spacescan.io/address/xch-balance/' + addr, 12000, 1)
+                        .then(function(d) {
+                            if (!d) return 0;
+                            // Spacescan returns { xch: "1.23" }; some responses use mojo field
+                            if (d.xch !== undefined) return parseFloat(d.xch) || 0;
+                            if (d.balance !== undefined) {
+                                var b = parseFloat(d.balance) || 0;
+                                return b > 1e6 ? b / 1e12 : b; // heuristic: large = mojos
+                            }
+                            return 0;
+                        })
+                        .catch(function() { return 0; });
+                };
                 var xchBalP = Promise.race([
                     fetch('https://xchscan.com/api/account/balance?address=' + addr)
                         .then(function(r) { if (!r.ok) throw new Error('xchscan ' + r.status); return r.json(); })
                         .then(function(d) { return parseFloat((d && d.xch) ? d.xch : 0); }),
                     new Promise(function(_, reject) { setTimeout(function() { reject(new Error('xchscan timeout')); }, 8000); })
-                ]).catch(function(e) { console.log('[Chia] xchscan fail for ' + addr.slice(0,10) + ': ' + e.message + ', using spacescan'); return spacescanXchP; });
+                ]).then(function(v) { return v > 0 ? v : spacescanXchP(); })
+                  .catch(function(e) { console.log('[Chia] xchscan fail for ' + addr.slice(0,10) + ': ' + e.message + ', using spacescan'); return spacescanXchP(); });
 
+                // CAT tokens — rate-limited queue, paginated, with retry
                 const tokensP = (async function() {
                     let rawTokens = [], sPage = 1;
                     while (true) {
-                        const td = await fetchWithTimeout(
-                            fetch('https://api.spacescan.io/address/token-balance/' + addr + '?page=' + sPage + '&count=200')
-                                .then(function(r) { return r.json(); }).catch(function() { return null; }),
-                            10000, null);
+                        const td = await spacescanFetch('https://api.spacescan.io/address/token-balance/' + addr + '?page=' + sPage + '&count=200', 20000, 2);
                         if (!td || !Array.isArray(td.data) || !td.data.length) break;
                         rawTokens = rawTokens.concat(td.data);
                         if (td.data.length < 200) break;
                         sPage++;
                     }
+                    console.log('[Chia] ' + addr.slice(0,10) + ': token-balance → ' + rawTokens.length + ' CATs');
                     return rawTokens;
                 })();
 
-                const nftsP = fetchWithTimeout(
-                    fetch('https://api.spacescan.io/address/nft-balance/' + addr)
-                        .then(function(r) { return r.json(); })
-                        .then(function(nd) { return (nd && Array.isArray(nd.balance)) ? nd.balance : []; })
-                        .catch(function() { return []; }),
-                    10000, []);
+                // NFTs — rate-limited queue, with retry
+                const nftsP = spacescanFetch('https://api.spacescan.io/address/nft-balance/' + addr, 20000, 1)
+                    .then(function(nd) { return (nd && Array.isArray(nd.balance)) ? nd.balance : []; })
+                    .catch(function() { return []; });
 
                 return Promise.all([xchBalP, tokensP, nftsP]).then(function(vals) {
                     return { xchBal: vals[0], rawTokens: vals[1] || [], nfts: vals[2] || [] };
@@ -11913,7 +11942,7 @@ document.addEventListener('DOMContentLoaded', () => {
         var html = '<section class="bag-chia-card">';
         html += '<div class="bag-chia-head">'
             + '<div>'
-            + '<div class="bag-card-label" style="color:rgba(134,239,172,0.72);">Sage Chia Portfolio</div>'
+            + '<div class="bag-card-label" style="color:rgba(134,239,172,0.72);">Chia Portfolio</div>'
             + '<div class="bag-results-title">Chia holdings</div>'
             + '<div class="bag-results-copy">' + walletLabel + '</div>'
             + '</div>'
