@@ -5740,39 +5740,54 @@
 
                 while (this.queue.length > 0) {
                     const now = Date.now();
+                    // Wait the FULL gap. Previously this was capped at 200ms, which let calls
+                    // fire ~5x/sec and tripped Spacescan's rate limit (it then returns a
+                    // Cloudflare HTML page that silently broke JSON parsing → empty results).
                     const wait = Math.max(0, this.lastCall + this.MIN_GAP - now);
-                    if (wait > 0) await new Promise(r => setTimeout(r, Math.min(wait, 200)));
+                    if (wait > 0) await new Promise(r => setTimeout(r, wait));
 
-                    const { url, timeout, resolve, retries } = this.queue.shift();
+                    const item = this.queue.shift();
+                    const { url, timeout, resolve, retries } = item;
                     this.lastCall = Date.now();
 
+                    let data = null, rateLimited = false;
                     try {
                         const ctrl = new AbortController();
                         const timer = setTimeout(() => ctrl.abort(), timeout);
-                        const resp = await fetch(url, { 
-                            headers: { Accept: 'application/json' }, 
+                        const resp = await fetch(url, {
+                            headers: { Accept: 'application/json' },
                             signal: ctrl.signal,
                             cache: 'no-store'
                         });
                         clearTimeout(timer);
-                        const data = resp.ok ? await resp.json() : null;
-                        
-                        // Retry once if failed and retries > 0
-                        if (!data && retries > 0) {
-                            console.log(`[spacescanQueue] Retrying ${url.slice(-40)}...`);
-                            this.queue.push({ url, timeout, resolve, retries: retries - 1 });
-                        } else {
-                            resolve(data);
+                        if (resp.status === 429) {
+                            rateLimited = true;
+                        } else if (resp.ok) {
+                            // Spacescan returns an HTML challenge page (status 200) when rate
+                            // limited. Detect non-JSON and treat it as rate limited, not "empty".
+                            const txt = await resp.text();
+                            const trimmed = txt.trim();
+                            if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+                                try { data = JSON.parse(trimmed); } catch (_) { data = null; }
+                            } else {
+                                rateLimited = true;
+                            }
                         }
-                    } catch(e) {
+                    } catch (e) {
                         console.warn(`[spacescanQueue] ${url.slice(-40)}: ${e.message}`);
-                        // Retry once on error if retries > 0
-                        if (retries > 0) {
-                            console.log(`[spacescanQueue] Retrying after error...`);
-                            this.queue.push({ url, timeout, resolve, retries: retries - 1 });
+                    }
+
+                    if ((data === null || rateLimited) && retries > 0) {
+                        if (rateLimited) {
+                            // Back off harder so the IP limit can recover before the retry.
+                            console.log(`[spacescanQueue] Rate limited on ${url.slice(-40)}, backing off...`);
+                            this.lastCall = Date.now() + 3500;
                         } else {
-                            resolve(null);
+                            console.log(`[spacescanQueue] Retrying ${url.slice(-40)}...`);
                         }
+                        this.queue.push({ ...item, retries: retries - 1 });
+                    } else {
+                        resolve(data);
                     }
                 }
 
@@ -11691,7 +11706,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const addressPromise = Promise.all(addrList.map(function(addr) {
                 // XCH balance — xchscan primary (fast, no rate limit), Spacescan fallback (rate-limited queue)
                 var spacescanXchP = function() {
-                    return spacescanFetch('https://api.spacescan.io/address/xch-balance/' + addr, 12000, 1)
+                    return spacescanFetch('https://api.spacescan.io/address/xch-balance/' + addr, 12000, 3)
                         .then(function(d) {
                             if (!d) return 0;
                             // Spacescan returns { xch: "1.23" }; some responses use mojo field
@@ -11712,11 +11727,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 ]).then(function(v) { return v > 0 ? v : spacescanXchP(); })
                   .catch(function(e) { console.log('[Chia] xchscan fail for ' + addr.slice(0,10) + ': ' + e.message + ', using spacescan'); return spacescanXchP(); });
 
-                // CAT tokens — rate-limited queue, paginated, with retry
+                // CAT tokens — rate-limited queue, paginated, generous retries so a transient
+                // Spacescan rate limit recovers instead of silently showing zero CATs.
                 const tokensP = (async function() {
                     let rawTokens = [], sPage = 1;
                     while (true) {
-                        const td = await spacescanFetch('https://api.spacescan.io/address/token-balance/' + addr + '?page=' + sPage + '&count=200', 20000, 2);
+                        const td = await spacescanFetch('https://api.spacescan.io/address/token-balance/' + addr + '?page=' + sPage + '&count=200', 20000, 4);
                         if (!td || !Array.isArray(td.data) || !td.data.length) break;
                         rawTokens = rawTokens.concat(td.data);
                         if (td.data.length < 200) break;
@@ -11726,8 +11742,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     return rawTokens;
                 })();
 
-                // NFTs — rate-limited queue, with retry
-                const nftsP = spacescanFetch('https://api.spacescan.io/address/nft-balance/' + addr, 20000, 1)
+                // NFTs — rate-limited queue, with retries
+                const nftsP = spacescanFetch('https://api.spacescan.io/address/nft-balance/' + addr, 20000, 3)
                     .then(function(nd) { return (nd && Array.isArray(nd.balance)) ? nd.balance : []; })
                     .catch(function() { return []; });
 
