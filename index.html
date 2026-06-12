@@ -2376,8 +2376,11 @@
         }
 
         @media (max-width: 900px) {
-            .bag-split {
-                grid-template-columns: 1fr;
+            /* Keep Base | Chia side-by-side on mobile (the "All" view only).
+               The Base-only / Chia-only tabs still go full width. */
+            .bag-split.has-chia:not(.show-base):not(.show-chia) {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
             }
 
             .bag-sage-btn {
@@ -2561,6 +2564,57 @@
             .bag-chia-highlight,
             .bag-collection-chip {
                 border-radius: 16px;
+            }
+        }
+
+        /* ── Compact cards when Base | Chia render SIDE-BY-SIDE on mobile ── */
+        @media (max-width: 900px) {
+            .bag-split.has-chia .bag-render-card,
+            .bag-split.has-chia .bag-chia-card {
+                padding: 12px !important;
+                border-radius: 14px !important;
+            }
+            /* Headline value per side */
+            .bag-split.has-chia .bag-chia-total {
+                font-size: 22px !important;
+            }
+            /* XCH / CATs / NFTs and ETH / Tokens / LPs summaries: stack in narrow col */
+            .bag-split.has-chia .bag-chia-mini-grid {
+                grid-template-columns: 1fr !important;
+                gap: 6px !important;
+            }
+            .bag-split.has-chia .bag-chia-highlight {
+                padding: 8px 11px !important;
+                display: flex !important;
+                align-items: baseline !important;
+                justify-content: space-between !important;
+                gap: 8px !important;
+            }
+            .bag-split.has-chia .bag-mini-label {
+                margin: 0 !important;
+            }
+            .bag-split.has-chia .bag-mini-value {
+                font-size: 15px !important;
+                margin-top: 0 !important;
+            }
+            /* Token rows: name on top, value below — clean at ~160px wide */
+            .bag-split.has-chia .bag-token-row {
+                padding: 10px 11px !important;
+            }
+            .bag-split.has-chia .bag-chia-token-grid {
+                grid-template-columns: 1fr !important;
+                gap: 7px !important;
+            }
+            .bag-split.has-chia .bag-section-meta {
+                display: none !important;
+            }
+            /* The results hero (address + total) — keep total visible, shrink address */
+            .bag-split.has-chia .bag-results-title {
+                font-size: 14px !important;
+            }
+            .bag-split.has-chia .bag-results-copy {
+                font-size: 10px !important;
+                word-break: break-all !important;
             }
         }
 
@@ -3211,8 +3265,7 @@
 
             #base-holdings-list > div,
             #chia-holdings-list > div {
-                min-height: 120px !important;
-                padding: 10px 12px !important;
+                min-height: 0 !important;
             }
 
             .treasury-main-header {
@@ -3284,36 +3337,42 @@
             }
 
             .holdings-column-header {
-                padding: 8px 6px !important;
-                min-height: 88px !important;
+                padding: 12px 12px !important;
+                min-height: 0 !important;
                 display: flex !important;
                 flex-direction: column !important;
-                justify-content: space-between !important;
+                gap: 6px !important;
             }
 
             .header-title {
                 font-family: 'Space Grotesk', sans-serif !important;
                 font-size: 12px !important;
                 font-weight: 700 !important;
-                flex-wrap: wrap !important;
-                gap: 4px !important;
+                flex-wrap: nowrap !important;
+                gap: 5px !important;
                 letter-spacing: 0 !important;
+                min-width: 0 !important;
+            }
+
+            .header-title span:last-child {
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                white-space: nowrap !important;
             }
 
             .header-title .header-icon {
-                font-size: 16px !important;
+                font-size: 15px !important;
+                flex-shrink: 0 !important;
             }
 
             .header-stats {
                 font-family: 'Inter', sans-serif !important;
                 font-size: 10px !important;
-                flex-direction: column !important;
-                gap: 2px !important;
             }
 
             .column-total {
                 font-family: 'Space Grotesk', sans-serif !important;
-                font-size: 13px !important;
+                font-size: 15px !important;
                 font-variant-numeric: tabular-nums !important;
             }
 
@@ -3324,24 +3383,39 @@
             }
 
             .holdings-list {
-                max-height: 400px !important;
+                max-height: 62vh !important;
                 overflow-y: auto !important;
-                padding: 6px !important;
+                -webkit-overflow-scrolling: touch !important;
+                padding: 8px !important;
             }
 
-            /* Make treasury holding items uniform height */
-            .holdings-list > div,
-            #base-holdings-list > div,
-            #chia-holdings-list > div {
-                min-height: 90px !important;
+            /* Compact, full-width cards inside the narrow side-by-side columns:
+               name on top, value below — reads cleanly even at ~160px wide */
+            .treasury-token-card {
+                padding: 10px 11px !important;
+                margin-bottom: 7px !important;
             }
-            
-            /* Make treasury headers uniform height */
-            .holdings-column-header {
-                min-height: 120px !important;
-                display: flex !important;
+
+            .treasury-token-card .ttc-head {
                 flex-direction: column !important;
-                justify-content: space-between !important;
+                align-items: flex-start !important;
+                gap: 1px !important;
+            }
+
+            .treasury-token-card .ttc-name {
+                font-size: 13px !important;
+                width: 100% !important;
+            }
+
+            .treasury-token-card .ttc-value {
+                font-size: 16px !important;
+            }
+
+            .treasury-token-card .ttc-detail > div {
+                grid-template-columns: 1fr !important;
+                gap: 2px !important;
+                font-size: 11px !important;
+                margin-top: 4px !important;
             }
 
             /* Treasury split — SIDE BY SIDE */
@@ -9620,20 +9694,20 @@ function buildTokenCard(token) {
     const clickHandler = explorerUrl ? `onclick="window.open('${explorerUrl}','_blank')"` : '';
 
     return `
-    <div style="
-        background:linear-gradient(135deg,rgba(30,30,40,0.7),rgba(15,15,25,0.9));
-        border:2px solid ${borderColor};border-radius:12px;padding:14px;margin-bottom:10px;
-        transition:all 0.3s;cursor:${explorerUrl ? 'pointer' : 'default'};
-        min-height:130px;display:flex;flex-direction:column;justify-content:space-between;
+    <div class="treasury-token-card" style="
+        background:linear-gradient(135deg,rgba(30,30,40,0.6),rgba(15,15,25,0.85));
+        border:1px solid ${borderColor};border-radius:12px;padding:12px 14px;margin-bottom:8px;
+        transition:border-color 0.2s,transform 0.15s,box-shadow 0.2s;cursor:${explorerUrl ? 'pointer' : 'default'};
+        display:flex;flex-direction:column;gap:6px;
         will-change:transform;contain:layout style paint;"
         ${clickHandler}
-        onmouseover="this.style.borderColor='${hoverBorder}';this.style.transform='translateX(4px)';this.style.boxShadow='0 4px 16px rgba(251,191,36,0.15)';"
-        onmouseout="this.style.borderColor='${borderColor}';this.style.transform='translateX(0)';this.style.boxShadow='none';">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-            <span style="font-size:15px;font-weight:700;color:white;max-width:65%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'Cinzel',serif;">${displayName}${isLP ? ' <span style="font-size:11px;color:#63b3ed;font-weight:600;opacity:0.85;font-family:Inter,sans-serif;">(LP)</span>' : ''}${explorerUrl ? ' <span style="font-size:10px;opacity:0.4;">↗</span>' : ''}</span>
-            <span style="font-size:16px;font-weight:700;color:${valueColor};font-family:'Space Grotesk','Cinzel',serif;">$${val >= 1000 ? val.toLocaleString(undefined,{maximumFractionDigits:0}) : val.toFixed(2)}</span>
+        onmouseover="this.style.borderColor='${hoverBorder}';this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 18px rgba(0,0,0,0.3)';"
+        onmouseout="this.style.borderColor='${borderColor}';this.style.transform='translateY(0)';this.style.boxShadow='none';">
+        <div class="ttc-head" style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;">
+            <span class="ttc-name" style="font-size:15px;font-weight:700;color:white;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'Cinzel',serif;flex:1;min-width:0;">${displayName}${isLP ? ' <span style="font-size:10px;color:#63b3ed;font-weight:600;opacity:0.85;font-family:Inter,sans-serif;">(LP)</span>' : ''}${explorerUrl ? ' <span style="font-size:9px;opacity:0.35;">↗</span>' : ''}</span>
+            <span class="ttc-value" style="font-size:16px;font-weight:800;color:${valueColor};font-family:'Space Grotesk','Cinzel',serif;white-space:nowrap;font-variant-numeric:tabular-nums;">$${val >= 1000 ? val.toLocaleString(undefined,{maximumFractionDigits:0}) : val.toFixed(2)}</span>
         </div>
-        <div style="font-family:'Inter',sans-serif;">${detailHtml}</div>
+        <div class="ttc-detail" style="font-family:'Inter',sans-serif;">${detailHtml}</div>
     </div>`;
 }
 
