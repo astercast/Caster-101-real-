@@ -114,55 +114,88 @@ async function saveBlobSnapshot(snapshot) {
     }
 }
 
-async function fetchBestBaseToken(contract) {
-    let price = 0, change24h = 0, marketCap = 0;
+// Standard-quote filter (shared by batch and per-token paths)
+function isStdQuote(symbol) {
+    const q = (symbol || '').toUpperCase();
+    return q === 'WETH' || q === 'USDC' || q === 'ETH' || q === 'USDT' || q === 'WXCH' || q === 'XCH';
+}
 
-    // ── Price: DexScreener only (authoritative DEX source) ──
-    // If a token has no standard-quote pairs on DexScreener it has no active
-    // trading on Base and we report price = 0. GeckoTerminal can return stale
-    // prices from zero-volume pools (e.g. Pizza), so we never use it for price.
-    try {
-        const response = await safeFetch(`https://api.dexscreener.com/latest/dex/tokens/${contract.toLowerCase()}`, 12000);
-        if (response.ok) {
-            const data = await response.json();
-            const pairs = Array.isArray(data?.pairs) ? data.pairs : [];
-            const valid = pairs.filter(p => {
-                if ((p.chainId || '').toLowerCase() !== 'base') return false;
-                const quote = (p.quoteToken?.symbol || '').toUpperCase();
-                return quote === 'WETH' || quote === 'USDC' || quote === 'ETH' || quote === 'USDT' || quote === 'WXCH' || quote === 'XCH';
-            });
-            const best = valid.sort((a, b) => parseFloat(b.volume?.h24 || 0) - parseFloat(a.volume?.h24 || 0))[0];
-            if (best) {
-                price = parseFloat(best.priceUsd || 0);
-                change24h = parseFloat(best.priceChange?.h24 || 0);
-                marketCap = parseFloat(best.marketCap || best.fdv || 0);
-            }
+// Ingest DexScreener pairs into a priceMap (contract → {price, change24h, marketCap, vol})
+// Only keeps the highest-volume standard-quote pair per contract.
+function ingestDexPairs(pairs, priceMap) {
+    for (const p of pairs) {
+        if ((p.chainId || '').toLowerCase() !== 'base') continue;
+        if (!isStdQuote(p.quoteToken?.symbol)) continue;
+        const ca = (p.baseToken?.address || '').toLowerCase();
+        const price = parseFloat(p.priceUsd || 0);
+        const vol = parseFloat(p.volume?.h24 || 0);
+        if (ca && price > 0 && (!priceMap[ca] || vol > (priceMap[ca].vol || 0))) {
+            priceMap[ca] = {
+                price,
+                change24h: parseFloat(p.priceChange?.h24 || 0),
+                marketCap: parseFloat(p.marketCap || p.fdv || 0),
+                vol
+            };
         }
-    } catch {}
-
-    // No price from DexScreener → token has no active standard-quote trading
-    if (price === 0) return { price: 0, change24h: 0, marketCap: 0 };
-
-    // ── Market cap: GeckoTerminal fallback only when DexScreener has price but no mcap ──
-    if (marketCap === 0) {
-        try {
-            const gt = await safeFetch(`https://api.geckoterminal.com/api/v2/networks/base/tokens/${contract.toLowerCase()}`, 8000);
-            if (gt.ok) {
-                const data = await gt.json();
-                const attr = data?.data?.attributes || {};
-                let gtMcap = parseFloat(attr.market_cap_usd || attr.fdv_usd || 0);
-                const normalizedSupply = parseFloat(attr.normalized_total_supply || 0);
-                if (gtMcap === 0 && normalizedSupply > 0) gtMcap = normalizedSupply * price;
-                if (gtMcap > 0) marketCap = gtMcap;
-            }
-        } catch {}
     }
-
-    return { price, change24h, marketCap };
 }
 
 async function buildSnapshot(req) {
     const origin = getOrigin(req);
+
+    // ── Base tokens: one batch DexScreener call instead of 18 per-token calls ──
+    // Per-token fallback only for contracts missed by the batch (rare).
+    // GT used only to fill missing market caps (never for price).
+    async function fetchAllBaseTokens() {
+        const contracts = TRACKED.base.filter(t => t.contract).map(t => t.contract.toLowerCase());
+        const priceMap = {};
+
+        // 1. Batch call — covers most tokens in one request
+        try {
+            const r = await safeFetch(`https://api.dexscreener.com/tokens/v1/base/${contracts.join(',')}`, 15000);
+            if (r.ok) {
+                const d = await r.json();
+                ingestDexPairs(Array.isArray(d) ? d : (d.pairs || []), priceMap);
+            }
+        } catch (e) { console.warn('[market-index] DexScreener batch failed:', e.message); }
+        console.log(`[market-index] Batch DexScreener: ${Object.keys(priceMap).length}/${contracts.length} priced`);
+
+        // 2. Per-token fallback for any contract the batch missed
+        const missed = contracts.filter(ca => !priceMap[ca]);
+        if (missed.length > 0) {
+            await Promise.all(missed.map(async ca => {
+                try {
+                    const r = await safeFetch(`https://api.dexscreener.com/latest/dex/tokens/${ca}`, 10000);
+                    if (r.ok) ingestDexPairs((await r.json())?.pairs || [], priceMap);
+                } catch {}
+            }));
+        }
+
+        // 3. GeckoTerminal mcap fill — only for tokens priced but missing mcap
+        const needsMcap = TRACKED.base.filter(t => {
+            const ca = t.contract?.toLowerCase();
+            return ca && priceMap[ca]?.price > 0 && !priceMap[ca]?.marketCap;
+        });
+        if (needsMcap.length > 0) {
+            await Promise.all(needsMcap.map(async t => {
+                const ca = t.contract.toLowerCase();
+                try {
+                    const gt = await safeFetch(`https://api.geckoterminal.com/api/v2/networks/base/tokens/${ca}`, 8000);
+                    if (gt.ok) {
+                        const attr = (await gt.json())?.data?.attributes || {};
+                        let mc = parseFloat(attr.market_cap_usd || attr.fdv_usd || 0);
+                        if (!mc) mc = parseFloat(attr.normalized_total_supply || 0) * priceMap[ca].price;
+                        if (mc > 0) priceMap[ca].marketCap = mc;
+                    }
+                } catch {}
+            }));
+        }
+
+        return TRACKED.base.map(t => ({
+            token: t,
+            data: priceMap[t.contract?.toLowerCase()] || { price: 0, change24h: 0, marketCap: 0 }
+        }));
+    }
 
     const [coingeckoResponse, catResponse, baseRows] = await Promise.all([
         safeFetch(`${origin}/api/coingecko-proxy?ids=chia&vs_currencies=usd&include_24hr_change=true&include_market_cap=true&t=${Date.now()}`, 12000)
@@ -171,7 +204,7 @@ async function buildSnapshot(req) {
         safeFetch(`${origin}/api/chia-cat-prices?t=${Date.now()}`, 20000)
             .then(r => r.ok ? r.json() : {})
             .catch(() => ({})),
-        Promise.all(TRACKED.base.map(async t => ({ token: t, data: await fetchBestBaseToken(t.contract) })))
+        fetchAllBaseTokens()
     ]);
 
     const xchPrice = parseFloat(coingeckoResponse?.chia?.usd || 0);

@@ -148,15 +148,15 @@ export default async function handler(req, res) {
     // Browser handles circulating supply fetching directly
     try {
         // Fetch all sources in parallel
+        // Spacescan calls are best-effort (Vercel IPs are often 403'd).
+        // Fire all at once — staggered delays only waste time when most calls fail anyway.
         const [xchResp, dexieTickers, ...catResults] = await Promise.all([
             timedFetch('https://api.coingecko.com/api/v3/simple/price?ids=chia&vs_currencies=usd', 6000)
                 .then(r => r.ok ? r.json() : {}).catch(() => ({})),
             timedFetch('https://dexie.space/v2/prices/tickers', 8000)
                 .then(r => r.ok ? r.json() : {}).catch(() => ({})),
-            // Spacescan calls — best effort, may fail from Vercel IPs
-            ...CAT_IDS.map((id, i) =>
-                sleep(i * 300).then(() => getSpacescanPrice(id))
-            ),
+            // Spacescan calls — best effort, fired in parallel (not staggered)
+            ...CAT_IDS.map(id => getSpacescanPrice(id)),
         ]);
 
         const xchUsd = xchResp?.chia?.usd || 2.20;
