@@ -8798,6 +8798,47 @@ function mergeBaseTokens(arr1, arr2) {
     return Array.from(map.values());
 }
 
+// Re-fetch Base treasury holdings live when a cached snapshot has empty/zero Base
+// (Blockscout is flaky server-side; the browser can wait out the slow responses).
+// Fire-and-forget: updates the display in place and persists a corrected snapshot.
+async function refetchTreasuryBase(chiaData, nftData) {
+    const BASE_WALLET_1 = '0x8d8cb6D19E32115823Cf0008701A84fB07F43467';
+    const BASE_WALLET_2 = '0xEEDC069F861880eC1B5f41c9bC7a747DC1cE32b9';
+    try {
+        const [r1, r2] = await Promise.all([
+            fetch(`/api/treasury-comprehensive?address=${BASE_WALLET_1}&chain=base`).then(r => r.ok ? r.json() : {}).catch(() => ({})),
+            fetch(`/api/treasury-comprehensive?address=${BASE_WALLET_2}&chain=base`).then(r => r.ok ? r.json() : {}).catch(() => ({}))
+        ]);
+        const lp1 = (r1.tokens || []).filter(t => t.type === 'lp');
+        const lp2 = (r2.tokens || []).filter(t => t.type === 'lp');
+        const reg1 = (r1.tokens || []).filter(t => t.type !== 'lp');
+        const reg2 = (r2.tokens || []).filter(t => t.type !== 'lp');
+        const baseData = {
+            tokens: [...mergeBaseTokens(reg1, reg2), ...lp1, ...lp2],
+            total: (r1.total || 0) + (r2.total || 0),
+            wallets: [BASE_WALLET_1, BASE_WALLET_2]
+        };
+        if (baseData.total <= 0 && baseData.tokens.length === 0) {
+            console.warn('⚡ Live Base re-fetch still empty — Blockscout unavailable');
+            return;
+        }
+        console.log(`⚡ Live Base re-fetch: $${baseData.total.toFixed(2)}, ${baseData.tokens.length} tokens`);
+        _treasuryCache.baseData = baseData;
+        updateTreasuryDisplay(baseData, chiaData, nftData);
+        // Persist corrected snapshot so the next visit loads Base instantly
+        if ((chiaData?.tokens || []).some(t => t.type !== 'native')) {
+            try {
+                await fetch('/api/treasury-index', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ baseData, chiaData, nftData })
+                });
+                console.log('💾 Corrected treasury snapshot (with Base) pushed to Blob');
+            } catch {}
+        }
+    } catch (e) { console.warn('⚡ Base re-fetch error:', e.message); }
+}
+
 function mergeChiaTokens(arr1, arr2) {
     // Merge two Chia token arrays — sum balances by assetId (or 'XCH' for native)
     const map = new Map();
@@ -8909,6 +8950,15 @@ async function loadComprehensiveTreasury(force = false) {
                 // Render immediately
                 updateTreasuryDisplay(idx.baseData, idx.chiaData, nftData);
 
+                // Snapshot Base may be empty/zero if the server's Blockscout call failed
+                // when the blob was built. Re-fetch Base live (browser waits out the slow
+                // Blockscout responses) and patch the display + snapshot in the background.
+                const _bd = idx.baseData || {};
+                if (!(_bd.total > 0) || !(Array.isArray(_bd.tokens) && _bd.tokens.length > 0)) {
+                    console.warn('⚡ Snapshot Base empty — re-fetching Base holdings live...');
+                    refetchTreasuryBase(idx.chiaData, nftData);
+                }
+
                 // Server-built blobs never have NFTs (Spacescan blocks Vercel IPs for wallet endpoints).
                 // If the blob has real NFT collections, render them immediately.
                 // If empty, fire loadNFTs() which uses browser-direct Spacescan — it actually works.
@@ -8947,11 +8997,16 @@ async function loadComprehensiveTreasury(force = false) {
                 // Render Base + partial Chia immediately, then load Chia browser-direct below.
                 const src = idx.source || 'unknown';
                 console.log(`⚡ Treasury partial (source=${src}): Base=$${(idx.baseData.total||0).toFixed(2)}, no Chia CATs — showing Base, loading Chia browser-direct`);
-                _fastBaseData = idx.baseData;
+                // Only reuse snapshot Base if it actually has data; otherwise leave
+                // _fastBaseData null so the fallback path re-fetches Base fresh.
+                const _pbd = idx.baseData || {};
+                if (_pbd.total > 0 && Array.isArray(_pbd.tokens) && _pbd.tokens.length > 0) {
+                    _fastBaseData = idx.baseData;
+                }
                 const partChia = idx.chiaData || { tokens: [], total: 0, xchPrice: 2.20 };
                 updateTreasuryDisplay(idx.baseData, partChia, idx.nftData || { collections: [], totalNFTs: 0, totalCollections: 0, totalValue: 0, totalXch: 0 });
                 loadNFTs();
-                // Fall through to direct-call Chia loading only (Base will be skipped via _fastBaseData)
+                // Fall through to direct-call Chia loading (Base re-fetched unless _fastBaseData set)
             }
         }
         console.warn('⚠️ treasury-index returned no usable data, falling back to direct calls');

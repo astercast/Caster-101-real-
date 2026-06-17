@@ -163,20 +163,40 @@ async function fetchBase(address) {
     const ethPrice = await getEthPrice();
     priceMap['0x4200000000000000000000000000000000000006'] = ethPrice;
 
-    try {
-        const r = await safeFetch(`https://base.blockscout.com/api/v2/addresses/${address}`, {}, 8000);
-        if (r.ok) {
-            const d = await r.json();
-            const b = parseFloat(d.coin_balance || 0) / 1e18;
-            if (b > 0.0001) tokens.push({ symbol: 'ETH', name: 'Ethereum', balance: b, price: ethPrice, value: b * ethPrice, type: 'native' });
-        }
-    } catch (e) { console.warn('[BASE] ETH:', e.message); }
+    for (let attempt = 0; attempt < 2; attempt++) {
+        if (attempt > 0) await sleep(800);
+        try {
+            const r = await safeFetch(`https://base.blockscout.com/api/v2/addresses/${address}`, {}, 12000);
+            if (r.ok) {
+                const d = await r.json();
+                const b = parseFloat(d.coin_balance || 0) / 1e18;
+                if (b > 0.0001) tokens.push({ symbol: 'ETH', name: 'Ethereum', balance: b, price: ethPrice, value: b * ethPrice, type: 'native' });
+                break;
+            }
+        } catch (e) { console.warn(`[BASE] ETH attempt ${attempt + 1}: ${e.message}`); }
+    }
 
+    // Blockscout is flaky: intermittent HTTP 500s + highly variable latency (6–27s).
+    // Retry up to 3x with a generous timeout, breaking the moment we get real items.
+    // (A 12s timeout previously aborted slow-but-valid responses → empty Base holdings.)
     let allItems = [];
-    try {
-        const r = await safeFetch(`https://base.blockscout.com/api/v2/addresses/${address}/token-balances`, {}, 12000);
-        if (r.ok) { const d = await r.json(); allItems = Array.isArray(d) ? d : (d.items || []); }
-    } catch (e) { console.warn('[BASE] ERC20:', e.message); }
+    const bsUrl = `https://base.blockscout.com/api/v2/addresses/${address}/token-balances`;
+    for (let attempt = 0; attempt < 3; attempt++) {
+        if (attempt > 0) await sleep(1200);
+        try {
+            const r = await safeFetch(bsUrl, {}, 24000);
+            if (r.ok) {
+                const d = await r.json();
+                const items = Array.isArray(d) ? d : (d.items || []);
+                if (items.length > 0) { allItems = items; break; }
+                console.warn(`[BASE] token-balances attempt ${attempt + 1}: HTTP 200 but 0 items`);
+            } else {
+                console.warn(`[BASE] token-balances attempt ${attempt + 1}: HTTP ${r.status}`);
+            }
+        } catch (e) {
+            console.warn(`[BASE] token-balances attempt ${attempt + 1}: ${e.message}`);
+        }
+    }
 
     const lpItems = [], erc20Items = [];
     for (const item of allItems) {
