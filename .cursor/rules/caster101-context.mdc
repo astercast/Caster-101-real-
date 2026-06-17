@@ -1,0 +1,222 @@
+---
+description: Caster101 full project context — every page, API, game system, treasury, mint, and token registry. Always loaded so the agent goes straight to work.
+alwaysApply: true
+---
+
+# Caster101 — Complete Project Context
+
+Live at **https://caster101.xyz** | GitHub: `Caster-101-real-` | Deployed on Vercel
+
+## Stack
+- Single `index.html` SPA (no framework) + standalone pages (`bag.html`, `treasury.html`, `mint.html`, `market.html`, `howto.html`, `book.html`)
+- `api/*.js` — Vercel serverless functions (ES modules unless noted)
+- `@vercel/blob` — snapshot cache for market + treasury data
+- Upstash Redis (KV) — Caster Valley cloud saves + leaderboard (`KV_REST_API_URL`, `KV_REST_API_TOKEN`)
+- Games: `caster-valley-3d.html` (main game), `awizard-game.html` (secret game), `game/index.html`
+
+## Site Tabs (index.html `showTab`)
+| tabName | Label | URL slug | Notes |
+|---------|-------|----------|-------|
+| market | EMOJI MARKET | /market | Main price view, Chia+Base columns |
+| portfolio | BAG | /portfolio | Personal wallet tracker |
+| treasury | aWIZARD TREASURY | /treasury | Multi-wallet treasury snapshot |
+| howto | HOW TO CAST | /howto | Tutorial page |
+| book | BOOK OF WIZARD | /book | Lore page |
+| valley | CASTER VALLEY | /valley | Game iframe (`caster-valley-3d.html`) |
+| secretgame | — | hidden | aWizard game, accessed by clicking "CASTER101" title |
+
+## All API Routes
+
+| File | Route | Method | Purpose |
+|------|-------|--------|---------|
+| `market-index.js` | `/api/market-index` | GET/POST | Snapshot registry + blob cache (mem 1min, blob SWR 10min). POST = browser push |
+| `chia-cat-prices.js` | `/api/chia-cat-prices` | GET | Dexie+Spacescan prices/supplies. `?mode=treasury&wallets=` for treasury mode |
+| `base-dex-pairs.js` | (imported) | — | Exported helpers for Base pricing |
+| `arbitrage.js` | `/api/arbitrage` | GET | Live cross-chain spreads. `?minSpreadPct=N` |
+| `prices.js` | `/api/prices` | GET | Token lookup by name/symbol. `?token=caster` |
+| `live-base-prices.js` | (imported) | — | Live Base price map for arbitrage |
+| `live-chia-prices.js` | (imported) | — | Live Chia price map for arbitrage |
+| `token-pairing.js` | (imported) | — | `pairingKey`, `PAIRING_ALIASES`, spread compute |
+| `treasury-index.js` | `/api/treasury-index` | GET/POST | Multi-wallet treasury snapshot (mem 2min, blob SWR 30min) |
+| `treasury-comprehensive.js` | `/api/treasury-comprehensive` | GET | Per-wallet data: `?chain=base&address=`, `?chain=chia&address=&type=tokens|nfts|full` |
+| `game-index.js` | `/api/game-index` | GET | Normie stats from normies.art HTML scrape. `?normieId=N` |
+| `caster-valley-save.js` | `/api/caster-valley-save` | GET/POST | Cloud save via Upstash KV. `?deviceId=` |
+| `caster-valley-leaderboard.js` | `/api/caster-valley-leaderboard` | GET/POST | Global leaderboard (top 50 by totalEssenceEarned). KV key `cv:leaderboard` |
+| `mint-config.js` | `/api/mint-config` | GET | Public mint phase/price/supply. Config from `MINT_CONFIG` env var |
+| `mint-allowlist.js` | `/api/mint-allowlist` | GET/POST | Check/manage Chia address allowlist. Admin: `Authorization: Bearer <MINT_ADMIN_SECRET>` |
+| `mint-submit.js` | `/api/mint-submit` | POST | NFT mint submission (MintGarden + Pinata IPFS) |
+| `coingecko-proxy.js` | `/api/coingecko-proxy` | GET | XCH/USD proxy |
+| `chia-supply.js` | `/api/chia-supply` | — | Spacescan supply parser (imported) |
+| `chia-collections.js` | `/api/chia-collections` | GET | Chia NFT collection data |
+| `chia-address-proxy.js` | `/api/chia-address-proxy` | GET | Chia address lookups |
+| `spacescan-proxy.js` | `/api/spacescan-proxy` | GET | Spacescan proxy |
+| `merkl-pools.js` | `/api/merkl-pools` | GET | 9mm liquidity pool APRs from Merkl API |
+| `merkl-proxy.js` | `/api/merkl-proxy` | GET | Merkl proxy |
+| `visitor-count.js` | `/api/visitor-count` | GET | Page view counter via counterapi.dev |
+| `market-index-refresh.js` | `/api/market-index-refresh` | GET | Trigger snapshot rebuild |
+| `metadata.js` | `/api/metadata` | GET | NFT metadata endpoint |
+
+## Pricing Pipeline (summary)
+
+### Chia prices: Dexie tickers (vol>0) → Spacescan fallback → Dexie best-ask → mcap = supply×price
+### Base prices: DexScreener batch (incomplete) → per-token (reliable) → Gecko gaps-only → Gecko pools for zero-pair tokens
+### Spread: `(base − chia) / chia × 100`. Positive = cheaper on Chia. BYC/Wiz pairing: both keys → `wiz`
+### Market cap priority (Base): dex fdv → gecko fdv → implied → gecko supply×price
+
+## Treasury System
+
+**Wallets tracked** (hardcoded in `treasury-index.js`):
+- Base: `0x8d8cb6D19E32115823Cf0008701A84fB07F43467`, `0xEEDC069F861880eC1B5f41c9bC7a747DC1cE32b9`
+- Chia: `xch10na8nqys9afs0fl74vvd6xl3akgu77p8mvjsp2ywy7rhq2s0jqys3nf7dl`, `xch1g477lha2wjjq9634kgqmryf4gplft9cjgv2vd29tq3ya26glwlkqp6pyex`, `xch1el40ydk4v2ccdq2l8d28wvr8hnndar0xywfgqel36f85ps8gj9jqfrm64j`
+
+**treasury-comprehensive.js** (per-wallet):
+- Base: Blockscout ERC20 list → DexScreener prices → RPC batch calls (token0/token1/getReserves/totalSupply) for LP valuation
+- Chia tokens: Spacescan xch-balance (fast) + token-balance (25s, may 429 rate-limit)
+- Chia NFTs: Spacescan nft-balance + MintGarden enrichment (parallel batches of 8)
+- `?chain=chia&type=full` → sequential W1+W2 token fetches with 2s gap between them
+
+**treasury-index.js** snapshot:
+- Memory 2min, blob SWR 30min
+- If blob has no CATs (Spacescan blocked Vercel IPs) → serve partial + queue rebuild
+- NFT data preserved from prior blob if server rebuild gets 0 NFTs
+
+## Caster Valley Game (`caster-valley-3d.html`)
+
+Cozy farming/crafting browser game. Loaded in an iframe inside the `valley` tab.
+
+**Game mechanics:**
+- Resources: Spellpower (SP / Essence), HP, XP, Level
+- Activities: farming, mining, fishing, crafting, feeding dragon
+- Skill tree: Bounty I–V (SP mult), other stat upgrades
+- Achievements with SP rewards
+- Day/night cycle (CSS body class `night-mode`)
+
+**Save system:**
+- Local: `localStorage` key `castervalleys1` (auto-save every 10s)
+- Cloud: `POST /api/caster-valley-save?deviceId={id}` (debounced, Upstash KV key `cv:save:{deviceId}`)
+- Load: compares cloud `savedAt` vs local — uses whichever is newer
+- Migration: `SAVE_MIGRATIONS` object, versioned saves (`SAVE_VERSION = 2`)
+
+**Leaderboard:**
+- `POST /api/caster-valley-leaderboard` — upserts entry `{ deviceId, name, level, totalEssenceEarned }`
+- Score only goes up (never decremented)
+- Name sanitized: max 20 chars, no `<>"` 
+- KV key `cv:leaderboard` = JSON object keyed by deviceId; top 50 returned sorted by essence
+
+**Normie integration (`game-index.js`):**
+- Scrapes `https://www.normies.art/normiecard?id={normieId}` HTML for HP stat
+- Cached per-normie: mem 5min, blob `caster101-index/game/normie-{id}.json`
+
+## Mint System
+
+**Env vars required:**
+| Var | Purpose |
+|-----|---------|
+| `MINT_CONFIG` | JSON: phase, price, priceXch, maxSupply, collectionName, royaltyPct, mintgardenProfileId |
+| `MINTGARDEN_API_KEY` | Creator API key |
+| `MINT_ROYALTY_ADDRESS` | xch1... royalty wallet |
+| `MINT_ADMIN_SECRET` | Admin Bearer token for allowlist management |
+| `PINATA_API_KEY` / `PINATA_SECRET_API_KEY` | IPFS upload |
+| `BLOB_READ_WRITE_TOKEN` | Shared with market data |
+
+**Phases:** `allowlist` | `public` | `closed` | `soon`
+
+**Allowlist blob:** `caster101-mint/allowlist.json` → `{ addresses: { "xch1...": { addedAt, note } } }`
+
+**Mint counter blob:** `caster101-mint/counter.json` → `{ count: N }`
+
+## Token Registry (Chia CATs)
+| id | name | displayName | assetId |
+|----|------|-------------|---------|
+| xch | Chia | — | Native |
+| caster-chia | Caster | — | a09af8b0d12b27772c64f89cf0d1db95186dca5b1871babc5108ff44f36305e6 |
+| spellpower-chia | Spellpower | — | eb2155a177b6060535dd8e72e98ddb0c77aea21fab53737de1c1ced3cb38e4c4 |
+| byc-chia | Bytecash | $BYC | ae1536f56760e471ad85ead45f00d680ff9cca73b8cc3407be778f1c0c606eac |
+| love-chia | Love | — | 70010d83542594dd44314efbae75d82b3d9ae7d946921ed981a6cd08f0549e50 |
+| sprout-chia | Sprout | — | ab558b1b841365a24d1ff2264c55982e55664a8b6e45bc107446b7e667bb463b |
+| pizza-chia | Pizza | — | dd37f678dda586fad9b1daeae1f7c5c137ffa6d947e1ed5c7b4f3c430da80638 |
+| bepe-chia | BEPE | $BEPE | ccda69ff6c44d687994efdbee30689be51d2347f739287ab4bb7b52344f8bf1d |
+| honk-chia | HonK | $HONK | 048b1358f3b55a70c4db22114c2f52569c0398ba19e8212b8daf1cb25c90a641 |
+| neck-chia | NeckCoin | $NECK | 1ad673d21799c9a224014ca71f9fe07cbc836fa23fa97b3be275d46d0b8bd9da |
+| chia-meme-chia | VFVAPatek9000Inu | $CHIA | 69326954fe16117cd6250e929748b2a1ab916347598bc8180749279cfae21ddb |
+| hodl-chia | HODL | $HODL | e335003c6d59aaaabe27eeeaf8a7b1308765f6bc9492a0b16394f50dec6bdcb7 |
+| mana-chia | MANA | MANA | 1653a1df583f3ae6a822ab214b74d2a08fb4309025d54f2db140e5e6bc06e9da |
+| hoa-chia | HOA | — | e816ee18ce2337c4128449bc539fbbe2ecfdd2098c4e7cab4667e223c3bdc23d |
+| ni-chia | No Idea | $NI | c0eb7cc73ef2e789a7b9cf7c8c27185beb2ff5fdf2997da28a6b9b3714e4034d |
+| horse-chia | HouseofRegardedSchizoEquestrians | $HORSE | 1efff18fedcdb63818a1b41ab3e977707bc314a090e7ea5db396a56095290604 |
+| tigerblood-chia | Tiger Blood | — | 95430751e3894b48820b7da497f04abd0e46fe6d982fa98daf174ff1e35159bd |
+| chocotaco-chia | Choco Taco | — | 8df67763ad273f4a08f8f19f8a172d80b38ad940f32fe20b0b2ed3d665edf575 |
+
+## Token Registry (Base contracts)
+| id | name | displayName | contract |
+|----|------|-------------|----------|
+| wxch-base | Wrapped XCH | wXCH | 0x36be1d329444aef5d28df3662ec5b4f965cd93e9 |
+| caster-base | Caster | — | 0x09Aa909Eea859f712f2Ae3dd1872671D2363f6f4 |
+| spellpower-base | Spellpower | — | 0x145F14b876051DC443dd18D5f8a7C48c5db75847 |
+| wiz-base | Wizard Bucks | — | 0x39916e508e389FBB4dDC3d1a38a5801f4eE253c7 |
+| love-base | Love | — | 0x817cAb331aaA4c24b4e32024FCa093AD40CBa208 |
+| sprout-base | Sprout | — | 0xd1b771CB462a4B0e4d56Bb68b4bF832994CC8820 |
+| pizza-base | Pizza | — | 0x84070f2c685b3d4B63c66f0B13fB83Fa6ccb4035 |
+| bepe-base | BEPE | $BEPE | 0xBB5cBDAE23C5368557CC9A32337863eECf03cF9f |
+| honk-base | HonK | $HONK | 0xF6C04947A13481daAf4E8756B04f3D6bB7C30efF |
+| neck-base | NeckCoin | $NECK | 0x359D5BFa1bb87598e2198EC139eE44D31Bd06FaC |
+| chia-meme-base | VFVAPatek9000Inu | $CHIA | 0x05AefaFfF978EA4F9E6ff9FA3Bc2465B90598549 |
+| hodl-base | HODL | $HODL | 0xb43ba3fD8ac8b16ED52CFBE72738967C2AD9cC03 |
+| mana-base | MANA | MANA | 0x4cE68125983527D1e289a0C1c70464B4bb8932ac |
+| hoa-base | HOA | — | 0xee642384091f4bb9ab457b875E4e209b5a0BD147 |
+| ni-base | No Idea | $NI | 0xf628fD48BB4A4903DdCdBb89b814B5484456fc4E |
+| horse-base | HouseofRegardedSchizoEquestrians | $HORSE | 0x827fc57Bc514578E8280cEE73f5e948D306aF074 |
+| tigerblood-base | Tiger Blood | — | 0xD999c5E89018a28deA05607837DD5DD6de26d907 |
+| chocotaco-base | Choco Taco | — | 0xBaB8a1AD71710d62e7E4c2F56c299422C6187c38 |
+
+## Bridge Pairing
+`byc-chia` (Bytecash) ↔ `wiz-base` (Wizard Bucks) — both canonical key `wiz`
+`PAIRING_ALIASES = { byc: 'wiz', wiz: 'wiz' }` (in `token-pairing.js` AND `index.html` `ARB_PAIR_ALIASES`)
+
+## Key Gotchas
+1. **DexScreener batch incomplete** — always follow with per-token calls
+2. **BYC/Wiz pairing**: both sides → key `wiz`
+3. **Spread denominator = Chia price**: `(base−chia)/chia×100`
+4. **Pizza on Base**: often 0 Dex pairs → Gecko pools
+5. **Dexie stale last_price**: only trust if `base_volume > 0`
+6. **mcap = supply×price** on Chia — never use xch.trade quoted mcap directly
+7. **HODL static supply**: 9,900,000,000 (fallback in `chia-cat-prices.js`)
+8. **Spacescan blocks Vercel IPs** for `/address/token-balance` — browser-direct only for portfolio
+9. **treasury NFT data**: server cannot fetch (Spacescan blocks) → browser POSTs NFTs → preserved from prior blob
+10. **market-index POST**: browser pushes live data so next visitor gets fresh snapshot
+11. **Gecko enrichment is gaps-only** — never overwrite a Dex price with Gecko
+12. **Tang names** (`TANG_NAMES` set in index.html): `HouseofRegardedSchizoEquestrians` + others — gets `.tang-ticker` CSS class
+
+## Adding a New Token (checklist)
+1. `api/market-index.js` → `TRACKED.chia` or `TRACKED.base`
+2. `api/chia-cat-prices.js` → `CAT_IDS` (Chia only)
+3. `api/prices.js` → `TOKEN_ALIASES`
+4. `index.html` → `trackedTokens`
+5. `index.html` → `EMOJI_MAP`
+6. `index.html` → `TANG_NAMES` (if meme/degen)
+7. Bridge pair with different name → `PAIRING_ALIASES` in `token-pairing.js` + `ARB_PAIR_ALIASES` in `index.html`
+
+## Env Vars
+| Var | Used by |
+|-----|---------|
+| `BLOB_READ_WRITE_TOKEN` | All blob ops (market, treasury, mint, game) |
+| `KV_REST_API_URL` / `KV_REST_API_TOKEN` | Caster Valley save + leaderboard |
+| `MINT_CONFIG` | Mint phase/price config |
+| `MINTGARDEN_API_KEY` | NFT mint |
+| `MINT_ROYALTY_ADDRESS` | Mint royalties |
+| `MINT_ADMIN_SECRET` | Allowlist admin |
+| `PINATA_API_KEY` / `PINATA_SECRET_API_KEY` | IPFS |
+
+## External APIs Used
+- Dexie: `https://dexie.space/v2/prices/tickers` + `/v1/offers`
+- Spacescan: `https://api.spacescan.io/cat/info/{id}`, `/address/*-balance/{addr}`
+- DexScreener: `/tokens/v1/base/{batch}`, `/latest/dex/tokens/{ca}`
+- GeckoTerminal: `/api/v2/networks/base/tokens/multi/{batch}`, `/tokens/{ca}/pools`
+- CoinGecko: proxy at `/api/coingecko-proxy`
+- MintGarden: `https://api.mintgarden.io/collections/{cid}`
+- Blockscout Base: `https://base.blockscout.com/api/v2/addresses/{addr}/token-balances`
+- Base RPC (LP): `base-rpc.publicnode.com`, `base.llamarpc.com`, `base.meowrpc.com`
+- Merkl: `https://api.merkl.xyz/v4/opportunities?search=9mm`
+- Normies: `https://www.normies.art/normiecard?id={id}`
+- counterapi: `https://api.counterapi.dev/v1/caster101/pageviews/up`
+- xchscan: `https://xchscan.com/api/chia-price`
