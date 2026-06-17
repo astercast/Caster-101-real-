@@ -8801,14 +8801,30 @@ function mergeBaseTokens(arr1, arr2) {
 // Re-fetch Base treasury holdings live when a cached snapshot has empty/zero Base
 // (Blockscout is flaky server-side; the browser can wait out the slow responses).
 // Fire-and-forget: updates the display in place and persists a corrected snapshot.
+let _refetchingBase = false;
 async function refetchTreasuryBase(chiaData, nftData) {
+    if (_refetchingBase) { console.log('⚡ Base re-fetch already in progress'); return; }
+    _refetchingBase = true;
     const BASE_WALLET_1 = '0x8d8cb6D19E32115823Cf0008701A84fB07F43467';
     const BASE_WALLET_2 = '0xEEDC069F861880eC1B5f41c9bC7a747DC1cE32b9';
+    // Fetch each wallet with one retry. SEQUENTIAL (not parallel): two concurrent
+    // calls double the load on the slow/flaky Blockscout API and can both hit
+    // Vercel's 60s gateway limit (504). One-at-a-time is far more reliable.
+    const fetchOne = async (addr) => {
+        for (let attempt = 0; attempt < 2; attempt++) {
+            try {
+                const r = await fetch(`/api/treasury-comprehensive?address=${addr}&chain=base`);
+                if (r.ok) {
+                    const d = await r.json();
+                    if (!d.error && Array.isArray(d.tokens) && (d.tokens.length > 0 || (d.total || 0) > 0)) return d;
+                }
+            } catch (e) { console.warn(`⚡ Base wallet ${addr.slice(0,8)} attempt ${attempt+1}: ${e.message}`); }
+        }
+        return { tokens: [], total: 0 };
+    };
     try {
-        const [r1, r2] = await Promise.all([
-            fetch(`/api/treasury-comprehensive?address=${BASE_WALLET_1}&chain=base`).then(r => r.ok ? r.json() : {}).catch(() => ({})),
-            fetch(`/api/treasury-comprehensive?address=${BASE_WALLET_2}&chain=base`).then(r => r.ok ? r.json() : {}).catch(() => ({}))
-        ]);
+        const r1 = await fetchOne(BASE_WALLET_1);
+        const r2 = await fetchOne(BASE_WALLET_2);
         const lp1 = (r1.tokens || []).filter(t => t.type === 'lp');
         const lp2 = (r2.tokens || []).filter(t => t.type === 'lp');
         const reg1 = (r1.tokens || []).filter(t => t.type !== 'lp');
@@ -8818,25 +8834,32 @@ async function refetchTreasuryBase(chiaData, nftData) {
             total: (r1.total || 0) + (r2.total || 0),
             wallets: [BASE_WALLET_1, BASE_WALLET_2]
         };
-        if (baseData.total <= 0 && baseData.tokens.length === 0) {
-            console.warn('⚡ Live Base re-fetch still empty — Blockscout unavailable');
+        if (baseData.tokens.length === 0) {
+            console.warn('⚡ Live Base re-fetch still empty — Blockscout unavailable, will retry next load');
             return;
         }
-        console.log(`⚡ Live Base re-fetch: $${baseData.total.toFixed(2)}, ${baseData.tokens.length} tokens`);
+        console.log(`⚡ Live Base re-fetch OK: $${baseData.total.toFixed(2)}, ${baseData.tokens.length} tokens`);
         _treasuryCache.baseData = baseData;
-        updateTreasuryDisplay(baseData, chiaData, nftData);
+        // Re-render using the freshest chia/nft we have so nothing else gets wiped
+        const freshChia = _treasuryCache.chiaData || chiaData;
+        const freshNft = window._chiaNFTData || nftData;
+        updateTreasuryDisplay(baseData, freshChia, freshNft);
         // Persist corrected snapshot so the next visit loads Base instantly
-        if ((chiaData?.tokens || []).some(t => t.type !== 'native')) {
+        if ((freshChia?.tokens || []).some(t => t.type !== 'native')) {
             try {
                 await fetch('/api/treasury-index', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ baseData, chiaData, nftData })
+                    body: JSON.stringify({ baseData, chiaData: freshChia, nftData: freshNft })
                 });
                 console.log('💾 Corrected treasury snapshot (with Base) pushed to Blob');
             } catch {}
         }
-    } catch (e) { console.warn('⚡ Base re-fetch error:', e.message); }
+    } catch (e) {
+        console.warn('⚡ Base re-fetch error:', e.message);
+    } finally {
+        _refetchingBase = false;
+    }
 }
 
 function mergeChiaTokens(arr1, arr2) {

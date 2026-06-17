@@ -62,11 +62,45 @@ async function loadBlobSnapshot() {
     }
 }
 
+function baseHasData(d) {
+    return !!d && ((d.total || 0) > 0 || (Array.isArray(d.tokens) && d.tokens.length > 0));
+}
+function chiaHasCats(d) {
+    return !!d && Array.isArray(d.tokens) && d.tokens.some(t => t.type !== 'native');
+}
+
+// Merge an incoming snapshot with whatever is already stored so that Base and
+// Chia never wipe each other out: the server can fetch Base but not Chia
+// (Spacescan blocks Vercel IPs), while the browser pushes Chia but sometimes
+// no Base. Each save keeps the best available of each section.
+function mergeSnapshots(incoming, existing) {
+    if (!existing) return incoming;
+    const out = { ...incoming };
+    if (!baseHasData(incoming.baseData) && baseHasData(existing.baseData)) {
+        out.baseData = existing.baseData;
+    }
+    if (!chiaHasCats(incoming.chiaData) && chiaHasCats(existing.chiaData)) {
+        out.chiaData = existing.chiaData;
+    }
+    const incNfts = incoming.nftData?.totalNFTs || 0;
+    const exNfts = existing.nftData?.totalNFTs || 0;
+    if (incNfts === 0 && exNfts > 0) out.nftData = existing.nftData;
+    return out;
+}
+
 async function saveBlobSnapshot(snapshot) {
     const api = await blobApi();
-    if (!api) return;
+    if (!api) return snapshot;
+    let merged = snapshot;
     try {
-        await api.put(INDEX_KEY, JSON.stringify(snapshot), {
+        const existing = await loadBlobSnapshot();
+        merged = mergeSnapshots(snapshot, existing);
+    } catch { /* no existing blob — save as-is */ }
+    // Keep the hot in-memory cache consistent with what we persist
+    _memSnapshot = merged;
+    _memAt = Date.now();
+    try {
+        await api.put(INDEX_KEY, JSON.stringify(merged), {
             access: 'public',
             contentType: 'application/json',
             addRandomSuffix: false,
@@ -75,6 +109,7 @@ async function saveBlobSnapshot(snapshot) {
     } catch (e) {
         console.warn('[treasury-index] Blob write failed:', e.message);
     }
+    return merged;
 }
 
 function mergeBaseTokens(arr1, arr2) {
@@ -274,8 +309,11 @@ export default async function handler(req, res) {
                             .then(async snapshot => {
                                 _memSnapshot = snapshot;
                                 _memAt = Date.now();
-                                const snapChiaOk = Array.isArray(snapshot.chiaData?.tokens) && snapshot.chiaData.tokens.some(t => t.type !== 'native');
-                                if (snapChiaOk) await saveBlobSnapshot(snapshot);
+                                // Save when EITHER section has data — mergeSnapshots()
+                                // keeps the prior Chia/NFTs so a Base-only build still helps.
+                                if (chiaHasCats(snapshot.chiaData) || baseHasData(snapshot.baseData)) {
+                                    await saveBlobSnapshot(snapshot);
+                                }
                                 return snapshot;
                             })
                             .finally(() => { _inflight = null; });
@@ -319,12 +357,12 @@ export default async function handler(req, res) {
                 .then(async snapshot => {
                     _memSnapshot = snapshot;
                     _memAt = Date.now();
-                    // Only persist blob if Chia data actually loaded (needs at least one CAT/LP beyond XCH)
-                    const chiaOk = Array.isArray(snapshot.chiaData?.tokens) && snapshot.chiaData.tokens.some(t => t.type !== 'native');
-                    if (chiaOk) {
+                    // Persist if EITHER Base or Chia loaded — mergeSnapshots() keeps the
+                    // other section from the prior blob so neither gets wiped.
+                    if (chiaHasCats(snapshot.chiaData) || baseHasData(snapshot.baseData)) {
                         await saveBlobSnapshot(snapshot);
                     } else {
-                        console.warn('[treasury-index] Skipping blob save — chiaData empty (chia-cat-prices may have timed out)');
+                        console.warn('[treasury-index] Skipping blob save — both Base and Chia empty');
                     }
                     return snapshot;
                 })
