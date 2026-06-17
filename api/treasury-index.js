@@ -372,7 +372,9 @@ export default async function handler(req, res) {
         }
 
         const fresh = await _inflight;
-        return res.status(200).json({ ...fresh, source: 'fresh' });
+        // Return the merged snapshot (saveBlobSnapshot set _memSnapshot to the merge of
+        // this build + prior blob) so a manual refresh never shows an empty section.
+        return res.status(200).json({ ...(_memSnapshot || fresh), source: 'fresh' });
     } catch (e) {
         if (_memSnapshot) return res.status(200).json({ ..._memSnapshot, source: 'memory-stale', error: String(e?.message || e) });
         return res.status(500).json({ error: 'treasury index failed', detail: String(e?.message || e) });
